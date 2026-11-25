@@ -836,7 +836,7 @@ Every badge around the chat - beside a section title, on a strip icon, on the tr
 command and on the dock's launcher - is drawn through the part `Badge` (`StateBadge`,
 `labelWithBadge` of the bridge). A `<section>` of the `<side-rail>` is declared `WithBadge` (`badge`,
 `badge-role`, `badge-label`), and the rail writes what its sections count beyond what the user has
-seen to its `badge-channel` (see [the side rail](../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/layout.md#a-collapsible-column-side-rail)).
+seen to its `badge-channel` (see [the side rail](../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/side-rail.md)).
 In `albert.view.xml` that channel is `railBadge`: the rail command of `<chat-conversation><commands>`
 shows it with `badge="railBadge"`, and a `<chat-dock badge="…">` around the page shows it on its
 launcher (`ChatDockControl.STATE_BADGE`, state `badge`) when the shell binds its own channel over
@@ -1473,7 +1473,7 @@ element wires an `input` channel - there the channel is the whole selection, and
 conversation - and elsewhere only into a store nothing has chosen a chat for yet (#577).
 
 The column beside the conversation is the engine's `<side-rail>` (`SideRailElement`, control
-`ReactSideRailControl`, see [the side rail](../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/layout.md#a-collapsible-column-side-rail)):
+`ReactSideRailControl`, see [the side rail](../com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/side-rail.md)):
 a strip of section icons and a column of sections, each section's body a view element the
 application configured there.
 

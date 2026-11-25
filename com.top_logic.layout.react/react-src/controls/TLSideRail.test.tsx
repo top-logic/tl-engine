@@ -45,7 +45,11 @@ class FakeResizeObserver {
   constructor(private readonly callback: () => void) {
     observers.push(this);
   }
-  observe(): void {}
+  /** The elements this observer watches. */
+  readonly targets: Element[] = [];
+  observe(target: Element): void {
+    this.targets.push(target);
+  }
   unobserve(): void {}
   disconnect(): void {
     observers.splice(observers.indexOf(this), 1);
@@ -269,6 +273,22 @@ describe('the rail in a narrow area', () => {
     expect(rail().getAttribute('data-tl-state')).toContain('drawer');
     expect(drawer()!.style.insetInlineStart).toMatch(/^\d+px$/);
     expect(await sentCommand(CMD_SET_DRAWER)).toEqual({ [ARG_DRAWER]: true });
+  });
+
+  it('opens the drawer beside the strip once the rail has shrunk to it', async () => {
+    await mountRail({}, 560);
+    expect(observers.some((observer) => observer.targets.includes(rail()))).toBe(true);
+    let railRight = 320;
+    rail().getBoundingClientRect = () => ({ left: 0, right: railRight }) as DOMRect;
+
+    // Still as wide as the column, e.g. while the split panel has not yet shrunk its pane.
+    resize(560);
+    expect(drawer()!.style.insetInlineStart).toBe('320px');
+
+    // The pane shrank to the strip: the rail's own observer reports it.
+    railRight = 41;
+    act(() => observers.filter((observer) => observer.targets.includes(rail())).forEach((observer) => observer.fire()));
+    expect(drawer()!.style.insetInlineStart).toBe('41px');
   });
 
   it('opens the section of a strip icon in the modal drawer, the focus inside', async () => {

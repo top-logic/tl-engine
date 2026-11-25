@@ -87,7 +87,7 @@ The demo application shows it under *List* (`demo/data-list-demo.view.xml` of
   the browser.
 - `title` and `empty-text` name the list and its empty state.
 - A list that collapses to a narrow strip, and opens as a drawer over its neighbours where its place
-  is narrow, stands in a [`<side-rail>`](doc:view-layer/layout#a-collapsible-column-side-rail) with
+  is narrow, stands in a [`<side-rail>`](doc:view-layer/side-rail) with
   one section; the list itself has no collapse of its own. A list with a title of its own takes a
   section without header, and `dismiss-on` naming the list's `selection` closes the drawer on a pick:
 

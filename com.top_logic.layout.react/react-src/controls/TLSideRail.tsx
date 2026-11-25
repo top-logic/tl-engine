@@ -114,17 +114,13 @@ const TLSideRail: React.FC<TLCellProps> = ({ controlId }) => {
       if (isNarrow && element) setInset(drawerInset(element, anchor, end));
     };
     measure();
+    // The rail itself is watched as well: once the column is gone - in a split panel only after the
+    // server shrank the pane to the strip - the strip is what the drawer opens beside.
     const observer = new ResizeObserver(measure);
     observer.observe(anchor);
+    if (element) observer.observe(element);
     return () => observer.disconnect();
   }, [drawerBelow, end]);
-
-  // Once the column is gone, the rail is its strip: measured again after the drawer mode was rendered.
-  useLayoutEffect(() => {
-    const element = root.current;
-    const anchor = element ? anchorOf(element) : null;
-    if (narrow && element && anchor) setInset(drawerInset(element, anchor, end));
-  }, [narrow, end]);
 
   // The drawer opens beside the strip: moved off the edge of the area by as much as the strip takes.
   useLayoutEffect(() => {

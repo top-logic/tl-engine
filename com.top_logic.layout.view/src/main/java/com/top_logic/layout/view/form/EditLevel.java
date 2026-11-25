@@ -187,7 +187,7 @@ public class EditLevel {
 		if (owns(current)) {
 			return current;
 		}
-		TLObjectOverlay result = new TLObjectOverlay(current);
+		TLObjectOverlay result = TLObjectOverlay.newOverlay(current);
 		add(result);
 		return result;
 	}
@@ -237,7 +237,7 @@ public class EditLevel {
 	 */
 	public TLObjectOverlay create(TLClass type, TLObject container) {
 		TLObject newObject = TransientObjectFactory.INSTANCE.createObject(type, container);
-		TLObjectOverlay result = new TLObjectOverlay(newObject);
+		TLObjectOverlay result = TLObjectOverlay.newOverlay(newObject);
 		add(result);
 		return result;
 	}

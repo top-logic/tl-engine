@@ -284,6 +284,16 @@ public class TileElement implements UIElement {
 	/**
 	 * The configured label of this tile, else the title of its content, {@code null} if there is
 	 * neither.
+	 *
+	 * @see #getTitle()
+	 */
+	public ResKey getName() {
+		return name();
+	}
+
+	/**
+	 * The configured label of this tile, else the title of its content, {@code null} if there is
+	 * neither.
 	 */
 	private ResKey name() {
 		if (_label != null) {

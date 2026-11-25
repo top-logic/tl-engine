@@ -32,6 +32,8 @@ interface TileDescriptor {
   width: 'quarter' | 'third' | 'half' | 'two-thirds' | 'full';
   rowSpan: number;
   control: unknown;
+  /** The name of the tile - the title it displays -, absent for a tile without a title. */
+  label?: string | null;
   /** What the tile runs when activated, absent for a tile that only displays its content. */
   action?: ActivationAction | null;
   /** Whether the tile is withheld from the dashboard; it then carries no control. */
@@ -224,8 +226,8 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
     enabled: editMode,
     handle: false,
     count: tiles.length,
-    // A tile is announced under the name of its action, a tile without one by its position.
-    labelOf: index => tiles[index]?.action?.label || i18n['js.dashboard.tile'].replace('{0}', String(index + 1)),
+    // A tile is announced under its name, a tile without a title by its position.
+    labelOf: index => tiles[index]?.label || i18n['js.dashboard.tile'].replace('{0}', String(index + 1)),
     keyOf: index => tiles[index]?.id ?? String(index),
   });
 
@@ -294,9 +296,8 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
               {...reorder.handleProps(index)}
             >
               {action && (
-                // While the tiles are rearranged the button steps aside, so tabbing does not reach an
-                // action the dashboard currently does not offer.
-                <ActivationButton action={action} activate={() => activateTile(tile.id)} focusable={!editMode} />
+                // While the tiles are rearranged there is no button: the dashboard offers no action then.
+                <ActivationButton action={action} activate={() => activateTile(tile.id)} enabled={!editMode} />
               )}
               <div className="tl-overlay__base">
                 <FillBarrier>

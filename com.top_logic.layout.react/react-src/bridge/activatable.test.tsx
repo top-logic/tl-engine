@@ -49,9 +49,10 @@ afterEach(() => {
 function render(action: ActivationAction | null, mode: ActivationMode, enabled = true): HTMLElement {
   const Element = () => {
     const props = activationProps(action, activate, mode, enabled);
+    // In the double mode, the element is an option of a list box, interactive by its role.
     return (
-      <div id="element" tabIndex={0} {...props}>
-        {action && mode === 'click' && <ActivationButton action={action} activate={activate} />}
+      <div id="element" tabIndex={0} role={mode === 'double' ? 'option' : undefined} {...props}>
+        {action && mode === 'click' && <ActivationButton action={action} activate={activate} enabled={enabled} />}
         <span id="text">Project Alpha</span>
         <button type="button" id="inner">Like</button>
         <input id="field" />
@@ -154,6 +155,16 @@ describe('activationProps in the click mode', () => {
     expect(element.getAttributeNames().some(name => element.getAttribute(name)?.includes('Locked.'))).toBe(true);
 
     click(byId('text'));
+    expect(activate).not.toHaveBeenCalled();
+  });
+
+  it('has no button to focus or press while not enabled', () => {
+    const element = render(OPEN, 'click', false);
+    expect(element.querySelector(`.${ACTIVATION_ACTION_CLASS}`)).toBeNull();
+    expect(Array.from(element.querySelectorAll('button')).map(b => b.textContent)).toEqual(['Like']);
+
+    click(byId('text'));
+    expect(key(element, 'Enter')).toBe(false);
     expect(activate).not.toHaveBeenCalled();
   });
 

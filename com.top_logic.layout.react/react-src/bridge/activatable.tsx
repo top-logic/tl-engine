@@ -1,5 +1,5 @@
 import React from 'react';
-import { isInteractiveTarget } from './interactive';
+import { isInteractiveWithin } from './interactive';
 import { tooltipProps } from './tooltip-host';
 import { usePart } from './parts';
 import { ICON_OPEN } from './icons';
@@ -16,7 +16,7 @@ import { ICON_OPEN } from './icons';
  *   selectable): a click or tap anywhere on the element opens it, and so do `Enter` and `Space`.
  *   The keyboard reaches the element through a {@link ActivationButton button} out of sight but in
  *   the tab order, which names the element; the element shows the focus ring for it. A click on
- *   interactive content of the element (a button, a link, a field) is that content's, and a click
+ *   interactive content of the element (a button, a link, a field; `isInteractiveWithin`) is that content's, and a click
  *   that ends a text selection in the element only selects the text.
  * - `double` - an element a click selects (an option of a list box): a double-click and `Enter`
  *   open it, and so does its {@link ActivationOpenButton open button}, since a double-click is
@@ -99,7 +99,10 @@ export function activationProps(
     // The action is not offered now, but the element still says what it would do.
     return { ...tooltipProps(action.tooltip) };
   }
-  const accepts = (event: React.SyntheticEvent<HTMLElement>) => !action.disabled && !isInteractiveTarget(event.target);
+  // Interactive content of the element answers a press itself; the element does not count, an option
+  // being interactive by its role.
+  const onInner = (event: React.SyntheticEvent<HTMLElement>) => isInteractiveWithin(event.target, event.currentTarget);
+  const accepts = (event: React.SyntheticEvent<HTMLElement>) => !action.disabled && !onInner(event);
   if (mode === 'click') {
     return {
       className: ACTIVATABLE_CLASS,
@@ -117,7 +120,7 @@ export function activationProps(
     ...tooltipProps(action.tooltip),
     onMouseDown: event => {
       // The second press of a double-click opens the element, it does not select a word.
-      if (event.detail > 1 && !isInteractiveTarget(event.target)) {
+      if (event.detail > 1 && !onInner(event)) {
         event.preventDefault();
       }
     },
@@ -146,8 +149,12 @@ export interface ActivationButtonProps {
   /** Opens the element. */
   activate: () => void;
 
-  /** Whether the button is in the tab order; a dashboard being rearranged takes it out. */
-  focusable?: boolean;
+  /**
+   * Whether the element can be opened now, see {@link activationProps}. While it cannot - a
+   * dashboard being rearranged - there is no button: nothing can be focused or pressed to open the
+   * element.
+   */
+  enabled?: boolean;
 }
 
 /**
@@ -155,16 +162,19 @@ export interface ActivationButtonProps {
  * sight but in the tab order, operated by `Enter` and `Space` as any button is. It is a direct
  * child of the element, which shows the focus ring for it.
  */
-export const ActivationButton: React.FC<ActivationButtonProps> = ({ action, activate, focusable = true }) => (
-  <button
-    type="button"
-    className={`${ACTIVATION_ACTION_CLASS} tl-visually-hidden`}
-    disabled={action.disabled}
-    tabIndex={focusable ? 0 : -1}
-    onClick={activate}
-  >
-    {action.label}
-  </button>
+export const ActivationButton: React.FC<ActivationButtonProps> = ({ action, activate, enabled = true }) => (
+  enabled
+    ? (
+      <button
+        type="button"
+        className={`${ACTIVATION_ACTION_CLASS} tl-visually-hidden`}
+        disabled={action.disabled}
+        onClick={activate}
+      >
+        {action.label}
+      </button>
+    )
+    : null
 );
 
 /** Properties of {@link ActivationOpenButton}. */

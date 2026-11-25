@@ -426,7 +426,7 @@ describe('the dashboard (spec §6: tl-dashboard)', () => {
   function tiles(order = ['t1', 't2', 't3']) {
     const all: Record<string, unknown> = {
       t1: {
-        id: 't1', width: 'half', rowSpan: 1, control: childControl('c-t1', 'Projekte'),
+        id: 't1', width: 'half', rowSpan: 1, control: childControl('c-t1', 'Projekte'), label: 'Projekte',
         action: { label: 'Projekte öffnen', disabled: false, tooltip: 'Zu den Projekten' },
       },
       t2: { id: 't2', width: 'half', rowSpan: 1, control: childControl('c-t2', 'Notizen') },
@@ -582,9 +582,21 @@ describe('the dashboard (spec §6: tl-dashboard)', () => {
       expect(layers[0].querySelector(':scope > .tl-dashboard__cover')).not.toBeNull();
       expect(layers[1].classList).toContain('tl-overlay__layer--top-right');
     });
-    // The action steps out of the tab order while the tiles are arranged.
-    expect(screen.getByRole('button', { name: 'Projekte öffnen' }).tabIndex).toBe(-1);
+    // While the tiles are arranged, nothing opens a tile: its action has no button.
+    expect(screen.queryByRole('button', { name: 'Projekte öffnen' })).toBeNull();
     expect(legacyClasses()).toEqual([]);
+  });
+
+  it('names a tile being moved by its title, a tile without a title by its position', async () => {
+    clearI18NCache();
+    mountDashboard(true);
+    englishTexts({ 'js.reorder.handle': 'Move {0}', 'js.dashboard.tile': 'Tile {0}' });
+    await settle();
+
+    // The tile with an action is named by its title, not by the name of its action; the tile with an
+    // action but no title by its position, like the tile without either.
+    expect(tileElements().map(tile => tile.getAttribute('aria-label')))
+      .toEqual(['Move Projekte', 'Move Tile 2', 'Move Tile 3']);
   });
 
   it('hides a tile by the part Button in the action surface over the tile', async () => {
@@ -626,7 +638,7 @@ describe('the dashboard (spec §6: tl-dashboard)', () => {
     expect(document.activeElement).toBe(tileOf('c-t2'));
   });
 
-  it('announces a tile with an action by the name of its action', async () => {
+  it('announces a tile by its title, not by the name of its action', async () => {
     clearI18NCache();
     const sent = mountDashboard(true);
     englishTexts({ 'js.reorder.moved': '{0}, position {1} of {2}', 'js.dashboard.tile': 'Tile {0}' });
@@ -637,7 +649,7 @@ describe('the dashboard (spec §6: tl-dashboard)', () => {
     await settle();
 
     expect(sentOf(sent, CMD_REORDER)).toEqual([[CMD_REORDER, { order: ['t2', 't1', 't3'] }]]);
-    expect(root().querySelector('[role="status"]')!.textContent).toBe('Projekte öffnen, position 2 of 3');
+    expect(root().querySelector('[role="status"]')!.textContent).toBe('Projekte, position 2 of 3');
   });
 
   it('moves no tile past the start of the dashboard', async () => {

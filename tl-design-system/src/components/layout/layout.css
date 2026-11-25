@@ -151,7 +151,8 @@
    ohne Auswahl, deren Einträge sich öffnen lassen (useItems). Name und Tastatur trägt ein verborgener Knopf
    (tl-activatable__action, tl-visually-hidden) direkt im Element; hat er den Tastaturfokus, trägt das Element den
    Ring (base.css). Die ganze Fläche nimmt den Klick (Zeiger); beim Zeigen trägt der Rand border-interactive — am
-   Element selbst (die Kachel ist eine Karte) oder an der Karte darin (die Hülle eines Eintrags hat keinen Rand).
+   Element selbst (die Kachel ist eine Karte) oder an der äußersten Karte darin (die Hülle eines Eintrags hat keinen
+   Rand; die Karte steht oft in der Hülle der View, die sie zeichnet). Eine Karte in einer Karte bleibt, wie sie ist.
    Kein Schatten. Ein deaktivierter Knopf lässt das Element, wie es ist. */
 .tl-activatable {
   position: relative;
@@ -162,7 +163,7 @@
 }
 
 .tl-activatable:has(> .tl-activatable__action:not(:disabled, [aria-disabled="true"])):hover,
-.tl-activatable:has(> .tl-activatable__action:not(:disabled, [aria-disabled="true"])):hover > .tl-card {
+.tl-activatable:has(> .tl-activatable__action:not(:disabled, [aria-disabled="true"])):hover .tl-card:not(.tl-card .tl-card) {
   border-color: var(--tl-border-interactive);
 }
 

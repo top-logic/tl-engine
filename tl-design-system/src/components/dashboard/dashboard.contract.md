@@ -8,7 +8,7 @@ garantiert Funktion, Tastatur, Fokus und Ansage, nicht das Aussehen; wer ins Bil
 
 | Schlüssel | Typ | Bedeutung |
 |---|---|---|
-| `children[]` | Liste | je Kachel `id`, `width` (`quarter` … `full`), `rowSpan`, `control` und optional `action` (`label`, `disabled`, `tooltip`) |
+| `children[]` | Liste | je Kachel `id`, `width` (`quarter` … `full`), `rowSpan`, `control`, optional `label` (der Titel der Kachel: ihr Name beim Verschieben, ohne Titel „Kachel n“) und optional `action` (`label`, `disabled`, `tooltip`) |
 | `minColWidth` | Länge | Mindestbreite einer Spalte (etwa `16rem`); daraus die Spaltenzahl |
 | `rowHeight` | Länge | Höhe einer Rasterzeile |
 | `editMode` | boolean | Bearbeiten: `data-tl-state~="edit"` an der Wurzel |
@@ -40,7 +40,7 @@ derselbe Wert.
 | Wurzel | `tl-dashboard` mit `tl-inset` (Innenabstand); im Bearbeiten `data-tl-state~="edit"` |
 | Raster | `tl-dashboard__grid`, `data-tl-axis="horizontal"`: die Einfügemarke steht links und rechts |
 | Kachel | `div` mit `tl-card`, `tl-dashboard__tile`, `tl-overlay`, `tl-overlay--fill`, mit Aktion außerhalb des Bearbeitens zusätzlich `tl-activatable` (`layout.contract.md`, Aktivierbar); der Inhalt in `tl-overlay__base`. Im Bearbeiten `role="group"`, fokussierbar (`tabindex="0"`), mit Name und Beschreibung aus `useListReorder` (ohne Rolle dürfte das `div` keinen Namen tragen) |
-| Aktion | `button` mit `tl-activatable__action` und `tl-visually-hidden` (`ActivationButton` der Bridge), direkt in der Kachel, Name `label`; der Tooltip über `tooltipProps` sitzt an der Kachel (der Knopf ist außer Sicht und bekommt keinen Zeiger); deaktiviert `disabled` bzw. `aria-disabled="true"` |
+| Aktion | `button` mit `tl-activatable__action` und `tl-visually-hidden` (`ActivationButton` der Bridge), direkt in der Kachel, Name `label`, nicht im Bearbeiten (dann gibt es keinen Knopf); der Tooltip über `tooltipProps` sitzt an der Kachel (der Knopf ist außer Sicht und bekommt keinen Zeiger); deaktiviert `disabled` bzw. `aria-disabled="true"` |
 | Abdeckung | im Bearbeiten `div` `tl-dashboard__cover` in einer Ebene `tl-overlay__layer` `tl-overlay__layer--fill`, im DOM vor der Ebene des Ausblenden-Knopfs |
 | Ausblenden-Knopf | Part `Button` (ghost, icon-only, Name `js.dashboard.hideTile`) in `tl-overlay__action` in einer Ebene `tl-overlay__layer` `tl-overlay__layer--top-right` |
 

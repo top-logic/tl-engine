@@ -182,7 +182,8 @@ test('activatable: Zeiger, Rand beim Zeigen, Fokusring, verborgener Knopf', () =
   // Zeigen — wie die Kachel: border-interactive am Element und an der Karte darin, kein Schatten.
   const zeigen = rulesOf(LAYOUT).filter(([s]) => s.includes(`${OFFEN}:hover`));
   assert.equal(zeigen.length, 1, 'eine Regel für das gezeigte aktivierbare Element');
-  assert.ok(zeigen[0][0].includes(`${OFFEN}:hover > .tl-card`), 'die Karte in der Hülle eines Eintrags trägt den Rand');
+  assert.ok(zeigen[0][0].includes(`${OFFEN}:hover .tl-card:not(.tl-card .tl-card)`),
+    'die äußerste Karte in der Hülle eines Eintrags trägt den Rand');
   assert.match(zeigen[0][1], /border-color:\s*var\(--tl-border-interactive\)/);
   assert.doesNotMatch(zeigen[0][1], /box-shadow/);
   assert.doesNotMatch(LAYOUT.slice(LAYOUT.indexOf('.tl-activatable')), /--tl-focus-ring/);

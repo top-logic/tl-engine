@@ -84,6 +84,9 @@ public class ReactDashboardControl extends ReactControl {
 	/** Descriptor key holding the control rendered inside a tile. */
 	private static final String TILE_CONTROL = "control";
 
+	/** Descriptor key holding a tile's {@link Tile#withLabel(String) name}, {@code null} without one. */
+	private static final String TILE_LABEL = "label";
+
 	/** Descriptor key telling that a tile is withheld, see {@link #setTileWithheld(String, boolean)}. */
 	private static final String TILE_HIDDEN = "hidden";
 
@@ -140,6 +143,8 @@ public class ReactDashboardControl extends ReactControl {
 
 		private boolean _withheld;
 
+		private String _label;
+
 		/**
 		 * Creates a {@link Tile}.
 		 *
@@ -189,6 +194,20 @@ public class ReactDashboardControl extends ReactControl {
 		 */
 		public Tile withWithheld(boolean withheld) {
 			_withheld = withheld;
+			return this;
+		}
+
+		/**
+		 * Sets the name the tile is announced under while it is moved in the edit mode: the title
+		 * it displays.
+		 *
+		 * @param label
+		 *        The name of the tile, {@code null} for a tile without a title, which is then
+		 *        announced by its position.
+		 * @return This instance for fluent chaining.
+		 */
+		public Tile withLabel(String label) {
+			_label = label;
 			return this;
 		}
 	}
@@ -249,6 +268,7 @@ public class ReactDashboardControl extends ReactControl {
 			d.put(TILE_ID, t._id);
 			d.put(TILE_WIDTH, t._width.getExternalName());
 			d.put(TILE_ROW_SPAN, Integer.valueOf(t._rowSpan));
+			d.put(TILE_LABEL, t._label);
 			if (!t._withheld) {
 				// A withheld tile is not drawn, so its content is not part of the displayed tree.
 				d.put(TILE_CONTROL, content.control());

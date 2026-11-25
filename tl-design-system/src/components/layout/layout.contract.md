@@ -63,7 +63,7 @@ bekommt keinen Zeiger und kein Zeigen; Enter an einer solchen Option wählt nur 
 | Wann | Bild |
 |---|---|
 | Knopf `tl-activatable__action` nicht deaktiviert | Zeiger `pointer` an `tl-activatable` |
-| Zeigen darauf | Rand `--tl-border-interactive` am Element und an einer `tl-card` direkt darin; kein Schatten |
+| Zeigen darauf | Rand `--tl-border-interactive` am Element und an der äußersten `tl-card` darin (nicht an einer Karte in einer Karte); kein Schatten |
 | Tastaturfokus am verborgenen Knopf | Ring am Element (`.tl-activatable:has(> .tl-activatable__action:focus-visible)` in `base.css`) |
 
 Leser der Auswahl auch `TLKanbanBoard` (`board.contract.md`): jede Karte ist ein `tl-item` mit `tl-board__card`,

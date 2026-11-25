@@ -1,5 +1,6 @@
 import {
   FillBarrier,
+  isCompositionKey,
   labelWithBadge,
   React,
   rootClassName,
@@ -168,8 +169,9 @@ export function TLChatDock({ controlId }: TLCellProps) {
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       // An Escape something inside already answered - the rail's drawer, the list's - closed that,
-      // and closing the dock with it would take the user two steps back for one key.
-      if (event.defaultPrevented || !closesOnKey(event.key, open)) return
+      // and closing the dock with it would take the user two steps back for one key. The Escape of
+      // an input method composition cancels the composition only.
+      if (event.defaultPrevented || isCompositionKey(event.nativeEvent) || !closesOnKey(event.key, open)) return
       event.stopPropagation()
       setOpen(false)
     },

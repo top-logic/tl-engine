@@ -132,7 +132,7 @@ public class TestAttributeCellMode extends AbstractModelAccessTest {
 		BoundFieldModel cell = cell(_stepRow, NAME);
 		assertNotNull(cell);
 		assertTrue(cell.isEditable());
-		assertTrue(new AttributeCellEditing(NAME).canEdit(_step));
+		assertTrue(new AttributeCellEditing(NAME, false).canEdit(_step));
 	}
 
 	/**
@@ -140,7 +140,7 @@ public class TestAttributeCellMode extends AbstractModelAccessTest {
 	 * edited in, although the user may write the row.
 	 */
 	public void testDerivedAttributeNotEdited() {
-		AttributeCellEditing summary = new AttributeCellEditing(SUMMARY);
+		AttributeCellEditing summary = new AttributeCellEditing(SUMMARY, false);
 		assertFalse(summary.canEdit(_step));
 		assertFalse(summary.canEdit(new TLObjectOverlay(_step)));
 		assertNull(cell(_stepRow, SUMMARY));
@@ -151,7 +151,7 @@ public class TestAttributeCellMode extends AbstractModelAccessTest {
 	 * create visibility is its visibility.
 	 */
 	public void testReadOnlyVisibilityNotEdited() {
-		AttributeCellEditing code = new AttributeCellEditing(CODE);
+		AttributeCellEditing code = new AttributeCellEditing(CODE, false);
 		assertFalse(code.canEdit(_step));
 		assertFalse(code.canEdit(new TLObjectOverlay(_step)));
 		assertNull(cell(_stepRow, CODE));
@@ -256,7 +256,7 @@ public class TestAttributeCellMode extends AbstractModelAccessTest {
 	 */
 	public void testHiddenCellControl() {
 		BoundFieldModel remark = cell(_stepRow, REMARK);
-		ReactControl control = new AttributeCellEditing(REMARK).createControl(_form.getReactContext(), _stepRow,
+		ReactControl control = new AttributeCellEditing(REMARK, false).createControl(_form.getReactContext(), _stepRow,
 			remark);
 		assertFalse(control.isHidden());
 

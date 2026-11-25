@@ -18,6 +18,7 @@ import java.util.function.Supplier;
 
 import com.top_logic.ai.chat.api.ChatCapabilities;
 import com.top_logic.ai.chat.api.ChatTranscripts;
+import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.api.messages.ChatCapabilitiesResponse;
 import com.top_logic.ai.chat.view.ChatConversationElement.Actions;
 import com.top_logic.ai.chat.view.ChatConversationElement.AgentCommand;
@@ -30,6 +31,7 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Prompt;
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompts;
 import com.top_logic.ai.chat.view.ChatConversationElement.Selection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -37,15 +39,19 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.ai.core.security.ReadFilter;
@@ -55,8 +61,10 @@ import com.top_logic.util.TLContext;
  * React control for {@code <chat-conversation/>}.
  *
  * <p>
- * Binds the window once through {@link ChatViewBinding}. An optional {@code input} channel selects
- * the open session, mapped by {@link ChatSessionIds}; an optional {@code busy} channel is written
+ * Binds the window once through {@link ChatViewBinding}. The {@code input} channel - a configured
+ * one, or an internal one - selects the open session, mapped by {@link ChatSessionIds}; a chat the
+ * window switches to on the server is written onto it, see {@link SessionSelection#adopt(String)}.
+ * An optional {@code busy} channel is written
  * from the browser while the agent works. Prompt improvement is a composer concern: this control
  * names the agent on the shared tracker.
  * </p>
@@ -98,12 +106,47 @@ public class ChatConversationControl extends ChatControl {
 	public static final String STATE_CAPABILITIES = "capabilities";
 
 	/**
-	 * The {@code input} channel and what the browser is told of it, or <code>null</code> when the
-	 * element wires none and the browser's store is the source.
+	 * State key: whether the conversation shown may only be read - the acting account may not write
+	 * it, or the element's {@link ChatConversationElement.Config#getWritable() writable} function
+	 * refuses it. The browser then shows no input line and no action that changes the conversation.
+	 * A new conversation, which has no session yet, is never read-only.
+	 */
+	public static final String STATE_READ_ONLY = "readOnly";
+
+	/**
+	 * Command by which the browser reports the conversation it shows, see
+	 * {@link #publishSession(Map)}. Takes {@link #ARG_PUBLISHED_ID}.
+	 */
+	public static final String CMD_PUBLISH_SESSION = "publishSession";
+
+	/** Argument of {@link #CMD_PUBLISH_SESSION}: the id of the conversation, empty for a fresh one. */
+	public static final String ARG_PUBLISHED_ID = "id";
+
+	/**
+	 * Name of the channel that holds the open conversation of an element that wires no
+	 * {@code input}.
+	 */
+	static final String INTERNAL_INPUT = "input";
+
+	/**
+	 * The {@code input} channel - the configured one, or an internal one - and what the browser is
+	 * told of it.
 	 */
 	private final SessionSelection _selection;
 
+	/** The listening to the window's active chat while this control is displayed. */
+	private Registration _activeSessionWatch = Registration.NONE;
+
+	/**
+	 * The window's active chat when this control was last hidden, <code>null</code> before it was
+	 * displayed: what is no news when it is displayed again.
+	 */
+	private String _activeWhenHidden;
+
 	private final ViewChannel _busyChannel;
+
+	/** The compiled {@link ChatConversationElement.Config#getWritable()}, <code>null</code> for none. */
+	private final QueryExecutor _writable;
 
 	/** The account's chat list, as the browser is told it. */
 	private final SessionListWatch _sessions;
@@ -286,21 +329,23 @@ public class ChatConversationControl extends ChatControl {
 		putState("attachments", Boolean.valueOf(controls.getAttachments()));
 		putState("tracePicker", Boolean.valueOf(controls.getTracePicker()));
 
+		// The open conversation is what the channel holds. Without a configured one, the element keeps
+		// a channel of its own, which the server keeps over a reload of the page as well.
 		ChannelRef inputRef = config.getInput();
-		// Whether a selection channel is wired. The browser distinguishes "no channel, the store is the
-		// source" from "channel wired but empty, which means a fresh conversation".
-		putState("hasInput", Boolean.valueOf(inputRef != null));
-		if (inputRef == null) {
-			_selection = null;
-			putState(SessionSelection.SELECTED, "");
-		} else {
-			ViewChannel input = context.resolveChannel(inputRef);
-			_selection = new SessionSelection(input, this::putState, ChatConversationControl::currentPerson);
-			ViewChannel.ChannelListener listener = _selection.listener();
-			input.addListener(listener);
-			addCleanupAction(() -> input.removeListener(listener));
-			_selection.apply();
-		}
+		ViewChannel input =
+			inputRef == null ? new DefaultViewChannel(INTERNAL_INPUT) : context.resolveChannel(inputRef);
+		Expr writable = config.getWritable();
+		_writable = writable == null ? null : QueryExecutor.compile(writable);
+		_selection = new SessionSelection(input, this::putState, ChatConversationControl::currentPerson,
+			this::writeReadOnly);
+		ViewChannel.ChannelListener listener = _selection.listener();
+		input.addListener(listener);
+		addCleanupAction(() -> input.removeListener(listener));
+		_selection.apply();
+		// A chat the window switches to on the server - one a command of the page started - is opened
+		// here, while this control is displayed, and when it is displayed again.
+		addDetachListener(this::stopWatchingActiveSession);
+		addCleanupAction(this::stopWatchingActiveSession);
 
 		// The chats of the account, which the conversation's header and the App rail read their titles
 		// from: written with every render, and again whenever they change (#596).
@@ -424,9 +469,25 @@ public class ChatConversationControl extends ChatControl {
 	protected void onBeforeWrite() {
 		super.onBeforeWrite();
 		_sessions.write();
+		writeReadOnly(_selection.selected());
 		Person person = signedInPerson();
 		putState(STATE_CAPABILITIES, person == null ? ChatCapabilitiesResponse.create()
 			: ChatCapabilities.build(person, binding().tracker().getPromptImproverAgentName()));
+	}
+
+	/**
+	 * Writes {@link #STATE_READ_ONLY} for the given session, the one the conversation shows.
+	 *
+	 * @param session
+	 *        The session shown, <code>null</code> for a new conversation.
+	 */
+	private void writeReadOnly(TLObject session) {
+		putState(STATE_READ_ONLY, Boolean.valueOf(session != null && !mayWrite(currentPerson(), session)));
+	}
+
+	@Override
+	protected boolean isWritable(TLObject session) {
+		return _writable == null || SearchExpression.isTrue(_writable.execute(session));
 	}
 
 	/**
@@ -440,9 +501,8 @@ public class ChatConversationControl extends ChatControl {
 	@Override
 	protected void onAttach() {
 		super.onAttach();
-		if (_selection != null) {
-			_selection.apply();
-		}
+		_selection.apply();
+		watchActiveSession();
 		reapply(_agentChannel, this::applyAgentFromChannel);
 		reapply(_modelChannel, this::applyModelFromChannel);
 		reapply(_effortChannel, this::applyEffortFromChannel);
@@ -456,6 +516,27 @@ public class ChatConversationControl extends ChatControl {
 	private static void reapply(ViewChannel channel, Consumer<Object> apply) {
 		if (channel != null) {
 			apply.accept(channel.get());
+		}
+	}
+
+	/**
+	 * Follows the window's active chat from now on, and opens the one the window switched to while
+	 * this control was hidden.
+	 */
+	private void watchActiveSession() {
+		_activeSessionWatch.dispose();
+		TaskProgressTracker tracker = binding().tracker();
+		_activeSessionWatch = tracker.addActiveSessionListener((sessionId, owner) -> _selection.adopt(sessionId));
+		String active = tracker.getActiveSessionId();
+		if (active != null && !active.equals(_activeWhenHidden)) {
+			_selection.adopt(active);
+		}
+	}
+
+	private void stopWatchingActiveSession() {
+		if (_activeSessionWatch.isActive()) {
+			_activeSessionWatch.dispose();
+			_activeWhenHidden = binding().tracker().getActiveSessionId();
 		}
 	}
 
@@ -480,8 +561,8 @@ public class ChatConversationControl extends ChatControl {
 	 *
 	 * <p>
 	 * This makes the {@code input} channel two-way: the conversation follows a selection and writes its
-	 * own session back when the store creates one (first send) or restores one (reload). It replaces the
-	 * former separate {@code <chat-session-binding/>}. Empty id clears the channel - a fresh conversation
+	 * own session back when the store creates one (first send) or opens one (a pick from its rail).
+	 * Empty id clears the channel - a fresh conversation
 	 * that has not persisted a session yet.
 	 * </p>
 	 *
@@ -492,17 +573,15 @@ public class ChatConversationControl extends ChatControl {
 	 * </p>
 	 *
 	 * @param args
-	 *        {@code id} is the owned chat session id, or empty to clear.
+	 *        {@link #ARG_PUBLISHED_ID} is the id of a chat the account may read, or empty to clear.
 	 */
-	@ReactCommandHandler(value = "publishSession", params = {
-		@ReactParam(name = "id", type = "string", description = "Owned chat session id, or empty to clear.")
+	@ReactCommandHandler(value = CMD_PUBLISH_SESSION, params = {
+		@ReactParam(name = ARG_PUBLISHED_ID, type = "string", description = "Id of a readable chat session, or empty to clear.")
 	})
 	public void publishSession(Map<String, Object> args) {
-		String id = args == null ? "" : String.valueOf(args.getOrDefault("id", "")).trim();
-		TLObject session = id.isEmpty() ? null : ChatSessionIds.ownedSession(id, currentPerson());
-		if (_selection == null) {
-			return;
-		}
+		String id = args == null ? "" : String.valueOf(args.getOrDefault(ARG_PUBLISHED_ID, "")).trim();
+		TLObject session =
+			id.isEmpty() ? null : ChatSessionIds.accessibleSession(id, currentPerson(), SimpleBoundCommandGroup.READ);
 		_selection.publish(id, session);
 	}
 

@@ -23,12 +23,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
-import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.react.control.identity.ObjectIdIndex;
 import com.top_logic.layout.react.control.identity.ObjectIdentities;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
-import com.top_logic.layout.form.model.FieldModel;
-import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.LabelDescription;
@@ -52,12 +49,6 @@ import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.dnd.TreeDropPlace;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.form.ReactCheckboxControl;
-import com.top_logic.layout.react.control.form.ReactFormBuilder;
-import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
-import com.top_logic.layout.react.control.form.ReactTextInputControl;
-import com.top_logic.layout.react.control.layout.LabelPosition;
-import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
@@ -84,9 +75,8 @@ import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableView;
 import com.top_logic.table.TableViewState;
-import com.top_logic.table.filter.FilterEditor;
+import com.top_logic.table.filter.ColumnFilterEditor;
 import com.top_logic.table.filter.FilterEditors;
-import com.top_logic.table.filter.FilterField;
 import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
@@ -454,6 +444,18 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** State key telling the client whether to offer the column selection. */
 	private static final String COLUMN_SELECT = "columnSelect";
 
+	/**
+	 * State key of the column selection the view popover shows on its first page "Columns", a
+	 * {@link ReactColumnSelectControl}; {@code null} while the popover is not open.
+	 */
+	private static final String COLUMN_SELECTION = "columnSelection";
+
+	/**
+	 * State key telling the client whether the table {@link TableView#isPersonalized() keeps its
+	 * state}.
+	 */
+	private static final String VIEW_OPTIONS = "viewOptions";
+
 	/** Per-column state key telling whether the rows can be grouped by that column. */
 	private static final String COLUMN_GROUPABLE = "groupable";
 
@@ -468,6 +470,18 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * at the end of the table, where the client renders it fixed to the right edge.
 	 */
 	private static final String COLUMN_PINNED_END = "pinnedEnd";
+
+	/**
+	 * Per-column state key telling whether the user may move the column in the table header: not the one pinned to
+	 * the end, nor one the column selection does not offer.
+	 */
+	private static final String COLUMN_REORDERABLE = "reorderable";
+
+	/**
+	 * Per-column state key telling whether the column {@link ColumnView#required() requires a value}
+	 * in the cells the user edits. Absent for a column that does not.
+	 */
+	private static final String COLUMN_REQUIRED = "required";
 
 	/**
 	 * Per-column state key holding the {@link ColumnView#cssClass() CSS class} the client puts on
@@ -564,7 +578,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** The command opening the filter dialog of a column, see {@link OpenFilterArguments}. */
 	public static final String CMD_OPEN_FILTER = "openFilter";
 
-	private static final String CMD_OPEN_COLUMN_SELECT = "openColumnSelect";
+	/** The command the client sends when the view popover opens on its page of the column selection. */
+	private static final String CMD_OPEN_COLUMNS = "openColumns";
+
+	/** The command the client sends when that popover closes, on whichever of its pages. */
+	private static final String CMD_CLOSE_COLUMNS = "closeColumns";
 
 	private static final String CMD_SCROLL = "scroll";
 
@@ -602,13 +620,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	public static final String CMD_COLUMN_RESIZE = "columnResize";
 
-	/**
-	 * The command the client sends to move a column to another position.
-	 *
-	 * @see ColumnReorderArguments
-	 */
-	public static final String CMD_COLUMN_REORDER = "columnReorder";
-
 	/** The command the client sends to expand or collapse a tree node or a group header. */
 	public static final String CMD_EXPAND = "expand";
 
@@ -619,6 +630,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * @see SetFrozenColumnCountArguments
 	 */
 	public static final String CMD_SET_FROZEN_COLUMN_COUNT = "setFrozenColumnCount";
+
+	/**
+	 * The command the client sends to return the table to the arrangement it is defined with: its
+	 * columns, their widths, the frozen columns, the sort and the grouping. The filters stay.
+	 */
+	public static final String CMD_RESET_VIEW = "resetView";
 
 	private static final String CMD_APPLY_NAMED_FILTER = "applyNamedFilter";
 
@@ -708,6 +725,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** View-supplied custom filter UIs, keyed by column name. */
 	private final Map<String, ColumnFilterUI> _filterUIs = new LinkedHashMap<>();
 
+	private FilterFieldFactory _filterFieldFactory = FilterFieldFactory.NONE;
+
 	/** Whether the user may choose which columns are displayed, and in which order. */
 	private boolean _columnSelect = true;
 
@@ -770,6 +789,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		putState(SELECTION_MODE, _selectionMode.getExternalName());
 		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
 		putState(FILTER_BAR, Boolean.valueOf(_filterBar));
+		putState(VIEW_OPTIONS, Boolean.valueOf(view.isPersonalized()));
 		pushGrouping();
 		buildFullState();
 	}
@@ -1140,6 +1160,17 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
+	 * Sets the factory creating the inputs of values and the displays of options in the filter
+	 * dialog of a column, see {@link ColumnFilterDialog}.
+	 *
+	 * @param factory
+	 *        The factory, {@code null} for {@link FilterFieldFactory#NONE}.
+	 */
+	public void setFilterFieldFactory(FilterFieldFactory factory) {
+		_filterFieldFactory = factory == null ? FilterFieldFactory.NONE : factory;
+	}
+
+	/**
 	 * Registers a view-supplied custom filter UI for a column, used instead of the built-in filter
 	 * editor when the column's funnel is opened.
 	 */
@@ -1216,8 +1247,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		// may choose at all - an action column carries the row itself, and would yield one group
 		// per row. A tree is structured by its nodes already and is not grouped at all.
 		Set<String> groupable = new HashSet<>();
-		if (!_treeMode) {
-			for (ColumnOption option : _view.columnOptions()) {
+		Set<String> arrangeable = new HashSet<>();
+		for (ColumnOption option : _view.columnOptions()) {
+			arrangeable.add(option.name());
+			if (!_treeMode) {
 				groupable.add(option.name());
 			}
 		}
@@ -1239,6 +1272,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			columnState.put(COLUMN_FILTER_ACTIVE, Boolean.valueOf(isFilterActive(column.name())));
 			columnState.put(COLUMN_GROUPABLE, Boolean.valueOf(groupable.contains(column.name())));
 			columnState.put(COLUMN_PINNED_END, Boolean.valueOf(column.pinnedEnd()));
+			columnState.put(COLUMN_REORDERABLE, Boolean.valueOf(arrangeable.contains(column.name())));
+			if (column.required()) {
+				columnState.put(COLUMN_REQUIRED, Boolean.TRUE);
+			}
 			if (column.cssClass() != null) {
 				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
 			}
@@ -1802,18 +1839,20 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * Opens the filter dialog for a column.
 	 *
 	 * <p>
-	 * The dialog is composed entirely from standard React controls: the column's
-	 * {@link FilterEditor} fields are laid out by {@link ReactFormBuilder} (labels + chrome),
-	 * inset by a {@link ReactInsetControl} and wrapped in a {@link ReactWindowControl} with reset /
-	 * cancel / apply {@link MessageButtons}, and shown through the {@link DialogManager}. The input control
-	 * per field is chosen from the field model itself ({@link #fieldControl}).
+	 * The dialog is composed entirely from standard React controls: the body of the column's
+	 * {@link ColumnFilterDialog} - the switch between the kinds of filter of the column and the
+	 * fields of the active kind -, inset by a {@link ReactInsetControl} and wrapped in a
+	 * {@link ReactWindowControl} with reset / cancel / apply {@link MessageButtons}, and shown through
+	 * the {@link DialogManager}. The inputs of values and the displays of options depending on the
+	 * type of the column come from the {@link #setFilterFieldFactory(FilterFieldFactory) filter field
+	 * factory}.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_OPEN_FILTER)
 	void handleOpenFilter(OpenFilterArguments args) {
 		String column = args.getColumn();
-		ColumnFilter<?> filter = _view.columnFilter(column);
-		if (filter == null) {
+		List<? extends ColumnFilter<?>> filters = _view.columnFilters(column);
+		if (filters.isEmpty()) {
 			return;
 		}
 		ReactContext context = getReactContext();
@@ -1834,23 +1873,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		} else {
 			// Facet counts are value-based, so only meaningful for filters that opt in (e.g. options);
 			// a predicate-based options filter (regexp) declines them to avoid misleading "(0)" labels.
-			MatchCounts counts = filter.countsMatches() ? _view.columnMatchCounts(column) : MatchCounts.NONE;
-			FilterEditor editor = FilterEditors.create(filter, _view.state().getFilters().get(column), counts);
-			// Build through the shared form pipeline with the same defaults as a model-bound form
-			// (responsive columns + automatic label position), so the dialog form renders and reflows
-			// exactly like every other form.
-			ReactFormBuilder form = new ReactFormBuilder(context);
-			for (FilterField field : editor.fields()) {
-				ReactControl input = fieldControl(context, field);
-				ReactFormFieldChromeControl chrome = form.addField(label(resources, field.label()), input);
-				if (input instanceof ReactCheckboxControl) {
-					// A checkbox reads as its own statement ("Yes", "case sensitive"), so the label
-					// belongs next to the box - above it, the two look like unrelated lines.
-					chrome.setLabelPosition(LabelPosition.AFTER);
-				}
-			}
-			body = form.build();
-			readState = editor::read;
+			ColumnFilterEditor editor = FilterEditors.create(filters, _view.state().getFilters().get(column),
+				kind -> countsMatches(filters, kind) ? _view.columnMatchCounts(column, kind) : MatchCounts.NONE);
+			ColumnFilterDialog dialog = new ColumnFilterDialog(context, column, editor, _filterFieldFactory);
+			body = dialog.body();
+			readState = dialog::read;
 		}
 
 		ResKey customTitle = customUI != null ? customUI.title() : null;
@@ -1884,60 +1911,85 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		});
 	}
 
-	// -- Column selection dialog --
+	/**
+	 * Closes the page of the column selection when the table leaves the display: displayed again,
+	 * the table shows no page nobody opened, and the content is released with it.
+	 */
+	@Override
+	protected void onDetach() {
+		super.onDetach();
+		if (columnSelection() != null) {
+			showColumnSelection(null);
+		}
+	}
+
+	/**
+	 * Whether the filter of the given kind among the given ones wants facet counts.
+	 */
+	private static boolean countsMatches(List<? extends ColumnFilter<?>> filters, String kind) {
+		for (ColumnFilter<?> filter : filters) {
+			if (filter.kind().equals(kind)) {
+				return filter.countsMatches();
+			}
+		}
+		return false;
+	}
+
+	// -- Column selection --
 
 	/**
 	 * Opens the column selection: which columns the table displays, in which order, which of them
-	 * it freezes, and which column the rows are grouped by.
+	 * it freezes, and which columns the rows are grouped by.
 	 *
 	 * <p>
-	 * The dialog edits a working copy in a {@link ReactColumnSelectControl} and applies it in one
-	 * step on {@code apply}, so a cancelled dialog leaves the table untouched and an accepted one
-	 * persists a single arrangement rather than every intermediate one.
+	 * The selection is the first page "Columns" of the view popover. It is held in the state, as a
+	 * child of the table, while the popover is open - also while it shows its second page, the view
+	 * -, and every gesture in it changes the table at once - the selection tells
+	 * {@link #applyColumns(List, List, List)} the arrangement it now has -, so there is nothing to
+	 * confirm and nothing to cancel.
 	 * </p>
 	 */
-	@ReactCommandHandler(CMD_OPEN_COLUMN_SELECT)
-	void handleOpenColumnSelect() {
+	@ReactCommandHandler(CMD_OPEN_COLUMNS)
+	void handleOpenColumns() {
 		if (!_columnSelect) {
 			return;
 		}
-		ReactContext context = getReactContext();
-		DialogManager dialogs = context.getDialogManager();
-		if (dialogs == null) {
-			return;
-		}
-		Resources resources = Resources.getInstance();
-
 		ReactColumnSelectControl selection =
-			new ReactColumnSelectControl(context, _view.columnOptions(), lockedColumnNames(), getGroupedColumns(),
-				!_treeMode);
-		// Wider than the filter dialog: three actions, one of them a spelled-out "show all columns".
-		ReactWindowControl window = new ReactWindowControl(context,
-			resources.getString(I18NConstants.JS_TABLE_COLUMNS), DisplayDimension.px(460),
-			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
-		// A fixed height: the search stays in place above the list, which fills the rest and scrolls
-		// alone, and the window keeps its size while a search narrows the list.
-		window.setHeight(DisplayDimension.percent(70));
-		window.setChild(selection);
-		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
-			applyColumns(selection.visibleColumns(), selection.lockedColumns(), selection.groupedColumns());
-			dialogs.closeTopDialog(DialogResult.ok(null));
-		});
-		applyButton.markAsDefault();
-		window.setActions(List.of(
-			new ReactButtonControl(context, resources.getString(I18NConstants.TABLE_COLUMNS_RESET), ctx -> {
-				// Resetting restores the arrangement the table is defined with - its columns, their
-				// widths, the frozen columns, the sort and the grouping -, the filters stay.
-				rearrange(_view::resetToDefaults);
-				dialogs.closeTopDialog(DialogResult.ok(null));
-			}),
-			MessageButtons.cancel(context, ctx -> {
-				dialogs.closeTopDialog(DialogResult.cancelled());
-			}),
-			applyButton));
-		dialogs.openDialog(true, window, result -> {
-			// Reset / Apply already acted; Cancel discards.
-		});
+			new ReactColumnSelectControl(getReactContext(), _view.columnOptions(), lockedColumnNames(),
+				getGroupedColumns(), !_treeMode);
+		selection.setOnChange(
+			() -> applyColumns(selection.visibleColumns(), selection.lockedColumns(), selection.groupedColumns()));
+		showColumnSelection(selection);
+	}
+
+	/**
+	 * Releases the column selection when the view popover closes. The table stays as it is: every
+	 * change has taken effect already.
+	 */
+	@ReactCommandHandler(CMD_CLOSE_COLUMNS)
+	void handleCloseColumns() {
+		showColumnSelection(null);
+	}
+
+	/**
+	 * Shows the given column selection, or none, and disposes the one shown before.
+	 *
+	 * <p>
+	 * Replacing the state only forgets the previous selection; disposing it is the job of whoever
+	 * replaces it.
+	 * </p>
+	 */
+	private void showColumnSelection(ReactColumnSelectControl selection) {
+		ReactColumnSelectControl previous = columnSelection();
+		putState(COLUMN_SELECTION, selection);
+		if (previous != null) {
+			previous.cleanupTree();
+		}
+	}
+
+	/** The column selection of the open view popover, {@code null} while it is not open. */
+	private ReactColumnSelectControl columnSelection() {
+		return getState(COLUMN_SELECTION) instanceof ReactColumnSelectControl selection ? selection : null;
 	}
 
 	/**
@@ -2043,22 +2095,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			result.add(displayed.get(n).name());
 		}
 		return result;
-	}
-
-	/**
-	 * Chooses the input control for a filter field from its model: a dropdown for a
-	 * {@link SelectFieldModel}, a checkbox for a boolean value, a text input otherwise.
-	 */
-	private static ReactControl fieldControl(ReactContext context, FilterField field) {
-		FieldModel model = field.model();
-		if (model instanceof SelectFieldModel selectModel) {
-			LabelProvider labels = field.optionLabels() != null ? field.optionLabels() : String::valueOf;
-			return new ReactSelectFormFieldControl(context, selectModel, labels);
-		}
-		if (model.getValue() instanceof Boolean) {
-			return new ReactCheckboxControl(context, model);
-		}
-		return new ReactTextInputControl(context, model);
 	}
 
 	/**
@@ -2441,7 +2477,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Set<String> result = new LinkedHashSet<>(super.nonRecordableCommands());
 		result.add(CMD_SCROLL);
 		result.add(CMD_COLUMN_RESIZE);
-		result.add(CMD_COLUMN_REORDER);
+		result.add(ReactColumnSelectControl.CMD_COLUMN_MOVE);
 		result.add(CMD_SET_FROZEN_COLUMN_COUNT);
 		return result;
 	}
@@ -2597,14 +2633,72 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Handles a column reorder.
+	 * Handles the move of a column in the table header: it changes its position and whether it is frozen in one
+	 * step.
+	 *
+	 * <p>
+	 * The target index is a place in the displayed columns after the moved column was taken out of them. A frozen
+	 * column ends up at the end of the frozen block at the latest, a movable one at the start of the rest at the
+	 * earliest; the number of frozen columns follows the column across the border. The columns the user cannot
+	 * decide about (a leading detail column) keep their place in front of the movable ones. A column pinned to the
+	 * end, one the user cannot arrange and an unknown one are not moved, and neither is a column to be hidden:
+	 * the header has no hidden zone.
+	 * </p>
 	 */
-	@ReactCommandHandler(CMD_COLUMN_REORDER)
-	void handleColumnReorder(ColumnReorderArguments args) {
+	@ReactCommandHandler(ReactColumnSelectControl.CMD_COLUMN_MOVE)
+	void handleColumnMove(ColumnMoveArguments args) {
 		String column = args.getColumn();
-		int targetIndex = args.getTargetIndex();
-		_view.moveColumn(column, targetIndex);
-		rebuildAfterRowChange();
+		if (!args.isVisible()) {
+			return;
+		}
+		List<String> displayed = new ArrayList<>();
+		int unpinned = 0;
+		for (ColumnView view : _view.columns()) {
+			displayed.add(view.name());
+			if (!view.pinnedEnd()) {
+				unpinned++;
+			}
+		}
+		int from = displayed.indexOf(column);
+		if (from < 0 || !isArrangeable(column)) {
+			return;
+		}
+		// Leading columns the user cannot arrange stay in front of every movable column.
+		int leading = 0;
+		while (leading < unpinned && !isArrangeable(displayed.get(leading))) {
+			leading++;
+		}
+		int frozen = Math.min(_view.frozenColumnCount(), unpinned);
+		int remaining = frozen - (from < frozen ? 1 : 0);
+		int block = Math.max(remaining, leading);
+		int target = Math.min(Math.max(args.getTargetIndex(), leading), unpinned - 1);
+		int count;
+		if (args.isLocked()) {
+			target = Math.min(target, block);
+			count = block + 1;
+		} else {
+			target = Math.max(target, block);
+			count = remaining;
+		}
+		int movedTo = target;
+		int frozenCount = count;
+		rearrange(() -> {
+			_view.moveColumn(column, movedTo);
+			_view.setFrozenColumnCount(frozenCount);
+		});
+	}
+
+	/**
+	 * Whether the user may move the column with the given name in the table header: it is neither pinned to the end
+	 * nor one of the columns the column selection does not offer.
+	 */
+	private boolean isArrangeable(String column) {
+		for (ColumnOption option : _view.columnOptions()) {
+			if (option.name().equals(column)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -2753,6 +2847,15 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	void handleDeleteNamedFilter(DeleteNamedFilterArguments args) {
 		_view.deleteNamedFilter(args.getId());
 		refreshFilterBar();
+	}
+
+	/**
+	 * Handles the view reset: restores the arrangement the table is defined with - its columns,
+	 * their widths, the frozen columns, the sort and the grouping - and keeps the filters.
+	 */
+	@ReactCommandHandler(CMD_RESET_VIEW)
+	void handleResetView() {
+		rearrange(_view::resetToDefaults);
 	}
 
 	/**

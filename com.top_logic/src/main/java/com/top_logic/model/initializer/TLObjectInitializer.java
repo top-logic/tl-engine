@@ -19,7 +19,14 @@ public interface TLObjectInitializer {
 
 	/**
 	 * Initializes the newly created object.
-	 * 
+	 *
+	 * <p>
+	 * The initializer is called within the commit of the transaction that created the object,
+	 * before the lifecycle and change handlers and the commit checks. It runs without security
+	 * checks: it may read and modify any object, independent of the rights of the user committing
+	 * the transaction.
+	 * </p>
+	 *
 	 * @param object
 	 *        The newly created element to initialize.
 	 */

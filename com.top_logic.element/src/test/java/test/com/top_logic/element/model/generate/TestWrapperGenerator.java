@@ -43,7 +43,10 @@ import com.top_logic.element.meta.kbbased.AttributedWrapper;
 import com.top_logic.element.model.generate.WrapperGenerator;
 import com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper;
 import com.top_logic.element.structured.wrap.StructuredElementWrapperFactory;
+import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLScope;
+import com.top_logic.model.config.JavaName;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelNamingConvention;
 
@@ -73,6 +76,14 @@ public class TestWrapperGenerator extends TestCase {
 	private static final String PACKAGE_WITH_SINGLETON = "test/ticket29806/singleton";
 
 	private static final String PACKAGE_WITHOUT_SINGLETON = "test/ticket29806/plain";
+
+	private static final String MODULE_CLASH_LAST_MODIFIED = "ticket30446.lastModified";
+
+	private static final String MODULE_CLASH_TYPES = "ticket30446.types";
+
+	private static final String MODULE_WITHOUT_CLASH = "ticket30446.valid";
+
+	private static final String PACKAGE_WITHOUT_CLASH = "test/ticket30446/valid";
 
 	/**
 	 * Matches the class declaration of a generated class and captures its super class.
@@ -186,6 +197,73 @@ public class TestWrapperGenerator extends TestCase {
 		assertTrue("Missing singleton lookup in factory.", singletonFactory.contains(" getRootSingleton("));
 
 		assertEquals(ELEMENT_FACTORY, superClassOf(source(factoryFile(root, PACKAGE_WITHOUT_SINGLETON))));
+	}
+
+	/**
+	 * An attribute whose getter clashes with a method inherited from {@link Wrapper} by the
+	 * implementation class is reported (Ticket #30446).
+	 */
+	public void testClashWithWrapperMethod() throws Exception {
+		File root = BasicTestCase.createdCleanTestDir("TestWrapperGeneratorClashWrapper");
+
+		String errors = generateWithErrors(root, MODULE_CLASH_LAST_MODIFIED);
+
+		assertContains(errors, "'lastModified'");
+		assertContains(errors, "getLastModified()");
+		assertContains(errors, Wrapper.class.getName());
+		assertContains(errors, "<" + JavaName.TAG_NAME);
+		assertTrue("Wrappers generated despite a clash.", listJavaFiles(root).isEmpty());
+	}
+
+	/**
+	 * A reference whose getter clashes with a method inherited from {@link TLScope} by a
+	 * specialization of <code>tl.element:StructuredElement</code> is reported (Ticket #30446).
+	 */
+	public void testClashWithScopeMethod() throws Exception {
+		File root = BasicTestCase.createdCleanTestDir("TestWrapperGeneratorClashScope");
+
+		String errors = generateWithErrors(root, MODULE_CLASH_TYPES);
+
+		assertContains(errors, "'types'");
+		assertContains(errors, "getTypes()");
+		assertContains(errors, "<" + JavaName.TAG_NAME);
+		assertTrue("Wrappers generated despite a clash.", listJavaFiles(root).isEmpty());
+	}
+
+	/**
+	 * Attributes with a {@link JavaName}, the attribute <code>name</code>, and overridden
+	 * attributes are generated without clash, and the result compiles (Ticket #30446).
+	 */
+	public void testNoClash() throws Exception {
+		File root = BasicTestCase.createdCleanTestDir("TestWrapperGeneratorNoClash");
+
+		generate(root, app1(), MODULE_WITHOUT_CLASH);
+		compileSources(root);
+
+		String device = source(new File(root, PACKAGE_WITHOUT_CLASH + "/impl/DeviceBase.java"));
+		assertTrue("Getter with Java name missing.", device.contains(" getConfigurationChanged()"));
+		String folder = source(new File(root, PACKAGE_WITHOUT_CLASH + "/impl/FolderBase.java"));
+		assertTrue("Getter with Java name missing.", folder.contains(" getItemTypes()"));
+		assertTrue("Adder with Java name missing.", folder.contains(" addItemType("));
+	}
+
+	private String generateWithErrors(File root, String moduleName) throws Exception {
+		ByteArrayOutputStream errBuffer = new ByteArrayOutputStream();
+		PrintStream origErr = System.err;
+		System.setErr(new PrintStream(new TeeOutputStream(origErr, errBuffer), true, StandardCharsets.UTF_8));
+		try {
+			generate(root, app1(), moduleName);
+			fail("Generation of module '" + moduleName + "' with clashing access methods must fail.");
+		} catch (AbortExecutionException ex) {
+			// Expected.
+		} finally {
+			System.setErr(origErr);
+		}
+		return errBuffer.toString(StandardCharsets.UTF_8);
+	}
+
+	private static void assertContains(String errors, String expected) {
+		assertTrue("Expected '" + expected + "' in reported errors: " + errors, errors.contains(expected));
 	}
 
 	private void generate(File root, File app, String moduleName) throws Exception {

@@ -63,10 +63,16 @@ public class SingletonRule extends RoleRule {
 
 	@Override
 	public boolean matches(TLObject itemWrapper) {
-		if (_singleton.tValid()) {
-			return itemWrapper == _singleton;
+		if (!_singleton.tValid()) {
+			return false;
 		}
-		return false;
+		if (itemWrapper == _singleton) {
+			return true;
+		}
+		// A historic version of the singleton holds the roles of the singleton.
+		return RuleHistory.isHistoric(itemWrapper)
+			&& itemWrapper.tId().getObjectName().equals(_singleton.tId().getObjectName())
+			&& itemWrapper.tId().getObjectType().equals(_singleton.tId().getObjectType());
 	}
 
 	@Override

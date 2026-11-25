@@ -2,11 +2,13 @@
 
 <!--
 	The latest changes of the logged-in user, opened from the user menu: a table of the last 30
-	commits (tl.changelog:ChangeSet) the current user is the author of, produced by the changeLog()
-	TL-Script function. The revision column shows the commit number as a number, so that it sorts
+	commits (tl.changelog:ChangeSet) the current user is the author of, produced by the privileged
+	function changeLogOfCurrentUser() (tl-layout-view.conf.config.xml), which restricts every commit to
+	what the user may see. The revision column shows the commit number as a number, so that it sorts
 	numerically, written without grouping separators by its format annotation; date and message are
 	the ChangeSet attributes, and "Reverted" marks a commit that has been reverted by a later commit
-	(revertedBy).
+	(revertedBy). "Incomplete" marks a commit with changes the user may not see; such a commit
+	cannot be reverted.
 	
 	Activating a row opens the details of the commit (admin/monitoring/revision-details.view.xml),
 	from which it can be undone or redone. The details dialog writes the current time to the reload
@@ -57,8 +59,9 @@
 					</label>
 					<value><![CDATA[$row.get(`tl.changelog:ChangeSet#revertedBy`) != null]]></value>
 				</computed-column>
+				<column attribute="incomplete"/>
 			</columns>
-			<rows><![CDATA[changeLog(null, 30, true, null, null, currentUser())]]></rows>
+			<rows><![CDATA[changeLogOfCurrentUser(30)]]></rows>
 			<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
 				image="css:bi bi-list-ul"
 			>

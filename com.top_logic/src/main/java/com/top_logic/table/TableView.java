@@ -351,16 +351,33 @@ public interface TableView<R> {
 	}
 
 	/**
-	 * The filter of the named column, or {@code null} if the column is not filterable. Used
-	 * by a UI tier (together with {@link #columnMatchCounts} and the current
-	 * {@link #state()}) to build a filter editor.
+	 * The {@link Column#filters() kinds of filter} of the named column, empty if the column is
+	 * unknown or not filterable. Used by a UI tier (together with
+	 * {@link #columnMatchCounts(String, String)} and the current {@link #state()}) to build a filter
+	 * editor.
 	 */
-	ColumnFilter<?> columnFilter(String column);
+	List<? extends ColumnFilter<?>> columnFilters(String column);
 
 	/**
-	 * Facet counts for the named column, or {@link MatchCounts#NONE} if unavailable.
+	 * Facet counts for the named column, as its active kind of filter buckets the values, or
+	 * {@link MatchCounts#NONE} if unavailable.
+	 *
+	 * @see RowSource#matchCounts(String)
 	 */
 	MatchCounts columnMatchCounts(String column);
+
+	/**
+	 * Facet counts for the named column, as the given kind of filter of it buckets the values, or
+	 * {@link MatchCounts#NONE} if unavailable.
+	 *
+	 * @param column
+	 *        The name of the column.
+	 * @param kind
+	 *        The {@link ColumnFilter#kind()}, {@code null} for the first filter of the column.
+	 *
+	 * @see RowSource#matchCounts(String, String)
+	 */
+	MatchCounts columnMatchCounts(String column, String kind);
 
 	// ---- named filters ----
 
@@ -441,6 +458,19 @@ public interface TableView<R> {
 	 * </p>
 	 */
 	boolean savesNamedFilters();
+
+	/**
+	 * Whether this table keeps its state - the arrangement and the filters the user chose - so that
+	 * it survives the session.
+	 *
+	 * <p>
+	 * A UI asks this before offering choices about the table: a table without a place to keep them
+	 * would lose every choice at once.
+	 * </p>
+	 */
+	default boolean isPersonalized() {
+		return false;
+	}
 
 	/**
 	 * Saves the current column filters and search term as a {@link NamedFilter} of the user's own,

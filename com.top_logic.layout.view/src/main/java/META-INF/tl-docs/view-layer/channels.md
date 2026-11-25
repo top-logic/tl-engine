@@ -1,5 +1,5 @@
 ---
-description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally declaring the class of its values with type for the access check of commands on an empty channel, optionally initialized from other channels with inputs, init, observed-types, and remembered per user with personalize, personalization-key), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>, and <dynamic-view> embedding a view configuration stored in a model attribute of the datatype tl.view:ViewDefinition, edited with <open-view-designer> and written by a script with viewParse.
+description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally declaring the class of its values with type for the access check of commands on an empty channel, optionally initialized from other channels with inputs, init, observed-types, and remembered per user with personalize, personalization-key), <derived-channel> (inputs, expr, reverse, observed-types), inputs naming channels declared later and channels reading each other in a cycle that comes to rest (a channel emptied when a channel depending on it changes), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>, and <dynamic-view> embedding a view configuration stored in a model attribute of the datatype tl.view:ViewDefinition, edited with <open-view-designer> and written by a script with viewParse.
 order: 15
 ---
 
@@ -25,7 +25,27 @@ The channels of a view are declared in the `<channels>` section of its `<view>` 
 </channels>
 ```
 
-The channels are created in declaration order, and a derived channel resolves its inputs when it is created. An input must therefore be declared above the derived channel reading it - a derived channel may read another derived channel declared before it - or be supplied by the view embedding this one (see [`<view-ref>`](#embedding-a-view-view-ref-and-bind) below). A reference to a channel the view does not know fails with "Unknown channel" and lists the channels that are known.
+A view first creates all its channels and then connects them to their inputs, in declaration order (`ChannelFactory.createChannel` and `bindChannel`). An input is a channel of the same view - declared before or after the channel reading it - or a channel supplied by the view embedding this one (see [`<view-ref>`](#embedding-a-view-view-ref-and-bind) below). A reference to a channel the view does not know fails with "Unknown channel" and lists the channels that are known. A channel bound before its inputs computes its value from their empty values first, and computes again when they are bound, since a channel announces the value it is bound with like any other new value.
+
+### Channels reading each other
+
+Two channels may name each other as inputs, also over further channels. Such a cycle comes to rest because a channel tells its listeners only about a value that differs from the one it held: the computation goes round until a channel computes the value it already has. A typical use is a channel that is emptied when another channel changes, which in turn depends on it - a set of objects placed beside the displayed module, dropped when the module changes, while the module is kept as long as the selection is one of those objects:
+
+```xml
+<channels>
+	<channel name="selectedPart"/>
+	<channel name="externalTypes"
+		init="null"
+		inputs="selectedModule"
+	/>
+	<derived-channel name="selectedModule"
+		expr="..."
+		inputs="selectedPart, externalTypes"
+	/>
+</channels>
+```
+
+A new `selectedModule` empties `externalTypes`; `selectedModule` is computed again from the empty value, comes to the same module, and the cycle is at rest. Selecting one of the external types leaves `selectedModule` unchanged, so `externalTypes` keeps its value. A cycle that never comes to rest - `x` computed as `$y + 'x'` and `y` as `$x + 'y'` - fails after a fixed number of rounds (`ChannelInputBinding.MAX_NESTING`) with an `IllegalStateException` naming the channels of the cycle (`'x' -> 'y' -> 'x'`).
 
 `inputs` takes two notations, here as everywhere in the view layer (`Inputs`): the comma-separated attribute `inputs="selectedCustomer, editMode"` and nested elements `<inputs><input channel="selectedCustomer"/><input channel="editMode"/></inputs>`.
 
@@ -70,7 +90,7 @@ Every script of the view layer sees the values of its inputs (the `inputs` or `i
 | chart `<tooltips>` `expr` | `element` (the data point) | `as` on the tooltip |
 | `<flow-diagram>` `createChart` | one variable per entry of `handlers`, named by its key | — |
 | display target `<bind expr>`, `label-expr` | `object` (the shown object) | — |
-| scripts of an action chain (`<execute-script>`, `<if>`, `<switch>`, `<confirm>`, `<notify>`, `<download>`, `<show-view>` binds, …) and the `refuse-if` of a `<drop>` | the arguments of the chain: the command's inputs or the value its trigger supplies (`row`, `node`, `value`, `link`, `element`, `file`, `objects` with `target` / `parent` / `before`), and inside follow-up actions `result` | see [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments); `as` on the `<with-result>` of the action with the result, or on the `<on-cancel>` of a `<start-job>` |
+| scripts of an action chain (`<execute-script>`, `<if>`, `<switch>`, `<confirm>`, `<notify>`, `<download>`, `<show-view>` binds, …) and the `refuse-if` of a `<drop>` | the arguments of the chain: the command's inputs or the value its trigger supplies (`row`, `node`, `value`, `link`, `element`, `file`, `objects` with `target` / `parent` / `before` and the value of the drop's `input`), and inside follow-up actions `result` | see [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments); `as` on the `<with-result>` of the action with the result, or on the `<on-cancel>` of a `<start-job>` |
 | `<case>` `match` / `test` of a `<switch>` action | `value` (the switch value) | `as` on the switch |
 | `<start-job>` `function`; `ChunkedScriptJobBody` `init` / `elements`, `finish` / `<step>` | `job` beside the arguments / `job`, `state` / `job`, `state`, `chunk` | — |
 | executability rules (`<visible-if>`, `<disabled-if>`) of a command | the arguments of the command, as the chain sees them | as for the chain |
@@ -299,7 +319,7 @@ A view can also be data: the datatype `tl.view:ViewDefinition` (module `tl.view`
 </dynamic-view>
 ```
 
-The expression is evaluated again on a new input value and on a change of an input object (an expression reaching beyond the input objects names the types it reads in `observed-types`). The embedded view is replaced only by a configuration that differs by value - an attribute parses its stored view on every read, so an edit of another attribute of the object keeps the embedded view and its state; the replaced one is disposed after the channel notification has unwound. While the expression yields `null`, the element is hidden. A configuration that cannot be instantiated renders the error placeholder of `<view-ref>`.
+The expression is evaluated again on a new input value and on a change of an input object (an expression reaching beyond the input objects names the types it reads in `observed-types`). The embedded view is replaced only by a configuration that differs by value - an attribute parses its stored view on every read, so an edit of another attribute of the object keeps the embedded view and its state; the replaced one is disposed at once, so that the channel notification in progress does not reach it anymore. While the expression yields `null`, the element is hidden. A configuration that cannot be instantiated renders the error placeholder of `<view-ref>`.
 
 A script stores a view in such an attribute with the TL-Script function `viewParse(xml)`
 (`ViewFunctions`), which reads the XML text of a view - written like a `.view.xml` file with the root

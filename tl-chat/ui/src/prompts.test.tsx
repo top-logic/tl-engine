@@ -288,6 +288,29 @@ describe('the question card', () => {
     expect(body).toEqual({ requestId: 'interaction-1', response: '', ownWords: 'Alle zwei Wochen' })
   })
 
+  it('sends the own answer on Enter, but not on the Enter that ends an input method composition', async () => {
+    const enter = (input: Element, composing: boolean) =>
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          keyCode: composing ? 229 : 13,
+          isComposing: composing,
+          bubbles: true,
+          cancelable: true,
+        }),
+      )
+    const body = await answer(question(), async (container) => {
+      await ownAnswer(container)
+      // The first word, composed with an input method (#30487): its Enter ends the composition only.
+      await type(container, '毎週')
+      enter(container.querySelector('.prompt-input')!, true)
+      await type(container, '毎週の月曜日')
+      enter(container.querySelector('.prompt-input')!, false)
+    })
+
+    expect(body).toEqual({ requestId: 'interaction-1', response: '', ownWords: '毎週の月曜日' })
+  })
+
   it('sends the own answer beside the options picked in a multi select', async () => {
     const body = await answer(question({ multiSelect: true }), async (container) => {
       button(container, 'Monthly').click()

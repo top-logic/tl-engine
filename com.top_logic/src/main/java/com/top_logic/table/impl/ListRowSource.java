@@ -7,6 +7,7 @@ package com.top_logic.table.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,13 +23,17 @@ import java.util.function.Predicate;
 
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.FilterSpec;
+import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.MatchCounts;
+import com.top_logic.table.Option;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
+import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
 
 /**
@@ -286,8 +291,17 @@ public class ListRowSource<R> implements RowSource<R> {
 		return result;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @throws IllegalArgumentException
+	 *         If the given order names a column this source does not have.
+	 */
 	@Override
 	public RowSource<R> withOrder(SortSpec sort) {
+		for (SortColumn sortColumn : sort.columns()) {
+			ColumnLogic.require(_byName, sortColumn.column());
+		}
 		_sort = sort;
 		recompute();
 		fireInvalidated();
@@ -302,8 +316,17 @@ public class ListRowSource<R> implements RowSource<R> {
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @throws IllegalArgumentException
+	 *         If the given grouping names a column this source does not have.
+	 */
 	@Override
 	public RowSource<R> withGrouping(GroupSpec grouping) {
+		for (String name : grouping.columns()) {
+			ColumnLogic.require(_byName, name);
+		}
 		_grouping = grouping;
 		recompute();
 		fireInvalidated();
@@ -312,6 +335,12 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	@Override
 	public MatchCounts matchCounts(String column) {
+		FilterState state = _filter.byColumn().get(column);
+		return matchCounts(column, state == null ? null : ColumnFilterState.kindOf(state));
+	}
+
+	@Override
+	public MatchCounts matchCounts(String column, String kind) {
 		Column<R, ?> definition = _byName.get(column);
 		if (definition == null) {
 			return MatchCounts.NONE;
@@ -323,10 +352,13 @@ public class ListRowSource<R> implements RowSource<R> {
 		Map<Object, Integer> counts = new HashMap<>();
 		for (R element : _elements) {
 			if (others == null || others.test(element)) {
-				addFacetCounts(definition, element, counts);
+				addFacetCounts(definition, kind, element, counts);
 			}
 		}
+		List<? extends R> elements = _elements;
 		return new MatchCounts() {
+			private List<Object> _values;
+
 			@Override
 			public int count(Object optionValue) {
 				Integer count = counts.get(optionValue);
@@ -337,14 +369,56 @@ public class ListRowSource<R> implements RowSource<R> {
 			public boolean isAvailable() {
 				return true;
 			}
+
+			@Override
+			public List<Object> values() {
+				if (_values == null) {
+					_values = facetValues(definition, kind, elements);
+				}
+				return _values;
+			}
 		};
 	}
 
-	private static <R, V> void addFacetCounts(Column<R, V> column, R element, Map<Object, Integer> counts) {
+	/**
+	 * The distinct facet keys of the given column over the given rows, in the
+	 * {@link ColumnFilter#facetOrder() order of the filter}, the column's ascending sort order, or
+	 * in the order of their first occurrence for a column that cannot be sorted,
+	 * followed by {@link Option#NO_VALUE} if a cell holds no value.
+	 */
+	private static <R, V> List<Object> facetValues(Column<R, V> column, String kind, List<? extends R> elements) {
+		Set<Object> keys = new LinkedHashSet<>();
+		Optional<ColumnFilter<V>> filter = column.filter(kind);
+		for (R element : elements) {
+			V value = column.value(element);
+			if (filter.isPresent()) {
+				keys.addAll(filter.get().facetKeys(value));
+			} else if (value != null) {
+				keys.add(value);
+			}
+		}
+		// The option standing for no value is no value of the column: it is not sorted with them,
+		// but follows them.
+		boolean noValue = keys.remove(Option.NO_VALUE);
+		List<Object> result = new ArrayList<>(keys);
+		Comparator<Object> facetOrder = filter.isPresent() ? filter.get().facetOrder() : null;
+		Comparator<Object> order = facetOrder != null ? facetOrder : ColumnLogic.valueOrder(column);
+		if (order != null) {
+			result.sort(order);
+		}
+		if (noValue) {
+			result.add(Option.NO_VALUE);
+		}
+		return Collections.unmodifiableList(result);
+	}
+
+	private static <R, V> void addFacetCounts(Column<R, V> column, String kind, R element,
+			Map<Object, Integer> counts) {
 		V value = column.value(element);
-		Optional<ColumnFilter<V>> filter = column.filter();
+		Optional<ColumnFilter<V>> filter = column.filter(kind);
 		if (filter.isPresent()) {
-			for (Object key : filter.get().facetKeys(value)) {
+			// A count is a number of rows: a cell holding a value twice counts once for it.
+			for (Object key : new LinkedHashSet<>(filter.get().facetKeys(value))) {
 				counts.merge(key, Integer.valueOf(1), Integer::sum);
 			}
 		} else if (value != null) {

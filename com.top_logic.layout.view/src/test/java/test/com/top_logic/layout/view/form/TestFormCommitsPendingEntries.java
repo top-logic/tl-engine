@@ -85,7 +85,9 @@ public class TestFormCommitsPendingEntries extends BasicTestCase {
 	private static final String ANNOTATIONS = "annotations";
 
 	/** Label of the button confirming a pending entry. */
-	private static final String CONFIRM = "✓";
+	private static String confirmLabel() {
+		return Resources.getInstance().getString(com.top_logic.layout.configedit.I18NConstants.CONFIRM_ENTRY);
+	}
 
 	private ReactContext _context;
 
@@ -140,7 +142,7 @@ public class TestFormCommitsPendingEntries extends BasicTestCase {
 		_form.enterEditMode();
 		click(addButton());
 		fillMandatoryValues();
-		assertNotNull("The new entry must be pending.", button(CONFIRM));
+		assertNotNull("The new entry must be pending.", button(confirmLabel()));
 		assertTrue("A pending entry is not yet part of the value.", storedAnnotations().isEmpty());
 
 		_form.revealAllValidation();
@@ -183,7 +185,7 @@ public class TestFormCommitsPendingEntries extends BasicTestCase {
 		assertTrue("The form must stay in edit mode.", _form.isEditMode());
 		assertTrue("Nothing must have been stored.", storedAnnotations().isEmpty());
 		assertEquals("The entry that could be confirmed is in the field's value.", 1, fieldValue().size());
-		assertNotNull("The refused entry must still be pending.", button(CONFIRM));
+		assertNotNull("The refused entry must still be pending.", button(confirmLabel()));
 
 		String message = Resources.getInstance().getString(refusal.getErrorKey());
 		assertTrue("The type must be named as the type selector names it: " + message,
@@ -216,7 +218,7 @@ public class TestFormCommitsPendingEntries extends BasicTestCase {
 		assertNotNull("The incomplete entry must refuse the save.", refusal);
 		assertEquals(I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS.getKey(), refusal.getErrorKey().getKey());
 		assertTrue(_form.isEditMode());
-		assertNull("The entry has been confirmed.", button(CONFIRM));
+		assertNull("The entry has been confirmed.", button(confirmLabel()));
 		assertEquals("The entry is kept in the field's value.", 1, fieldValue().size());
 		assertTrue("Nothing must have been stored.", storedAnnotations().isEmpty());
 	}
@@ -229,7 +231,7 @@ public class TestFormCommitsPendingEntries extends BasicTestCase {
 		_form.enterEditMode();
 		click(addButton());
 		fillMandatoryValues();
-		click(button(CONFIRM));
+		click(button(confirmLabel()));
 		click(addButton());
 		fillMandatoryValues();
 
@@ -266,8 +268,8 @@ public class TestFormCommitsPendingEntries extends BasicTestCase {
 		_form.enterEditMode();
 		click(addButton());
 		fillMandatoryValues();
-		click(button(CONFIRM));
-		assertNull("Nothing is pending anymore.", button(CONFIRM));
+		click(button(confirmLabel()));
+		assertNull("Nothing is pending anymore.", button(confirmLabel()));
 
 		_form.executeSave();
 

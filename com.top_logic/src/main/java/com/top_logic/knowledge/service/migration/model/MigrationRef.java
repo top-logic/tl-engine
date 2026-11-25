@@ -158,7 +158,10 @@ public class MigrationRef {
 		return _id.toString();
 	}
 
-	private VersionID getId() {
+	/**
+	 * The identifier of the version this migration establishes.
+	 */
+	public VersionID getId() {
 		return _id;
 	}
 

@@ -32,6 +32,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.impl.TypedObjectClasses;
 import com.top_logic.util.Resources;
 
 /**
@@ -46,6 +47,17 @@ public class AttributeUpdateContainer implements OverlayLookup {
 	public static final String ID_SEPARATOR = "_";
 
 	private static final int FIRST_ID = 1;
+
+	/**
+	 * Parameter types of the {@link ObjectEditing} constructor.
+	 */
+	private static final Class<?>[] EDITING_SIGNATURE = { AttributeUpdateContainer.class, TLObject.class };
+
+	/**
+	 * Parameter types of the {@link ObjectCreation} constructor.
+	 */
+	private static final Class<?>[] CREATION_SIGNATURE =
+		{ AttributeUpdateContainer.class, TLStructuredType.class, String.class, ObjectConstructor.class };
 
 	private AttributeFormContext _form;
 
@@ -286,7 +298,8 @@ public class AttributeUpdateContainer implements OverlayLookup {
 
 	private TLFormObject allocateCreateOverlay(TLStructuredType type, String domain, TLObject container,
 			ObjectConstructor constructor) {
-		ObjectCreation newOverlay = new ObjectCreation(this, type, domain, constructor);
+		ObjectCreation newOverlay = TypedObjectClasses.newInstance(ObjectCreation.class, type,
+			CREATION_SIGNATURE, this, type, domain, constructor);
 		_creates.put(domain, newOverlay);
 		newOverlay.initContainer(container);
 
@@ -328,7 +341,8 @@ public class AttributeUpdateContainer implements OverlayLookup {
 			return existingOverlay;
 		}
 		
-		ObjectEditing newOverlay = new ObjectEditing(this, object);
+		ObjectEditing newOverlay = TypedObjectClasses.newInstance(ObjectEditing.class, object.tType(),
+			EDITING_SIGNATURE, this, object);
 		_edits.put(object, newOverlay);
 		return newOverlay;
 	}

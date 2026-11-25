@@ -228,6 +228,21 @@ describe('TLDatePicker as MUI X picker', () => {
     expect(sent.mock.calls).toEqual([changedTo('2026-06-02'), COMMITTED]);
   });
 
+  it('sends nothing on the Enter that ends an input method composition; the next Enter does', async () => {
+    const sent = mountDate({ value: '2026-06-01', inputType: 'date', commitEdits: true });
+
+    await stepUp('Day');
+    // The key code an input method reports for the Enter that ends its composition (#30487).
+    fireEvent.keyDown(document.activeElement!, { key: 'Enter', keyCode: 229, isComposing: true });
+    await settle();
+
+    expect(sent).not.toHaveBeenCalled();
+
+    await pressEnter();
+
+    expect(sent.mock.calls).toEqual([changedTo('2026-06-02'), COMMITTED]);
+  });
+
   it('sends a day chosen in the popup at once', async () => {
     const sent = mountDate({ value: '2026-06-01', inputType: 'date', commitEdits: true });
 

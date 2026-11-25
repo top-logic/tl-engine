@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestViewTypedBuffers">
+			<annotations>
+				<package-binding
+					implementation-package="test.com.top_logic.layout.view.form.typed.impl"
+					interface-package="test.com.top_logic.layout.view.form.typed"
+				/>
+			</annotations>
+			<types>
+				<class name="TypedItem">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="TypedNode">
+					<annotations>
+						<table name="StructuredElement"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<property name="label"
+							type="tl.core:String"
+						/>
+						<reference name="children"
+							override="true"
+							type="TypedNode"
+						/>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="TypedNode"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

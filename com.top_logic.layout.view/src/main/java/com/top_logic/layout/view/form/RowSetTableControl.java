@@ -31,7 +31,9 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonAppearance;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.CommandTrigger;
@@ -53,6 +55,7 @@ import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -63,6 +66,7 @@ import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExistence;
+import com.top_logic.layout.view.table.ColumnFilterFieldFactory;
 import com.top_logic.layout.view.table.ColumnHeader;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
@@ -255,8 +259,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
 	private TableViewControl.ActivationHandler<TLObject> _activationHandler;
 
-	/** The grouping the table starts with, until a personalization of its own exists. */
-	private GroupSpec _grouping = GroupSpec.NONE;
+	/**
+	 * Computes the grouping the table starts with, until a personalization of its own exists, from
+	 * the columns built for the current user.
+	 *
+	 * @see #setGrouping(Function)
+	 */
+	private Function<List<? extends Column<?, ?>>, GroupSpec> _grouping = columns -> GroupSpec.NONE;
 
 	/** @see #setSelectionMode(SelectionMode) */
 	private SelectionMode _selectionMode = SelectionMode.SINGLE;
@@ -708,8 +717,14 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * {@link TableViewControl} this control builds, so a grouping the user chose (and which is
 	 * persisted under the table's identity) wins over it.
 	 * </p>
+	 *
+	 * @param grouping
+	 *        Computes the grouping from the columns built for the current user, called whenever the
+	 *        columns are rebuilt - a declared grouping column the access rights of the user withhold
+	 *        is not among them, see
+	 *        {@link ColumnDeclarations#grouping(com.top_logic.basic.Log, String, GroupSpec, Collection, List)}.
 	 */
-	public void setGrouping(GroupSpec grouping) {
+	public void setGrouping(Function<List<? extends Column<?, ?>>, GroupSpec> grouping) {
 		_grouping = grouping;
 	}
 
@@ -1092,8 +1107,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				.build());
 		}
 
+		ColumnResolution scope = columnResolution();
+		if (scope == null) {
+			// The type of the rows was deleted while the table is displayed: its rows went with it.
+			rowObjects = List.of();
+		}
 		List<ColumnSetup> setups = new ArrayList<>(_columns.size());
-		columns.addAll(createDataColumns(editMode, isEditing(), setups));
+		columns.addAll(createDataColumns(scope, editMode, isEditing(), setups));
 		_hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
 		_dataSetups = setups;
 
@@ -1121,7 +1141,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			_arrangement.createSource(rowObjects, isEditing() ? session() : null, columns);
 		TableViewState initialState =
 			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
-		initialState.setGrouping(_grouping);
+		initialState.setGrouping(_grouping.apply(columns));
 		initialState.setSelection(Selection.none(_selectionMode));
 		if (_fixedColumns > 0) {
 			// The configured number counts data columns; a leading action column has to be added on
@@ -1171,6 +1191,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			}
 		});
 		_tableControl.setFilterBar(_filterBar);
+		_tableControl.setFilterFieldFactory(ColumnFilterFieldFactory.of(setups));
 		// Where all rows are edited, the row of the focused editor is the row the commands act on.
 		_tableControl.setSelectOnEditorFocus(_policy == RowEditPolicy.ALL && editMode);
 		_tableControl.setRowCount(_rowCount);
@@ -1260,10 +1281,40 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
-	 * Builds the data columns for the current mode, resolving the declarations against the
-	 * {@link #setRowTypes(List) row types}, or the binding's current row type (the bound attribute
-	 * may resolve only once the form has an object).
+	 * What the data columns are resolved against: the {@link #setRowTypes(List) row types}, or the
+	 * binding's current row type (the bound attribute may resolve only once the form has an
+	 * object), without the types deleted meanwhile.
 	 *
+	 * @return The resolution against the row types still alive, {@code null} when all row types
+	 *         are deleted - the table then shows neither data columns nor rows until it is built
+	 *         for other types.
+	 */
+	private ColumnResolution columnResolution() {
+		List<? extends TLStructuredType> types;
+		if (_rowTypes.isEmpty()) {
+			TLStructuredType rowType = binding().getRowType();
+			types = rowType == null ? List.of() : List.of(rowType);
+		} else {
+			types = _rowTypes;
+		}
+		List<TLStructuredType> alive = new ArrayList<>(types.size());
+		for (TLStructuredType type : types) {
+			if (type.tValid()) {
+				alive.add(type);
+			}
+		}
+		if (alive.isEmpty() && !types.isEmpty()) {
+			return null;
+		}
+		return new ColumnResolution(alive, _context);
+	}
+
+	/**
+	 * Builds the data columns for the current mode.
+	 *
+	 * @param scope
+	 *        What the columns are resolved against, see {@link #columnResolution()}; {@code null}
+	 *        builds no data columns.
 	 * @param editMode
 	 *        Whether the rows may be changed, so that editable cells render their inputs.
 	 * @param edited
@@ -1271,10 +1322,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * @param setups
 	 *        Collects the resolved {@link ColumnSetup}s, for per-session UI installation.
 	 */
-	private List<Column<TLObject, ?>> createDataColumns(boolean editMode, boolean edited, List<ColumnSetup> setups) {
+	private List<Column<TLObject, ?>> createDataColumns(ColumnResolution scope, boolean editMode, boolean edited,
+			List<ColumnSetup> setups) {
+		if (scope == null) {
+			return List.of();
+		}
 		List<Column<TLObject, ?>> columns = new ArrayList<>(_columns.size());
-		ColumnResolution scope = _rowTypes.isEmpty() ? new ColumnResolution(binding().getRowType(), _context)
-			: new ColumnResolution(_rowTypes, _context);
 		List<ColumnDeclaration> declarations =
 			_columns.isEmpty() ? ColumnDeclarations.mainColumns(scope.rowType()) : _columns;
 		for (ColumnSetup resolved : ColumnDeclarations.resolve(declarations, scope)) {
@@ -1455,6 +1508,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DETAIL);
 		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		button.setAppearance(ButtonAppearance.GHOST);
+		button.setSize(ButtonSize.SMALL);
 		return button;
 	}
 
@@ -1515,7 +1570,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		// Create the dialog control tree from the view definition.
-		ReactControl dialogControl = (ReactControl) dialogView.createControl(dialogContext);
+		ReactControl dialogControl = ViewUnitControl.forView(dialogContext, viewPath, dialogView);
 		ObservingChannels.observeWhileDisplayed(dialogControl, dialogChannels, dialogContext);
 
 		// Open the dialog.
@@ -1751,6 +1806,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DELETE);
 		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		button.setAppearance(ButtonAppearance.GHOST);
+		button.setSize(ButtonSize.SMALL);
 		return button;
 	}
 
@@ -1822,6 +1879,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		@Override
+		public boolean required() {
+			return _editable && _setup != null && _setup.editing() != null && _setup.editing().required();
+		}
+
+		@Override
 		public String cssClass() {
 			return _inner.cssClass();
 		}
@@ -1868,6 +1930,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		@Override
 		public Optional<Sort<V>> sort() {
 			return _inner.sort();
+		}
+
+		@Override
+		public List<ColumnFilter<V>> filters() {
+			return _inner.filters();
 		}
 
 		@Override

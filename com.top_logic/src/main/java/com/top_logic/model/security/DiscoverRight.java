@@ -210,7 +210,8 @@ public final class DiscoverRight {
 	 *
 	 * <p>
 	 * Objects already contained in the stored value are not checked: they may stay even if the user
-	 * cannot discover them.
+	 * cannot discover them. A deleted object is not checked either: it is discoverable for nobody,
+	 * but whether it may be stored is no question of the user's rights.
 	 * </p>
 	 *
 	 * @param self
@@ -271,7 +272,7 @@ public final class DiscoverRight {
 		Set<?> stored = asSet(storedValue.get());
 		ModelAccessRights accessRights = ModelAccessRights.getInstance();
 		for (Object target : newTargets) {
-			if (target instanceof TLObject object && !stored.contains(object)
+			if (target instanceof TLObject object && object.tValid() && !stored.contains(object)
 				&& !accessRights.isDiscoverAllowed(object)) {
 				throw new TopLogicException(I18NConstants.ERROR_TARGET_NOT_DISCOVERABLE__OBJECT_ATTRIBUTE.fill(self, part));
 			}

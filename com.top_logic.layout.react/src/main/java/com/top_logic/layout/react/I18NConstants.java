@@ -264,6 +264,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_CONNECTION_RECONNECTING;
 
 	/**
+	 * @en This part of the view could not be displayed.
+	 */
+	@CustomKey("js.child.renderError")
+	public static ResKey JS_CHILD_RENDER_ERROR;
+
+	/**
 	 * @en Record audio
 	 */
 	@CustomKey("js.audioRecorder.record")
@@ -785,6 +791,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMPACT_FIELD_EDIT_BUTTON;
 
 	/**
+	 * @en Edit the value (required)
+	 */
+	public static ResKey COMPACT_FIELD_EDIT_REQUIRED_BUTTON;
+
+	/**
 	 * @en Value
 	 */
 	public static ResKey COMPACT_FIELD_TITLE;
@@ -934,6 +945,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLUMNS;
 
 	/**
+	 * @en Reset columns
+	 */
+	@CustomKey("js.table.columnsReset")
+	public static ResKey JS_TABLE_COLUMNS_RESET;
+
+	/**
 	 * @en Find column
 	 */
 	@CustomKey("js.table.columnSearch")
@@ -1004,6 +1021,54 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.table.columnsLocked")
 	public static ResKey JS_TABLE_COLUMNS_LOCKED;
+
+	/**
+	 * @en Movable
+	 */
+	@CustomKey("js.table.columnsMovable")
+	public static ResKey JS_TABLE_COLUMNS_MOVABLE;
+
+	/**
+	 * @en Hidden
+	 */
+	@CustomKey("js.table.columnsHidden")
+	public static ResKey JS_TABLE_COLUMNS_HIDDEN;
+
+	/**
+	 * @en Drag here to freeze
+	 */
+	@CustomKey("js.table.columnDropLocked")
+	public static ResKey JS_TABLE_COLUMN_DROP_LOCKED;
+
+	/**
+	 * @en Drag here to unfreeze
+	 */
+	@CustomKey("js.table.columnDropMovable")
+	public static ResKey JS_TABLE_COLUMN_DROP_MOVABLE;
+
+	/**
+	 * @en Drag here to hide
+	 */
+	@CustomKey("js.table.columnDropHidden")
+	public static ResKey JS_TABLE_COLUMN_DROP_HIDDEN;
+
+	/**
+	 * @en {0}, frozen, position {1} of {2}
+	 */
+	@CustomKey("js.table.columnMovedLocked")
+	public static ResKey JS_TABLE_COLUMN_MOVED_LOCKED;
+
+	/**
+	 * @en {0}, movable, position {1} of {2}
+	 */
+	@CustomKey("js.table.columnMovedMovable")
+	public static ResKey JS_TABLE_COLUMN_MOVED_MOVABLE;
+
+	/**
+	 * @en {0}, hidden
+	 */
+	@CustomKey("js.table.columnMovedHidden")
+	public static ResKey JS_TABLE_COLUMN_MOVED_HIDDEN;
 
 	/**
 	 * @en At least one column stays visible
@@ -1078,6 +1143,28 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_SEARCH_HINT;
 
 	/**
+	 * @en Filter by
+	 *
+	 * @see com.top_logic.layout.react.control.table.ColumnFilterDialog
+	 */
+	public static ResKey FILTER_KIND;
+
+	/**
+	 * @en {0} (not available)
+	 *
+	 * @see com.top_logic.layout.react.control.table.ColumnFilterDialog
+	 */
+	public static ResKey1 FILTER_KIND_NOT_AVAILABLE__KIND;
+
+	/**
+	 * @en This kind of filter is not offered for the values the column currently holds. The column
+	 *     stays filtered by it until you choose another kind or reset the filter.
+	 *
+	 * @see com.top_logic.layout.react.control.table.ColumnFilterDialog
+	 */
+	public static ResKey FILTER_KIND_NOT_AVAILABLE_NOTICE;
+
+	/**
 	 * @en Show all rows again
 	 */
 	@CustomKey("js.table.clearFilter")
@@ -1112,11 +1199,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.table.cancelSave")
 	public static ResKey JS_TABLE_CANCEL_SAVE;
-
-	/**
-	 * @en Restore default
-	 */
-	public static ResKey TABLE_COLUMNS_RESET;
 
 	/**
 	 * @en {0,choice,0#No rows|1#1 row|2#{0} rows}

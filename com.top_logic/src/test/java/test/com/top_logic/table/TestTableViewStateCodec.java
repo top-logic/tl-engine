@@ -18,6 +18,7 @@ import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.table.filter.TextMatchMode;
 import com.top_logic.table.impl.TableViewStateCodec;
 
 /**
@@ -104,6 +105,23 @@ public class TestTableViewStateCodec extends TestCase {
 		assertTrue(restored.getSort().isEmpty());
 	}
 
+	/**
+	 * A state stored while density, stripes and column lines were still kept per table is read:
+	 * the order is restored, the former fields are ignored.
+	 */
+	public void testDecodeIgnoresFormerViewOptions() {
+		Map<String, Object> json = new LinkedHashMap<>();
+		json.put("columnOrder", List.of("status", "name"));
+		json.put("density", "compact");
+		json.put("striped", Boolean.TRUE);
+		json.put("columnLines", Boolean.TRUE);
+
+		TableViewState restored = new TableViewState();
+		TableViewStateCodec.readInto(restored, json);
+
+		assertEquals(List.of("status", "name"), restored.getColumnOrder());
+	}
+
 	/** Without a {@link FilterCodec}, filters stay outside the persisted subset. */
 	public void testFiltersNotPersistedWithoutCodec() {
 		TableViewState original = new TableViewState();
@@ -119,12 +137,12 @@ public class TestTableViewStateCodec extends TestCase {
 	/** The search term round-trips with all of its matching flags. */
 	public void testSearchRoundTrip() {
 		TableViewState original = new TableViewState();
-		original.setSearch(new TextFilterState("ab.*c", true, true, true));
+		original.setSearch(new TextFilterState("ab.*c", true, TextMatchMode.REGEXP, true));
 
 		TableViewState restored = new TableViewState();
 		TableViewStateCodec.readInto(restored, TableViewStateCodec.toJson(original));
 
-		assertEquals(new TextFilterState("ab.*c", true, true, true), restored.getSearch());
+		assertEquals(new TextFilterState("ab.*c", true, TextMatchMode.REGEXP, true), restored.getSearch());
 	}
 
 	public void testNoSearchWritesNoEntry() {

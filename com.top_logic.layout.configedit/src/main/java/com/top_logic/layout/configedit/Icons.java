@@ -32,4 +32,16 @@ public class Icons extends IconsBase {
 	@DefaultValue("css:fas fa-plus")
 	public static ThemeImage CONFIG_LIST_ADD;
 
+	@DefaultValue("css:fa-solid fa-chevron-up")
+	public static ThemeImage CONFIG_LIST_MOVE_UP;
+
+	@DefaultValue("css:fa-solid fa-chevron-down")
+	public static ThemeImage CONFIG_LIST_MOVE_DOWN;
+
+	@DefaultValue("css:fa-solid fa-xmark")
+	public static ThemeImage CONFIG_LIST_REMOVE;
+
+	@DefaultValue("css:fa-solid fa-check")
+	public static ThemeImage CONFIG_LIST_CONFIRM;
+
 }

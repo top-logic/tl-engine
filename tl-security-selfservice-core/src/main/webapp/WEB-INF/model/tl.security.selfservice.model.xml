@@ -144,6 +144,7 @@
 					</annotations>
 				</property>
 				<reference name="account"
+					deletion-policy="delete-referer"
 					kind="forwards"
 					navigate="true"
 					type="tl.accounts:Person"

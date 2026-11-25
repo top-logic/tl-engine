@@ -16,7 +16,9 @@ import jakarta.servlet.http.Part;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -27,6 +29,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
@@ -39,9 +42,10 @@ import de.haumacher.msgbuf.data.ReflectiveDataObject;
  * within an interaction of that window.
  *
  * <p>
- * For the tests that pin what a chat command answers - ownership, refusals, what a run is started
+ * For the tests that pin what a chat command answers - access, refusals, what a run is started
  * with - without a browser. The services a chat control reads (the view's column and field
- * services, the session service) have to be in the suite.
+ * services, the session service, and the model-based security that decides the access to a chat:
+ * {@code AccessManager} and {@code SecurityConfigurationService}) have to be in the suite.
  * </p>
  */
 public final class ChatCommandDriver {
@@ -58,9 +62,12 @@ public final class ChatCommandDriver {
 			return getState(key);
 		}
 
-		/** Writes the state again as a render does - what a browser reload of the window causes. */
+		/**
+		 * Writes the state again as a render does - what a browser reload of the window causes -,
+		 * with the security checks on, as a request of a browser window runs.
+		 */
 		public void render() {
-			onBeforeWrite();
+			ThreadContext.withSecurityChecks(true, this::onBeforeWrite);
 		}
 	}
 
@@ -129,16 +136,19 @@ public final class ChatCommandDriver {
 	}
 
 	/**
-	 * Runs the given computation in the driver's window. A window of its own sees what is committed
-	 * now, as the next request of a browser window does.
+	 * Runs the given computation in the driver's window, with the security checks on, as a request
+	 * of a browser window runs. A window of its own sees what is committed now, as the next request
+	 * of a browser window does.
 	 */
 	private <T> T inWindow(ComputationEx2<T, Exception, RuntimeException> job) throws Exception {
+		ComputationEx2<T, Exception, RuntimeException> checked =
+			() -> ThreadContext.<T, Exception, RuntimeException> withSecurityChecks(true, job);
 		if (_subSession == TLContextManager.getSubSession()) {
-			return job.run();
+			return checked.run();
 		}
 		return ThreadContextManager.inContext(_subSession, () -> {
 			HistoryUtils.updateSessionRevision();
-			return job.run();
+			return checked.run();
 		});
 	}
 
@@ -168,16 +178,39 @@ public final class ChatCommandDriver {
 	 *        The content of the {@code <chat-conversation>} element, e.g. a {@code <context>}.
 	 */
 	public Conversation conversation(Person person, String content) throws Exception {
-		return inWindow(() -> render(person, content));
+		return conversation(person, "", content);
 	}
 
-	private Conversation render(Person person, String content) throws Exception {
+	/**
+	 * A conversation of the given configuration, rendered and displayed for the given account.
+	 *
+	 * @param attributes
+	 *        Further attributes of the {@code <chat-conversation>} element, e.g. an {@code input}
+	 *        naming a channel {@link #registerChannel(String, ViewChannel) registered} before.
+	 * @param content
+	 *        The content of the {@code <chat-conversation>} element, e.g. a {@code <context>}.
+	 */
+	public Conversation conversation(Person person, String attributes, String content) throws Exception {
+		return inWindow(() -> render(person, attributes, content));
+	}
+
+	/** Declares a channel of the view the conversations are rendered in. */
+	public void registerChannel(String name, ViewChannel channel) {
+		_view.registerChannel(name, channel);
+	}
+
+	/** The chat id of the driver's conversation for the given account. */
+	public String chatId(Person person) {
+		return _chatId + "-" + person.getName();
+	}
+
+	private Conversation render(Person person, String attributes, String content) throws Exception {
 		_subSession.setPerson(person);
 		Conversation control = new Conversation(_view,
 			(ChatConversationElement.Config) TypedConfiguration.parse(
 				CharacterContents.newContent("<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
 					+ " config:interface='" + ChatConversationElement.Config.class.getName() + "'"
-					+ " chat-id='" + _chatId + "-" + person.getName() + "'>" + content + "</chat-conversation>")));
+					+ " chat-id='" + chatId(person) + "' " + attributes + ">" + content + "</chat-conversation>")));
 		control.attach();
 		return control;
 	}
@@ -232,6 +265,14 @@ public final class ChatCommandDriver {
 				return control.executeClientCommand(name, arguments);
 			}
 		}));
+	}
+
+	/**
+	 * Reads what the data route of the conversation answers for the given key, as the browser reads
+	 * a transcript; <code>null</code> for a key that names nothing the account may read.
+	 */
+	public BinaryData data(ChatControl control, String key) {
+		return inWindowUnchecked(() -> control.getDownloadData(key));
 	}
 
 	/** Uploads one file to the conversation, as the bridge's upload does, and answers with the reply. */

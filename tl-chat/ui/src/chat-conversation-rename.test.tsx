@@ -25,7 +25,7 @@ let listed: { id: string; title: string }[]
 let requested: string[]
 
 function state(chatId: string, extra: Record<string, unknown>): Record<string, unknown> {
-  return { chatId, hasInput: true, authenticated: true, language: 'de', ...extra }
+  return { chatId, authenticated: true, language: 'de', ...extra }
 }
 
 async function render(chatId: string, extra: Record<string, unknown>): Promise<void> {
@@ -56,7 +56,6 @@ beforeEach(() => {
     const body = id ? { id, turnsJson: '', title: listed.find((session) => session.id === id)?.title } : {}
     return { ok: true, status: 200, json: async () => body }
   }) as unknown as typeof fetch
-  for (const key of Object.keys(window.sessionStorage)) window.sessionStorage.removeItem(key)
   container = document.createElement('div')
   document.body.appendChild(container)
   root = createRoot(container)

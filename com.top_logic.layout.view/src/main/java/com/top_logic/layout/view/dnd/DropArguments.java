@@ -15,6 +15,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.react.control.dnd.DropLocation;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.ActionScopes;
@@ -26,7 +27,8 @@ import com.top_logic.model.search.ui.ScriptContextVariablesProvider;
  *
  * <p>
  * The dragged objects are the main argument, named by {@link DropConfig#getAs()}, the
- * {@link DropReference references} are named by the properties of the drop naming them. The
+ * {@link DropReference references} are named by the properties of the drop naming them, and the
+ * value of the {@link DropConfig#getInput() input} of the drop, if it has one, by the input. The
  * {@link DropConfig#getRefuseIf() refusal function} and the {@link DropConfig#getActions() actions}
  * of the drop see the same arguments.
  * </p>
@@ -68,13 +70,18 @@ public class DropArguments {
 
 	/**
 	 * The names of the arguments of the given drop in the order of their values: the dragged
-	 * objects, followed by the references of the signature.
+	 * objects, followed by the references of the signature and, for a drop with an
+	 * {@link DropConfig#getInput() input}, the name of the input.
 	 */
 	public static List<String> names(DropConfig config, DropSignature signature) {
-		List<String> result = new ArrayList<>(signature.references().size() + 1);
+		List<String> result = new ArrayList<>(signature.references().size() + 2);
 		result.add(objectsName(config));
 		for (DropReference reference : signature.references()) {
 			result.add(referenceName(config, reference));
+		}
+		InputRef input = config.getInput();
+		if (input != null) {
+			result.add(input.getName());
 		}
 		return result;
 	}
@@ -99,7 +106,8 @@ public class DropArguments {
 	}
 
 	/**
-	 * The arguments of a drop of the given objects at the given location.
+	 * The arguments of a drop without {@link DropConfig#getInput() input} of the given objects at
+	 * the given location.
 	 *
 	 * @param names
 	 *        The {@link #names(DropConfig, DropSignature) names} of the arguments of the drop.

@@ -115,6 +115,7 @@ public class TestDelegatingColumn extends TestCase {
 		assertFalse(wrapped.selectable());
 		assertEquals(ColumnAlignment.END, wrapped.alignment());
 		assertFalse(wrapped.pinnedEnd());
+		assertFalse(wrapped.required());
 		assertEquals(COLUMN_CSS, wrapped.cssClass());
 		assertEquals(ROW_CSS, wrapped.cssClass(row));
 		assertEquals(Optional.of(EXISTENCE), wrapped.existence());

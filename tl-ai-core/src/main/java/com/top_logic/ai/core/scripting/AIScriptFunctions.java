@@ -33,13 +33,22 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.model.search.expr.config.operations.UsesSecurity;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.AgentFactory;
 import com.top_logic.ai.core.agent.AgentLoop;
 import com.top_logic.ai.core.agent.AgentParams;
@@ -61,6 +70,7 @@ import com.top_logic.ai.core.execution.RunInfoBinding;
 import com.top_logic.ai.core.execution.RunRecording;
 import com.top_logic.ai.core.execution.model.AgentExecution;
 import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.ai.core.execution.model.UserMemory;
 import com.top_logic.ai.core.limits.RunLimitSettings;
 import com.top_logic.ai.core.message.AssistantMessage;
@@ -79,6 +89,9 @@ import com.top_logic.ai.core.provider.catalog.ResolvedModel;
 import com.top_logic.ai.core.provider.health.ModelAvailability;
 import com.top_logic.ai.core.provider.health.ModelHealthMark;
 import com.top_logic.ai.core.provider.health.ModelTarget;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Cause;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.ai.core.security.RunAuthorization;
 import com.top_logic.ai.core.security.RunEntryPoint;
 import com.top_logic.ai.core.security.RunPrincipal;
 import com.top_logic.ai.core.security.RunSecurity;
@@ -198,6 +211,21 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 	/** Key of the {@link #modelCatalogStatus()} map: why loading the remote catalog failed. */
 	public static final String CATALOG_FAILURE = "failure";
+
+	/** The TL-Script name of {@link #agentRunStatus(Object, boolean)}, for the log of a denial. */
+	private static final String RUN_STATUS_FUNCTION = "aiAgentRunStatus";
+
+	/** The TL-Script name of {@link #agentRunResult(Object, boolean)}, for the log of a denial. */
+	private static final String RUN_RESULT_FUNCTION = "aiAgentRunResult";
+
+	/** The TL-Script name of {@link #agentRunError(Object, boolean)}, for the log of a denial. */
+	private static final String RUN_ERROR_FUNCTION = "aiAgentRunError";
+
+	/** The TL-Script name of {@link #agentRunTranscript(Object, boolean)}, for the log of a denial. */
+	private static final String RUN_TRANSCRIPT_FUNCTION = "aiAgentRunTranscript";
+
+	/** The TL-Script name of {@link #agentRunCancel(Object, boolean)}, for the log of a denial. */
+	private static final String RUN_CANCEL_FUNCTION = "aiAgentRunCancel";
 
 	/**
 	 * Returns a list of all available model names from the {@link LLMProviderService}.
@@ -374,7 +402,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        </ul>
 	 * @param model
 	 *        The model name to use, or {@code null} to use the
-	 *        {@link AgentRuntimeService#defaultTarget() default model}.
+	 *        {@link AgentRuntimeService#defaultTarget() default model}. The call acts as the account
+	 *        that executed the script, and the section &lt;model-access&gt; of the tool access
+	 *        policy decides which models this account may use: the default model takes the place
+	 *        of the model of an agent, so another model needs a grant.
 	 * @param responseFormat
 	 *        The response format specification, which reaches the provider's request. Can be:
 	 *        <ul>
@@ -395,21 +426,25 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        no tools.
 	 * @return The assistant's response text.
 	 * @throws TopLogicException
-	 *         If the run did not reach an answer - an HTTP error, a stream error, a refusal, a
-	 *         cancellation or an exhausted turn budget - carrying the provider's error kind and
-	 *         message. It never returns the empty string for a failed call: a caller cannot tell
-	 *         that apart from a model that answered nothing.
+	 *         If the acting account may not use the model, with the reason of the policy, before
+	 *         any request is sent. If the run did not reach an answer - an HTTP error, a stream
+	 *         error, a refusal, a cancellation or an exhausted turn budget - carrying the provider's
+	 *         error kind and message. It never returns the empty string for a failed call: a caller
+	 *         cannot tell that apart from a model that answered nothing.
 	 */
 	public static String chat(List<Object> messages, String model, Object responseFormat,
 			Collection<String> tools) {
 		LLMProviderService registry = LLMProviderService.getInstance();
 		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+		// Also for a call that names a model: the policy decides against the default model. Without a
+		// default model no provider is available, and the call fails here, naming the missing secrets.
+		ModelTarget defaultTarget = runtime != null ? runtime.defaultTarget() : null;
+		String defaultModel = defaultTarget != null ? defaultTarget.model() : null;
 		String modelName = model;
 		String providerName = null;
-		if (modelName == null && runtime != null) {
-			ModelTarget target = runtime.defaultTarget();
-			modelName = target.model();
-			providerName = target.provider();
+		if (modelName == null && defaultTarget != null) {
+			modelName = defaultModel;
+			providerName = defaultTarget.provider();
 		}
 
 		// Build system prompt and user messages from the input
@@ -454,21 +489,23 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 		toolRegistry.freeze();
 
-		LLMProvider provider = registry.buildProvider(modelName, providerName);
-
-		AgentParams config = new AgentParams(
-			modelName, systemPrompt != null ? systemPrompt : "",
-			// A call without tools is one exchange. A call with tools needs the turns to use them:
-			// the answer comes after the tool results, so a one-turn budget would stop the loop
-			// with the tool calls made and nothing said.
-			toolRegistry.tools().isEmpty() ? 1 : AgentRuntimeService.maxTurns(),
-			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
-			Map.of(),
-			toResponseFormat(responseFormat));
-
-		AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
 		ToolContext context = ToolContext.forCurrentUser();
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
+			// Before the provider is built: a call the account may not make costs no round trip.
+			refuseModel(context.security().runAuthorization(), modelName, defaultModel);
+			LLMProvider provider = registry.buildProvider(modelName, providerName);
+
+			AgentParams config = new AgentParams(
+				modelName, systemPrompt != null ? systemPrompt : "",
+				// A call without tools is one exchange. A call with tools needs the turns to use them:
+				// the answer comes after the tool results, so a one-turn budget would stop the loop
+				// with the tool calls made and nothing said.
+				toolRegistry.tools().isEmpty() ? 1 : AgentRuntimeService.maxTurns(),
+				AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
+				Map.of(),
+				toResponseFormat(responseFormat));
+
+			AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
 			int messageCountBefore = conversation.size();
 
 			AgentSession session = createScriptSession("ai.chat (" + modelName + ")");
@@ -489,6 +526,40 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		} finally {
 			context.transaction().close();
 		}
+	}
+
+	/**
+	 * Refuses a call of {@link #chat(List, String, Object, Collection)} on a model the acting account
+	 * may not use.
+	 *
+	 * <p>
+	 * The rule of {@code <model-access>} for an agent run, with the default model in the place of the
+	 * model of the agent: such a call has no agent. The default model is therefore permitted unless a
+	 * role denies it, and another model needs a grant. Both cases are one question to the policy, and
+	 * not {@link RunAuthorization#assignedModelRefusal(String)} for the default model: that one reports
+	 * a denied default model as the model of an agent.
+	 * </p>
+	 *
+	 * @param authorization
+	 *        What the acting account may run.
+	 * @param modelName
+	 *        The model the call runs on.
+	 * @param defaultModel
+	 *        The default model of the installation; <code>null</code> only while the agent runtime is
+	 *        not running, and then every model needs a grant.
+	 * @throws TopLogicException
+	 *         With the reason of the policy, if the account may not use the model.
+	 */
+	private static void refuseModel(RunAuthorization authorization, String modelName, String defaultModel) {
+		Decision.Denied denied = authorization.modelRefusal(modelName, defaultModel);
+		if (denied == null) {
+			return;
+		}
+		// The sentence of the policy for this cause names the model of the agent.
+		ResKey reason = denied.cause() == Cause.NOT_THE_AGENTS
+			? I18NConstants.ERROR_MODEL_NOT_THE_DEFAULT__MODEL.fill(denied.name())
+			: denied.reason();
+		throw new TopLogicException(reason);
 	}
 
 	/**
@@ -598,8 +669,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * Reading an async run back needs a <b>second</b> console execution: within the request that
-	 * started it, {@link #agentRunStatus(Object)} returns {@code null} (not {@code RUNNING}) for the
-	 * same revision-pinning reason, however long the script waits. See
+	 * started it, {@link #agentRunStatus(Object, boolean)} returns {@code null} (not
+	 * {@code RUNNING}) for the same revision-pinning reason, however long the script waits. See
 	 * {@link #agentChatAsync(String, Object)}.
 	 * </p>
 	 *
@@ -660,9 +731,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * Unlike {@link #agentChat(String, Object)}, which runs the agent loop synchronously on the
 	 * calling thread and blocks until it finishes, this function submits the run to the
 	 * {@link SchedulerService} and returns right away. The return value is the session's persistent
-	 * id as a plain {@link String} handle: poll it with {@link #agentRunStatus(Object)} and
-	 * {@link #agentRunResult(Object)} to observe progress and retrieve the transcript once the run
-	 * is {@code COMPLETE}.
+	 * id as a plain {@link String} handle: poll it with {@link #agentRunStatus(Object, boolean)}
+	 * and {@link #agentRunResult(Object, boolean)} to observe progress and retrieve the transcript
+	 * once the run is {@code COMPLETE}.
 	 * </p>
 	 *
 	 * <p>
@@ -695,10 +766,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * <b>Poll the handle in a separate request.</b> The run stays invisible for the rest of the
 	 * request that started it, however long that request sleeps: the session was committed at a
 	 * revision newer than this request's pinned one, so the handle does not resolve here and
-	 * {@link #agentRunStatus(Object)} returns {@code null} - not {@code RUNNING}. In the Script
-	 * console this means two executions: one starts the run and keeps the handle, a later one reads
-	 * status and result. Carry the handle over with {@code storeInSession}/{@code loadFromSession}, or
-	 * paste it into the follow-up script.
+	 * {@link #agentRunStatus(Object, boolean)} returns {@code null} - not {@code RUNNING}. In the
+	 * Script console this means two executions: one starts the run and keeps the handle, a later one
+	 * reads status and result. Carry the handle over with
+	 * {@code storeInSession}/{@code loadFromSession}, or paste it into the follow-up script.
 	 * </p>
 	 *
 	 * <p>
@@ -798,7 +869,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		// Runs as the account that started it - agentChatAsync derived a sub-session of that account's
 		// on this thread - and is marked as a background run, so the policy's background allowlist applies as
 		// an additional ceiling. Auto-approval is exactly the compensating control that allowlist
-		// replaces: a run with nobody to ask must not reach write tools by default.
+		// replaces: a run whose tool calls nobody approves must not reach write tools by default.
 		ToolContext context = new ToolContext(
 			RunSecurity.contextFor(
 				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, true,
@@ -863,10 +934,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * <p>
 	 * <b>Where the report goes.</b> The run is recorded as a chat of the owner, titled "Research:" and
 	 * the start of the question. The chat appears in the owner's chat list, and the owner reads the
-	 * report there, with its footnotes. {@link #agentRunResult(Object)} returns the same report for the
-	 * handle; {@link #agentRunStatus(Object)} and {@link #agentRunCancel(Object)} work as for
-	 * {@link #agentChatAsync(String, Object)}. As there, read the handle in a later request than the
-	 * one that started the run.
+	 * report there, with its footnotes. {@link #agentRunResult(Object, boolean)} returns the same
+	 * report for the handle; {@link #agentRunStatus(Object, boolean)} and
+	 * {@link #agentRunCancel(Object, boolean)} work as for {@link #agentChatAsync(String, Object)}.
+	 * As there, read the handle in a later request than the one that started the run.
 	 * </p>
 	 *
 	 * <p>
@@ -906,7 +977,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @throws TopLogicException
 	 *         If the question is empty, the effort is unknown, no owner can be determined, or a user
 	 *         names another account.
-	 * @see #agentRunResult(Object)
+	 * @see #agentRunResult(Object, boolean)
 	 */
 	public static String research(String question, String effort, Object owner) {
 		return HeadlessResearch.start(question, effort, owner);
@@ -933,39 +1004,35 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * console execution.
 	 * </p>
 	 *
+	 * <p>
+	 * <b>Who reads the status.</b> A script that applies the access rights of the current account
+	 * reads the status only where this account may read the attribute {@code status} of the run, and
+	 * a queued run only where it may read the session. With the shipped access policy, these are the
+	 * runs of the account itself, and every run for an administrator. For another run, the result is
+	 * {@code null}, as for an unknown handle, also while that run is queued. A script without access
+	 * checks, such as a scheduler task, reads the status of every run.
+	 * </p>
+	 *
 	 * @param handle
 	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
-	 * @return The status name, or {@code null} if the handle cannot be resolved to a run.
+	 * @param usesSecurity
+	 *        Whether the call is evaluated with the access rights of the current account.
+	 * @return The status name, or {@code null} if the handle cannot be resolved to a run whose
+	 *         status the current account may read.
 	 */
-	public static String agentRunStatus(Object handle) {
-		AgentExecution execution = resolveExecution(handle);
-		if (execution == null) {
-			// A session handle with no visible execution yet: the run is queued or its recording
-			// has not yet propagated to this thread's revision view. This also covers the string
-			// session id returned by agentChatAsync, whose background execution only becomes visible
-			// in a later request's revision.
-			return isSessionHandle(handle)
-				? AgentExecutionStore.ExecutionStatus.RUNNING.name()
-				: null;
+	public static String agentRunStatus(Object handle, @UsesSecurity boolean usesSecurity) {
+		TLObject run = resolveRun(handle, usesSecurity, SimpleBoundCommandGroup.READ, RUN_STATUS_FUNCTION,
+			TlAiExecutionFactory.getStatusAgentExecutionAttr());
+		if (run instanceof AgentExecution execution) {
+			com.top_logic.model.TLClassifier status = execution.getStatus();
+			return status != null ? status.getName() : null;
 		}
-		com.top_logic.model.TLClassifier status = execution.getStatus();
-		return status != null ? status.getName() : null;
-	}
-
-	/**
-	 * Whether the handle refers to an {@link AgentSession} - either the wrapper directly or the
-	 * string session id returned by {@link #agentChatAsync(String, Object)} - as opposed to a
-	 * run-id string or an unresolvable value.
-	 */
-	private static boolean isSessionHandle(Object handle) {
-		if (handle instanceof AgentSession) {
-			return true;
-		}
-		if (handle instanceof String id && AgentExecutionStore.Module.INSTANCE.isActive()) {
-			return AgentExecutionStore.getInstance().findSessionById(id) != null;
-		}
-		return false;
+		// A session with no visible execution yet: the run is queued or its recording has not yet
+		// propagated to this thread's revision view. This also covers the string session id returned
+		// by agentChatAsync, whose background execution only becomes visible in a later request's
+		// revision.
+		return run != null ? AgentExecutionStore.ExecutionStatus.RUNNING.name() : null;
 	}
 
 	/**
@@ -979,29 +1046,46 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * transcript - and it raises what {@code agentChat} would have raised. A run that ended in
 	 * {@code ERROR}, {@code CANCELLED} or {@code REJECTED} therefore fails here with the recorded
 	 * error message rather than reading as an absent answer. Use
-	 * {@link #agentRunTranscript(Object)} for the full conversation log.
+	 * {@link #agentRunTranscript(Object, boolean)} for the full conversation log.
 	 * </p>
 	 *
 	 * <p>
-	 * {@code null} means only "not finished yet": the handle resolves to no execution (queued, or
-	 * not yet visible in this request's revision) or the run is still {@code RUNNING}. A script
-	 * that wants to handle a failure instead of failing asks {@link #agentRunStatus(Object)} first
-	 * and reads {@link #agentRunError(Object)}; the documented polling shape
+	 * For a run that the account may read, {@code null} means only "not finished yet": the handle
+	 * resolves to no execution (queued, or not yet visible in this request's revision) or the run is
+	 * still {@code RUNNING}. A script that wants to handle a failure instead of failing asks
+	 * {@link #agentRunStatus(Object, boolean)} first and reads
+	 * {@link #agentRunError(Object, boolean)}; the documented polling shape
 	 * ({@code aiAgentRunStatus($h) == "COMPLETE" ? aiAgentRunResult($h) : null}) never reaches the
 	 * raise.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Who reads the answer.</b> A script that applies the access rights of the current account
+	 * reads the answer only where this account may read the attributes {@code status},
+	 * {@code response} and {@code errorMessage} of the run, since the answer, its absence and the
+	 * raised failure come from them. With the shipped access policy, these are the runs of the
+	 * account itself, and every run for an administrator. For another run, the result is
+	 * {@code null}, as for an unknown handle, and a failed run raises nothing. A script without
+	 * access checks, such as a scheduler task, reads the answer of every run.
 	 * </p>
 	 *
 	 * @param handle
 	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
+	 * @param usesSecurity
+	 *        Whether the call is evaluated with the access rights of the current account.
 	 * @return The final answer text when the run is {@code COMPLETE}, or {@code null} while it is
-	 *         not finished.
+	 *         not finished or when the current account may not read its answer.
 	 * @throws TopLogicException
 	 *         If the run ended in a state other than {@code COMPLETE}, carrying the recorded error
 	 *         message.
 	 */
-	public static String agentRunResult(Object handle) {
-		AgentExecution execution = resolveExecution(handle);
+	public static String agentRunResult(Object handle, @UsesSecurity boolean usesSecurity) {
+		AgentExecution execution =
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, RUN_RESULT_FUNCTION,
+				TlAiExecutionFactory.getStatusAgentExecutionAttr(),
+				TlAiExecutionFactory.getResponseAgentExecutionAttr(),
+				TlAiExecutionFactory.getErrorMessageAgentExecutionAttr());
 		if (execution == null) {
 			return null;
 		}
@@ -1026,20 +1110,35 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * Returns what went wrong in an async agent run, without raising it.
 	 *
 	 * <p>
-	 * This is the error message {@link #agentRunResult(Object)} would raise: the provider's own
-	 * message for a run that failed against the model, the exception message for a run that failed
-	 * before or around it, {@code null} for a run that is still going or that succeeded. Use it
-	 * when the script wants to record or display the failure rather than be stopped by it.
+	 * This is the error message {@link #agentRunResult(Object, boolean)} would raise: the
+	 * provider's own message for a run that failed against the model, the exception message for a
+	 * run that failed before or around it, {@code null} for a run that is still going or that
+	 * succeeded. Use it when the script wants to record or display the failure rather than be
+	 * stopped by it.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Who reads the error.</b> A script that applies the access rights of the current account
+	 * reads the error only where this account may read the attribute {@code errorMessage} of the
+	 * run. With the shipped access policy,
+	 * these are the runs of the account itself, and every run for an administrator. For another
+	 * run, the result is {@code null}, as for an unknown handle. A script without access checks,
+	 * such as a scheduler task, reads the error of every run.
 	 * </p>
 	 *
 	 * @param handle
 	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
-	 * @return The recorded error message, or {@code null} if there is none.
-	 * @see #agentRunStatus(Object)
+	 * @param usesSecurity
+	 *        Whether the call is evaluated with the access rights of the current account.
+	 * @return The recorded error message, or {@code null} if there is none or the current account
+	 *         may not read it.
+	 * @see #agentRunStatus(Object, boolean)
 	 */
-	public static String agentRunError(Object handle) {
-		AgentExecution execution = resolveExecution(handle);
+	public static String agentRunError(Object handle, @UsesSecurity boolean usesSecurity) {
+		AgentExecution execution =
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, RUN_ERROR_FUNCTION,
+				TlAiExecutionFactory.getErrorMessageAgentExecutionAttr());
 		if (execution == null) {
 			return null;
 		}
@@ -1057,17 +1156,31 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * iteration, and it is {@code null} before that. The complete transcript is written once the run
 	 * reaches any terminal state, including {@code ERROR} and {@code CANCELLED}, where the partial
 	 * log is the most useful diagnostic. For the agent's final answer alone, use
-	 * {@link #agentRunResult(Object)}.
+	 * {@link #agentRunResult(Object, boolean)}.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Who reads the transcript.</b> The transcript holds the arguments and the results of the
+	 * tool calls, which the run read with the rights of its owner. A script that applies the access
+	 * rights of the current account reads the transcript only where this account may read the
+	 * attribute {@code transcript} of the run, as {@code $run.get(...)} does. With the shipped access
+	 * policy, these are the runs of the account itself, and every run for an administrator. For
+	 * another run, the result is {@code null}, as for an unknown handle. A script without access
+	 * checks, such as a scheduler task, reads the transcript of every run.
 	 * </p>
 	 *
 	 * @param handle
 	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
-	 * @return The serialized transcript, or {@code null} if the handle cannot be resolved or no
-	 *         transcript has been recorded yet.
+	 * @param usesSecurity
+	 *        Whether the call is evaluated with the access rights of the current account.
+	 * @return The serialized transcript, or {@code null} if the handle cannot be resolved to a run
+	 *         whose transcript the current account may read, or no transcript has been recorded yet.
 	 */
-	public static String agentRunTranscript(Object handle) {
-		AgentExecution execution = resolveExecution(handle);
+	public static String agentRunTranscript(Object handle, @UsesSecurity boolean usesSecurity) {
+		AgentExecution execution =
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, RUN_TRANSCRIPT_FUNCTION,
+				TlAiExecutionFactory.getTranscriptAgentExecutionAttr());
 		if (execution == null) {
 			return null;
 		}
@@ -1083,22 +1196,37 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * cancel marker is set and committed - a normal KB write that works from any node, so the node
 	 * receiving the cancel need not be the node running the job. The running node observes the
 	 * marker at its next agent-loop turn and cancels the run, which then finalizes as
-	 * {@code CANCELLED}. Cancellation is therefore asynchronous: poll {@link #agentRunStatus(Object)}
-	 * to observe the run reach {@code CANCELLED}.
+	 * {@code CANCELLED}. Cancellation is therefore asynchronous: poll
+	 * {@link #agentRunStatus(Object, boolean)} to observe the run reach {@code CANCELLED}.
 	 * </p>
 	 *
 	 * <p>
 	 * A no-op for a run that has already reached a terminal state (nothing left to cancel).
 	 * </p>
 	 *
+	 * <p>
+	 * <b>Who stops a run.</b> A script that applies the access rights of the current account stops
+	 * only a run on whose attribute {@code cancelRequested} this account has the right
+	 * {@code Write}. With the shipped access policy, these are the runs of the account itself, and
+	 * every run for an administrator. A restricted account, which may only read, cannot stop even
+	 * its own run. For another run, the result is {@code false}, as for an unknown handle, and the
+	 * run continues. A script without access checks, such as a scheduler task, stops every run. The
+	 * application log names the account that stopped a run.
+	 * </p>
+	 *
 	 * @param handle
 	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
+	 * @param usesSecurity
+	 *        Whether the call is evaluated with the access rights of the current account.
 	 * @return {@code true} if a still-running run was signalled to cancel; {@code false} if the
-	 *         handle could not be resolved or the run was already terminal.
+	 *         handle could not be resolved to a run that the current account may stop, or the run
+	 *         was already terminal.
 	 */
-	public static boolean agentRunCancel(Object handle) {
-		AgentExecution execution = resolveExecution(handle);
+	public static boolean agentRunCancel(Object handle, @UsesSecurity boolean usesSecurity) {
+		AgentExecution execution =
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.WRITE, RUN_CANCEL_FUNCTION,
+				TlAiExecutionFactory.getCancelRequestedAgentExecutionAttr());
 		if (execution == null || !AgentExecutionStore.Module.INSTANCE.isActive()) {
 			return false;
 		}
@@ -1117,9 +1245,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * Refuses a session the acting account neither owns nor administers. The check is here and not
-	 * only in the view that calls it: a command's input is whatever a channel happens to hold, and
-	 * this function is reachable from a scheduler task and the TL-Script console as well.
+	 * Refuses a session the acting account may not write (the write right on the session, decided
+	 * by the model-based security). The check is here and not only in the view
+	 * that calls it: a command's input is whatever a channel happens to hold, and this function is
+	 * reachable from a scheduler task and the TL-Script console as well.
 	 * </p>
 	 *
 	 * @param session
@@ -1128,15 +1257,16 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        The new title; must not be blank.
 	 * @return The renamed session, so the call can be chained.
 	 * @throws TopLogicException
-	 *         If {@code session} is not a session, is someone else's, or {@code title} is blank.
+	 *         If {@code session} is not a session, may not be written, or {@code title} is blank.
+	 * @see SimpleBoundCommandGroup#WRITE The right checked on the session.
 	 */
 	public static AgentSession sessionRename(Object session, String title) {
-		AgentSession owned = ownedSession(session);
+		AgentSession writable = writableSession(session);
 		if (title == null || title.isBlank()) {
 			throw new TopLogicException(I18NConstants.ERROR_SESSION_TITLE_EMPTY);
 		}
-		AgentExecutionStore.getInstance().updateTitle(owned, title.trim());
-		return owned;
+		AgentExecutionStore.getInstance().updateTitle(writable, title.trim());
+		return writable;
 	}
 
 	/**
@@ -1153,17 +1283,16 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * Refuses a session the acting account neither owns nor administers, for the same reason
-	 * renaming one does.
+	 * Refuses a session the acting account may not write, for the same reason renaming one does.
 	 * </p>
 	 *
 	 * @param session
 	 *        The {@code tl.ai.execution:AgentSession} to delete.
 	 * @return Always {@code true}; a refusal is a {@link TopLogicException}, not a {@code false}.
 	 * @throws TopLogicException
-	 *         If {@code session} is not a session or is someone else's.
+	 *         If {@code session} is not a session or may not be written.
 	 * @see AgentExecutionStore#deleteSession(AgentSession) What the cancelling and the cascade are.
-	 * @see #sessionRename(Object, String) The same ownership check.
+	 * @see #sessionRename(Object, String) The same access check.
 	 */
 	public static boolean sessionDelete(Object session) {
 		AgentSession resolved = unwrapSession(session);
@@ -1172,7 +1301,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			// only throw.
 			return true;
 		}
-		AgentExecutionStore.getInstance().deleteSession(ownedSession(session));
+		AgentExecutionStore.getInstance().deleteSession(writableSession(session));
 		return true;
 	}
 
@@ -1187,7 +1316,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * Refuses a memory the acting account neither owns nor administers. The check is here and not
+	 * Refuses a memory the acting account may not write (the write right on the memory, decided by
+	 * the model-based security). The check is here and not
 	 * only in the view that calls it, for the same reason {@link #sessionDelete(Object)} has it
 	 * here: a command's input is whatever a channel happens to hold, and this function is reachable
 	 * from a scheduler task and the TL-Script console as well.
@@ -1197,10 +1327,11 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        The {@code tl.ai.execution:UserMemory} to delete.
 	 * @return Always {@code true}; a refusal is a {@link TopLogicException}, not a {@code false}.
 	 * @throws TopLogicException
-	 *         If {@code memory} is not a memory or is someone else's.
+	 *         If {@code memory} is not a memory or may not be written.
+	 * @see SimpleBoundCommandGroup#WRITE The right checked on the memory.
 	 */
 	public static boolean memoryDelete(Object memory) {
-		AgentExecutionStore.getInstance().deleteMemory(ownedMemory(memory));
+		AgentExecutionStore.getInstance().deleteMemory(writableMemory(memory));
 		return true;
 	}
 
@@ -1483,16 +1614,16 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * The given value as a {@link UserMemory} the acting account may delete.
+	 * The given value as a {@link UserMemory} the acting account may write.
 	 *
 	 * <p>
-	 * An administrator may delete any of them, which mirrors {@link #ownedSession(Object)} and is
-	 * what makes a {@code <data-list>} over all memories usable as an administration view. Nobody
-	 * else reaches another account's memory: the store's reader filters by owner, so a row of
-	 * somebody else can only arrive here by being guessed, and it is refused.
+	 * Decided like {@link #writableSession(Object)}: the shipped policy gives the owner
+	 * {@link SimpleBoundCommandGroup#WRITE} on their memories, and an administrator passes the
+	 * bypass of the model-based security, which makes a {@code <data-list>} over all memories usable
+	 * as an administration view.
 	 * </p>
 	 */
-	private static UserMemory ownedMemory(Object memory) {
+	private static UserMemory writableMemory(Object memory) {
 		UserMemory resolved = memory instanceof UserMemory found ? found : null;
 		if (resolved == null && memory instanceof Collection<?> many && many.size() == 1) {
 			Object only = many.iterator().next();
@@ -1501,9 +1632,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		if (resolved == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NOT_A_MEMORY);
 		}
-		Person actor = TLContext.currentUser();
-		if (actor == null || (!actor.equals(resolved.getOwner()) && !actor.isAdmin())) {
-			throw new TopLogicException(I18NConstants.ERROR_MEMORY_NOT_OWNED);
+		if (!mayWrite(resolved)) {
+			throw new TopLogicException(I18NConstants.ERROR_MEMORY_WRITE_DENIED);
 		}
 		return resolved;
 	}
@@ -1530,39 +1660,135 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * The given value as an {@link AgentSession} the acting account may change.
 	 *
 	 * <p>
-	 * An administrator may change any session. That mirrors {@code ToolAuthorization} and
-	 * {@code RunAuthorization}, where an administrator already bypasses the layer, and it is what
-	 * makes a {@code <data-list>} over all sessions usable as an administration view. It does not
-	 * loosen the commands of the chat controls, which stay strictly owner-only: there the guard also defends
-	 * against a guessed id arriving from a browser, and no administration surface asks for it.
+	 * Whether it may is {@link SimpleBoundCommandGroup#WRITE} on the session, decided by the
+	 * model-based security: the shipped policy gives it to the owner, an application may give it to
+	 * further roles, and an administrator passes the bypass, which makes a {@code <data-list>} over
+	 * all sessions usable as an administration view.
 	 * </p>
 	 */
-	private static AgentSession ownedSession(Object session) {
+	private static AgentSession writableSession(Object session) {
 		AgentSession resolved = unwrapSession(session);
 		if (resolved == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NOT_A_SESSION);
 		}
-		Person actor = TLContext.currentUser();
-		if (actor == null || (!actor.equals(resolved.getOwner()) && !actor.isAdmin())) {
-			throw new TopLogicException(I18NConstants.ERROR_SESSION_NOT_OWNED);
+		if (!mayWrite(resolved)) {
+			throw new TopLogicException(I18NConstants.ERROR_SESSION_WRITE_DENIED);
 		}
 		return resolved;
 	}
 
 	/**
-	 * Resolves an async-run handle to its {@link AgentExecution}.
+	 * Whether the acting account may write the given object, as the model-based security decides.
+	 */
+	private static boolean mayWrite(TLObject object) {
+		return ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), object,
+			SimpleBoundCommandGroup.WRITE);
+	}
+
+	/**
+	 * Resolves an async-run handle to its {@link AgentExecution}, for an account that may perform
+	 * the given operation on it.
+	 *
+	 * <p>
+	 * A handle of a session whose run is not recorded (or not visible) yet resolves to
+	 * <code>null</code>; see
+	 * {@link #resolveRun(Object, boolean, BoundCommandGroup, String, TLStructuredTypePart...)} for
+	 * the check.
+	 * </p>
+	 */
+	private static AgentExecution resolveExecution(Object handle, boolean usesSecurity,
+			BoundCommandGroup operation, String function, TLStructuredTypePart... attributes) {
+		return resolveRun(handle, usesSecurity, operation, function, attributes) instanceof AgentExecution execution
+			? execution
+			: null;
+	}
+
+	/**
+	 * Resolves an async-run handle to the object that stands for the run, for an account that may
+	 * perform the given operation on it.
+	 *
+	 * <p>
+	 * With the security check of the script on, an object on which the current account may not
+	 * perform the operation resolves to <code>null</code>, as an unknown handle does: a handle is no
+	 * secret, and an answer of its own would tell which runs exist. The handle functions return
+	 * text, which the result filter of TL-Script does not see, so they must check here. The check
+	 * is the model-based security and not an owner rule, so that the access policy decides who
+	 * reads and who stops a run, and an application can give this right to a role with a grant.
+	 * </p>
+	 *
+	 * <p>
+	 * A run is checked on each attribute that the function reads or writes, as
+	 * {@code $run.get(...)} and {@code $run.set(...)} are: a grant on the attribute (a
+	 * {@code <part>} of the security configuration) decides for it, and without one the right on the
+	 * run decides. A session whose run is not visible yet has none of these attributes; it is checked
+	 * as a whole.
+	 * </p>
+	 *
+	 * @param usesSecurity
+	 *        Whether the calling script is evaluated with the access rights of the current account.
+	 *        Without them, as in a scheduler task, every run resolves.
+	 * @param operation
+	 *        {@link SimpleBoundCommandGroup#READ} to read the run,
+	 *        {@link SimpleBoundCommandGroup#WRITE} to stop it.
+	 * @param function
+	 *        The name of the calling TL-Script function, for the log of a denial.
+	 * @param attributes
+	 *        The attributes of the run that the function reads or writes.
+	 * @return The run, the session of a run that is not visible yet, or <code>null</code>.
+	 */
+	private static TLObject resolveRun(Object handle, boolean usesSecurity, BoundCommandGroup operation,
+			String function, TLStructuredTypePart... attributes) {
+		TLObject run = findRun(handle);
+		if (run == null || !usesSecurity) {
+			return run;
+		}
+		if (!run.tValid()) {
+			// Accessible for nobody, but no denial to log: a channel can still hold a deleted run.
+			return null;
+		}
+		TLModelPart denied = deniedPart(run, operation, attributes);
+		if (denied == null) {
+			return run;
+		}
+		// DEBUG and not WARN: a denial is a normal result of the access rights, and a script that
+		// polls a handle of another account would otherwise write one line for each call.
+		Logger.debug(() -> "Run handle denied: function=" + function + " operation=" + operation.getID()
+			+ " on=" + TLModelUtil.qualifiedName(denied) + " run=" + runName(run) + " user=" + actorName(),
+			AIScriptFunctions.class);
+		return null;
+	}
+
+	/**
+	 * The attribute of the run, or the type of the session, on which the current account may not
+	 * perform the given operation, or <code>null</code> if it may.
+	 */
+	private static TLModelPart deniedPart(TLObject run, BoundCommandGroup operation,
+			TLStructuredTypePart[] attributes) {
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		Person actor = TLContext.currentUser();
+		if (run instanceof AgentExecution) {
+			for (TLStructuredTypePart attribute : attributes) {
+				if (!rights.isAllowed(actor, run, attribute, operation)) {
+					return attribute;
+				}
+			}
+			return null;
+		}
+		return rights.isAllowed(actor, run, operation) ? null : run.tType();
+	}
+
+	/**
+	 * The object an async-run handle names, without any access check.
 	 *
 	 * <p>
 	 * Accepts the string session-id handle returned by {@link #agentChatAsync(String, Object)} (its
 	 * session's top-level execution is returned), an {@link AgentSession} directly, an
-	 * {@link AgentExecution} directly, or a run-id string. Returns <code>null</code> when the handle
-	 * cannot be resolved (unknown type, or no execution recorded yet).
+	 * {@link AgentExecution} directly, or a run-id string. A session without a visible top-level
+	 * execution stands for its run that is queued. Returns <code>null</code> when the handle cannot
+	 * be resolved.
 	 * </p>
 	 */
-	private static AgentExecution resolveExecution(Object handle) {
-		if (handle == null) {
-			return null;
-		}
+	private static TLObject findRun(Object handle) {
 		if (handle instanceof AgentExecution execution) {
 			return execution;
 		}
@@ -1570,20 +1796,35 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			return null;
 		}
 		AgentExecutionStore store = AgentExecutionStore.getInstance();
-		if (handle instanceof AgentSession session) {
-			return topLevelExecutionOf(store, session);
-		}
-		if (handle instanceof String id) {
-			// The async handle is a session id (see agentChatAsync); resolve it to the session and
-			// return its top-level execution. Fall back to a run-id lookup for handles obtained
-			// otherwise (e.g. an AgentExecution's run id).
-			AgentSession session = store.findSessionById(id);
-			if (session != null) {
-				return topLevelExecutionOf(store, session);
+		AgentSession session = null;
+		if (handle instanceof AgentSession found) {
+			session = found;
+		} else if (handle instanceof String id) {
+			// The async handle is a session id (see agentChatAsync). Fall back to a run-id lookup
+			// for handles obtained otherwise (e.g. an AgentExecution's run id).
+			session = store.findSessionById(id);
+			if (session == null) {
+				return store.findExecutionByRunId(id);
 			}
-			return store.findExecutionByRunId(id);
 		}
-		return null;
+		if (session == null) {
+			return null;
+		}
+		AgentExecution topLevel = topLevelExecutionOf(store, session);
+		return topLevel != null ? topLevel : session;
+	}
+
+	/** The name of a run or of a queued session, for a log record. */
+	private static String runName(TLObject run) {
+		return run instanceof AgentExecution execution
+			? execution.getRunId()
+			: KBUtils.getWrappedObjectName(run).toString();
+	}
+
+	/** The login name of the acting account, for a log record. */
+	private static String actorName() {
+		Person actor = TLContext.currentUser();
+		return actor == null ? "(none)" : actor.getName();
 	}
 
 	/**

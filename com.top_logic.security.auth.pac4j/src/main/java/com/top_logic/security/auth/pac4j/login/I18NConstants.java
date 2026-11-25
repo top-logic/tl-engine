@@ -14,7 +14,7 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Log in with single sign-on
+	 * @en Sign in with Single Sign-On
 	 */
 	public static ResKey LOGIN_WITH_SSO;
 

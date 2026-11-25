@@ -1,5 +1,6 @@
-// Client-side scroll-to-anchor primitive, shared by TLScrollLink (a click) and the server-driven
-// <scroll-to-anchor> action (a FunctionCall to window.TLReact.scrollToAnchor).
+// Client-side scroll primitives: the scroll-to-anchor jump, shared by TLScrollLink (a click) and the
+// server-driven <scroll-to-anchor> action (a FunctionCall to window.TLReact.scrollToAnchor), and the
+// lookup of the box that scrolls an element.
 
 import { addStateWord, removeStateWord } from './css';
 
@@ -52,4 +53,20 @@ export function scrollToAnchor(key: string): void {
     addStateWord(node, FLASH);
     node.addEventListener('animationend', endFlash);
   });
+}
+
+/**
+ * The nearest ancestor of the given element that scrolls its content vertically, null if none does.
+ *
+ * An ancestor counts while it is a scroll container (overflow `auto` or `scroll`) whose content is
+ * taller than its box; a box that could scroll but currently has nothing to scroll is passed over.
+ */
+export function scrollingAncestor(element: HTMLElement): HTMLElement | null {
+  for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+    const overflow = getComputedStyle(parent).overflowY;
+    if ((overflow === 'auto' || overflow === 'scroll') && parent.scrollHeight > parent.clientHeight) {
+      return parent;
+    }
+  }
+  return null;
 }

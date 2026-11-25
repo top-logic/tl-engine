@@ -1,4 +1,4 @@
-import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, registerPendingFlush, unregisterPendingFlush, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, StateBadge, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, useDisplayClass, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget, isCompositionKey } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, registerPendingFlush, unregisterPendingFlush, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, StateBadge, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, useDisplayClass, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget, isCompositionKey, scrollingAncestor } from 'tl-react-bridge';
 import { ButtonDefaults } from 'tl-react-bridge';
 import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
@@ -131,19 +131,6 @@ const RESTORE_TIMEOUT_MS = 1000;
  */
 function isBoundedBody(body: HTMLElement): boolean {
   return body.scrollHeight > body.clientHeight || body.clientHeight <= window.innerHeight;
-}
-
-/**
- * The nearest ancestor of the given element that scrolls vertically, null if none does.
- */
-function scrollingAncestor(element: HTMLElement): HTMLElement | null {
-  for (let parent = element.parentElement; parent; parent = parent.parentElement) {
-    const overflow = getComputedStyle(parent).overflowY;
-    if ((overflow === 'auto' || overflow === 'scroll') && parent.scrollHeight > parent.clientHeight) {
-      return parent;
-    }
-  }
-  return null;
 }
 
 /**

@@ -21,7 +21,7 @@ derselbe Wert.
 
 | Aktion | Auslöser |
 |---|---|
-| `activate` | Klick auf eine Kachel mit Aktion; Enter oder Leertaste am Knopf `tl-dashboard__action`. Nicht im Bearbeiten, nicht bei `disabled` |
+| `activate` | Klick auf eine Kachel mit Aktion (nicht auf bedienbaren Inhalt, nicht am Ende einer Textmarkierung); Enter oder Leertaste am Knopf `tl-activatable__action`. Nicht im Bearbeiten, nicht bei `disabled` |
 | `hide` | der Ausblenden-Knopf im Bearbeiten |
 | `reorder` | Ziehen einer Kachel im Bearbeiten; Alt+Pfeil links, rechts an der fokussierten Kachel (`useListReorder`, `axis: 'horizontal'`) |
 
@@ -39,8 +39,8 @@ derselbe Wert.
 |---|---|
 | Wurzel | `tl-dashboard` mit `tl-inset` (Innenabstand); im Bearbeiten `data-tl-state~="edit"` |
 | Raster | `tl-dashboard__grid`, `data-tl-axis="horizontal"`: die Einfügemarke steht links und rechts |
-| Kachel | `div` mit `tl-card`, `tl-dashboard__tile`, `tl-overlay`, `tl-overlay--fill`; der Inhalt in `tl-overlay__base`. Im Bearbeiten `role="group"`, fokussierbar (`tabindex="0"`), mit Name und Beschreibung aus `useListReorder` (ohne Rolle dürfte das `div` keinen Namen tragen) |
-| Aktion | `button` mit `tl-dashboard__action` und `tl-visually-hidden`, direkt in der Kachel, Name `label`; der Tooltip über `tooltipProps` sitzt an der Kachel (der Knopf ist außer Sicht und bekommt keinen Zeiger); deaktiviert `disabled` bzw. `aria-disabled="true"` |
+| Kachel | `div` mit `tl-card`, `tl-dashboard__tile`, `tl-overlay`, `tl-overlay--fill`, mit Aktion außerhalb des Bearbeitens zusätzlich `tl-activatable` (`layout.contract.md`, Aktivierbar); der Inhalt in `tl-overlay__base`. Im Bearbeiten `role="group"`, fokussierbar (`tabindex="0"`), mit Name und Beschreibung aus `useListReorder` (ohne Rolle dürfte das `div` keinen Namen tragen) |
+| Aktion | `button` mit `tl-activatable__action` und `tl-visually-hidden` (`ActivationButton` der Bridge), direkt in der Kachel, Name `label`; der Tooltip über `tooltipProps` sitzt an der Kachel (der Knopf ist außer Sicht und bekommt keinen Zeiger); deaktiviert `disabled` bzw. `aria-disabled="true"` |
 | Abdeckung | im Bearbeiten `div` `tl-dashboard__cover` in einer Ebene `tl-overlay__layer` `tl-overlay__layer--fill`, im DOM vor der Ebene des Ausblenden-Knopfs |
 | Ausblenden-Knopf | Part `Button` (ghost, icon-only, Name `js.dashboard.hideTile`) in `tl-overlay__action` in einer Ebene `tl-overlay__layer` `tl-overlay__layer--top-right` |
 
@@ -51,7 +51,8 @@ derselbe Wert.
 | `tl-dashboard` | die Wurzel, mit `tl-inset` |
 | `tl-dashboard__grid` | das Raster; Spalten, Zeilenhöhe und Abstand inline (Daten der Packung) |
 | `tl-dashboard__tile` | die Kachel, mit `tl-card` und `tl-overlay tl-overlay--fill`; Lage im Raster inline |
-| `tl-dashboard__action` | der verborgene Knopf der Aktion, mit `tl-visually-hidden` |
+| `tl-activatable` | die Kachel mit Aktion außerhalb des Bearbeitens (`layout.contract.md`) |
+| `tl-activatable__action` | der verborgene Knopf der Aktion, mit `tl-visually-hidden` |
 | `tl-dashboard__cover` | die Abdeckung im Bearbeiten |
 
 ## Attribute
@@ -69,10 +70,11 @@ derselbe Wert.
 
 - Die Kachel ist eine Karte: Fläche, Rand und Ecke aus `tl-card`, **kein Schatten**. Was nicht in ihre Höhe passt,
   rollt (`overflow: auto` statt `clip` der Karte).
-- Eine Kachel mit Aktion nimmt den Klick auf ihrer ganzen Fläche (Zeiger `pointer`); beim Zeigen trägt ihr Rand
-  `--tl-border-interactive` — nicht im Bearbeiten, nicht bei deaktivierter Aktion.
+- Eine Kachel mit Aktion ist aktivierbar (`tl-activatable`, die allgemeine Regel in `layout.css`): sie nimmt den Klick
+  auf ihrer ganzen Fläche (Zeiger `pointer`); beim Zeigen trägt ihr Rand `--tl-border-interactive` — nicht im
+  Bearbeiten (dann fehlt die Klasse), nicht bei deaktivierter Aktion.
 - Fokus: hat der verborgene Knopf den Tastaturfokus, trägt die Kachel den Ring. Die Regel steht in `base.css` als
-  Alternative der einen Ring-Regel (`.tl-dashboard__tile:has(> .tl-dashboard__action:focus-visible)`); `dashboard.css`
+  Alternative der einen Ring-Regel (`.tl-activatable:has(> .tl-activatable__action:focus-visible)`); `dashboard.css`
   liest kein Fokus-Token. Der Knopf steht mit `--tl-space-sm` Abstand zur Kachelkante, sein eigener Ring endet so
   nicht an der rollenden Kachel.
 - Bearbeiten: die Abdeckung nimmt den Zeiger (`cursor: move`), ein Klick erreicht den Inhalt nicht. Der

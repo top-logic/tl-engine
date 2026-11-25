@@ -106,6 +106,13 @@ export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDra
 export { DropHint, NO_DRAG_IMAGE } from './bridge/drop-hint';
 export type { DropVerdict, HintAnchor } from './bridge/drop-hint';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
+export {
+  ACTIVATABLE_CLASS, ACTIVATION_ACTION_CLASS, ActivationButton, ActivationOpenButton, activationProps,
+  endsTextSelection,
+} from './bridge/activatable';
+export type {
+  ActivationAction, ActivationButtonProps, ActivationMode, ActivationOpenButtonProps, ActivationProps,
+} from './bridge/activatable';
 export { INTERACTIVE_SELECTOR, isInteractiveWithin, isInteractiveTarget, isOperableTarget, operableSelector } from './bridge/interactive';
 export { ATTR_LONG_PRESS, LONG_PRESS_EVENT } from './bridge/touch-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';

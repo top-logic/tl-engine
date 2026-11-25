@@ -515,7 +515,7 @@ describe('the dashboard (spec §6: tl-dashboard)', () => {
     await settle();
 
     const action = screen.getByRole('button', { name: 'Projekte öffnen' });
-    expect(action.classList).toContain('tl-dashboard__action');
+    expect(action.classList).toContain('tl-activatable__action');
     expect(action.classList).toContain('tl-visually-hidden');
     // The ring of the tile is drawn for a focused button that is a direct child of the tile (base.css).
     expect(action.parentElement).toBe(tileOf('c-t1'));

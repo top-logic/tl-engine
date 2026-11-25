@@ -166,19 +166,33 @@ test('dashboard: Kachel ist eine Karte', () => {
   assert.doesNotMatch(regel(DASHBOARD, '.tl-dashboard__tile'), /box-shadow/);
   assert.doesNotMatch(ohneKommentar(DASHBOARD), /box-shadow/, 'kein Schatten, auch nicht beim Zeigen');
   assert.match(regel(DASHBOARD, '.tl-dashboard__cover'), /cursor:\s*move/);
-  // Zeigen auf eine Kachel mit Aktion — nicht im Bearbeiten, nicht deaktiviert — wie heute border-interactive.
-  const zeigen = rulesOf(DASHBOARD).filter(([s]) => /\.tl-dashboard__tile:has\(> \.tl-dashboard__action:not\(:disabled, \[aria-disabled="true"\]\)\):hover/.test(s)
-    && /\.tl-dashboard:not\(\[data-tl-state~="edit"\]\)/.test(s));
-  assert.equal(zeigen.length, 1, 'eine Regel für die gezeigte Kachel mit Aktion');
+  // Eine Kachel mit Aktion ist aktivierbar (tl-activatable, layout.css): die eine allgemeine Regel, kein Zeiger, kein
+  // Rand und kein Knopf der Kachel im Dashboard selbst (#30569).
+  assert.doesNotMatch(ohneKommentar(DASHBOARD), /cursor:\s*pointer|border-interactive|tl-dashboard__action/);
+  assert.match(vertrag('dashboard'), /tl-activatable/);
+});
+
+// --- tl-activatable (#30569): das Element, das ein Klick öffnet — Kachel und Eintrag ------------------------------
+
+const LAYOUT = leseOder('layout', 'layout.css');
+
+test('activatable: Zeiger, Rand beim Zeigen, Fokusring, verborgener Knopf', () => {
+  const OFFEN = '.tl-activatable:has(> .tl-activatable__action:not(:disabled, [aria-disabled="true"]))';
+  assert.match(regel(LAYOUT, OFFEN), /cursor:\s*pointer/);
+  // Zeigen — wie die Kachel: border-interactive am Element und an der Karte darin, kein Schatten.
+  const zeigen = rulesOf(LAYOUT).filter(([s]) => s.includes(`${OFFEN}:hover`));
+  assert.equal(zeigen.length, 1, 'eine Regel für das gezeigte aktivierbare Element');
+  assert.ok(zeigen[0][0].includes(`${OFFEN}:hover > .tl-card`), 'die Karte in der Hülle eines Eintrags trägt den Rand');
   assert.match(zeigen[0][1], /border-color:\s*var\(--tl-border-interactive\)/);
-  assert.doesNotMatch(DASHBOARD, /--tl-focus-ring/);
-  // Der Fokusring der Kachel kommt aus base.css: die eine Ring-Regel trägt die Kachel als Alternative.
+  assert.doesNotMatch(zeigen[0][1], /box-shadow/);
+  assert.doesNotMatch(LAYOUT.slice(LAYOUT.indexOf('.tl-activatable')), /--tl-focus-ring/);
+  // Der Fokusring kommt aus base.css: die eine Ring-Regel trägt das Element als Alternative.
   const ring = /([^{}]+)\{\s*outline:\s*var\(--tl-focus-width\) solid var\(--tl-focus-ring\);/.exec(BASE);
   assert.ok(ring, 'Ring-Regel fehlt');
-  assert.ok(ring[1].split(/,\n/).map((s) => s.trim()).includes('.tl-dashboard__tile:has(> .tl-dashboard__action:focus-visible)'),
-    'die Kachel trägt den Ring, wenn ihr verborgener Knopf den Fokus hat');
-  // Der verborgene Knopf steht mit Abstand space-sm zur Kachelkante: sein Ring liegt in der Kachel (focus-clip).
-  const knopf = regel(DASHBOARD, '.tl-dashboard__action');
+  assert.ok(ring[1].split(/,\n/).map((s) => s.trim()).includes('.tl-activatable:has(> .tl-activatable__action:focus-visible)'),
+    'das Element trägt den Ring, wenn sein verborgener Knopf den Fokus hat');
+  // Der verborgene Knopf steht mit Abstand space-sm zur Kante: sein Ring liegt im Element (focus-clip).
+  const knopf = regel(LAYOUT, '.tl-activatable__action');
   assert.match(knopf, /position:\s*absolute/);
   assert.match(knopf, /inset-block-start:\s*var\(--tl-space-sm\)/);
   assert.match(knopf, /inset-inline-start:\s*var\(--tl-space-sm\)/);

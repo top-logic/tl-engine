@@ -1,4 +1,5 @@
-import { React, useTLState, useTLCommand, useI18N, TLChild, FillBarrier, rootClassName, stateAttr, usePart, ICON_CLOSE, isInteractiveTarget, useListReorder, reorderState, useTokenPx, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, TLChild, FillBarrier, rootClassName, stateAttr, usePart, ICON_CLOSE, useListReorder, reorderState, useTokenPx, activationProps, ActivationButton } from 'tl-react-bridge';
+import type { ActivationAction } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React;
@@ -26,23 +27,13 @@ const HIDE_COMMAND = 'hide';
 /** The argument of {@link ACTIVATE_COMMAND} and {@link HIDE_COMMAND} naming the tile. */
 const TILE_ID_ARG = 'tileId';
 
-/**
- * What activating a tile offers: the name the tile is announced under, whether the activation is
- * currently refused and the text explaining it.
- */
-interface TileAction {
-  label: string;
-  disabled: boolean;
-  tooltip?: string | null;
-}
-
 interface TileDescriptor {
   id: string;
   width: 'quarter' | 'third' | 'half' | 'two-thirds' | 'full';
   rowSpan: number;
   control: unknown;
   /** What the tile runs when activated, absent for a tile that only displays its content. */
-  action?: TileAction | null;
+  action?: ActivationAction | null;
   /** Whether the tile is withheld from the dashboard; it then carries no control. */
   hidden?: boolean;
 }
@@ -259,18 +250,6 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
     e.stopPropagation();
   }, []);
 
-  /**
-   * A press anywhere on the tile activates it - except while the dashboard is rearranged, while
-   * the action is refused, and where the press landed on a descendant that answers it itself.
-   * The tile's own action button is such a descendant, and its click handler has already sent the
-   * activation, so the tile is activated exactly once however it was pressed.
-   */
-  const onTileClick = useCallback((e: React.MouseEvent<HTMLDivElement>, tile: TileDescriptor) => {
-    const action = tile.action;
-    if (!action || editMode || action.disabled || isInteractiveTarget(e.target)) return;
-    activateTile(tile.id);
-  }, [editMode, activateTile]);
-
   // Columns, row height and gap are data of the packing; the design system has no form for them.
   const gridStyle: React.CSSProperties = {
     display: 'grid',
@@ -295,37 +274,29 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
             gridRow: `${p.rowStart + 1} / ${p.rowEnd + 1}`,
           };
           const action = tile.action;
+          const activation = activationProps(action, () => activateTile(tile.id), 'click', !editMode);
           return (
             // While the dashboard is rearranged, the tile is what the keyboard moves: focusable, named and
             // described by the reorder gesture, Alt + arrow left and right move it one place.
+            // A press anywhere on the tile activates it - except while the dashboard is rearranged, while the
+            // action is refused, and where the press landed on content answering it itself (activationProps).
             <div
               key={tile.id}
-              className="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill"
+              {...activation}
+              className={['tl-card tl-dashboard__tile tl-overlay tl-overlay--fill', activation.className]
+                .filter(Boolean).join(' ')}
               style={style}
               data-tl-state={reorderState(reorder.itemState(index))}
               tabIndex={editMode ? 0 : undefined}
               // A group, so that the name the reorder gesture gives it is allowed (a generic div takes none).
               role={editMode ? 'group' : undefined}
-              onClick={action ? e => onTileClick(e, tile) : undefined}
-              {...tooltipProps(action?.tooltip)}
               {...reorder.itemProps(index)}
               {...reorder.handleProps(index)}
             >
               {action && (
-                // The tile's accessible name and its keyboard operation: a button of its own, out
-                // of sight but in the tab order, activated by Enter and Space as any button is.
-                // While the tiles are rearranged it steps aside, so tabbing does not reach an
-                // action the dashboard currently does not offer. It is a direct child of the tile,
-                // which shows the focus ring for it.
-                <button
-                  type="button"
-                  className="tl-dashboard__action tl-visually-hidden"
-                  disabled={action.disabled}
-                  tabIndex={editMode ? -1 : 0}
-                  onClick={() => activateTile(tile.id)}
-                >
-                  {action.label}
-                </button>
+                // While the tiles are rearranged the button steps aside, so tabbing does not reach an
+                // action the dashboard currently does not offer.
+                <ActivationButton action={action} activate={() => activateTile(tile.id)} focusable={!editMode} />
               )}
               <div className="tl-overlay__base">
                 <FillBarrier>

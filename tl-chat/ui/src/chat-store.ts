@@ -21,6 +21,7 @@ import {
   editSend as editSendTurn,
   ForbiddenError,
   RefusedError,
+  TurnError,
   loadSession,
   loadSubagentTranscript,
   openSession,
@@ -1395,6 +1396,21 @@ export class ChatStore {
     if (this.draftKey === NEW_CONVERSATION) this.draftKey = sessionId
   }
 
+  /**
+   * Opens the chat a failed first send left behind, as choosing it in the list opens it; the draft
+   * of the new conversation goes with it, as with a first send that went through.
+   */
+  private async openKeptChat(sessionId: string, title: string): Promise<void> {
+    this.carryNewDraft(sessionId)
+    this.patch({ sessions: withSession(this.state.sessions, { id: sessionId, title }) })
+    try {
+      await this.actions.selectSession(sessionId)
+    } catch {
+      // The chat is in the list and the message in the composer; the notice the caller shows says
+      // that it was not sent.
+    }
+  }
+
   private get state(): ChatState {
     return this.snapshot
   }
@@ -2359,6 +2375,11 @@ export class ChatStore {
       }
       this.patch({ busy: wasBusy })
       this.setRun((s) => ({ ...s, busy: wasBusy }))
+      // A first message whose send created a chat and failed only afterwards leaves that chat open,
+      // with its subject: the window shows it, and the message stays in the composer to be sent
+      // again into it. Opened before the notice, which opening a chat clears.
+      const kept = !edit && !active && err instanceof TurnError ? err.sessionId : ''
+      if (kept) await this.openKeptChat(kept, request.title ?? '')
       // A refusal is not a failure: the server wrote a sentence for this user saying what they
       // may not use, and it reads as information rather than as something that went wrong.
       // A RefusedError says the same thing about a ceiling that will pass, so it is not sticky -

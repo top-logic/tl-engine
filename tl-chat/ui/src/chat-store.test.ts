@@ -2727,6 +2727,48 @@ describe('a draft per chat', () => {
     release()
   })
 
+  for (const status of [STATUS_FORBIDDEN, STATUS_REJECTED]) {
+    it(`opens the chat a first send kept although it was not sent (${status}), with the draft`, async () => {
+      // The server created the chat and its subject, and the send failed only afterwards.
+      turnAnswer = async () => {
+        turnAnswer = null
+        return { success: true, [FIELD_STATUS]: status, [FIELD_REASON]: 'Gerade nicht.', [FIELD_SESSION_ID]: 'kept' }
+      }
+      const store = chatStore('alpha', BOOT)
+      const release = store.subscribe(() => undefined, control(), DATA_URL)
+      const shown = composer(store)
+      type(store, shown, 'Neue Frage')
+
+      expect(await store.actions.send('Neue Frage')).toBe(false)
+
+      expect(store.getState().sessionId).toBe('kept')
+      expect(store.getState().sessions.map((session) => session.id)).toEqual(['kept'])
+      expect(commands.find((command) => command.name === CMD_SELECT_SESSION)?.args).toEqual({
+        [ARG_SESSION_ID]: 'kept',
+      })
+      expect(requested.some((url) => url.includes(SESSION_DATA + 'kept'))).toBe(true)
+      expect(store.getState().messages).toEqual([])
+      expect(store.getState().notice).toBe('Gerade nicht.')
+      expect(shown.text).toBe('Neue Frage')
+      // The server moved the files of the message to the kept chat.
+      store.takeAttachments({ kept: [{ id: 'f1', fileName: 'plan.png', mimeType: 'image/png', size: 4 }] })
+      expect(store.getState().draftAttachments.map((f) => f.fileName)).toEqual(['plan.png'])
+
+      store.actions.newChat()
+      expect(shown.text).toBe('')
+
+      // Sent again, the message goes into the kept chat.
+      await store.actions.selectSession('kept')
+      expect(shown.text).toBe('Neue Frage')
+      expect(await store.actions.send('Neue Frage')).toBe(true)
+      expect(sentBodies[1][ARG_SESSION_ID]).toBe('kept')
+      expect(sentBodies[1][ARG_TITLE]).toBeUndefined()
+
+      await settle()
+      release()
+    })
+  }
+
   it('gives a composer that mounts again the draft of the chat on screen', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL)

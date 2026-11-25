@@ -24,14 +24,31 @@ import type {
 } from './types'
 
 /**
+ * A command that did not do what was asked, naming the chat it nevertheless leaves open.
+ *
+ * A first message whose send created a chat and failed only afterwards leaves that chat behind, with
+ * its subject (`ChatControl#sendTurn`): the answer names it, so that the message can be sent again
+ * into it.
+ */
+export class TurnError extends Error {
+  /**
+   * @param sessionId The chat the command leaves open, `''` for none.
+   */
+  constructor(message: string, public readonly sessionId: string = '') {
+    super(message)
+    this.name = 'TurnError'
+  }
+}
+
+/**
  * A request the account may not make, with the reason the server wrote for this user.
  *
  * An error of its own, because the caller has something to show rather than something to report: the
  * reason is a finished sentence in the user's language, not a status to translate.
  */
-export class ForbiddenError extends Error {
-  constructor(public readonly reason: string) {
-    super(reason || 'forbidden')
+export class ForbiddenError extends TurnError {
+  constructor(public readonly reason: string, sessionId: string = '') {
+    super(reason || 'forbidden', sessionId)
     this.name = 'ForbiddenError'
   }
 }
@@ -44,8 +61,8 @@ export class ForbiddenError extends Error {
  * class so that a caller which wants to offer "try again" can tell the two apart.
  */
 export class RefusedError extends ForbiddenError {
-  constructor(reason: string) {
-    super(reason)
+  constructor(reason: string, sessionId: string = '') {
+    super(reason, sessionId)
     this.name = 'RefusedError'
   }
 }
@@ -308,9 +325,9 @@ const UPLOAD_SESSION_PART = 'sessionId'
 export const NEW_CONVERSATION = ''
 
 /** A send the chat refused because it is answering something else. */
-export class BusyError extends Error {
-  constructor() {
-    super(STATUS_BUSY)
+export class BusyError extends TurnError {
+  constructor(sessionId: string = '') {
+    super(STATUS_BUSY, sessionId)
     this.name = 'BusyError'
   }
 }
@@ -363,21 +380,23 @@ function settingsArgs(settings: TurnSettings): Record<string, unknown> {
  *
  * @throws ForbiddenError for a request the account may not make, with the server's sentence;
  *         RefusedError when there is no room for the run right now; BusyError while the chat answers
- *         something else; an Error for anything else that did not send the message.
+ *         something else; a TurnError for anything else that did not send the message. Each names
+ *         the chat the command leaves open, if any.
  */
 async function turn(command: ChatCommand, name: string, args: Record<string, unknown>): Promise<TurnAnswer> {
   const answer = await command(name, args)
   const status = answer?.[FIELD_STATUS]
   const reason = typeof answer?.[FIELD_REASON] === 'string' ? (answer[FIELD_REASON] as string) : ''
-  if (status === STATUS_FORBIDDEN) throw new ForbiddenError(reason)
-  if (status === STATUS_REJECTED) throw new RefusedError(reason)
-  if (status === STATUS_BUSY) throw new BusyError()
-  if (status !== STATUS_PROCESSING) throw new Error(typeof status === 'string' ? status : `${name} failed`)
   const sessionId = answer?.[FIELD_SESSION_ID]
+  const kept = typeof sessionId === 'string' ? sessionId : ''
+  if (status === STATUS_FORBIDDEN) throw new ForbiddenError(reason, kept)
+  if (status === STATUS_REJECTED) throw new RefusedError(reason, kept)
+  if (status === STATUS_BUSY) throw new BusyError(kept)
+  if (status !== STATUS_PROCESSING) throw new TurnError(typeof status === 'string' ? status : `${name} failed`, kept)
   const removed = answer?.[FIELD_REMOVED_TURNS]
   const text = answer?.[FIELD_TEXT]
   return {
-    sessionId: typeof sessionId === 'string' ? sessionId : '',
+    sessionId: kept,
     features: (answer?.[FIELD_FEATURES] ?? undefined) as Partial<ConversationFeatures> | undefined,
     removedTurns: typeof removed === 'number' ? removed : 0,
     text: typeof text === 'string' ? text : '',

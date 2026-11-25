@@ -145,6 +145,10 @@ public class ReactDashboardControl extends ReactControl {
 
 		private String _label;
 
+		private ItemActivation _activation;
+
+		private Object _item;
+
 		/**
 		 * Creates a {@link Tile}.
 		 *
@@ -210,6 +214,30 @@ public class ReactDashboardControl extends ReactControl {
 			_label = label;
 			return this;
 		}
+
+		/**
+		 * Makes the tile an entry point for an object: activating it runs the given activation with
+		 * the given object.
+		 *
+		 * <p>
+		 * This is how a tile computed from an object is activated, the activation deciding per
+		 * object whether and how the tile is offered, like an item of an activatable
+		 * {@link ReactLayoutControl}. It takes the place of the {@link TileContent#action() action}
+		 * of the content. When what the activation offers changes, its owner reports it with
+		 * {@link ReactDashboardControl#updateActivation()}.
+		 * </p>
+		 *
+		 * @param activation
+		 *        What activating the tile runs.
+		 * @param item
+		 *        The object the activation runs with.
+		 * @return This instance for fluent chaining.
+		 */
+		public Tile withActivation(ItemActivation activation, Object item) {
+			_activation = activation;
+			_item = item;
+			return this;
+		}
 	}
 
 	private final List<Tile> _tiles;
@@ -273,7 +301,7 @@ public class ReactDashboardControl extends ReactControl {
 				// A withheld tile is not drawn, so its content is not part of the displayed tree.
 				d.put(TILE_CONTROL, content.control());
 			}
-			d.put(TILE_ACTION, actionDescriptor(content.action()));
+			d.put(TILE_ACTION, t._activation != null ? itemActionDescriptor(t) : actionDescriptor(content.action()));
 			if (t._withheld) {
 				d.put(TILE_HIDDEN, Boolean.TRUE);
 			}
@@ -321,11 +349,28 @@ public class ReactDashboardControl extends ReactControl {
 	}
 
 	/**
+	 * What the client needs to offer a tile with an {@link Tile#withActivation(ItemActivation, Object)
+	 * activation} as an entry point, {@code null} where the activation offers nothing for its object.
+	 */
+	private static Map<String, Object> itemActionDescriptor(Tile tile) {
+		ItemAction action = tile._activation.action(tile._item);
+		return action == null ? null : action.toState();
+	}
+
+	/**
 	 * Republishes the tile descriptors, so that a tile whose action has become available, refused
 	 * or hidden is offered accordingly.
 	 */
 	private void handleActionChange() {
 		putState(CHILDREN, buildDescriptors());
+	}
+
+	/**
+	 * Publishes again what activating each tile offers, after an
+	 * {@link Tile#withActivation(ItemActivation, Object) activation} reported a change.
+	 */
+	public void updateActivation() {
+		handleActionChange();
 	}
 
 	/**
@@ -610,6 +655,11 @@ public class ReactDashboardControl extends ReactControl {
 	 * unknown tile does nothing.
 	 * </p>
 	 *
+	 * <p>
+	 * A tile with an {@link Tile#withActivation(ItemActivation, Object) activation} runs it with its
+	 * object instead, see {@link ItemActivation#activate(Object)}.
+	 * </p>
+	 *
 	 * @param args
 	 *        Names the tile the user activated, see {@link ActivateTileArguments#getTileId()}.
 	 */
@@ -618,6 +668,10 @@ public class ReactDashboardControl extends ReactControl {
 	void handleActivate(ActivateTileArguments args) {
 		Tile tile = tile(args.getTileId());
 		if (tile == null || !tile._visible || tile._withheld) {
+			return;
+		}
+		if (tile._activation != null) {
+			tile._activation.activate(tile._item);
 			return;
 		}
 		TileAction action = contentOf(tile).action();

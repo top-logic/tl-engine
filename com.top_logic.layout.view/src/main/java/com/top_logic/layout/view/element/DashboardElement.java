@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,25 +25,26 @@ import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl.Tile;
-import com.top_logic.layout.react.control.layout.ReactDashboardControl.TileContent;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CommandScope;
-import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.security.UnitHiding;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
- * A UI element that renders a responsive dashboard grid of {@link TileElement
- * tiles}.
+ * A UI element that renders a responsive dashboard grid of tiles.
+ *
+ * <p>
+ * The tiles are contributed by the {@link Config#getEntries() entries} of the dashboard: a
+ * {@link TileElement &lt;tile&gt;} contributes one fixed tile, a {@link TileListElement
+ * &lt;tiles&gt;} one tile per object of a computed list. All tiles share one order, and the tiles of
+ * a {@code <tiles>} entry follow its objects while the dashboard is displayed.
+ * </p>
  *
  * <p>
  * Tile order is personalized per user via {@link PersonalConfiguration}, keyed
@@ -102,8 +104,8 @@ public class DashboardElement implements UIElement {
 		/** Config property name for {@link #getRowHeight()}. */
 		String ROW_HEIGHT = "row-height";
 
-		/** Config property name for {@link #getTiles()}. */
-		String TILES = "tiles";
+		/** Config property name for {@link #getEntries()}. */
+		String ENTRIES = "entries";
 
 		@Override
 		@ClassDefault(DashboardElement.class)
@@ -142,19 +144,26 @@ public class DashboardElement implements UIElement {
 		String getRowHeight();
 
 		/**
-		 * The tiles.
+		 * The entries contributing the tiles: fixed {@code <tile>}s and {@code <tiles>} computed
+		 * from a list of objects.
 		 *
-		 * @implNote Written directly as {@code <tile>} children of the {@code <dashboard>}, the
-		 *           only entries accepted, since the entry type only binds the instance type to
-		 *           {@link UIElement}. Keyed by {@link TileElement.Config#ID} so that a same-path
-		 *           overlay can address a tile.
+		 * <p>
+		 * Without an arrangement of the user, the tiles appear in the order of their entries, the
+		 * tiles of a {@code <tiles>} entry in the order of its objects.
+		 * </p>
+		 *
+		 * @implNote Written directly as children of the {@code <dashboard>}. Keyed by
+		 *           {@link TileDeclaration.Config#ID} so that a same-path overlay can address an
+		 *           entry.
 		 */
-		@Name(TILES)
-		@Subtypes({ @Subtype(tag = TileElement.Config.TAG_NAME, type = TileElement.Config.class) })
-		@com.top_logic.basic.config.annotation.Key(TileElement.Config.ID)
+		@Name(ENTRIES)
+		@Subtypes({
+			@Subtype(tag = TileElement.Config.TAG_NAME, type = TileElement.Config.class),
+			@Subtype(tag = TileListElement.Config.TAG_NAME, type = TileListElement.Config.class) })
+		@com.top_logic.basic.config.annotation.Key(TileDeclaration.Config.ID)
 		@com.top_logic.basic.config.annotation.DefaultContainer
 		@TreeProperty
-		List<TileElement.Config> getTiles();
+		List<TileDeclaration.Config> getEntries();
 	}
 
 	private final String _id;
@@ -163,7 +172,7 @@ public class DashboardElement implements UIElement {
 
 	private final String _rowHeight;
 
-	private final List<TileElement> _tiles;
+	private final List<TileDeclaration> _declarations;
 
 	private final String _cssClass;
 
@@ -175,11 +184,11 @@ public class DashboardElement implements UIElement {
 		_id = config.getId();
 		_minColWidth = config.getMinColWidth();
 		_rowHeight = config.getRowHeight();
-		_tiles = new ArrayList<>();
-		for (TileElement.Config tc : config.getTiles()) {
-			TileElement tile = (TileElement) context.getInstance(tc);
-			if (tile != null) {
-				_tiles.add(tile);
+		_declarations = new ArrayList<>();
+		for (TileDeclaration.Config entry : config.getEntries()) {
+			TileDeclaration declaration = (TileDeclaration) context.getInstance(entry);
+			if (declaration != null) {
+				_declarations.add(declaration);
 			}
 		}
 		_cssClass = config.getCssClass();
@@ -187,130 +196,241 @@ public class DashboardElement implements UIElement {
 
 	@Override
 	public List<ChildGroup> getChildGroups() {
-		return List.of(ChildGroup.elements(List.<UIElement> copyOf(_tiles)));
+		return List.of(ChildGroup.elements(List.<UIElement> copyOf(_declarations)));
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		// The shared anonymous account has no personal layout of its own, so an anonymous session
-		// gets a dashboard that offers no rearranging and no hiding at all.
-		boolean personalizable = !TLContext.isAnonymous();
-		Map<String, Boolean> visibility = personalizable ? readPersonalVisibility() : Map.of();
-
-		List<TileElement> ordered = applyPersonalOrder(_tiles);
-		List<TileElement> accessible = new ArrayList<>(ordered.size());
-		List<Tile> reactTiles = new ArrayList<>(ordered.size());
-		Map<String, UnitHiding> hidings = new LinkedHashMap<>();
-		for (TileElement t : ordered) {
-			if (!t.isAccessible()) {
-				// Access denied for the current user: omit the tile entirely.
-				continue;
-			}
-			accessible.add(t);
-			Boolean stored = visibility.get(t.getId());
-			boolean visible = stored != null ? stored.booleanValue() : defaultVisibility(t);
-			Tile tile = new Tile(t.getId(), t.getWidth(), t.getRowSpan(), visible,
-				() -> createTileContent(context, t));
-			ResKey name = t.getName();
-			tile.withLabel(name == null ? null : Resources.getInstance().getString(name));
-			UnitHiding hiding = t.hiding(context);
-			if (hiding != null) {
-				tile.withWithheld(hiding.isHidden());
-				hidings.put(t.getId(), hiding);
-			}
-			reactTiles.add(tile);
-		}
-		ReactDashboardControl control = new ReactDashboardControl(context, _minColWidth, _rowHeight, reactTiles,
-			personalizable ? this::storePersonalOrder : null,
-			personalizable ? (tileId, visible) -> storePersonalVisibility(tileId, visible.booleanValue()) : null);
-
-		control.setCssClass(_cssClass);
-		hidings.forEach((id, hiding) -> hiding.bind(control, hidden -> control.setTileWithheld(id, hidden)));
-		if (personalizable) {
-			contributeEditCommands(context, control, accessible);
-		}
-
-		return control;
+		return new Display(context).control();
 	}
 
 	/**
-	 * Whether the given tile is shown for a user who has neither hidden nor added it.
+	 * One display of the dashboard: its control, the tiles of its entries and the arrangement of
+	 * the user.
 	 */
-	private static boolean defaultVisibility(TileElement tile) {
-		return !tile.isOptional();
-	}
+	private final class Display implements DashboardTiles.Host {
 
-	/**
-	 * Creates what the given tile displays and runs.
-	 *
-	 * <p>
-	 * The model of the tile's action follows its input exactly while the tile's content is
-	 * displayed, so that a tile is offered, refused or hidden according to what its command says
-	 * about the current input.
-	 * </p>
-	 */
-	private static TileContent createTileContent(ViewContext context, TileElement tile) {
-		ReactControl content = tile.createContentControl(context);
-		ViewCommandModel action = tile.createActionModel(context);
-		if (action != null) {
-			content.addAttachListener(() -> action.attach(context.getModelScope()));
-			content.addDetachListener(action::detach);
-		}
-		return new TileContent(content, tile.toAction(action));
-	}
+		/**
+		 * Whether the user may rearrange the dashboard. The shared anonymous account has no personal
+		 * layout of its own, so an anonymous session gets a dashboard that offers no rearranging and
+		 * no hiding at all.
+		 */
+		private final boolean _personalizable;
 
-	private void contributeEditCommands(ViewContext context, ReactDashboardControl control,
-			List<TileElement> tiles) {
-		CommandScope scope = context.getScope(CommandScope.class);
-		if (scope == null) {
-			return;
-		}
-		List<DashboardCommandModel> commands = new ArrayList<>(2 + tiles.size());
-		commands.add(DashboardCommandModel.editCommand(control));
-		commands.add(DashboardCommandModel.doneCommand(control));
-		for (TileElement tile : tiles) {
-			commands.add(DashboardCommandModel.showTileCommand(control, tile.getId(), tile.getTitle()));
-		}
+		private final List<DashboardTiles> _sources = new ArrayList<>();
 
-		control.addAttachListener(() -> {
-			for (DashboardCommandModel command : commands) {
-				command.attach();
-				scope.addCommand(command);
+		/** The stored order of the tile ids, empty while the user has not rearranged the dashboard. */
+		private List<String> _order;
+
+		/** The stored tile visibilities deviating from the default, tile id to whether it is shown. */
+		private final Map<String, Boolean> _visibility;
+
+		/** The current tiles by id, in the order of their declaration. */
+		private Map<String, DashboardTiles.Entry> _entries;
+
+		private final ReactDashboardControl _control;
+
+		/** The command scope the edit commands are offered in, {@code null} for none. */
+		private final CommandScope _scope;
+
+		/** The commands adding a hidden tile again, by tile id. */
+		private final Map<String, DashboardCommandModel> _tileCommands = new LinkedHashMap<>();
+
+		Display(ViewContext context) {
+			_personalizable = !TLContext.isAnonymous();
+			_order = _personalizable ? readPersonalOrder() : List.of();
+			_visibility = _personalizable ? readPersonalVisibility() : new HashMap<>();
+			for (TileDeclaration declaration : _declarations) {
+				_sources.add(declaration.createTiles(context, this));
 			}
-		});
-		control.addDetachListener(() -> {
-			for (DashboardCommandModel command : commands) {
-				scope.removeCommand(command);
-				command.detach();
-			}
-		});
-	}
+			_entries = collectEntries();
 
-	private List<TileElement> applyPersonalOrder(List<TileElement> tiles) {
-		List<String> personal = readPersonalOrder();
-		if (personal == null || personal.isEmpty()) {
-			return tiles;
-		}
-		Map<String, TileElement> byId = new LinkedHashMap<>();
-		for (TileElement t : tiles) {
-			byId.put(t.getId(), t);
-		}
-		List<TileElement> result = new ArrayList<>(tiles.size());
-		for (String id : personal) {
-			TileElement t = byId.remove(id);
-			if (t != null) {
-				result.add(t);
+			_control = new ReactDashboardControl(context, _minColWidth, _rowHeight, arrangeTiles(),
+				_personalizable ? this::handleReorder : null,
+				_personalizable ? this::handleVisibilityChange : null);
+			_control.setCssClass(_cssClass);
+
+			for (DashboardTiles.Entry entry : _entries.values()) {
+				UnitHiding hiding = entry.hiding();
+				if (hiding != null) {
+					String id = entry.id();
+					hiding.bind(_control, hidden -> _control.setTileWithheld(id, hidden));
+				}
+			}
+
+			_control.addAttachListener(() -> {
+				for (DashboardTiles source : _sources) {
+					source.attach(context.getModelScope());
+				}
+			});
+			_control.addDetachListener(() -> {
+				for (DashboardTiles source : _sources) {
+					source.detach();
+				}
+			});
+			_control.addCleanupAction(() -> {
+				for (DashboardTiles source : _sources) {
+					source.dispose();
+				}
+			});
+
+			_scope = _personalizable ? context.getScope(CommandScope.class) : null;
+			if (_scope != null) {
+				contributeEditCommands();
 			}
 		}
-		result.addAll(byId.values());
-		return result;
+
+		ReactDashboardControl control() {
+			return _control;
+		}
+
+		@Override
+		public void tilesChanged() {
+			_entries = collectEntries();
+			_control.setTiles(arrangeTiles());
+			if (_scope != null) {
+				updateTileCommands();
+			}
+		}
+
+		@Override
+		public void activationChanged() {
+			_control.updateActivation();
+		}
+
+		/**
+		 * The tiles of all entries by id, in the order of their declaration.
+		 */
+		private Map<String, DashboardTiles.Entry> collectEntries() {
+			Map<String, DashboardTiles.Entry> result = new LinkedHashMap<>();
+			for (DashboardTiles source : _sources) {
+				for (DashboardTiles.Entry entry : source.tiles()) {
+					result.putIfAbsent(entry.id(), entry);
+				}
+			}
+			return result;
+		}
+
+		/**
+		 * The tiles of the control in the arrangement of the user: the tiles of the stored order
+		 * first, skipping stored ids without a tile, then the others in the order of their
+		 * declaration.
+		 */
+		private List<Tile> arrangeTiles() {
+			Map<String, DashboardTiles.Entry> remaining = new LinkedHashMap<>(_entries);
+			List<DashboardTiles.Entry> ordered = new ArrayList<>(remaining.size());
+			for (String id : _order) {
+				DashboardTiles.Entry entry = remaining.remove(id);
+				if (entry != null) {
+					ordered.add(entry);
+				}
+			}
+			ordered.addAll(remaining.values());
+
+			List<Tile> result = new ArrayList<>(ordered.size());
+			for (DashboardTiles.Entry entry : ordered) {
+				Boolean stored = _visibility.get(entry.id());
+				boolean visible = stored != null ? stored.booleanValue() : !entry.optional();
+				Tile tile = new Tile(entry.id(), entry.width(), entry.rowSpan(), visible, entry.content())
+					.withLabel(entry.label());
+				UnitHiding hiding = entry.hiding();
+				if (hiding != null) {
+					tile.withWithheld(hiding.isHidden());
+				}
+				if (entry.activation() != null) {
+					tile.withActivation(entry.activation(), entry.item());
+				}
+				result.add(tile);
+			}
+			return result;
+		}
+
+		private void handleReorder(List<String> order) {
+			_order = new ArrayList<>(order);
+			storePersonalOrder(_order);
+		}
+
+		/**
+		 * Remembers that the given tile is shown or hidden, as a deviation from its default, or
+		 * drops the remembered entry where the tile is back to its default.
+		 */
+		private void handleVisibilityChange(String tileId, Boolean visible) {
+			DashboardTiles.Entry entry = _entries.get(tileId);
+			if (entry != null && visible.booleanValue() == !entry.optional()) {
+				_visibility.remove(tileId);
+			} else {
+				_visibility.put(tileId, visible);
+			}
+			storePersonalVisibility(_visibility);
+		}
+
+		private void contributeEditCommands() {
+			List<DashboardCommandModel> commands = List.of(
+				DashboardCommandModel.editCommand(_control),
+				DashboardCommandModel.doneCommand(_control));
+			updateTileCommands();
+
+			_control.addAttachListener(() -> {
+				for (DashboardCommandModel command : commands) {
+					offer(command);
+				}
+				for (DashboardCommandModel command : _tileCommands.values()) {
+					offer(command);
+				}
+			});
+			_control.addDetachListener(() -> {
+				for (DashboardCommandModel command : commands) {
+					withdraw(command);
+				}
+				for (DashboardCommandModel command : _tileCommands.values()) {
+					withdraw(command);
+				}
+			});
+		}
+
+		/**
+		 * Brings the commands adding a hidden tile in line with the current tiles.
+		 */
+		private void updateTileCommands() {
+			boolean offered = _control.isAttached();
+			for (Iterator<Map.Entry<String, DashboardCommandModel>> it = _tileCommands.entrySet().iterator(); it
+				.hasNext();) {
+				Map.Entry<String, DashboardCommandModel> command = it.next();
+				if (!_entries.containsKey(command.getKey())) {
+					it.remove();
+					if (offered) {
+						withdraw(command.getValue());
+					}
+				}
+			}
+			for (DashboardTiles.Entry entry : _entries.values()) {
+				if (!_tileCommands.containsKey(entry.id())) {
+					DashboardCommandModel command =
+						DashboardCommandModel.showTileCommand(_control, entry.id(), entry.title());
+					_tileCommands.put(entry.id(), command);
+					if (offered) {
+						offer(command);
+					}
+				}
+			}
+		}
+
+		private void offer(DashboardCommandModel command) {
+			command.attach();
+			_scope.addCommand(command);
+		}
+
+		private void withdraw(DashboardCommandModel command) {
+			_scope.removeCommand(command);
+			command.detach();
+		}
 	}
 
 	@SuppressWarnings("unchecked")
 	private List<String> readPersonalOrder() {
 		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
 		if (pc == null) {
-			return null;
+			return List.of();
 		}
 		Object value = pc.getJSONValue(PC_KEY_PREFIX + _id);
 		if (value instanceof List) {
@@ -323,7 +443,7 @@ public class DashboardElement implements UIElement {
 			}
 			return result;
 		}
-		return null;
+		return List.of();
 	}
 
 	/**
@@ -332,7 +452,7 @@ public class DashboardElement implements UIElement {
 	private Map<String, Boolean> readPersonalVisibility() {
 		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
 		if (pc == null) {
-			return Map.of();
+			return new HashMap<>();
 		}
 		Map<String, Boolean> result = new HashMap<>();
 		if (pc.getJSONValue(PC_VISIBILITY_KEY_PREFIX + _id) instanceof Map<?, ?> raw) {
@@ -346,37 +466,20 @@ public class DashboardElement implements UIElement {
 	}
 
 	/**
-	 * Stores that the given tile is shown or hidden, as a deviation from its default, or drops the
-	 * stored entry where the tile is back to its default.
+	 * Stores the given tile visibilities deviating from their defaults.
 	 */
-	private void storePersonalVisibility(String tileId, boolean visible) {
+	private void storePersonalVisibility(Map<String, Boolean> visibility) {
 		try {
 			PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
 			if (pc == null) {
 				return;
 			}
-			Map<String, Boolean> visibility = new LinkedHashMap<>(readPersonalVisibility());
-			TileElement tile = tile(tileId);
-			if (tile != null && visible == defaultVisibility(tile)) {
-				visibility.remove(tileId);
-			} else {
-				visibility.put(tileId, Boolean.valueOf(visible));
-			}
-			pc.setJSONValue(PC_VISIBILITY_KEY_PREFIX + _id, visibility.isEmpty() ? null : visibility);
+			pc.setJSONValue(PC_VISIBILITY_KEY_PREFIX + _id, visibility.isEmpty() ? null : new LinkedHashMap<>(visibility));
 			PersonalConfiguration.storePersonalConfiguration();
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to persist dashboard tile visibility for '" + _id + "'.", ex,
 				DashboardElement.class);
 		}
-	}
-
-	private TileElement tile(String tileId) {
-		for (TileElement tile : _tiles) {
-			if (tile.getId().equals(tileId)) {
-				return tile;
-			}
-		}
-		return null;
 	}
 
 	private void storePersonalOrder(List<String> order) {

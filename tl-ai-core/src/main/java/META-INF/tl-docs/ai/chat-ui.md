@@ -132,10 +132,46 @@ The subject is there before the first run asks: `<chat-conversation subject="…
 - `send(turn, sink, cancel)` runs on the chat's worker thread and blocks until the run has ended. The backend reports its work as `AgentEvent`s into `sink`, from `RunStarted` to `RunCompleted`, and `RunRecording` records them as the conversation's execution with its transcript, tokens and cost, recorded under `agentName()`.
 - **Events only on that thread.** The thread carries the run's frame - the user's sub-session, the bound `ConversationLogListener`, the processing state - and the recording takes its events one at a time in run order. A backend that reads its process on a thread of its own queues what it reads and drains the queue inside `send`; the sink refuses an event from another thread, one after `send` returned and every event after a refused one, and the run then ends in an error.
 - **Stop** cancels `cancel` on the thread of the stop request (`CancellationToken#onCancel`); the backend ends its work, emits `RunCompleted` with `ABORTED` and returns what it has. A backend that throws, or returns without `RunCompleted`, ends the run in an error: recorded as `ERROR` with an error part in the turn (`RunRecording#fail`; kind `APPLICATION_ERROR` unless a `ProviderException` caused it, message the failure's `I18NFailure` text in the user's language), reported to the windows as such, and the chat is free for the next message.
-- `features()` (`BackendFeatures`) states which functions beyond sending the backend supports - regenerate, editing, the agent / model / effort / MCP pickers, attachments, approvals. The browser receives them as `features` with the transcript of the conversation and with the answer to every `send` (`ConversationFeaturesDto`) and hides what is not supported (`ui/src/features.ts`: one object gates the transcript's regenerate and edit, the composer's pickers, the attachment button and the auto-approve switch; absent means everything). The server refuses an unsupported regenerate (`regenerate`), edit (`editSend`) and a message with files (`send`) as `forbidden` with a sentence, like a policy refusal.
+- `features()` (`BackendFeatures`) states which functions beyond sending the backend supports - regenerate, editing, the agent / model / effort / MCP pickers, approvals - and which files a message may carry (`attachments`, an `AttachmentPolicy`, see [attachments](#attachments)). The browser receives them as `features` with the transcript of the conversation and with the answer to every `send` (`ConversationFeaturesDto`) and hides what is not supported (`ui/src/features.ts`: one object gates the transcript's regenerate and edit, the composer's pickers, the attachment button and the auto-approve switch; absent means everything). The server refuses an unsupported regenerate (`regenerate`), edit (`editSend`) and a message with files the policy does not allow (`send`) as `forbidden` with a sentence, like a policy refusal.
 - **No agent policy for such a conversation.** `send` and `regenerate` do not ask the agent security policy about the account's agents, model or MCP choice there - no agent of this application runs, and an account that may run none can still talk to the backend. Ownership, the busy refusal, the send lock and the installation's room and budget are checked as for every chat.
 - A lead turn for subagents' news is never started for such a conversation: only the framework's agent spawns subagents.
 - **Context and cost.** The context gauge of such a conversation measures against `contextWindow()` of the backend - the window its process reported, zero while unknown, and then no gauge is shown -, never the window of the framework's agent. The cost a run reports in `RunCompleted` is shown after the run's duration line, live from the `run_completed` frame and after a reload from the recorded execution (`runs` of the conversation's transcript), the same as for a run of the framework's agent. The duration line after a reload is measured from the recorded execution as well - from its start, which is the run's `RunStarted`, to its end - so the time the backend took to start its process before the run is left out, as it is live.
+
+### Attachments
+
+A message may carry files - uploaded to the chat control, held on the server for the message being written, and sent with it. Which files, is decided by whoever answers the conversation, as an `AttachmentPolicy` (`com.top_logic.ai.chat.backend`):
+
+- `acceptedTypes` - the allowed types in the syntax of `accepted-types` everywhere in TopLogic: MIME types (`text/csv`), MIME patterns (`text/*`) and file patterns (`*.zip`), comma separated; `*/*`, `*.*` or an empty list allow every type. A file's type is checked by its name (`AcceptedTypesChecker`).
+- `maxFiles` - how many files one message may carry; `0` for none.
+- `maxFileSize` - the largest file; `maxMessageSize` - the largest sum of the sizes of a message's files. `0` means no limit. The application-wide upload limit (`max-upload-size`) caps the file size as well.
+
+**A backend** states its policy in its `BackendFeatures`: `AttachmentPolicy.NONE` for a backend that takes no files, `AttachmentPolicy.MODEL_READABLE` for the files a language model reads, or a policy of its own with the types and limits it processes:
+
+```java
+new BackendFeatures(false, false, false, false, false, false,
+    new AttachmentPolicy("text/csv, *.zip", 3, 20L * 1024 * 1024, 50L * 1024 * 1024), false)
+```
+
+**The application's own agent** takes the policy configured as `internal-attachments` of the `ConversationBackendService`. Its default is `AttachmentPolicy.MODEL_READABLE`: the images a provider request carries (`ImageContent.ACCEPTED_MEDIA_TYPES`: PNG, JPEG, GIF, WebP) and PDF, at most 5 files of up to 10 MB each and 50 MB in all. An application narrows it in its configuration:
+
+```xml
+<config service-class="com.top_logic.ai.chat.backend.ConversationBackendService">
+    <instance>
+        <internal-attachments
+            accepted-types="image/png, image/jpeg, application/pdf"
+            max-files="3"
+            max-file-size="5m"
+            max-message-size="10m"
+        />
+    </instance>
+</config>
+```
+
+A type the language model cannot read, allowed there, reaches the model as a placeholder naming the file, not as its content (`ChatProcessor.toContentPart`).
+
+The policy is the same for every view of a chat: all `<chat-conversation>` elements of one `chat-id` in a window share the files attached, so the limits are not configured on the element. `ConversationBackendService.attachmentPolicy(...)` is the one place that answers which policy applies - the backend's for a conversation a backend answers, the configured one otherwise.
+
+**Browser and server check the same limits.** The policy reaches the browser as `attachments` of the conversation's `features` (`AttachmentPolicyDto`: the `accept` attribute of the file input, the allowed types, the three limits; `maxFiles` `0` for no files) and, for a chat not created yet, as the `attachmentPolicy` state of the chat control, which the control publishes again with its upload size limit whenever the conversation switches to another chat. The file picker offers only the allowed types; dropping, pasting or picking a file the policy does not allow refuses it before the upload with a sentence - the type is not allowed (naming the allowed types), the file is too large, one file too many, the message too large. The upload checks the file against the policy of the chat shown and answers the same sentences. When the message is sent, its files are checked again against the policy of the chat it goes to - switching to another chat can change who answers -, and a send whose files that chat does not take is refused with the sentence naming the file; the files stay attached.
 
 ### The front end
 

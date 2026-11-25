@@ -6,6 +6,7 @@
 package com.top_logic.knowledge.service.migration;
 
 import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.sql.SQLException;
 import java.time.Instant;
 
@@ -27,9 +28,15 @@ import com.top_logic.basic.util.StopWatch;
  * </p>
  *
  * <p>
- * The lock is not released when the node holding it crashes during the migration. In that case the
- * state of the database is unknown anyway: The database must be restored from a backup, which
- * does not contain the lock property.
+ * The owner identification consists of the runtime name of the JVM (<code>pid@host</code>) and
+ * the start time of the JVM. The lock is not released when the node holding it is terminated
+ * during the migration. The next start resumes the interrupted migration from its
+ * {@link MigrationProgress}. A node that finds a lock with its own runtime name but another start
+ * time knows that the holder was a former run of itself that has been terminated (e.g. after a
+ * restart of its container, where the process ID is always the same). It takes the lock over and
+ * resumes the migration. A lock held by another node is waited for, since this node cannot tell
+ * whether the holder is still alive. If that node has been terminated, the property can be deleted
+ * manually after checking the holder; the next start resumes the migration as well.
  * </p>
  */
 public final class MigrationLock implements AutoCloseable {
@@ -38,6 +45,12 @@ public final class MigrationLock implements AutoCloseable {
 	 * Name of the global {@link DBProperties database property} representing the lock.
 	 */
 	public static final String LOCK_PROPERTY = "migration.lock";
+
+	/**
+	 * Separator between the runtime name and the start time in the {@link #getOwner() owner
+	 * identification}.
+	 */
+	private static final String SINCE = " since ";
 
 	/**
 	 * Milliseconds to wait before checking again whether the lock has been released.
@@ -80,6 +93,15 @@ public final class MigrationLock implements AutoCloseable {
 	/**
 	 * Acquires the migration lock, waits until another node has released it.
 	 *
+	 * <p>
+	 * A lock with the runtime name of this JVM but another start time was left behind by a former
+	 * run of this node that has been terminated during a migration: Instead of waiting forever, the
+	 * lock is taken over by replacing the value of the former run with the own one, which is
+	 * reported as warning. A lock with the {@link #getOwner() owner identification} of this JVM is
+	 * held by another acquisition in this JVM: It is waited for like the lock of another node, it is
+	 * never taken over.
+	 * </p>
+	 *
 	 * @param log
 	 *        Log to report progress to.
 	 * @param pool
@@ -89,7 +111,9 @@ public final class MigrationLock implements AutoCloseable {
 	 *         If the thread is interrupted while waiting for the lock.
 	 */
 	public static MigrationLock acquire(Log log, ConnectionPool pool) throws InterruptedException {
-		String owner = ManagementFactory.getRuntimeMXBean().getName() + " since " + Instant.now();
+		RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
+		String runtimeName = runtime.getName();
+		String owner = runtimeName + SINCE + Instant.ofEpochMilli(runtime.getStartTime());
 
 		log.info("Acquiring migration lock.");
 		StopWatch timer = StopWatch.createStartedWatch();
@@ -103,10 +127,20 @@ public final class MigrationLock implements AutoCloseable {
 			long now = System.currentTimeMillis();
 			if (holder == UNKNOWN_HOLDER) {
 				// Retry without reporting, the holder is known at the next attempt.
+			} else if (isFormerRun(holder, runtimeName, owner)) {
+				if (takeOver(log, pool, holder, owner)) {
+					log.info("Took over the migration lock held by '" + holder + "': This node was terminated"
+						+ " during a migration started at "
+						+ holder.substring(runtimeName.length() + SINCE.length())
+						+ ". The interrupted migration is resumed.", Log.WARN);
+					break;
+				}
+				// The lock has changed in the meantime, retry.
 			} else if (!holder.equals(reportedHolder)) {
 				log.info("Migration lock is held by '" + holder + "', waiting. If that node was terminated during"
-					+ " the migration, the database must be restored from a backup (alternatively, the global"
-					+ " database property '" + LOCK_PROPERTY + "' can be deleted manually).");
+					+ " the migration, the global database property '" + LOCK_PROPERTY + "' can be deleted after"
+					+ " checking that the holder is no longer running; the next start resumes the interrupted"
+					+ " migration.");
 				reportedHolder = holder;
 				lastReport = now;
 			} else if (now - lastReport >= REPORT_INTERVAL) {
@@ -118,6 +152,45 @@ public final class MigrationLock implements AutoCloseable {
 		log.info("Acquired migration lock in " + timer + ".");
 
 		return new MigrationLock(log, pool, owner);
+	}
+
+	/**
+	 * Whether the given lock holder is a former run of this node.
+	 *
+	 * @param holder
+	 *        The current value of the {@link #LOCK_PROPERTY}.
+	 * @param runtimeName
+	 *        The runtime name of this JVM.
+	 * @param owner
+	 *        The {@link #getOwner() owner identification} of this JVM.
+	 */
+	private static boolean isFormerRun(String holder, String runtimeName, String owner) {
+		return holder.startsWith(runtimeName + SINCE) && !holder.equals(owner);
+	}
+
+	/**
+	 * Replaces the value of the lock property held by a former run of this node with the own owner
+	 * identification.
+	 *
+	 * @return Whether the lock has been taken over, <code>false</code> if its value has changed in
+	 *         the meantime.
+	 */
+	private static boolean takeOver(Log log, ConnectionPool pool, String holder, String owner) {
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			if (DBProperties.compareAndSet(connection, DBProperties.GLOBAL_PROPERTY, LOCK_PROPERTY, holder, owner)) {
+				connection.commit();
+				return true;
+			}
+			connection.rollback();
+			return false;
+		} catch (SQLException ex) {
+			rollback(connection);
+			log.info("Concurrent access to migration lock: " + ex.getMessage(), Log.DEBUG);
+			return false;
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
 	}
 
 	/**

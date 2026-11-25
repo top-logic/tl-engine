@@ -8,10 +8,13 @@ package com.top_logic.knowledge.service.migration;
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.w3c.dom.Document;
 
@@ -31,6 +34,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.dob.MOFactory;
+import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
@@ -72,6 +76,15 @@ public class MigrationContext extends TypedAnnotationContainer {
 
 	private MORepository _schemaRepository;
 
+	/**
+	 * The tables whose {@link RevisionXref} entries must be rebuilt, indexed by their name.
+	 *
+	 * <p>
+	 * A table restored by {@link #restoreXRef(Collection, Collection)} is only known by its name,
+	 * its value is <code>null</code> until {@link #revalidateXRef(Log, PooledConnection)}
+	 * resolves it.
+	 * </p>
+	 */
 	private final Map<String, MOStructure> _xrefInvalidates = new HashMap<>();
 
 	private final Set<String> _xrefDeleted = new HashSet<>();
@@ -240,10 +253,56 @@ public class MigrationContext extends TypedAnnotationContainer {
 	}
 
 	/**
+	 * The names of the tables whose {@link RevisionXref} entries are rebuilt by
+	 * {@link #revalidateXRef(Log, PooledConnection)}.
+	 *
+	 * @see #invalidateXRef(MOStructure)
+	 */
+	public Set<String> getXRefInvalidated() {
+		return Collections.unmodifiableSet(new TreeSet<>(_xrefInvalidates.keySet()));
+	}
+
+	/**
+	 * The names of the dropped tables whose {@link RevisionXref} entries are removed by
+	 * {@link #revalidateXRef(Log, PooledConnection)}.
+	 *
+	 * @see #deletedTable(String)
+	 */
+	public Set<String> getXRefDeleted() {
+		return Collections.unmodifiableSet(new TreeSet<>(_xrefDeleted));
+	}
+
+	/**
+	 * Restores the pending {@link RevisionXref} changes recorded by an interrupted migration.
+	 *
+	 * <p>
+	 * The invalidated tables are resolved by their name in the {@link #getSchemaRepository()
+	 * schema repository} when {@link #revalidateXRef(Log, PooledConnection)} rebuilds their
+	 * entries.
+	 * </p>
+	 *
+	 * @param invalidated
+	 *        See {@link #getXRefInvalidated()}.
+	 * @param deleted
+	 *        See {@link #getXRefDeleted()}.
+	 */
+	public void restoreXRef(Collection<String> invalidated, Collection<String> deleted) {
+		for (String tableName : invalidated) {
+			_xrefInvalidates.putIfAbsent(tableName, null);
+			_xrefDeleted.remove(tableName);
+		}
+		for (String tableName : deleted) {
+			deletedTable(tableName);
+		}
+	}
+
+	/**
 	 * Re-builds the {@link RevisionXref} table for those tables that have been
 	 * {@link #invalidateXRef(MOStructure) invalidated}.
 	 */
 	public void revalidateXRef(Log log, PooledConnection connection) throws SQLException {
+		resolveInvalidatedTables();
+
 		for (String tableName : _xrefDeleted) {
 			clearXRef(log, connection, tableName);
 		}
@@ -273,6 +332,22 @@ public class MigrationContext extends TypedAnnotationContainer {
 
 		_xrefInvalidates.clear();
 		_xrefDeleted.clear();
+	}
+
+	private void resolveInvalidatedTables() {
+		for (Map.Entry<String, MOStructure> entry : _xrefInvalidates.entrySet()) {
+			if (entry.getValue() != null) {
+				continue;
+			}
+			String tableName = entry.getKey();
+			MetaObject table = _schemaRepository.getTypeOrNull(tableName);
+			if (!(table instanceof MOStructure)) {
+				throw new KnowledgeBaseRuntimeException(
+					"Table '" + tableName + "' with invalidated " + RevisionXref.REVISION_XREF_TYPE_NAME
+						+ " entries is not part of the application schema.");
+			}
+			entry.setValue((MOStructure) table);
+		}
 	}
 
 	private void clearXRef(Log log, PooledConnection connection, String tableName) throws SQLException {

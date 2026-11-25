@@ -240,7 +240,13 @@ final class ColumnLogic {
 		});
 	}
 
-	private static <R> Column<R, ?> require(Map<String, Column<R, ?>> byName, String name) {
+	/**
+	 * The column of the given name.
+	 *
+	 * @throws IllegalArgumentException
+	 *         If there is no column of that name.
+	 */
+	static <R> Column<R, ?> require(Map<String, Column<R, ?>> byName, String name) {
 		Column<R, ?> column = byName.get(name);
 		if (column == null) {
 			throw new IllegalArgumentException("No such column: " + name);

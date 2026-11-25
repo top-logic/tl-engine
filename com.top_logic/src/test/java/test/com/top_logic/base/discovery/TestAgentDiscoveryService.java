@@ -8,6 +8,7 @@ package test.com.top_logic.base.discovery;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -34,10 +35,16 @@ import com.top_logic.base.discovery.LlmsTxtSection;
 import com.top_logic.base.discovery.catalog.AiCatalog;
 import com.top_logic.base.discovery.catalog.CatalogEntry;
 import com.top_logic.basic.AliasManager;
+import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.layout.I18NConstants;
 import com.top_logic.layout.servlet.CacheControlFilter;
+import com.top_logic.util.Resources;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
@@ -100,7 +107,7 @@ public class TestAgentDiscoveryService extends BasicTestCase {
 		assertPublic(response);
 
 		String text = response.getText();
-		assertTrue(text, text.startsWith("# Test Application\n"));
+		assertTrue(text, text.startsWith("# " + applicationTitle() + "\n"));
 		assertContains("\n> An application for testing the agent discovery.\n", text);
 		assertContains(APPLICATION_URL + AgentDiscoveryServlet.AI_CATALOG_PATH, text);
 		assertContains("\n## Test Endpoint\n", text);
@@ -121,7 +128,7 @@ public class TestAgentDiscoveryService extends BasicTestCase {
 
 		AiCatalog catalog = AiCatalog.readAiCatalog(new JsonReader(new StringR(json)));
 		assertEquals(AgentDiscoveryService.AI_CATALOG_SPEC_VERSION, catalog.getSpecVersion());
-		assertEquals("Test Application", catalog.getHost().getDisplayName());
+		assertEquals(applicationTitle(), catalog.getHost().getDisplayName());
 		assertEquals(APPLICATION_URL + AgentDiscoveryServlet.LLMS_TXT_PATH, catalog.getHost().getDocumentationUrl());
 
 		List<CatalogEntry> entries = catalog.getEntries();
@@ -132,6 +139,20 @@ public class TestAgentDiscoveryService extends BasicTestCase {
 		assertEquals(APPLICATION_URL + "/test-endpoint", entry.getUrl());
 		assertEquals("Test Endpoint", entry.getDisplayName());
 		assertFalse(entry.hasData());
+	}
+
+	/**
+	 * The name of the application is its title, not an option of the service.
+	 */
+	public void testNoDisplayNameOption() {
+		String xml = "<instance display-name=\"Other Name\"/>";
+		try {
+			TypedConfiguration.parse("instance", AgentDiscoveryService.Config.class,
+				CharacterContents.newContent(xml));
+			fail("The option display-name must be rejected.");
+		} catch (ConfigurationException ex) {
+			assertContains("display-name", ex.getMessage());
+		}
 	}
 
 	public void testApplicationUrl() throws Exception {
@@ -182,6 +203,15 @@ public class TestAgentDiscoveryService extends BasicTestCase {
 		HttpServletRequest request = invocation(AgentDiscoveryServlet.LLMS_TXT_PATH).getRequest();
 		return DiscoveryContext.fromRequest(new ForwardedRequest(request, scheme, host, port, contextPath))
 			.applicationUrl();
+	}
+
+	/**
+	 * The English {@link I18NConstants#APPLICATION_TITLE application title}.
+	 */
+	private static String applicationTitle() {
+		String title = Resources.getInstance(Locale.ENGLISH).getString(I18NConstants.APPLICATION_TITLE);
+		assertFalse("The test environment defines no application title.", StringServices.isEmpty(title));
+		return title;
 	}
 
 	private static void assertPublic(WebResponse response) {

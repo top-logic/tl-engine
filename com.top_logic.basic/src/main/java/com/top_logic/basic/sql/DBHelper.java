@@ -2042,6 +2042,21 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
+	 * Whether schema changes (DDL statements such as <code>CREATE TABLE</code> or
+	 * <code>ALTER TABLE</code>) take part in the current transaction of a connection.
+	 *
+	 * <p>
+	 * On a database with transactional DDL, a rollback undoes the schema changes of the transaction
+	 * together with its data changes. A database without transactional DDL commits a schema change
+	 * implicitly, and with it all data changes executed before in the same transaction, so that a
+	 * rollback after a DDL statement cannot undo them.
+	 * </p>
+	 */
+	public boolean supportsTransactionalDDL() {
+		return false;
+	}
+
+	/**
 	 * Whether {@link #analyzeTable(Statement, String)} refreshes the planner statistics of a table
 	 * in this dialect.
 	 *

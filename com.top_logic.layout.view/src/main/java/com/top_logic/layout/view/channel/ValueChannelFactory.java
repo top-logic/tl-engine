@@ -89,19 +89,21 @@ public class ValueChannelFactory implements ChannelFactory {
 
 	@Override
 	public ViewChannel createChannel(ViewContext context) {
-		DefaultViewChannel channel;
 		if (_init == null) {
-			channel = new DefaultViewChannel(_name, _valueType);
-		} else {
-			InitializedViewChannel initialized = new InitializedViewChannel(_name, _valueType);
-			initialized.bind(ChannelInputs.resolve(context, _inputRefs), _init::execute,
+			return new DefaultViewChannel(_name, _valueType);
+		}
+		return new InitializedViewChannel(_name, _valueType);
+	}
+
+	@Override
+	public void bindChannel(ViewContext context, ViewChannel channel) {
+		if (_init != null) {
+			((InitializedViewChannel) channel).bind(ChannelInputs.resolve(context, _inputRefs), _init::execute,
 				ObservedTypes.resolve(_observedTypeRefs));
-			channel = initialized;
 		}
 		if (_personalize) {
 			personalize(channel, personalizationKey(context));
 		}
-		return channel;
 	}
 
 	/**
@@ -123,7 +125,7 @@ public class ValueChannelFactory implements ChannelFactory {
 		if (stored != null) {
 			JsonValueCodec.Result remembered = JsonValueCodec.decode(stored);
 			if (remembered.isPresent()) {
-				// A channel just created has no veto listeners.
+				// A channel being bound has no veto listeners: the elements reading it come later.
 				channel.set(remembered.get());
 			} else {
 				PersonalConfiguration.getPersonalConfiguration().setJSONValue(key, null);

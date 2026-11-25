@@ -31,7 +31,9 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonAppearance;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.CommandTrigger;
@@ -256,8 +258,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
 	private TableViewControl.ActivationHandler<TLObject> _activationHandler;
 
-	/** The grouping the table starts with, until a personalization of its own exists. */
-	private GroupSpec _grouping = GroupSpec.NONE;
+	/**
+	 * Computes the grouping the table starts with, until a personalization of its own exists, from
+	 * the columns built for the current user.
+	 *
+	 * @see #setGrouping(Function)
+	 */
+	private Function<List<? extends Column<?, ?>>, GroupSpec> _grouping = columns -> GroupSpec.NONE;
 
 	/** @see #setSelectionMode(SelectionMode) */
 	private SelectionMode _selectionMode = SelectionMode.SINGLE;
@@ -709,8 +716,14 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * {@link TableViewControl} this control builds, so a grouping the user chose (and which is
 	 * persisted under the table's identity) wins over it.
 	 * </p>
+	 *
+	 * @param grouping
+	 *        Computes the grouping from the columns built for the current user, called whenever the
+	 *        columns are rebuilt - a declared grouping column the access rights of the user withhold
+	 *        is not among them, see
+	 *        {@link ColumnDeclarations#grouping(com.top_logic.basic.Log, String, GroupSpec, Collection, List)}.
 	 */
-	public void setGrouping(GroupSpec grouping) {
+	public void setGrouping(Function<List<? extends Column<?, ?>>, GroupSpec> grouping) {
 		_grouping = grouping;
 	}
 
@@ -1127,7 +1140,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			_arrangement.createSource(rowObjects, isEditing() ? session() : null, columns);
 		TableViewState initialState =
 			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
-		initialState.setGrouping(_grouping);
+		initialState.setGrouping(_grouping.apply(columns));
 		initialState.setSelection(Selection.none(_selectionMode));
 		if (_fixedColumns > 0) {
 			// The configured number counts data columns; a leading action column has to be added on
@@ -1494,6 +1507,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DETAIL);
 		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		button.setAppearance(ButtonAppearance.GHOST);
+		button.setSize(ButtonSize.SMALL);
 		return button;
 	}
 
@@ -1790,6 +1805,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DELETE);
 		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		button.setAppearance(ButtonAppearance.GHOST);
+		button.setSize(ButtonSize.SMALL);
 		return button;
 	}
 

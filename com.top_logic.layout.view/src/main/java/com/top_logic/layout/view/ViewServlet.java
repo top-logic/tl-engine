@@ -26,14 +26,10 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.FaviconTag;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.layout.react.resource.ClientResources;
 import com.top_logic.layout.react.theme.UITheme;
 import com.top_logic.layout.react.theme.UIThemeService;
-import com.top_logic.knowledge.service.HistoryManager;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.db2.UpdateChainLink;
-import com.top_logic.knowledge.service.db2.UpdateChainView;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
@@ -541,11 +537,7 @@ public class ViewServlet extends TopLogicServlet {
 			subSession.setSessionContext(sessionContext);
 			subSession = sessionContext.setIfAbsent(windowName, subSession);
 			subSession.setPerson(sessionContext.getOriginalUser());
-
-			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			HistoryManager hm = kb.getHistoryManager();
-			UpdateChainLink lastKBRevision = ((UpdateChainView) kb.getUpdateChain()).current();
-			subSession.updateSessionRevision(hm, lastKBRevision);
+			HistoryUtils.moveToCurrentRevision(subSession);
 		}
 
 		// Install on the current thread so that TLContext.getContext() is available during

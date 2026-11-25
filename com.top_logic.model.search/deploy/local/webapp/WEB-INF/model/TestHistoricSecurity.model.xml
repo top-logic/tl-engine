@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Model of the reference example of the specification "object security for historic versions"
+	(access-historic-spec.md, section 7): releases referring to released versions of a document.
+-->
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestHistoricSecurity">
+			<types>
+				<class name="Document">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="sections"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Section"
+						/>
+						<reference name="editors"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+						<reference name="glossary"
+							type="Glossary"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Section">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="partner"
+							type="Partner"
+						/>
+						<reference name="reviewers"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+						<reference name="paragraphs"
+							composite="true"
+							multiple="true"
+							type="Paragraph"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Paragraph">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Glossary">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Partner">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="group"
+							type="tl.accounts:Group"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Release">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="snapshot"
+							history-type="historic"
+							type="Document"
+						/>
+						<reference name="draft"
+							history-type="historic"
+							type="Document"
+						>
+							<annotations>
+								<storage-algorithm>
+									<historic-storage/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="partner"
+							type="Partner"
+						/>
+						<reference name="recipients"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<!--
+					Second example: releases of an area and of a part of it, reached through
+					ordinary references and role parents.
+				-->
+				<class name="Area">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="editors"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Chapter">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="area"
+							type="Area"
+						/>
+						<reference name="children"
+							composite="true"
+							multiple="true"
+							type="Chapter"
+						/>
+						<reference name="parts"
+							composite="true"
+							multiple="true"
+							type="ChapterPart"
+						/>
+					</attributes>
+				</class>
+
+				<class name="ChapterPart">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="AreaRelease">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="snapshot"
+							history-type="historic"
+							type="Area"
+						/>
+						<reference name="roots"
+							history-type="historic"
+							multiple="true"
+							type="Chapter"
+						/>
+						<reference name="recipients"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

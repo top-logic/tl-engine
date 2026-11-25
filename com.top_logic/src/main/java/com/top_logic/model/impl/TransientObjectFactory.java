@@ -10,12 +10,18 @@ import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.knowledge.wrap.ValueProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link TLFactory} creating {@link TransientTLObjectImpl}s.
+ * 
+ * <p>
+ * A created object implements the generated Java interfaces of its type, see
+ * {@link TypedObjectClasses}.
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -26,6 +32,11 @@ public class TransientObjectFactory implements TLFactory {
 	 */
 	public static final TransientObjectFactory INSTANCE = new TransientObjectFactory();
 
+	/**
+	 * Parameter types of the {@link TransientTLObjectImpl} constructor creating new objects.
+	 */
+	private static final Class<?>[] CONSTRUCTOR_SIGNATURE = { TLStructuredType.class, TLObject.class };
+
 	private TransientObjectFactory() {
 		// Singleton constructor.
 	}
@@ -33,7 +44,8 @@ public class TransientObjectFactory implements TLFactory {
 	@Override
 	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues, TLID id) {
 		TLFactory.failIfAbstract(type);
-		TransientTLObjectImpl result = new TransientTLObjectImpl(type, context);
+		TransientTLObjectImpl result = TypedObjectClasses.newInstance(TransientTLObjectImpl.class, type,
+			CONSTRUCTOR_SIGNATURE, type, context);
 		try {
 			TLFactory.setupDefaultValues(context, result, type);
 		} catch (Exception ex) {

@@ -145,6 +145,46 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 	}
 
 	/**
+	 * Check if the given person has one of the given roles at the given bound object, regarding
+	 * only the identity of the object.
+	 *
+	 * <p>
+	 * In contrast to {@link #hasRole(Person, BoundObject, Collection)}, a historic version of an
+	 * object is not checked with the roles granted on that version, but with the roles of its
+	 * current object. This decides an operation that modifies data, when it is checked on a
+	 * historic version of an object that has been deleted in the meantime.
+	 * </p>
+	 *
+	 * @param user
+	 *        The user that wants to access an object.
+	 * @param object
+	 *        The object that should be accessed.
+	 * @param accessRoles
+	 *        Roles that allow access to the given object.
+	 * @return Whether the given user has one of the given roles on the identity of the given object
+	 *         or on the identity of one of its role parents.
+	 */
+	public final boolean hasRoleOfIdentity(Person user, BoundObject object,
+			Collection<? extends BoundRole> accessRoles) {
+		if (user == null) {
+			return false;
+		}
+		if (user.isAdmin()) {
+			return true;
+		}
+		return internalHasRoleOfIdentity(user, object, accessRoles);
+	}
+
+	/**
+	 * Implementation of {@link #hasRoleOfIdentity(Person, BoundObject, Collection)} without (again)
+	 * checking for admin access.
+	 */
+	protected boolean internalHasRoleOfIdentity(Person person, BoundObject object,
+			Collection<? extends BoundRole> accessRoles) {
+		return internalHasRole(person, object, accessRoles);
+	}
+
+	/**
 	 * Whether the given person may hold one of the given roles on some object.
 	 * <p>
 	 * The answer is never narrower than {@link #hasRole(Person, BoundObject, Collection)}: whenever

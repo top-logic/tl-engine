@@ -329,6 +329,92 @@ public class ReactDashboardControl extends ReactControl {
 	}
 
 	/**
+	 * Replaces the tiles of this dashboard.
+	 *
+	 * <p>
+	 * The given tiles take the place of the current ones, in the given order, with their width, row
+	 * span, name, visibility and withholding. A given tile whose {@link Tile#getId() id} names a
+	 * current tile takes over the content of that tile, so that its controls keep what they display;
+	 * its own content factory is not called. The content of a current tile whose id is not given
+	 * anymore is disposed.
+	 * </p>
+	 *
+	 * <p>
+	 * Neither the reorder nor the visibility callback is notified: the given arrangement is what the
+	 * caller already knows. The listeners registered via {@link #addStateChangeListener(Runnable)}
+	 * are notified, since tiles may have been shown, hidden, added or removed.
+	 * </p>
+	 *
+	 * @param tiles
+	 *        All tiles, shown or hidden, in the order they should appear. The ids must be distinct.
+	 */
+	public void setTiles(List<Tile> tiles) {
+		Map<String, Tile> current = new LinkedHashMap<>();
+		for (Tile tile : _tiles) {
+			current.put(tile._id, tile);
+		}
+		Set<Tile> displayedBefore = new HashSet<>();
+		for (Tile tile : tiles) {
+			Tile before = current.remove(tile._id);
+			if (before == null || before == tile || before._content == null) {
+				if (before == tile && isDisplayed(tile)) {
+					displayedBefore.add(tile);
+				}
+				continue;
+			}
+			tile._content = before._content;
+			if (isDisplayed(before)) {
+				if (isDisplayed(tile)) {
+					displayedBefore.add(tile);
+				} else {
+					tile._content.control().detach();
+				}
+			}
+		}
+		_tiles.clear();
+		_tiles.addAll(tiles);
+
+		for (Tile dropped : current.values()) {
+			disposeContent(dropped);
+		}
+
+		putState(CHILDREN, buildDescriptors());
+		if (isAttached()) {
+			// The content of a new tile, or of one that is shown again, is part of the displayed tree
+			// now, whether or not its serialization already attached it.
+			for (Tile tile : _tiles) {
+				if (isDisplayed(tile) && !displayedBefore.contains(tile)) {
+					tile._content.control().attach();
+				}
+			}
+		}
+		fireStateChange();
+	}
+
+	/**
+	 * Whether the content of the given tile is part of the displayed tree, given that this control
+	 * is displayed.
+	 */
+	private static boolean isDisplayed(Tile tile) {
+		return tile._visible && !tile._withheld;
+	}
+
+	/**
+	 * Disposes the content of a tile that is no longer part of this dashboard.
+	 */
+	private void disposeContent(Tile tile) {
+		TileContent content = tile._content;
+		if (content == null) {
+			return;
+		}
+		tile._content = null;
+		if (content.action() != null) {
+			content.action().model().removeStateChangeListener(_actionChangeHandler);
+		}
+		content.control().cleanupTree();
+	}
+
+	/**
 	 * Disposes the content of the hidden tiles as well, which the state of this control does not
 	 * show.
 	 */

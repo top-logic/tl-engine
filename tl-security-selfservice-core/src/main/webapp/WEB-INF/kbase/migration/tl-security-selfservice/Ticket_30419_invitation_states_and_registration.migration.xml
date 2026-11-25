@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Completes the model of tl.security.selfservice (Ticket #30419): the states of invitations and
+	registrations, the class Registration, and the attributes and annotations of Invitation that the
+	module got since its migration Ticket_30041_invitation_lifecycle. Up to now they reached existing
+	databases only through the automatic model upgrade, which an application may prevent.
+
+	A database that already has these model elements keeps them: the processors skip what already
+	exists, and an annotation replaces an existing one of the same kind.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_invitation_states_and_registration"
+		module="tl-security-selfservice"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30419_create_changelog_and_access_tokens"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_30419_changelog_storage_algorithms"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_30041_invitation_lifecycle"
+			module="tl-security-selfservice"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.security.selfservice:Invitation#id">
+			<annotation class="com.top_logic.model.annotate.TLDefaultValue"/>
+		</remove-annotations>
+		<remove-annotations name="tl.security.selfservice:Invitation#email">
+			<annotation class="com.top_logic.model.annotate.TLConstraints"/>
+		</remove-annotations>
+		<create-enumeration name="tl.security.selfservice:InvitationState"/>
+		<create-classifier name="tl.security.selfservice:InvitationState#OPEN"/>
+		<create-classifier name="tl.security.selfservice:InvitationState#EXPIRED"/>
+		<create-classifier name="tl.security.selfservice:InvitationState#ACCEPTED"/>
+		<create-enumeration name="tl.security.selfservice:RegistrationState"/>
+		<create-classifier name="tl.security.selfservice:RegistrationState#PENDING"/>
+		<create-classifier name="tl.security.selfservice:RegistrationState#APPROVED"/>
+		<create-class name="tl.security.selfservice:Registration"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="Registration"/>
+				<id-column value="email"/>
+			</annotations>
+		</create-class>
+		<create-property name="tl.security.selfservice:Invitation#language"
+			type="tl.util:Language"
+		>
+			<annotations>
+				<default-value>
+					<provider class="com.top_logic.model.provider.CurrentUserLanguageDefault"/>
+				</default-value>
+				<options>
+					<config-reference name="supportedLocales"/>
+				</options>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.selfservice:Invitation#createdAt"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<search-range value="false"/>
+				<delete-protected/>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.security.selfservice.model.impl.InvitationImpl#calculateCreatedAt()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.selfservice:Invitation#expires"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+				<default-value>
+					<provider class="com.top_logic.security.selfservice.invitation.InvitationExpiryDefault"/>
+				</default-value>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.selfservice:Invitation#accepted"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<add-annotations name="tl.security.selfservice:Invitation">
+			<annotations>
+				<id-column value="email"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.security.selfservice:Invitation#id">
+			<annotations>
+				<default-value>
+					<provider class="com.top_logic.model.provider.SecureStringDefaultProvider"
+						size="32"
+					/>
+				</default-value>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.security.selfservice:Invitation#email">
+			<annotations>
+				<constraints>
+					<constraint-by-expression>
+						<check><![CDATA[email -> self -> $self.get(`tl.security.selfservice:Invitation#accepted`) == null && invitationExistingAccount($email) != null ?
+  #("Es gibt bereits einen Zugang für die E-Mail-Adresse {0}."@de, "There is already an account for the email address {0}."@en).fill($email) :
+  null]]></check>
+					</constraint-by-expression>
+					<constraint-by-expression check="email -> invitationEmailRefusal($email)"/>
+					<constraint-by-expression>
+						<check><![CDATA[email -> self -> {
+  lowerCaseMail = $email.toLowerCase();
+  existingInvitation = all(`tl.security.selfservice:Invitation`)
+    .filter(invitation -> $invitation != $self)
+    .filter(invitation -> $invitation.get(`tl.security.selfservice:Invitation#state`) == `tl.security.selfservice:InvitationState#OPEN`)
+    .filter(invitation -> $invitation.get(`tl.security.selfservice:Invitation#email`).toLowerCase() == $lowerCaseMail)
+    .firstElement();
+  $existingInvitation != null ? 
+  #("Es gibt bereits eine Einladung für die E-Mail-Adresse {0}."@de, "There is already an invitation for the email address {0}."@en).fill($existingInvitation.get(`tl.security.selfservice:Invitation#email`)) :
+  null;
+}]]></check>
+					</constraint-by-expression>
+				</constraints>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.security.selfservice:Invitation#createCallback">
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</add-annotations>
+		<add-class-generalizations name="tl.security.selfservice:Registration">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-property name="tl.security.selfservice:Registration#email"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.selfservice:Registration#createdAt"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<search-range value="false"/>
+				<delete-protected/>
+				<storage-algorithm>
+					<query expr="registration -> $registration.createRevision().get(`tl.core:Revision#date`)"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.selfservice:Registration#approved"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-reference name="tl.security.selfservice:Invitation#createdBy"
+			navigate="true"
+			type="tl.accounts:Person"
+		>
+			<annotations>
+				<search-range value="false"/>
+				<delete-protected/>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.security.selfservice.model.impl.InvitationImpl#calculateCreatedBy()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.security.selfservice:Invitation#account"
+			deletion-policy="delete-referer"
+			navigate="true"
+			type="tl.accounts:Person"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.security.selfservice:Invitation#state"
+			type="tl.security.selfservice:InvitationState"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[invitation ->
+  $invitation.get(`tl.security.selfservice:Invitation#accepted`) != null ? `tl.security.selfservice:InvitationState#ACCEPTED` : (
+    $invitation.get(`tl.security.selfservice:Invitation#expires`) != null && $invitation.get(`tl.security.selfservice:Invitation#expires`) <= now() ?
+      `tl.security.selfservice:InvitationState#EXPIRED` :
+      `tl.security.selfservice:InvitationState#OPEN`
+  )]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.security.selfservice:Registration#account"
+			deletion-policy="delete-referer"
+			navigate="true"
+			type="tl.accounts:Person"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.security.selfservice:Registration#approvedBy"
+			navigate="true"
+			type="tl.accounts:Person"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.security.selfservice:Registration#state"
+			type="tl.security.selfservice:RegistrationState"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[registration ->
+  $registration.get(`tl.security.selfservice:Registration#approved`) == null
+    && $registration.get(`tl.security.selfservice:Registration#account`).get(`tl.accounts:Person#locked`) == true ?
+    `tl.security.selfservice:RegistrationState#PENDING` :
+    `tl.security.selfservice:RegistrationState#APPROVED`]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<reorder-part name="tl.security.selfservice:Invitation#language"
+			before="createCallback"
+		/>
+		<reorder-part name="tl.security.selfservice:Invitation#createdAt"/>
+		<reorder-part name="tl.security.selfservice:Invitation#createdBy"/>
+		<reorder-part name="tl.security.selfservice:Invitation#expires"/>
+		<reorder-part name="tl.security.selfservice:Invitation#accepted"/>
+		<reorder-part name="tl.security.selfservice:Invitation#account"/>
+		<reorder-part name="tl.security.selfservice:Invitation#state"/>
+		<!-- Establishes the order of the attributes in the model: moves each one to the end. -->
+		<reorder-part name="tl.security.selfservice:Registration#email"/>
+		<reorder-part name="tl.security.selfservice:Registration#account"/>
+		<reorder-part name="tl.security.selfservice:Registration#createdAt"/>
+		<reorder-part name="tl.security.selfservice:Registration#approved"/>
+		<reorder-part name="tl.security.selfservice:Registration#approvedBy"/>
+		<reorder-part name="tl.security.selfservice:Registration#state"/>
+	</processors>
+	<post-processors/>
+</migration>

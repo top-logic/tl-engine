@@ -806,6 +806,75 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals(List.of("Charlie", "alice", "Bob"), names(view));
 	}
 
+	/**
+	 * Tests that an initial grouping and sort naming a column the table does not have - one withheld
+	 * from the user, for instance - take no effect, while the known sort column does, and that a
+	 * reset does not bring the unknown column back.
+	 */
+	public void testInitialGroupingAndSortByUnknownColumnHaveNoEffect() {
+		List<Column<Person, ?>> columns = personColumns();
+		TableViewState initial = DefaultTableView.initialState(columns,
+			new SortSpec(List.of(new SortColumn("missing", true), new SortColumn("age", false))), List.of());
+		initial.setGrouping(new GroupSpec(List.of("missing")));
+		TableView<Person> view = new DefaultTableView<>(columns, new ListRowSource<>(people(), columns), initial);
+
+		assertEquals(GroupSpec.NONE, view.state().getGrouping());
+		assertEquals(List.of(new SortColumn("age", false)), view.state().getSort());
+		assertEquals("The table is not grouped.", List.of(), groupValues(view));
+		assertEquals("The known sort column orders the rows.", List.of("Bob", "Charlie", "alice"), names(view));
+
+		view.group(new GroupSpec(List.of("age")));
+		view.sort(SortSpec.ascending("name"));
+		view.resetToDefaults();
+		assertEquals(GroupSpec.NONE, view.state().getGrouping());
+		assertEquals(List.of(new SortColumn("age", false)), view.state().getSort());
+		assertEquals(List.of(), groupValues(view));
+		assertEquals(List.of("Bob", "Charlie", "alice"), names(view));
+	}
+
+	/**
+	 * Tests that an initial grouping by a known column groups the table.
+	 */
+	public void testInitialGroupingByKnownColumnTakesEffect() {
+		List<Column<Person, ?>> columns = personColumns();
+		TableViewState initial = DefaultTableView.initialState(columns, SortSpec.NONE, List.of());
+		initial.setGrouping(new GroupSpec(List.of("age")));
+		TableView<Person> view = new DefaultTableView<>(columns, new ListRowSource<>(people(), columns), initial);
+
+		assertEquals(new GroupSpec(List.of("age")), view.state().getGrouping());
+		assertEquals(List.of(25, 30, 40), groupValues(view));
+	}
+
+	/**
+	 * Tests that grouping or sorting by a column the table does not have is rejected and leaves the
+	 * table as it was.
+	 */
+	public void testGroupAndSortByUnknownColumnAreRejected() {
+		TableView<Person> view = newView();
+		view.group(new GroupSpec(List.of("age")));
+		view.sort(SortSpec.ascending("name"));
+		List<Object> groups = groupValues(view);
+		List<String> rows = dataNames(view);
+
+		try {
+			view.group(new GroupSpec(List.of("missing")));
+			fail("A grouping by an unknown column must be rejected.");
+		} catch (IllegalArgumentException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("missing"));
+		}
+		try {
+			view.sort(new SortSpec(List.of(new SortColumn("age", false), new SortColumn("missing", true))));
+			fail("An order by an unknown column must be rejected.");
+		} catch (IllegalArgumentException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("missing"));
+		}
+
+		assertEquals(new GroupSpec(List.of("age")), view.state().getGrouping());
+		assertEquals(List.of(new SortColumn("name", true)), view.state().getSort());
+		assertEquals(groups, groupValues(view));
+		assertEquals(rows, dataNames(view));
+	}
+
 	// ---- named filters ----
 
 	/** Identifier of the declared filter selecting the rows older than 26. */

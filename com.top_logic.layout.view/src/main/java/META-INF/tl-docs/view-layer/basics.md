@@ -118,6 +118,12 @@ order: 10
 - **Standalone form-field controls bind to a `FieldModel`.** For a standalone field control (e.g. a checkbox cell), use the concrete `com.top_logic.layout.form.model.AbstractFieldModel` + `FieldModelListener` — not `FormContext` / `FormField` / `FormFieldAdapter`, which are legacy-compat shims. `AbstractFieldModel` is editable by default, needs no `FormContext` parent, and triggers no label resource lookup in `ReactFormFieldControl`.
 - Modifying persistent state from a control's value listener needs a transaction; the listener has no ambient one, so open `beginTransaction()` there (or buffer changes and apply them under one transaction on save).
 
+### The Enter of an input method composition
+
+A person who types with an input method (for example for Japanese) ends a composition with Enter. This Enter belongs to the input method, in every input of the view layer: it submits nothing, picks no entry of a list and runs no command bound to the key (`key="ENTER"`). The next Enter does.
+
+A key belongs to a composition when `isComposing` is set or when its key code is 229. Safari needs the key code: it ends the composition before it reports the Enter. A control of an application that handles a key in an input calls `isCompositionKey(event)` of `tl-react-bridge` first and leaves such a key alone. A React handler passes `event.nativeEvent`.
+
 ## Spacing model
 
 Containers are flush: a `<panel>`, a `<tab>`, a `<pane>`, a dialog window and the simple layouts `<stack>` / `<grid>` lay their content out up to their border and add no padding. The content owns its breathing room:

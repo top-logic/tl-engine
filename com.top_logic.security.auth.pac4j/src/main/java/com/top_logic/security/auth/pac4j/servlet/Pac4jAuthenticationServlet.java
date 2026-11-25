@@ -168,11 +168,47 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 	}
 
 	private Optional<UserProfile> getUserProfile(HttpServletRequest request, HttpServletResponse response) {
+		return profileManager(request, response).getProfile();
+	}
+
+	/**
+	 * Discards the pac4j profile of the rejected login.
+	 *
+	 * <p>
+	 * The pac4j {@link SecurityFilter} lets a request pass as soon as it finds a stored profile.
+	 * Without discarding it, the next login would present the rejected identity again instead of
+	 * reaching the identity provider, where another identity can be chosen.
+	 * </p>
+	 *
+	 * @see #removeProfiles(HttpServletRequest, HttpServletResponse)
+	 */
+	@Override
+	protected void discardRejectedAuthentication(HttpServletRequest request, HttpServletResponse response) {
+		removeProfiles(request, response);
+	}
+
+	/**
+	 * Removes the pac4j profiles stored for the given request.
+	 *
+	 * <p>
+	 * The next request through the pac4j {@link SecurityFilter} then finds no profile and hands the
+	 * browser to the identity provider again. The HTTP session itself is kept.
+	 * </p>
+	 */
+	public static void removeProfiles(HttpServletRequest request, HttpServletResponse response) {
+		profileManager(request, response).removeProfiles();
+	}
+
+	/**
+	 * The {@link ProfileManager} giving access to the pac4j profiles stored in the HTTP session of
+	 * the given request.
+	 */
+	private static ProfileManager profileManager(HttpServletRequest request, HttpServletResponse response) {
 		Config config = Pac4jConfigFactory.getInstance().getPac4jConfig();
 		WebContext context = new JEEContext(request, response);
 		ProfileManager manager = config.getProfileManagerFactory().apply(context, new JEESessionStore());
 		manager.setConfig(config);
-		return manager.getProfile();
+		return manager;
 	}
 
 }

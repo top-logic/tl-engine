@@ -152,9 +152,9 @@ public class SectionApproval implements SecurityContextFactory {
 }
 ```
 
-The factory is told a `RunPrincipal`: the account the run acts as, how the run was started (`CHAT`, `SCRIPT`, `MCP`, `SCHEDULED`, `INTERNAL`), whether anybody is there to answer a prompt, and the conversation the run belongs to when the entry point has one. The run has no id and no agent yet - those are settled after the context is built. Three rules:
+The factory is told a `RunPrincipal`: the account the run acts as, how the run was started (`CHAT`, `SCRIPT`, `MCP`, `A2A`, `SCHEDULED`, `INTERNAL`), whether anybody is there to approve a tool call, and the conversation the run belongs to when the entry point has one. The run has no id and no agent yet - those are settled after the context is built. Three rules:
 
-- **Every entry point asks.** `RunSecurity.contextFor` is the one call, and the chat, the TL-Script functions, the MCP endpoint and the prompt improver all go through it. An application substitutes one implementation, not several call sites.
+- **Every entry point asks.** `RunSecurity.contextFor` is the one call, and the chat, the TL-Script functions, the MCP and A2A endpoints and the prompt improver all go through it. An application substitutes one implementation, not several call sites.
 - **Configuring nothing changes nothing.** The default is `DefaultSecurityContextFactory`.
 - **A factory may narrow and may not widen.** Everything else about a run - which tools, which agents, which objects - is decided against the account's roles, and a context written from scratch would answer all of that permissively, since `SecurityContext`'s methods have permissive defaults. Build `DefaultSecurityContextFactory.defaultContext(run)`, wrap it in `SecurityContextProxy`, and override the one answer that is to differ.
 

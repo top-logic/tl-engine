@@ -204,24 +204,76 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 			String userName = exception.getPerson() == null ? "null" : getLoginName(exception.getPerson());
 			String message = "User " + userName + " tried to login while the system was in maintenance mode.";
 			Logger.debug(message, ExternalAuthenticationServlet.class);
+			rejectAuthentication(request, response);
 			forwardToSSOLoginFailed(request, response, ResKey.text(Login.getI18NedMaintenanceMessage(userName)));
 		} catch (UnknownAccountException exception) {
 			Logger.info("No account for externally authenticated user: " + exception.getMessage(),
 				ExternalAuthenticationServlet.class);
+			rejectAuthentication(request, response);
 			redirectToUnknownAccountPage(exception.getLoginName(), request, response);
 		} catch (LoginDeniedException exception) {
 			Logger.debug("Access denied: " + exception.getMessage(), exception, ExternalAuthenticationServlet.class);
+			rejectAuthentication(request, response);
 			ResKey reason = exception.getReason();
 			forwardToSSOLoginFailed(request, response,
 				reason != null ? reason : I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED);
 		} catch (LoginFailedException exception) {
 			Logger.error("Login failed: " + exception.getMessage(), exception, ExternalAuthenticationServlet.class);
+			rejectAuthentication(request, response);
 			forwardToSSOLoginFailed(request, response, I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED);
 		} catch (Throwable exception) {
 			Logger.error("Problem during login: " + exception.getMessage(), exception,
 				ExternalAuthenticationServlet.class);
+			rejectAuthentication(request, response);
 			forwardToSSOLoginFailed(request, response, I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED);
 		}
+	}
+
+	/**
+	 * Calls {@link #discardRejectedAuthentication(HttpServletRequest, HttpServletResponse)} for a
+	 * rejected login, before the rejection is shown.
+	 *
+	 * <p>
+	 * A failure of the hook is only logged: the visitor is told about the rejection anyway.
+	 * </p>
+	 */
+	private void rejectAuthentication(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			discardRejectedAuthentication(request, response);
+		} catch (Throwable ex) {
+			if (ex instanceof VirtualMachineError) {
+				throw ex;
+			}
+			Logger.error("Failed to discard the authentication of a rejected login.", ex,
+				ExternalAuthenticationServlet.class);
+		}
+	}
+
+	/**
+	 * Hook for subclasses: Discards what the external authentication has left for the given request
+	 * after the login has been rejected.
+	 *
+	 * <p>
+	 * Called once for every rejected login (no account, a denied or failed login, maintenance mode,
+	 * an unexpected error), before the rejection is shown to the visitor. Not called when the login
+	 * is forwarded elsewhere ({@link ForwardRequiredException}), breaks off
+	 * ({@link BreakCheckRequestException}), or succeeds.
+	 * </p>
+	 *
+	 * <p>
+	 * An authentication that keeps the identity it has established (e.g. in the HTTP session)
+	 * removes it here, so that the next login attempt asks the external authentication again
+	 * instead of presenting the rejected identity once more. The HTTP session itself must be kept: it
+	 * carries the reason of the rejection to the page that shows it (see
+	 * {@link ExternalLoginFailure}).
+	 * </p>
+	 *
+	 * <p>
+	 * By default nothing is discarded.
+	 * </p>
+	 */
+	protected void discardRejectedAuthentication(HttpServletRequest request, HttpServletResponse response) {
+		// Nothing kept by default.
 	}
 
 	private synchronized void internalCheckRequest(HttpServletRequest request, HttpServletResponse response)

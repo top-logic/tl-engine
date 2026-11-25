@@ -4,10 +4,8 @@
  */
 package com.top_logic.model.security;
 
-import java.util.Arrays;
 import java.util.Collection;
 
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
@@ -18,11 +16,11 @@ import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
  *
  * <p>
  * A type either delegates its access decision to an {@link AccessParentConfig access parent}, or
- * defines its access itself by grants and marks. A type delegating every operation has no use for
- * grants, see {@link IgnoredGrants}, and no marks, see {@link AccessParentStandsAlone}. A form
- * editing the access rights of a type offers only the way not excluded by the other: the grants and
- * marks are hidden while the type delegates, the access parent while the type has grants or a
- * mark.
+ * is marked to need no access check or to be internal - never both, see
+ * {@link AccessParentStandsAlone}. A form editing the access rights of a type offers only the way
+ * not excluded by the other: the marks are hidden while the type delegates, the access parent while
+ * the type has a mark. The grants are no such way: they decide beside an access parent, see
+ * {@link ForGrants}.
  * </p>
  *
  * <p>
@@ -80,33 +78,32 @@ public class HideBesideOtherDefinition extends GenericFunction<FieldMode> {
 	}
 
 	/**
-	 * {@link HideBesideOtherDefinition} for the grants of a type, which are hidden as well while the
-	 * type is without security - see {@link SecurityConfigurationService.TypeBasedAccessRights#isWithoutSecurity()}.
+	 * {@link DynamicMode} for the grants of a type, which are hidden while the type is without
+	 * security - see {@link SecurityConfigurationService.TypeBasedAccessRights#isWithoutSecurity()}.
 	 *
 	 * <p>
-	 * The arguments are whether the type is without security, the grants and the definition of the
-	 * access parent.
-	 * </p>
-	 *
-	 * <p>
-	 * A definition {@link AccessParentConfig#isRestricted(PolymorphicConfiguration) restricted} to
-	 * some operations leaves the other operations to the grants of the type, so the grants are not
-	 * hidden beside it - for an {@link AnyOfAccessParent}, when all its candidates are restricted,
-	 * or when it names the object itself as candidate.
+	 * The only argument is whether the type is without security. Beside an access parent the
+	 * grants are offered: they decide the operations it does not delegate, and the delegated ones as
+	 * well when it names the object itself as candidate. Grants the access parent ignores are
+	 * reported by {@link IgnoredGrants}. Offering them independently of the access parent keeps them
+	 * available while the candidates of the access parent are edited in the same form.
 	 * </p>
 	 */
-	public static class ForGrants extends HideBesideOtherDefinition {
+	public static class ForGrants extends GenericFunction<FieldMode> {
 
 		@Override
 		public FieldMode invoke(Object... args) {
-			if (args.length > 0 && Boolean.TRUE.equals(args[0])) {
-				return FieldMode.INVISIBLE;
-			}
-			if (args.length > 2 && args[2] instanceof PolymorphicConfiguration<?> definition
-				&& AccessParentConfig.isRestricted(definition)) {
-				return FieldMode.ACTIVE;
-			}
-			return super.invoke(Arrays.copyOfRange(args, Math.min(1, args.length), args.length));
+			return args.length > 0 && Boolean.TRUE.equals(args[0]) ? FieldMode.INVISIBLE : FieldMode.ACTIVE;
+		}
+
+		@Override
+		public int getArgumentCount() {
+			return 0;
+		}
+
+		@Override
+		public boolean hasVarArgs() {
+			return true;
 		}
 
 	}

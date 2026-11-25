@@ -27,6 +27,7 @@ import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig;
+import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewAction;
@@ -360,8 +361,11 @@ public class SecurityDefinitionAction implements ViewAction {
 				throw new TopLogicException(I18NConstants.ERROR_MISSING_GRANT_OPERATION);
 			}
 		}
-		checkConstraints(entry);
+		List<ConstraintFailure> warnings = checkConstraints(entry);
 		store(() -> editor().putAccessRights(entry), grantsFile());
+		for (ConstraintFailure warning : warnings) {
+			InfoService.showWarning(I18NConstants.ACCESS_RIGHTS_SAVED_WITH_WARNING, warning.getConstraintName());
+		}
 		return changed();
 	}
 
@@ -374,8 +378,12 @@ public class SecurityDefinitionAction implements ViewAction {
 	 * the wording of the server log naming the configuration interface, the raw value and the
 	 * source location.
 	 * </p>
+	 *
+	 * @return The constraints checked as warning that the access rights violate, such as grants
+	 *         their access parent ignores. They do not prevent storing the access rights, but are
+	 *         told to the user.
 	 */
-	private static void checkConstraints(ModelAccessRights entry) {
+	private static List<ConstraintFailure> checkConstraints(ModelAccessRights entry) {
 		ConstraintChecker checker = new ConstraintChecker();
 		try {
 			checker.check(entry);
@@ -390,6 +398,7 @@ public class SecurityDefinitionAction implements ViewAction {
 			throw new TopLogicException(
 				I18NConstants.ERROR_ACCESS_RIGHTS_INVALID__PROBLEM.fill(error.getConstraintName()));
 		}
+		return checker.getFailures().stream().filter(ConstraintFailure::isWarning).toList();
 	}
 
 	/**

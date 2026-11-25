@@ -345,7 +345,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		@Constraint(value = AccessParentStandsAlone.class, args = { @Ref(WITHOUT_SECURITY), @Ref(INTERNAL) })
 		@Constraint(value = IgnoredGrants.class, args = { @Ref(GRANTS) }, asWarning = true)
 		@DynamicMode(fun = HideBesideOtherDefinition.class,
-			args = { @Ref(ACCESS_PARENT), @Ref(GRANTS), @Ref(WITHOUT_SECURITY), @Ref(INTERNAL) })
+			args = { @Ref(ACCESS_PARENT), @Ref(WITHOUT_SECURITY), @Ref(INTERNAL) })
 		AccessParentConfig getAccessParent();
 
 		/**
@@ -354,12 +354,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		void setAccessParent(AccessParentConfig value);
 
 		/**
-		 * @see HideBesideOtherDefinition The grants are not offered while the type delegates to an
-		 *      access parent.
+		 * @see HideBesideOtherDefinition.ForGrants The grants are not offered while the type is
+		 *      without security. They are offered beside an access parent: they decide the
+		 *      operations it does not delegate, and the delegated ones as well when it names the
+		 *      object itself as candidate; grants it ignores are reported by {@link IgnoredGrants}.
 		 */
 		@Override
-		@DynamicMode(fun = HideBesideOtherDefinition.ForGrants.class,
-			args = { @Ref(WITHOUT_SECURITY), @Ref(GRANTS), @Ref({ ACCESS_PARENT, AccessParentConfig.DEFINITION }) })
+		@DynamicMode(fun = HideBesideOtherDefinition.ForGrants.class, args = { @Ref(WITHOUT_SECURITY) })
 		List<AccessRule> getGrants();
 
 		/**

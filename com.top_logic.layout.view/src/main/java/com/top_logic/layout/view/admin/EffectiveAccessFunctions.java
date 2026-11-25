@@ -471,6 +471,20 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 			return text;
 		}
 		String operation = resources.getString(SecurityGrantFunctions.labelKey(decision.checkedOperation()));
+		TLObject object = explanation.object();
+		if (roleHolders.size() > 1 && roleHolders.contains(object)
+			&& !decision.checkedOperation().equals(decision.operation())) {
+			// The object deciding itself beside its access parents checks the operation itself,
+			// the access parents the operation it is mapped to.
+			String parents = roleHolders.stream()
+				.filter(holder -> !holder.equals(object))
+				.map(labels)
+				.collect(Collectors.joining(SEPARATOR));
+			return resources.getString(
+				I18NConstants.EFFECTIVE_ACCESS_CHECKED_ON_ITSELF_AND_PARENTS__OPERATION_OBJECT_PARENT_OPERATION_PARENTS_REASON
+					.fill(resources.getString(SecurityGrantFunctions.labelKey(decision.operation())),
+						labels.apply(object), operation, parents, text));
+		}
 		if (roleHolders.size() == 1) {
 			return resources.getString(I18NConstants.EFFECTIVE_ACCESS_CHECKED_ON__OPERATION_OBJECT_REASON.fill(
 				operation, labels.apply(roleHolders.get(0)), text));

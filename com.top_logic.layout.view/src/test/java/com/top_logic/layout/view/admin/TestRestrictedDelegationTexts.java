@@ -137,6 +137,27 @@ public class TestRestrictedDelegationTexts extends TestCase {
 	}
 
 	/**
+	 * An operation mapped to another one on the access parents, decided by the object itself as
+	 * well, names the operation checked on the object and the one checked on its access parents.
+	 */
+	public void testReasonOfMappedOperationOnObjectItself() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.explain");
+		TLClass object = TLModelUtil.addClass(module, "Session");
+		TLClass parentObject = TLModelUtil.addClass(module, "Document");
+		OperationDecision delete = new OperationDecision(SimpleBoundCommandGroup.DELETE, SimpleBoundCommandGroup.WRITE,
+			List.of(object, parentObject), false, Set.of(), Set.of(), Set.of(), true);
+		AccessExplanation explanation = explanation(object, object, List.of(delete));
+
+		String reason = EffectiveAccessFunctions.reason(explanation, delete, LABELS);
+		String expected = translate(
+			I18NConstants.EFFECTIVE_ACCESS_CHECKED_ON_ITSELF_AND_PARENTS__OPERATION_OBJECT_PARENT_OPERATION_PARENTS_REASON
+				.fill(translate(SecurityGrantFunctions.labelKey(SimpleBoundCommandGroup.DELETE)), "Session",
+					translate(SecurityGrantFunctions.labelKey(SimpleBoundCommandGroup.WRITE)), "Document",
+					translate(I18NConstants.EFFECTIVE_ACCESS_DENIED_RESTRICTED)));
+		assertEquals(expected, reason);
+	}
+
+	/**
 	 * The label of a restricted relation names the delegated operations by their labels in the
 	 * language of the user, ordered by their names.
 	 */

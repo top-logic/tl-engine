@@ -9,6 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey5;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -150,6 +151,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The access rights cannot be stored: {0}
 	 */
 	public static ResKey1 ERROR_ACCESS_RIGHTS_INVALID__PROBLEM;
+
+	/**
+	 * @en The access rights are stored, but take no full effect.
+	 */
+	public static ResKey ACCESS_RIGHTS_SAVED_WITH_WARNING;
 
 	/**
 	 * @en No role source: neither a role rule nor a role parent rule applies to the type, and no
@@ -665,6 +671,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Checked as "{0}" on any of: {1}. {2}
 	 */
 	public static ResKey3 EFFECTIVE_ACCESS_CHECKED_ON_SEVERAL__OPERATION_OBJECTS_REASON;
+
+	/**
+	 * @en Checked as "{0}" on "{1}" itself, and as "{2}" on any of: {3}. {4}
+	 */
+	public static ResKey5 EFFECTIVE_ACCESS_CHECKED_ON_ITSELF_AND_PARENTS__OPERATION_OBJECT_PARENT_OPERATION_PARENTS_REASON;
 
 	/**
 	 * @en The access parent {0} combines its candidates itself; the roles shown may admit more than

@@ -16,6 +16,7 @@ import {
   ARG_FROM_TURN,
   ARG_MODE,
   ARG_REQUEST_ID,
+  ARG_ATTACHMENT_ID,
   ARG_SESSION_ID,
   ARG_SUBAGENT_ID,
   ARG_TEXT,
@@ -66,6 +67,7 @@ import {
   resetTLBridge,
   setPageLeaving,
   tlUpload,
+  uploadForms,
   uploads,
   answerUploads,
   type CommandResponse,
@@ -789,8 +791,9 @@ describe('sending', () => {
     expect(turnCommands).toEqual([])
 
     store.takeAttachments(
-      readBootstrap({ [STATE_DRAFT_ATTACHMENTS]: [{ id: 'f1', fileName: 'bild.png', mimeType: 'image/png', size: 4 }] })
-        .draftAttachments,
+      readBootstrap({
+        [STATE_DRAFT_ATTACHMENTS]: { '': [{ id: 'f1', fileName: 'bild.png', mimeType: 'image/png', size: 4 }] },
+      }).draftAttachments,
     )
     expect(store.getState().draftAttachments.map((f) => f.fileName)).toEqual(['bild.png'])
     arrive()
@@ -807,12 +810,43 @@ describe('sending', () => {
   it('takes a file off the message through the command', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL, tlUpload)
-    store.takeAttachments([{ id: 'f1', fileName: 'a.pdf', mimeType: 'application/pdf', size: 4 }])
+    store.takeAttachments({ '': [{ id: 'f1', fileName: 'a.pdf', mimeType: 'application/pdf', size: 4 }] })
 
     store.actions.removeAttachment('f1')
 
     expect(store.getState().draftAttachments).toEqual([])
-    expect(commands.map((command) => command.name)).toContain(CMD_REMOVE_ATTACHMENT)
+    const removal = commands.find((command) => command.name === CMD_REMOVE_ATTACHMENT)
+    expect(removal?.args).toEqual({ [ARG_ATTACHMENT_ID]: 'f1', [ARG_SESSION_ID]: '' })
+
+    await settle()
+    release()
+  })
+
+  it('shows the files of the chat on screen, and attaches in that chat', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL, tlUpload)
+    store.takeAttachments({
+      s1: [{ id: 'f1', fileName: 'a.png', mimeType: 'image/png', size: 4 }],
+      '': [{ id: 'f2', fileName: 'neu.png', mimeType: 'image/png', size: 4 }],
+    })
+    expect(store.getState().draftAttachments.map((f) => f.fileName)).toEqual(['neu.png'])
+    await store.actions.attach([file('noch.png', 'image/png')])
+    expect(uploadForms[0].get('sessionId')).toBe('')
+
+    await store.actions.selectSession('s1')
+    expect(store.getState().draftAttachments.map((f) => f.fileName)).toEqual(['a.png'])
+    await store.actions.attach([file('b.png', 'image/png')])
+    expect(uploadForms[1].get('sessionId')).toBe('s1')
+
+    store.actions.removeAttachment('f1')
+    expect(store.getState().draftAttachments).toEqual([])
+    expect(commands.find((command) => command.name === CMD_REMOVE_ATTACHMENT)?.args).toEqual({
+      [ARG_ATTACHMENT_ID]: 'f1',
+      [ARG_SESSION_ID]: 's1',
+    })
+
+    store.actions.newChat()
+    expect(store.getState().draftAttachments.map((f) => f.fileName)).toEqual(['neu.png'])
 
     await settle()
     release()
@@ -2527,6 +2561,7 @@ describe('the composer seam', () => {
     store.actions.bindComposer({
       insertReference: () => undefined,
       setDraft: (text) => drafts.push(text),
+      restoreDraft: () => undefined,
       focus: () => undefined,
     })
 
@@ -2545,6 +2580,7 @@ describe('the composer seam', () => {
     store.actions.bindComposer({
       insertReference: (token) => tokens.push(token.label),
       setDraft: () => undefined,
+      restoreDraft: () => undefined,
       focus: () => undefined,
     })
 
@@ -2567,6 +2603,142 @@ describe('the composer seam', () => {
 
     expect(() => store.actions.setDraft('Bitte erkläre die Rechnung.')).not.toThrow()
 
+    release()
+  })
+})
+
+/**
+ * The unsent text belongs to the chat it was written in, not to the place that shows the chat
+ * (#30552): a switch puts the other chat's text into the composer, without taking the focus.
+ */
+describe('a draft per chat', () => {
+  /** A composer that reports what it shows, as the mounted one does through `onDraft`. */
+  function composer(store: ReturnType<typeof chatStore>) {
+    const shown = { text: '', restored: [] as string[], written: [] as string[], focused: 0 }
+    store.actions.bindComposer({
+      insertReference: () => undefined,
+      setDraft: (text) => {
+        shown.written.push(text)
+        shown.focused += 1
+        shown.text = text
+        store.actions.noteDraft(text)
+      },
+      restoreDraft: (text) => {
+        shown.restored.push(text)
+        shown.text = text
+        store.actions.noteDraft(text)
+      },
+      focus: () => {
+        shown.focused += 1
+      },
+    })
+    return shown
+  }
+
+  /** The user types: the composer reports its new text. */
+  function type(store: ReturnType<typeof chatStore>, shown: { text: string }, text: string) {
+    shown.text = text
+    store.actions.noteDraft(text)
+  }
+
+  it('shows the text of the chat on screen, and brings the text of a chat back', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    const shown = composer(store)
+    await store.actions.selectSession('a')
+    type(store, shown, 'Frage zu A')
+
+    await store.actions.selectSession('b')
+    expect(shown.text).toBe('')
+
+    await store.actions.selectSession('a')
+    expect(shown.text).toBe('Frage zu A')
+    expect(shown.focused).toBe(0)
+    expect(shown.written).toEqual([])
+
+    await settle()
+    release()
+  })
+
+  it('writes a draft from outside into the chat on screen only', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    const shown = composer(store)
+    await store.actions.selectSession('a')
+    type(store, shown, 'Frage zu A')
+    await store.actions.selectSession('b')
+
+    store.actions.setDraft('Bitte erkläre B.')
+    expect(shown.text).toBe('Bitte erkläre B.')
+
+    await store.actions.selectSession('a')
+    expect(shown.text).toBe('Frage zu A')
+    await store.actions.selectSession('b')
+    expect(shown.text).toBe('Bitte erkläre B.')
+
+    await settle()
+    release()
+  })
+
+  it('gives a new chat a draft of its own, which the first send hands to the chat it creates', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    const shown = composer(store)
+    await store.actions.selectSession('a')
+    type(store, shown, 'Frage zu A')
+
+    store.actions.newChat()
+    expect(shown.text).toBe('')
+    type(store, shown, 'Neue Frage')
+
+    expect(await store.actions.send('Neue Frage')).toBe(true)
+    expect(store.getState().sessionId).toBe('s1')
+    // Nothing was put into the composer for the chat the send created: it holds the sent text.
+    expect(shown.restored).toEqual(['', ''])
+    // The composer empties itself once the send is through.
+    type(store, shown, '')
+
+    store.actions.newChat()
+    expect(shown.text).toBe('')
+    await store.actions.selectSession('a')
+    expect(shown.text).toBe('Frage zu A')
+
+    await settle()
+    release()
+  })
+
+  it('keeps the draft of a new chat whose first send is refused', async () => {
+    turnAnswer = async () => ({ success: true, [FIELD_STATUS]: STATUS_FORBIDDEN, [FIELD_REASON]: 'Nicht erlaubt.' })
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    const shown = composer(store)
+    type(store, shown, 'Neue Frage')
+
+    expect(await store.actions.send('Neue Frage')).toBe(false)
+    await store.actions.selectSession('a')
+    expect(shown.text).toBe('')
+
+    store.actions.newChat()
+    expect(shown.text).toBe('Neue Frage')
+
+    await settle()
+    release()
+  })
+
+  it('gives a composer that mounts again the draft of the chat on screen', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    const first = composer(store)
+    await store.actions.selectSession('a')
+    type(store, first, 'Frage zu A')
+    store.actions.bindComposer(null)
+
+    const again = composer(store)
+
+    expect(again.restored).toEqual(['Frage zu A'])
+    expect(again.focused).toBe(0)
+
+    await settle()
     release()
   })
 })
@@ -3135,6 +3307,7 @@ describe('a window the server no longer knows', () => {
     const staleComposer = {
       insertReference: () => undefined,
       setDraft: (text: string) => staleDrafts.push(text),
+      restoreDraft: () => undefined,
       focus: () => undefined,
     }
     store.actions.bindComposer(staleComposer)
@@ -3162,6 +3335,7 @@ describe('a window the server no longer knows', () => {
     reloaded.actions.bindComposer({
       insertReference: () => undefined,
       setDraft: (text) => drafts.push(text),
+      restoreDraft: () => undefined,
       focus: () => undefined,
     })
     expect(drafts).toEqual(['Hallo nach dem Kontowechsel'])
@@ -3170,6 +3344,7 @@ describe('a window the server no longer knows', () => {
     reloaded.actions.bindComposer({
       insertReference: () => undefined,
       setDraft: (text) => drafts.push(text),
+      restoreDraft: () => undefined,
       focus: () => undefined,
     })
     expect(drafts).toHaveLength(1)

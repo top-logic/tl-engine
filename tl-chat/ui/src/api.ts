@@ -285,11 +285,27 @@ export const STATUS_FORBIDDEN = 'forbidden'
 /** Status: no room for the run right now. Must match `ChatControl#STATUS_REJECTED`. */
 export const STATUS_REJECTED = 'rejected'
 
-/** State key of the files attached to the message. Must match `ChatControl#STATE_DRAFT_ATTACHMENTS`. */
+/**
+ * State key of the files attached to the messages being written: per chat session id
+ * ({@link NEW_CONVERSATION} for the chat the next send creates), the files attached in it. Must
+ * match `ChatControl#STATE_DRAFT_ATTACHMENTS`.
+ */
 export const STATE_DRAFT_ATTACHMENTS = 'draftAttachments'
 
 /** Name of the multipart part of an uploaded file. Must match `UploadSupport#FILE_PART`. */
 const UPLOAD_FILE_PART = 'file'
+
+/**
+ * Name of the multipart part naming the chat an upload attaches its files in. Must match
+ * `ChatControl#UPLOAD_SESSION_PART`.
+ */
+const UPLOAD_SESSION_PART = 'sessionId'
+
+/**
+ * The key of the files attached in the chat the next send creates, which has no id yet. Must match
+ * `ChatViewBinding#NEW_CONVERSATION`.
+ */
+export const NEW_CONVERSATION = ''
 
 /** A send the chat refused because it is answering something else. */
 export class BusyError extends Error {
@@ -410,24 +426,29 @@ export function regenerate(command: ChatCommand, sessionId: string, settings: Tu
   return turn(command, CMD_REGENERATE, { [ARG_SESSION_ID]: sessionId, ...settingsArgs(settings) })
 }
 
-/** Takes a file off the message being written. */
-export async function removeAttachment(command: ChatCommand, id: string): Promise<void> {
-  await command(CMD_REMOVE_ATTACHMENT, { [ARG_ATTACHMENT_ID]: id })
+/** Takes a file off the message being written in the given chat (`null` for a chat not yet created). */
+export async function removeAttachment(command: ChatCommand, id: string, sessionId: string | null): Promise<void> {
+  await command(CMD_REMOVE_ATTACHMENT, { [ARG_ATTACHMENT_ID]: id, [ARG_SESSION_ID]: sessionId ?? NEW_CONVERSATION })
 }
 
 /** An upload to a chat control (`useTLUpload`). */
 export type ChatUpload = (formData: FormData) => Promise<CommandResponse | undefined>
 
 /**
- * Uploads files to be attached to the message being written; they then stand in the control state
- * ({@link readDraftAttachments}).
+ * Uploads files to be attached to the message being written in the given chat (`null` for a chat
+ * not yet created); they then stand in the control state ({@link readAttachmentLists}).
  *
  * @returns why files were not attached, one sentence each; empty when all of them were.
  * @throws when the upload did not reach the server.
  */
-export async function uploadAttachments(upload: ChatUpload, files: File[]): Promise<string[]> {
+export async function uploadAttachments(
+  upload: ChatUpload,
+  files: File[],
+  sessionId: string | null,
+): Promise<string[]> {
   if (files.length === 0) return []
   const form = new FormData()
+  form.append(UPLOAD_SESSION_PART, sessionId ?? NEW_CONVERSATION)
   for (const file of files) form.append(UPLOAD_FILE_PART, file, file.name)
   const answer = await upload(form)
   if (!answer) throw new Error('upload failed')
@@ -436,10 +457,21 @@ export async function uploadAttachments(upload: ChatUpload, files: File[]): Prom
 }
 
 /**
- * The files attached to the message being written, as a chat control states them; `undefined` when
- * the state carries none.
+ * The files attached to the messages being written, per chat session id, as a chat control states
+ * them ({@link STATE_DRAFT_ATTACHMENTS}); `undefined` when the state carries none.
  */
-export function readDraftAttachments(data: unknown): DraftAttachment[] | undefined {
+export function readAttachmentLists(data: unknown): Record<string, DraftAttachment[]> | undefined {
+  if (data == null || typeof data !== 'object' || Array.isArray(data)) return undefined
+  const result: Record<string, DraftAttachment[]> = {}
+  for (const [sessionId, files] of Object.entries(data as Record<string, unknown>)) {
+    const list = readDraftAttachments(files)
+    if (list && list.length > 0) result[sessionId] = list
+  }
+  return result
+}
+
+/** The files of one chat in {@link readAttachmentLists}. */
+function readDraftAttachments(data: unknown): DraftAttachment[] | undefined {
   if (!Array.isArray(data)) return undefined
   return data
     .filter((item): item is Record<string, unknown> => item != null && typeof item === 'object')

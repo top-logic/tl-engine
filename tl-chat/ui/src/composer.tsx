@@ -593,6 +593,7 @@ export const Composer = React.memo(
     () => ({
       insertReference: (token: ReferenceToken) => area.current?.insertReference(token),
       setDraft: (draft: string) => area.current?.setDraft(draft),
+      restoreDraft: (draft: string) => area.current?.restoreDraft(draft),
       focus: () => area.current?.focus(),
     }),
     [],

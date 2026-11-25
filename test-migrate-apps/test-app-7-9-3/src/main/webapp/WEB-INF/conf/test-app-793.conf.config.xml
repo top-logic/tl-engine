@@ -15,10 +15,14 @@
 			"tl-security-auth-pac4j" became migration modules. The minimum modules make the migrations
 			of these modules run on it instead of being skipped as migrations of a module new to the
 			application.
+
+			"tl-security-selfservice" did not exist in TL 7.9.3. Its migrations build its model from
+			scratch, so listing it makes them run on this database as well: the migration test then
+			fails, if a model change of the module lacks its migration.
 		-->
 		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
 			<instance
-				minimum-modules="tl, tl-element, tl-contact, tl-model-search, tl-model-wysiwyg, tl-layout-formeditor, tl-search-lucene, tl-doc, tl-monitoring, tl-bpe, tl-bpe-app, tl-security-auth-pac4j, test-app-793"
+				minimum-modules="tl, tl-element, tl-contact, tl-model-search, tl-model-wysiwyg, tl-layout-formeditor, tl-search-lucene, tl-doc, tl-monitoring, tl-bpe, tl-bpe-app, tl-security-auth-pac4j, tl-security-selfservice, test-app-793"
 			>
 				<modules>
 					<module name="test-app-793" />

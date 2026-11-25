@@ -78,6 +78,10 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-chart-chartjs</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-security-selfservice</artifactId>
+		</dependency>
 		<!-- Allow to integrate REST services through OpenAPI interface definitions. -->
         <dependency>
                 <groupId>com.top-logic</groupId>

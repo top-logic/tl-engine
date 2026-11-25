@@ -1546,19 +1546,25 @@ public class Util {
 
 	/**
 	 * Adds a generalisation for the given specialisation.
+	 *
+	 * @return Whether the generalisation was added, <code>false</code> when the specialisation
+	 *         already has it.
 	 */
-	public void addGeneralisation(PooledConnection con, QualifiedTypeName specialisation,
+	public boolean addGeneralisation(PooledConnection con, QualifiedTypeName specialisation,
 			QualifiedTypeName generalisation)
 			throws SQLException, MigrationException {
-		addGeneralisation(con, TLContext.TRUNK_ID,
+		return addGeneralisation(con, TLContext.TRUNK_ID,
 			specialisation.getModuleName(), specialisation.getTypeName(),
 			generalisation.getModuleName(), generalisation.getTypeName());
 	}
 
 	/**
 	 * Adds a generalisation for the given specialisation.
+	 *
+	 * @return Whether the generalisation was added, <code>false</code> when the specialisation
+	 *         already has it.
 	 */
-	public void addGeneralisation(PooledConnection con, long branch, String specialisationModule,
+	public boolean addGeneralisation(PooledConnection con, long branch, String specialisationModule,
 			String specialisationName, String generalisationModule, String generalisationName)
 			throws SQLException, MigrationException {
 		Type generalization = getTLClass(con, getTLModuleOrFail(con, generalisationModule), generalisationName);
@@ -1573,8 +1579,14 @@ public class Util {
 				+ TLModelUtil.qualifiedName(specialisationModule, specialisationName) + " found for generalization "
 				+ TLModelUtil.qualifiedName(generalisationModule, generalisationName) + ".");
 		}
+		for (TypeGeneralization existing : getTLClassGeneralizationLinks(con, specialization)) {
+			if (existing.getDestination().equals(generalization.getID())) {
+				return false;
+			}
+		}
 		int newOrderValue = newGeneralizationOrder(con, branch, specialization.getID());
 		addGeneralization(con, branch, specialization.getID(), generalization.getID(), newOrderValue);
+		return true;
 	}
 
 	/**

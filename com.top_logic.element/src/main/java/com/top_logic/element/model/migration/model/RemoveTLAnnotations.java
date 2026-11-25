@@ -29,6 +29,7 @@ import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.Module;
 import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} for removing annotations from a model element.
@@ -131,26 +132,36 @@ public class RemoveTLAnnotations extends TLModelBaseLineMigrationProcessor<Remov
 			return updateModelBaseline;
 		}
 		String moduleName = name.substring(0, moduleTypeSepIdx);
-		Module module = _util.getTLModuleOrFail(connection, moduleName);
+		Module module = _util.getTLModule(connection, TLContext.TRUNK_ID, moduleName);
+		if (module == null) {
+			log.info("No module with name '" + moduleName + "' found.", Log.WARN);
+		}
 		int typePartSepIdx = name.indexOf(TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR, moduleTypeSepIdx + 1);
 		if (typePartSepIdx < 0) {
 			String typeName = name.substring(moduleTypeSepIdx + 1);
-			_util.removeTypeAnnotations(log, connection, module, typeName, toRemove);
+			if (module != null) {
+				_util.removeTypeAnnotations(log, connection, module, typeName, toRemove);
+			}
 			boolean updateModelBaseline = tlModel == null ? false :
 				MigrationUtils.removeTypeAnnotations(log, tlModel, moduleName, typeName, toRemove);
-			log.info(
-				"Removed annotation from type " + TLModelUtil.qualifiedName(module.getModuleName(), typeName) + ".");
+			log.info("Removed annotation from type " + TLModelUtil.qualifiedName(moduleName, typeName) + ".");
 			return updateModelBaseline;
 		}
 
 		String typeName = name.substring(moduleTypeSepIdx + 1, typePartSepIdx);
-		Type type = _util.getTLTypeOrFail(connection, module, typeName);
 		String partName = name.substring(typePartSepIdx + 1);
-		_util.removeTypePartAnnotations(log, connection, type, partName, toRemove);
+		if (module != null) {
+			Type type = _util.getTLTypeOrNull(connection, module, typeName);
+			if (type == null) {
+				log.info("No type '" + TLModelUtil.qualifiedName(moduleName, typeName) + "' found.", Log.WARN);
+			} else {
+				_util.removeTypePartAnnotations(log, connection, type, partName, toRemove);
+			}
+		}
 		boolean updateModelBaseline = tlModel == null ? false :
 			MigrationUtils.removeTypePartAnnotations(log, tlModel, moduleName, typeName, partName, toRemove);
 		log.info("Removed annotation from type part "
-			+ TLModelUtil.qualifiedName(module.getModuleName(), type.getTypeName(), partName) + ".");
+			+ TLModelUtil.qualifiedName(moduleName, typeName, partName) + ".");
 		return updateModelBaseline;
 	}
 

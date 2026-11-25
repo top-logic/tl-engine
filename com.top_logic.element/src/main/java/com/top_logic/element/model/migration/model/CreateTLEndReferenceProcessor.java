@@ -21,6 +21,7 @@ import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} creating a {@link TLReference} for an existing
@@ -81,6 +82,11 @@ public class CreateTLEndReferenceProcessor extends AbstractConfiguredInstance<Cr
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedPartName associationEnd = getConfig().getEnd();
 
+		Type owner = _util.getTLTypeOrNull(connection, partName.getOwner());
+		if (owner != null && _util.getTLTypePart(connection, owner, partName.getPartName()) != null) {
+			log.info("Part already exists: " + _util.qualifiedName(partName), Log.WARN);
+			return;
+		}
 		_util.createTLEndReference(log, connection, partName, associationEnd, getConfig());
 		log.info(
 			"Created reference " + _util.qualifiedName(partName) + " for end " + _util.qualifiedName(associationEnd));

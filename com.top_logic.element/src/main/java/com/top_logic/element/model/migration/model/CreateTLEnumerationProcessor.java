@@ -79,6 +79,10 @@ public class CreateTLEnumerationProcessor
 
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName enumName = getConfig().getName();
+		if (_util.getTLTypeOrNull(connection, enumName) != null) {
+			log.info("Enumeration already exists: " + _util.qualifiedName(enumName), Log.WARN);
+			return;
+		}
 		_util.createTLEnumeration(connection, enumName, getConfig());
 		if (tlModel != null) {
 			MigrationUtils.createEnumType(log, tlModel, enumName, getConfig());

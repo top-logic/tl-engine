@@ -447,19 +447,25 @@ public class MigrationUtils {
 
 	/**
 	 * Adds a generalisation for the given specialisation.
+	 *
+	 * @return Whether the generalisation was added, <code>false</code> when the specialisation
+	 *         already has it.
 	 */
-	public static void addGeneralisation(Log log, Document model, QualifiedTypeName specialisation,
+	public static boolean addGeneralisation(Log log, Document model, QualifiedTypeName specialisation,
 			QualifiedTypeName generalisation)
 			throws MigrationException {
-		addGeneralisation(log, model,
+		return addGeneralisation(log, model,
 			specialisation.getModuleName(), specialisation.getTypeName(),
 			generalisation.getModuleName(), generalisation.getTypeName());
 	}
 
 	/**
 	 * Adds a generalisation for the given specialisation.
+	 *
+	 * @return Whether the generalisation was added, <code>false</code> when the specialisation
+	 *         already has it.
 	 */
-	public static void addGeneralisation(Log log, Document model, String specialisationModule,
+	public static boolean addGeneralisation(Log log, Document model, String specialisationModule,
 			String specialisationName, String generalisationModule, String generalisationName)
 			throws MigrationException {
 		Element specModule = getTLModuleOrFail(model, specialisationModule);
@@ -472,6 +478,9 @@ public class MigrationUtils {
 		if (generalizations == null) {
 			generalizations = specType.getOwnerDocument().createElement(ObjectTypeConfig.GENERALIZATIONS);
 			specType.appendChild(generalizations);
+		} else if (findGeneralisation(generalizations, specialisationModule.equals(generalisationModule),
+			generalisationModule, generalisationName) != null) {
+			return false;
 		}
 		Element newGeneralization = specType.getOwnerDocument().createElement(ExtendsConfig.TAG_NAME);
 		if (specialisationModule.equals(generalisationModule)) {
@@ -481,6 +490,7 @@ public class MigrationUtils {
 				TLModelUtil.qualifiedName(generalisationModule, generalisationName));
 		}
 		generalizations.appendChild(newGeneralization);
+		return true;
 	}
 
 	private static Element getGeneralizations(Log log, Element structuredType) {
@@ -1171,33 +1181,70 @@ public class MigrationUtils {
 
 	/**
 	 * Removes some annotations from a {@link TLModule}.
+	 *
+	 * <p>
+	 * A module that does not exist is reported as warning, nothing is changed then.
+	 * </p>
+	 *
+	 * @return Whether the model baseline was changed.
 	 */
 	public static boolean removeModuleAnnotations(Log log, Document tlModel, String moduleName,
-			Collection<? extends Class<? extends TLAnnotation>> toRemove) throws MigrationException {
-		Element module = getTLModuleOrFail(tlModel, moduleName);
+			Collection<? extends Class<? extends TLAnnotation>> toRemove) {
+		Element module;
+		try {
+			module = getTLModuleOrFail(tlModel, moduleName);
+		} catch (MigrationException ex) {
+			log.info("No module with name '" + moduleName + "' found.", Protocol.WARN);
+			return false;
+		}
 		return removeModelPartAnnotations(log, module, toRemove);
 	}
 
 	/**
 	 * Removes some annotations from a {@link TLType}.
+	 *
+	 * <p>
+	 * A type that does not exist is reported as warning, nothing is changed then.
+	 * </p>
+	 *
+	 * @return Whether the model baseline was changed.
 	 */
 	public static boolean removeTypeAnnotations(Log log, Document tlModel,
 			String moduleName, String typeName,
-			Set<Class<? extends TLAnnotation>> toRemove) throws MigrationException {
-		Element module = getTLModuleOrFail(tlModel, moduleName);
-		Element type = getTLTypeOrFail(log, module, typeName);
+			Set<Class<? extends TLAnnotation>> toRemove) {
+		Element type;
+		try {
+			Element module = getTLModuleOrFail(tlModel, moduleName);
+			type = getTLTypeOrFail(log, module, typeName);
+		} catch (MigrationException ex) {
+			log.info("No type '" + TLModelUtil.qualifiedName(moduleName, typeName) + "' found.", Protocol.WARN);
+			return false;
+		}
 		return removeModelPartAnnotations(log, type, toRemove);
 	}
 
 	/**
 	 * Removes some annotations from a {@link TLTypePart}.
+	 *
+	 * <p>
+	 * A type part that does not exist is reported as warning, nothing is changed then.
+	 * </p>
+	 *
+	 * @return Whether the model baseline was changed.
 	 */
 	public static boolean removeTypePartAnnotations(Log log, Document tlModel,
 			String moduleName, String typeName, String partName,
-			Set<Class<? extends TLAnnotation>> toRemove) throws MigrationException {
-		Element module = getTLModuleOrFail(tlModel, moduleName);
-		Element type = getTLTypeOrFail(log, module, typeName);
-		Element part = getTLTypePartOrFail(log, type, partName);
+			Set<Class<? extends TLAnnotation>> toRemove) {
+		Element part;
+		try {
+			Element module = getTLModuleOrFail(tlModel, moduleName);
+			Element type = getTLTypeOrFail(log, module, typeName);
+			part = getTLTypePartOrFail(log, type, partName);
+		} catch (MigrationException ex) {
+			log.info("No type part '" + TLModelUtil.qualifiedName(moduleName, typeName, partName) + "' found.",
+				Protocol.WARN);
+			return false;
+		}
 		return removeModelPartAnnotations(log, part, toRemove);
 	}
 

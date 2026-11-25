@@ -7,6 +7,9 @@ package com.top_logic.element.model.migration.model;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -138,6 +141,11 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 
 	private void internalDoMigration(MigrationContext context, Log log, PooledConnection connection) throws Exception {
 		Module module = _util.getTLModuleOrFail(connection, getConfig().getModule());
+		if (hasSingleton(connection, module, getConfig().getName())) {
+			log.info("Singleton '" + getConfig().getName() + "' already exists in module " + _util.toString(module),
+				Log.WARN);
+			return;
+		}
 		BranchIdType newSingleton = _singletonCreator.createObject(context, connection);
 		CompiledStatement createSingleton = query(
 			parameters(
@@ -179,6 +187,30 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 		if (getConfig().isUpdateStoredModule()) {
 			MigrationUtils.modifyTLModel(log, connection, tlModel -> addSingletonDefintion(log, tlModel));
 			log.info("Added singleton definition to module " + _util.toString(module));
+		}
+	}
+
+	private boolean hasSingleton(PooledConnection connection, Module module, String name) throws SQLException {
+		CompiledStatement selectSingleton = query(
+			parameters(
+				_util.branchParamDef(),
+				parameterDef(DBType.ID, "module"),
+				parameterDef(DBType.STRING, "name")),
+			selectDistinct(
+				columns(
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, "id")),
+				table(SQLH.mangleDBName(PersistentModuleSingletons.OBJECT_NAME)),
+				and(
+					_util.eqBranch(),
+					eqSQL(
+						column(Util.refID(PersistentModuleSingletons.SOURCE_ATTR)),
+						parameter(DBType.ID, "module")),
+					eqSQL(
+						column(SQLH.mangleDBName(PersistentModuleSingletons.NAME_ATTR)),
+						parameter(DBType.STRING, "name"))))).toSql(connection.getSQLDialect());
+
+		try (ResultSet result = selectSingleton.executeQuery(connection, module.getBranch(), module.getID(), name)) {
+			return result.next();
 		}
 	}
 

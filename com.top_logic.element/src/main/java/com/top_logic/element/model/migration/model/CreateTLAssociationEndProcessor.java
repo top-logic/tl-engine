@@ -22,6 +22,7 @@ import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} creating {@link TLAssociationEnd}.
@@ -83,6 +84,11 @@ public class CreateTLAssociationEndProcessor
 	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
 		QualifiedTypeName targetType = getConfig().getType();
+		Type owner = _util.getTLTypeOrNull(connection, partName.getOwner());
+		if (owner != null && _util.getTLTypePart(connection, owner, partName.getPartName()) != null) {
+			log.info("Part already exists: " + _util.qualifiedName(partName), Log.WARN);
+			return false;
+		}
 		_util.createTLAssociationEnd(log, connection, partName,
 			targetType, getConfig().isMandatory(), getConfig().isAbstract(), getConfig().isComposite(),
 			getConfig().isAggregate(), getConfig().isMultiple(),

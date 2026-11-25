@@ -79,6 +79,10 @@ public class CreateTLAssociationProcessor
 
 	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName typeName = getConfig().getName();
+		if (_util.getTLTypeOrNull(connection, typeName) != null) {
+			log.info("Association already exists: " + _util.qualifiedName(typeName), Log.WARN);
+			return false;
+		}
 		_util.createTLAssociation(connection, typeName, getConfig());
 		boolean updateModelBaseline;
 		if (tlModel == null || TLStructuredTypeColumns.isSyntheticAssociationName(typeName.getTypeName())) {

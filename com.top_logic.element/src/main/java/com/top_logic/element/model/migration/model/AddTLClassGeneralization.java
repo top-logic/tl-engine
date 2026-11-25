@@ -117,21 +117,25 @@ public class AddTLClassGeneralization extends TLModelBaseLineMigrationProcessor<
 		boolean updateModelBaseline = false;
 		for (Generalization generalization : getConfig().getGeneralizations()) {
 			QualifiedTypeName typeName = generalization.getType();
-			_util.addGeneralisation(connection, specialisation, typeName);
+			boolean added = _util.addGeneralisation(connection, specialisation, typeName);
 			if (tlModel == null) {
 				// skip model baseline change
 			} else if (QUALIFIED_TL_OBJECT_NAME.equals(
 				typeName.getName()) && !TlModelFactory.TL_MODEL_STRUCTURE.equals(specialisation.getModuleName())) {
 				/* TLObject extension is typically not contained in model baseline, except for
 				 * module "tl.model". */
-			} else {
-				MigrationUtils.addGeneralisation(log, tlModel, specialisation, typeName);
+			} else if (MigrationUtils.addGeneralisation(log, tlModel, specialisation, typeName)) {
 				updateModelBaseline = true;
 			}
-			log.info(
-				"Added generalisation "
-					+ _util.qualifiedName(typeName) + " to "
-					+ _util.qualifiedName(specialisation));
+			if (added) {
+				log.info(
+					"Added generalisation "
+						+ _util.qualifiedName(typeName) + " to "
+						+ _util.qualifiedName(specialisation));
+			} else {
+				log.info("Generalisation " + _util.qualifiedName(typeName) + " of "
+					+ _util.qualifiedName(specialisation) + " already exists.", Log.WARN);
+			}
 		}
 		return updateModelBaseline;
 	}

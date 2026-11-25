@@ -24,6 +24,7 @@ import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.Module;
 import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} for adding annotations to a model element. Already existing
@@ -99,11 +100,16 @@ public class AddTLAnnotations extends TLModelBaseLineMigrationProcessor<AddTLAnn
 			return true;
 		}
 		String moduleName = name.substring(0, moduleTypeSepIdx);
-		Module module = _util.getTLModuleOrFail(connection, moduleName);
+		Module module = _util.getTLModule(connection, TLContext.TRUNK_ID, moduleName);
+		if (module == null) {
+			log.info("No module with name '" + moduleName + "' found.", Log.WARN);
+		}
 		int typePartSepIdx = name.indexOf(TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR, moduleTypeSepIdx + 1);
 		if (typePartSepIdx < 0) {
 			String typeName = name.substring(moduleTypeSepIdx + 1);
-			_util.addTypeAnnotations(log, connection, module, typeName, getConfig());
+			if (module != null) {
+				_util.addTypeAnnotations(log, connection, module, typeName, getConfig());
+			}
 			if (tlModel != null) {
 				try {
 					addTypeAnnotations(log, tlModel, moduleName, typeName);
@@ -114,14 +120,20 @@ public class AddTLAnnotations extends TLModelBaseLineMigrationProcessor<AddTLAnn
 					return false;
 				}
 			}
-			log.info("Added annotation to type '" + TLModelUtil.qualifiedName(module.getModuleName(), typeName) + "'.");
+			log.info("Added annotation to type '" + TLModelUtil.qualifiedName(moduleName, typeName) + "'.");
 			return true;
 		}
 
 		String typeName = name.substring(moduleTypeSepIdx + 1, typePartSepIdx);
-		Type type = _util.getTLTypeOrFail(connection, module, typeName);
 		String partName = name.substring(typePartSepIdx + 1);
-		_util.addTypePartAnnotations(log, connection, type, partName, getConfig());
+		if (module != null) {
+			Type type = _util.getTLTypeOrNull(connection, module, typeName);
+			if (type == null) {
+				log.info("No type '" + TLModelUtil.qualifiedName(moduleName, typeName) + "' found.", Log.WARN);
+			} else {
+				_util.addTypePartAnnotations(log, connection, type, partName, getConfig());
+			}
+		}
 		if (tlModel != null) {
 			try {
 				addTypePartAnnotations(log, tlModel, moduleName, typeName, partName);
@@ -134,20 +146,32 @@ public class AddTLAnnotations extends TLModelBaseLineMigrationProcessor<AddTLAnn
 		}
 
 		log.info("Added annotation to type part '"
-				+ TLModelUtil.qualifiedTypePartName(module.getModuleName(), type.getTypeName(), partName) + "'.");
+				+ TLModelUtil.qualifiedTypePartName(moduleName, typeName, partName) + "'.");
 		return true;
 	}
 
 	private void addTypePartAnnotations(Log log, Document document, String moduleName, String typeName,
 			String partName) throws MigrationException {
-		Element module = MigrationUtils.getTLModuleOrFail(document, moduleName);
-		Element type = MigrationUtils.getTLTypeOrFail(log, module, typeName);
+		Element type;
+		try {
+			Element module = MigrationUtils.getTLModuleOrFail(document, moduleName);
+			type = MigrationUtils.getTLTypeOrFail(log, module, typeName);
+		} catch (MigrationException ex) {
+			log.info("No type '" + TLModelUtil.qualifiedName(moduleName, typeName) + "' found.", Log.WARN);
+			return;
+		}
 		MigrationUtils.addTypePartAnnotations(log, type, partName, getConfig());
 	}
 
 	private void addTypeAnnotations(Log log, Document document, String moduleName, String typeName)
 			throws MigrationException {
-		Element module = MigrationUtils.getTLModuleOrFail(document, moduleName);
+		Element module;
+		try {
+			module = MigrationUtils.getTLModuleOrFail(document, moduleName);
+		} catch (MigrationException ex) {
+			log.info("No module with name '" + moduleName + "' found.", Log.WARN);
+			return;
+		}
 		MigrationUtils.addTypeAnnotations(log, module, typeName, getConfig());
 	}
 

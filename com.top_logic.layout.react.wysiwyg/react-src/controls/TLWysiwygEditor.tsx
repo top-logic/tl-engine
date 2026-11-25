@@ -17,7 +17,7 @@ import {
   ObjectMention, MentionList, useMentions, mentionConfigs, CMD_MENTION, ARG_TRIGGER, ARG_QUERY, STATE_MENTIONS,
   STATE_MENTION_OPTIONS,
 } from './mentions';
-import { FollowObjectLinks, ObjectLink, objectLinkAt } from './ObjectLink';
+import { FollowObjectLinks, MaskedObjectLink, ObjectLink, objectLinkAt } from './ObjectLink';
 import { IMAGE_MIME_TYPES, imageFiles } from './ImageFiles';
 import type { MentionAnswer } from './mentions';
 import './TLWysiwygEditor.css';
@@ -249,6 +249,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       ObjectLink.configure({ openOnClick: false }),
       FollowObjectLinks.configure({ follow: (href: string) => followLinkRef.current(href) }),
       ObjectMention,
+      MaskedObjectLink,
       ...mentions.extensions,
       Image.configure({ allowBase64: true, inline: true, resize: IMAGE_RESIZE }),
       // Image files pasted or dropped are uploaded, where the editor offers images.

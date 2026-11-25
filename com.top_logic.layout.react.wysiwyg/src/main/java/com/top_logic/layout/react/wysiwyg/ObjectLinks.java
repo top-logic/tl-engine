@@ -11,7 +11,6 @@ import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.model.TLObject;
-import com.top_logic.tool.boundsec.ObjectNotFound;
 
 /**
  * Follows the {@link TLObjectLinkUtil#TL_OBJECT object links} embedded in displayed application
@@ -23,6 +22,12 @@ import com.top_logic.tool.boundsec.ObjectNotFound;
  * that description back to the object and hands it to the {@link ObjectNavigator} of the context,
  * which leads to the place the application displays it at. Whatever stands in the way - a link to
  * an object that is gone, an object with no place of its own - is told to the user.
+ * </p>
+ *
+ * <p>
+ * A link to an object that the user may not discover gets the answer of a link to an object that
+ * is gone, see {@link TLObjectLinkUtil#getDiscoverableObject(String)}. So a link written by hand
+ * does not tell whether such an object exists or where it is displayed.
  * </p>
  */
 public final class ObjectLinks {
@@ -41,13 +46,7 @@ public final class ObjectLinks {
 	 *        {@link TLObjectLinkUtil#getLinkDestination(TLObject, String)} wrote it.
 	 */
 	public static void follow(ReactContext context, String href) {
-		Wrapper target;
-		try {
-			target = href == null ? null : TLObjectLinkUtil.getObject(href);
-		} catch (ObjectNotFound problem) {
-			ViewMessages.error(context, I18NConstants.ERROR_LINKED_OBJECT_NOT_FOUND, problem.getErrorKey());
-			return;
-		}
+		Wrapper target = TLObjectLinkUtil.getDiscoverableObject(href);
 		if (target == null) {
 			ViewMessages.error(context, I18NConstants.ERROR_LINKED_OBJECT_NOT_FOUND);
 			return;

@@ -6,7 +6,6 @@
 package com.top_logic.layout.react.wysiwyg;
 
 import java.util.List;
-import java.util.function.Function;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -29,6 +28,7 @@ import com.top_logic.layout.react.control.form.I18NEditorDialog;
 import com.top_logic.layout.react.control.form.I18NLocalizedFieldModel;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
 import com.top_logic.layout.react.control.form.ReactRenderedTextControl;
+import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 
 /**
  * {@link ConfigAnnotationControlProvider} editing a property whose text is {@link Html} in a
@@ -96,7 +96,7 @@ public class HtmlConfigProvider extends AbstractConfiguredInstance<HtmlConfigPro
 		if (ConfigControlService.holdsText(model)) {
 			return new ReactRenderedTextControl(context, model,
 				() -> ReactWysiwygControl.forText(context, model, sourceEditing),
-				Function.identity());
+				HtmlConfigProvider::displayedHtml);
 		}
 		return createI18NEditor(context, model, model, sourceEditing);
 	}
@@ -128,7 +128,16 @@ public class HtmlConfigProvider extends AbstractConfiguredInstance<HtmlConfigPro
 				inline.setSourceEditing(sourceEditing);
 				return I18NEditorDialog.createEditor(context, i18nModel, inline, valueEditor, label);
 			},
-			ReactI18NStringInputControl::displayText, Function.identity());
+			ReactI18NStringInputControl::displayText, HtmlConfigProvider::displayedHtml);
+	}
+
+	/**
+	 * The HTML displayed for the given text while the property cannot be edited: each link to an
+	 * object that the current user may not discover is masked, see
+	 * {@link TLObjectLinkUtil#maskLinks(String, java.util.function.Function)}.
+	 */
+	private static String displayedHtml(String html) {
+		return TLObjectLinkUtil.maskLinks(html, null);
 	}
 
 	/**

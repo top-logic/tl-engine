@@ -19,14 +19,16 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.providers.ChangeHandlerByExpression;
+import com.top_logic.model.search.providers.InitializerByExpression;
 import com.top_logic.model.search.providers.LifecycleHandlerByExpression;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.TLContextManager;
 
 /**
- * Test that {@link ChangeHandlerByExpression} and {@link LifecycleHandlerByExpression} run their
- * scripts independently of the rights of the user committing the transaction.
+ * Test that {@link ChangeHandlerByExpression}, {@link LifecycleHandlerByExpression} and
+ * {@link InitializerByExpression} run their scripts independently of the rights of the user
+ * committing the transaction.
  *
  * <p>
  * The user of the test has no role, in particular no right to read or write the objects of the
@@ -40,6 +42,8 @@ public class TestHandlerByExpressionSecurity extends AbstractSearchExpressionTes
 	private static final String COUNTER = "TestHandlersByExpression:Counter";
 
 	private static final String COUNTER_REF = "counter";
+
+	private static final String REQUEST = "TestHandlersByExpression:Request";
 
 	/**
 	 * Non-administrative user without any role.
@@ -83,6 +87,21 @@ public class TestHandlerByExpressionSecurity extends AbstractSearchExpressionTes
 		assertFalse(item.tValid());
 		assertEquals("The deleting script reads the item, its function writes the counter.",
 			"deleted:x:null;", counter.tValueByName(LOG));
+	}
+
+	public void testInitializerAsUserWithoutRights() {
+		newObject(COUNTER, "existing");
+
+		TLObject request = TLContextManager.inPersonContext(_user, () -> newObject(REQUEST, "r"));
+
+		assertEquals("The initializer sees all counters, also the ones the user may not read.",
+			"existing:1", request.tValueByName(LOG));
+		TLObject audit = (TLObject) request.tValueByName(COUNTER_REF);
+		assertNotNull("The initializer creates an object the user has no right to create.", audit);
+		assertEquals("audit", audit.tValueByName(NAME));
+
+		delete(request);
+		delete(audit);
 	}
 
 	public static Test suite() {

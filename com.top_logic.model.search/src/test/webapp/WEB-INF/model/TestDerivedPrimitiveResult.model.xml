@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestDerivedPrimitiveResult">
+			<types>
+				<class name="Item">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<property name="text"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query>
+										<expr><![CDATA[x -> "Item " + $x.get(`TestDerivedPrimitiveResult:Item#name`)]]></expr>
+									</query>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="textFromResKey"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query>
+										<expr><![CDATA[x -> #("Text"@de, "Text"@en)]]></expr>
+									</query>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="number"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query>
+										<expr><![CDATA[x -> 6 * 7]]></expr>
+									</query>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="numberFromString"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query>
+										<expr><![CDATA[x -> "42"]]></expr>
+									</query>
+								</storage-algorithm>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

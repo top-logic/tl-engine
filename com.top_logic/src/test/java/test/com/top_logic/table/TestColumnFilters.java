@@ -34,6 +34,7 @@ import com.top_logic.table.filter.RangeFilterState;
 import com.top_logic.table.filter.RegexpOptionsFilter;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.table.filter.TextMatchMode;
 
 /**
  * Test for the concrete {@link com.top_logic.table.ColumnFilter} library.
@@ -55,7 +56,7 @@ public class TestColumnFilters extends TestCase {
 
 	public void testTextCaseSensitiveWholeField() {
 		Predicate<String> p =
-			TextColumnFilter.forStrings().predicate(new TextFilterState("Alice", true, false, true));
+			TextColumnFilter.forStrings().predicate(new TextFilterState("Alice", true, TextMatchMode.CONTAINS, true));
 		assertTrue(p.test("Alice"));
 		assertFalse(p.test("alice"));
 		assertFalse(p.test("Alice2"));
@@ -63,7 +64,7 @@ public class TestColumnFilters extends TestCase {
 
 	public void testTextRegexp() {
 		Predicate<String> p =
-			TextColumnFilter.forStrings().predicate(new TextFilterState("^a.*e$", false, true, false));
+			TextColumnFilter.forStrings().predicate(new TextFilterState("^a.*e$", false, TextMatchMode.REGEXP));
 		assertTrue(p.test("apple"));
 		assertTrue(p.test("APPLE"));
 		assertFalse(p.test("banana"));
@@ -134,7 +135,7 @@ public class TestColumnFilters extends TestCase {
 
 	public void testTextSerialization() {
 		TextColumnFilter<String> filter = TextColumnFilter.forStrings();
-		TextFilterState original = new TextFilterState("ab", true, false, true);
+		TextFilterState original = new TextFilterState("ab", true, TextMatchMode.WORD_START, true);
 		assertEquals(original, filter.fromJson(filter.toJson(original)));
 		assertNull("Malformed JSON yields no state.", filter.fromJson("not-a-map"));
 	}
@@ -268,12 +269,11 @@ public class TestColumnFilters extends TestCase {
 		assertEquals(original, BooleanColumnFilter.INSTANCE.fromJson(BooleanColumnFilter.INSTANCE.toJson(original)));
 	}
 
-	public void testInversionOptIn() {
-		// Only filters for which inversion is meaningful offer it.
-		assertTrue(TextColumnFilter.forStrings().supportsInversion());
-		assertTrue(ComparableColumnFilter.integers().supportsInversion());
-		assertTrue(new OptionsColumnFilter<>(List.of()).supportsInversion());
-		assertFalse(BooleanColumnFilter.INSTANCE.supportsInversion());
+	public void testDefaultKinds() {
+		assertEquals(ColumnFilter.KIND_TEXT, TextColumnFilter.forStrings().kind());
+		assertEquals(ColumnFilter.KIND_RANGE, ComparableColumnFilter.integers().kind());
+		assertEquals(ColumnFilter.KIND_VALUES, new OptionsColumnFilter<>(List.of()).kind());
+		assertEquals(ColumnFilter.KIND_BOOLEAN, BooleanColumnFilter.INSTANCE.kind());
 	}
 
 	public void testStateForText() {

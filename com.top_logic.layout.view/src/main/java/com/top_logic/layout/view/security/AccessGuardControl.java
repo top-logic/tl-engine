@@ -30,9 +30,9 @@ import com.top_logic.util.Resources;
  * {@link UnitAccess#decide(SecuredObject)}). The decision is made anew when an input channel of the
  * unit takes a new value, and when an object an input holds is changed (its roles may depend on
  * it). Content that is no longer displayed is {@link ContentControls#retire(ReactControl) retired}:
- * it is detached at once and disposed after the channel notification in progress, since it may
- * itself listen to the channel that caused the change. While the decision stays the same, the
- * displayed content stays as it is.
+ * it is disposed at once, so that the channel notification in progress does not reach it anymore,
+ * although it may itself listen to the channel that caused the change. While the decision stays
+ * the same, the displayed content stays as it is.
  * </p>
  *
  * <p>

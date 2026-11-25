@@ -20,9 +20,10 @@ import com.top_logic.model.util.TLModelPartRef;
  * {@link ChannelFactory} for derived (computed, read-only) channels.
  *
  * <p>
- * Compiles the TL-Script expression once at configuration parse time. Per-session, resolves the
- * input channel references and the observed types, and creates a {@link DerivedViewChannel} that
- * recomputes on input changes and, while displayed, on changes of the observed objects.
+ * Compiles the TL-Script expression once at configuration parse time. Per-session, creates a
+ * {@link DerivedViewChannel} and, when binding it, resolves the input channel references and the
+ * observed types, so that the channel recomputes on input changes and, while displayed, on changes
+ * of the observed objects.
  * </p>
  */
 public class DerivedChannelFactory implements ChannelFactory {
@@ -58,12 +59,16 @@ public class DerivedChannelFactory implements ChannelFactory {
 
 	@Override
 	public ViewChannel createChannel(ViewContext context) {
-		DerivedViewChannel channel = new DerivedViewChannel(_name, _valueType);
+		return new DerivedViewChannel(_name, _valueType);
+	}
+
+	@Override
+	public void bindChannel(ViewContext context, ViewChannel channel) {
 		List<ViewChannel> inputs = ChannelInputs.resolve(context, _inputRefs);
 		Function<Object, Object> reverse = _reverseExecutor != null
 			? value -> _reverseExecutor.execute(ChannelInputs.arguments(inputs, value))
 			: null;
-		channel.bind(inputs, _executor::execute, reverse, ObservedTypes.resolve(_observedTypeRefs));
-		return channel;
+		((DerivedViewChannel) channel).bind(inputs, _executor::execute, reverse,
+			ObservedTypes.resolve(_observedTypeRefs));
 	}
 }

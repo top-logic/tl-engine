@@ -123,4 +123,24 @@ for (const density of ['normal', 'compact']) {
       .map((k) => `${k.name}: oben ${k.oben} px, unten ${k.unten} px, Rahmen ${m.bw} px`);
     assert.deepEqual(falsch, []);
   });
+
+  test(`Bearbeitete Zeile [${density}]: die Pflichtecke sitzt oben rechts im Feld, nur an einem bearbeitbaren Pflichtfeld`, async () => {
+    await browser.goto(origin + '/src/components/table/table.spec.html');
+    const m = await browser.evaluate(`(() => {
+      document.documentElement.dataset.tlDensity = '${density}';
+      const e = document.createElement('i'); e.style.cssText = 'position:absolute;width:var(--tl-space-xs)'; document.body.append(e);
+      const xs = e.getBoundingClientRect().width; e.remove();
+      const f = (test) => { const cs = getComputedStyle(document.querySelector('[data-test="' + test + '"] .tl-field'));
+        return { image: cs.backgroundImage, size: cs.backgroundSize, position: cs.backgroundPosition }; };
+      return { xs, name: f('ed-sel-name'), status: f('ed-sel-status'), datum: f('ed-err-datum'),
+        optional: f('ed-sel-datum'), readonly: f('ed-ro-name') };
+    })()`);
+    for (const key of ['name', 'status', 'datum']) {
+      assert.notEqual(m[key].image, 'none', `${key} trägt die Ecke`);
+      assert.equal(m[key].size, `${m.xs}px ${m.xs}px`, `${key}: Größe space-xs in beiden Achsen`);
+      assert.equal(m[key].position, '100% 0%', `${key}: oben rechts`);
+    }
+    assert.equal(m.optional.image, 'none', 'ein Feld ohne Pflicht trägt keine Ecke');
+    assert.equal(m.readonly.image, 'none', 'ein readonly-Feld trägt keine Ecke, auch wenn es Pflicht ist');
+  });
 }

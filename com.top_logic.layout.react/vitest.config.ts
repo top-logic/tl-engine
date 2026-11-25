@@ -13,6 +13,8 @@ export default defineConfig({
     include: ['react-src/**/*.test.{ts,tsx}'],
     // The bridge installs DOM observers when it is loaded.
     environment: 'jsdom',
+    // Answers the translation requests of the components (no server to answer them).
+    setupFiles: ['react-src/vitest.setup.ts'],
     // A JUnit report next to the surefire reports of the module, so CI collects the JS test results
     // together with the Java ones.
     reporters: ['default', 'junit'],

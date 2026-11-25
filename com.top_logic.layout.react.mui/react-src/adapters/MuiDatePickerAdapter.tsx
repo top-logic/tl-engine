@@ -1,5 +1,6 @@
 import {
   React, useTLState, useTLTypingField, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps, usePart,
+  isCompositionKey,
 } from 'tl-react-bridge';
 import type { TLCellProps, DatePickerStateJson } from 'tl-react-bridge';
 import dayjs from 'dayjs';
@@ -211,8 +212,9 @@ const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     finishEdit();
   };
 
+  // The Enter that ends an input method composition is the input method's: the date is not finished.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
-    if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey
+    if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey || isCompositionKey(e.nativeEvent)
       || !e.currentTarget.contains(e.target as Node)) {
       return;
     }

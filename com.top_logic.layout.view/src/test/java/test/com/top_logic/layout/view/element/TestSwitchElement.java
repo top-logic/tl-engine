@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.element;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -33,8 +34,12 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.element.SwitchElement;
+import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -102,28 +107,8 @@ public class TestSwitchElement extends BasicTestCase {
 	 * a case matches.
 	 */
 	public void testHiddenWithoutContent() throws Exception {
-		DefaultInstantiationContext context = new DefaultInstantiationContext(TestSwitchElement.class);
-		ConfigurationReader reader = new ConfigurationReader(context, Collections.singletonMap(
-			"switch", TypedConfiguration.getConfigurationDescriptor(SwitchElement.Config.class)));
-		reader.setSource(new ClassRelativeBinaryContent(TestSwitchElement.class, "test-switch-without-default.xml"));
-		SwitchElement.Config config = (SwitchElement.Config) reader.read();
-		context.checkErrors();
-		UIElement element = context.getInstance(config);
-		context.checkErrors();
-
-		// No object is observed, so the window reports no model scope - which spares the test the
-		// knowledge base one is built from.
-		ViewContext viewContext = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
-			new ReactWindowRegistry("test")) {
-			@Override
-			public ModelScope getModelScope() {
-				return null;
-			}
-		});
 		DefaultViewChannel value = new DefaultViewChannel("value");
-		viewContext.registerChannel("value", value);
-
-		ReactControl control = (ReactControl) element.createControl(viewContext);
+		ReactControl control = createSwitch("test-switch-without-default.xml", value);
 		assertTrue("Without a matching case and without default, the switch is hidden.", control.isHidden());
 
 		value.set("something");
@@ -134,11 +119,74 @@ public class TestSwitchElement extends BasicTestCase {
 	}
 
 	/**
-	 * Test suite with a knowledge base, in which the case tests are evaluated.
+	 * Tests that content a switch discards for a new input value does not hear that value anymore,
+	 * although it listens to the same channel as the switch and is still pending in the running
+	 * notification: a discarded form must not evaluate anything over a value it is not built for.
+	 */
+	public void testDiscardedContentMissesTheNewValue() throws Exception {
+		DefaultViewChannel value = new DefaultViewChannel("value");
+		ReactControl control = createSwitch("test-switch-rebuild-form.xml", value);
+
+		TLObject first = TLModelUtil.findType("tl.model:TLClass");
+		TLObject second = TLModelUtil.findType("tl.model:TLEnumeration");
+
+		value.set(first);
+		FormControl discarded = shownForm(control);
+		assertSame(first, discarded.getCurrentObject());
+
+		value.set(second);
+		FormControl shown = shownForm(control);
+		assertNotSame("The switch builds its content anew for the new value.", discarded, shown);
+		assertSame(second, shown.getCurrentObject());
+		assertTrue("The discarded form is disposed.", discarded.isDisposed());
+		assertSame("The discarded form must not take the value it was discarded for.",
+			first, discarded.getCurrentObject());
+	}
+
+	private static FormControl shownForm(ReactControl switchControl) {
+		List<ReactControl> shown = switchControl.visibleChildren();
+		assertEquals("The switch shows exactly its content.", 1, shown.size());
+		assertTrue("The content of the switch must be a form, but is " + shown.get(0),
+			shown.get(0) instanceof FormControl);
+		return (FormControl) shown.get(0);
+	}
+
+	/**
+	 * Creates the control of the {@code <switch>} declared in the given resource, reading its input
+	 * from the given channel registered as {@code value}.
+	 */
+	private static ReactControl createSwitch(String resource, DefaultViewChannel value) throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestSwitchElement.class);
+		ConfigurationReader reader = new ConfigurationReader(context, Collections.singletonMap(
+			"switch", TypedConfiguration.getConfigurationDescriptor(SwitchElement.Config.class)));
+		reader.setSource(new ClassRelativeBinaryContent(TestSwitchElement.class, resource));
+		SwitchElement.Config config = (SwitchElement.Config) reader.read();
+		context.checkErrors();
+		UIElement element = context.getInstance(config);
+		context.checkErrors();
+
+		// The controls are never attached and observe no object, so the window reports no model
+		// scope - which spares the test the knowledge base one is built from.
+		ViewContext viewContext = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+			new ReactWindowRegistry("test")) {
+			@Override
+			public ModelScope getModelScope() {
+				return null;
+			}
+		});
+		viewContext.registerChannel("value", value);
+
+		return (ReactControl) element.createControl(viewContext);
+	}
+
+	/**
+	 * Test suite with a knowledge base, in which the case tests are evaluated, and the services a form
+	 * resolves its commands with.
 	 */
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(TestSwitchElement.class,
 			ServiceTestSetup.createStarterFactoryForModules(
-				TypeIndex.Module.INSTANCE, SearchBuilder.Module.INSTANCE, ModelService.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, SearchBuilder.Module.INSTANCE, ModelService.Module.INSTANCE,
+				CommandGroupRegistry.Module.INSTANCE));
 	}
 }

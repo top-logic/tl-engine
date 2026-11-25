@@ -167,6 +167,42 @@ public class TestDBProperties extends BasicTestCase {
 
 	}
 
+	public void testCompareAndSetDeleteMissing() throws SQLException {
+		String property = "testCompareAndSetDeleteMissing";
+
+		boolean set =
+			DBProperties.compareAndSet(_writeConnection, DBProperties.GLOBAL_PROPERTY, property, "x", null);
+		assertFalse(set);
+		assertEquals(null, DBProperties.getProperty(_writeConnection, DBProperties.GLOBAL_PROPERTY, property));
+		_writeConnection.commit();
+		assertEquals(null, DBProperties.getProperty(_readConnection, DBProperties.GLOBAL_PROPERTY, property));
+	}
+
+	public void testCompareAndSetUpdateMissing() throws SQLException {
+		String property = "testCompareAndSetUpdateMissing";
+
+		boolean set =
+			DBProperties.compareAndSet(_writeConnection, DBProperties.GLOBAL_PROPERTY, property, "x", "y");
+		assertFalse(set);
+		assertEquals(null, DBProperties.getProperty(_writeConnection, DBProperties.GLOBAL_PROPERTY, property));
+		_writeConnection.commit();
+		assertEquals(null, DBProperties.getProperty(_readConnection, DBProperties.GLOBAL_PROPERTY, property));
+	}
+
+	public void testCompareAndSetInsertMissing() throws SQLException {
+		String property = "testCompareAndSetInsertMissing";
+
+		boolean set =
+			DBProperties.compareAndSet(_writeConnection, DBProperties.GLOBAL_PROPERTY, property, null, "y");
+		assertTrue(set);
+		assertEquals("y", DBProperties.getProperty(_writeConnection, DBProperties.GLOBAL_PROPERTY, property));
+		_writeConnection.commit();
+		assertEquals("y", DBProperties.getProperty(_readConnection, DBProperties.GLOBAL_PROPERTY, property));
+
+		assertTrue(DBProperties.compareAndSet(_writeConnection, DBProperties.GLOBAL_PROPERTY, property, "y", null));
+		_writeConnection.commit();
+	}
+
     public void testSetProperties() throws Exception {
 		DBProperties dbProperties = new DBProperties(_pool);
 

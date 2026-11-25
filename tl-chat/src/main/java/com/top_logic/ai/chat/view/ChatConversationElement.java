@@ -377,10 +377,23 @@ public class ChatConversationElement implements UIElement {
 		String getChatId();
 
 		/**
-		 * Optional channel holding the open {@code AgentSession}. The conversation follows a write.
+		 * Optional channel holding the open {@code AgentSession}. The conversation follows a write and
+		 * writes back the chat it creates or the user opens.
 		 *
-		 * Leave empty when the conversation should only talk to the other chat elements through
-		 * {@code chat-id}.
+		 * <p>
+		 * A chat the window switches to on the server - one started by a command of the page with
+		 * {@code chatStart} - is written onto the channel as well: at once while the conversation is
+		 * displayed, otherwise when it is displayed. That includes its first display: a conversation
+		 * displayed in a window that already has an open chat of its {@code chat-id} (after a reload,
+		 * or after {@code chatStart}) shows that chat; in a window without one, the channel stays
+		 * empty, a fresh conversation. Only the signed-in account's chats are written, and a channel
+		 * listener that refuses the chat and writes another one wins.
+		 * </p>
+		 *
+		 * <p>
+		 * Leave empty when no other element of the page needs the open conversation: the element then
+		 * keeps an internal channel that behaves the same way.
+		 * </p>
 		 */
 		@Name(INPUT)
 		@Label("Input")

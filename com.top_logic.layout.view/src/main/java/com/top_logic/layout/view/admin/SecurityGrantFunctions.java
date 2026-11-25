@@ -7,9 +7,12 @@ package com.top_logic.layout.view.admin;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.ConfigurationException;
@@ -107,12 +110,15 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Why the given type has no grants of its own, as a paragraph of HTML.
+	 * Why the given type has no grants of its own, or none for some operations, as a paragraph of
+	 * HTML.
 	 *
 	 * @param grants
 	 *        The grants, see {@link #of(TLClass)}.
-	 * @return The explanation in the language of the user, <code>null</code> for a type with
-	 *         grants of its own.
+	 * @return The explanation in the language of the user, <code>null</code> for a type deciding
+	 *         all operations by grants of its own.
+	 *
+	 * @see #hasOwn(TypeGrants)
 	 */
 	@Label("Explanation of a type without grants")
 	@SideEffectFree
@@ -123,7 +129,7 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 		ResKey explanation;
 		AccessParentFunction parent = grants.getAccessParent();
 		if (parent != null) {
-			explanation = I18NConstants.GRANTS_DELEGATED__PARENT.fill(parent.getLabel());
+			explanation = delegation(parent);
 		} else if (grants.isExempt()) {
 			explanation = I18NConstants.GRANTS_EXEMPT;
 		} else {
@@ -131,6 +137,46 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 		}
 		return HTML_PARAGRAPH_START + TagUtil.encodeXML(Resources.getInstance().getString(explanation))
 			+ HTML_PARAGRAPH_END;
+	}
+
+	/**
+	 * Whether the given type has grants of its own, for all operations or for the operations its
+	 * access parent does not decide.
+	 *
+	 * @param grants
+	 *        The grants, see {@link #of(TLClass)}.
+	 * @return Whether there are {@link #operations(TypeGrants) operations} to grant on the type,
+	 *         <code>false</code> for no grants.
+	 */
+	@Label("Whether a type has grants of its own")
+	@SideEffectFree
+	public static boolean hasOwn(TypeGrants grants) {
+		return grants != null && !grants.getOperations().isEmpty();
+	}
+
+	/**
+	 * What the given access parent decides, for the explanation of the grants of the type
+	 * delegating to it.
+	 */
+	static ResKey delegation(AccessParentFunction parent) {
+		Set<BoundCommandGroup> operations = parent.getOperations();
+		if (operations == null) {
+			return I18NConstants.GRANTS_DELEGATED__PARENT.fill(parent.getLabel());
+		}
+		return I18NConstants.GRANTS_DELEGATED_RESTRICTED__PARENT_OPERATIONS.fill(parent.getRelation().getLabel(),
+			operationLabels(operations));
+	}
+
+	/**
+	 * The labels of the given operations in the language of the user, ordered by the names of the
+	 * operations, as a text listing them.
+	 */
+	static String operationLabels(Collection<BoundCommandGroup> operations) {
+		Resources resources = Resources.getInstance();
+		return operations.stream()
+			.sorted(Comparator.comparing(BoundCommandGroup::getID))
+			.map(operation -> resources.getString(labelKey(operation)))
+			.collect(Collectors.joining(SEPARATOR));
 	}
 
 	/**
@@ -389,7 +435,9 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 			parts.add(resources.getString(I18NConstants.GRANTS_IMPLIED_BY_ATTRIBUTES__OPERATION_ATTRIBUTES
 				.fill(resources.getString(labelKey(entry.getKey())), attributes)));
 		}
-		if (!cell.restricted()) {
+		if (cell.discoverReadable()) {
+			parts.add(resources.getString(I18NConstants.GRANTS_DISCOVER_ATTRIBUTE));
+		} else if (!cell.restricted()) {
 			parts.add(resources.getString(I18NConstants.GRANTS_UNRESTRICTED));
 		}
 		if (cell.pending()) {

@@ -24,10 +24,10 @@ import com.top_logic.layout.view.table.DeclaredFilters.Criterion;
 import com.top_logic.layout.view.table.DeclaredFilters.Declaration;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.NamedFilter;
-import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BooleanFilterState;
@@ -39,6 +39,7 @@ import com.top_logic.table.filter.OptionsFilterState;
 import com.top_logic.table.filter.RangeFilterState;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.table.filter.TextMatchMode;
 import com.top_logic.table.impl.DefaultColumn;
 
 /**
@@ -204,7 +205,7 @@ public class TestDeclaredFilters extends TestCase {
 	 * options a single value cannot say.
 	 */
 	public void testTextState() {
-		TextFilterState pattern = new TextFilterState("^Ali", true, true, false);
+		TextFilterState pattern = new TextFilterState("^Ali", true, TextMatchMode.REGEXP);
 		NamedFilter filter = resolveOne(Criterion.state(NAME, pattern));
 
 		assertEquals(pattern, filter.filters().get(NAME));
@@ -261,7 +262,7 @@ public class TestDeclaredFilters extends TestCase {
 		TextFilterState pattern = TextFilterState.contains("Alice");
 		NamedFilter filter = resolveOne(new Criterion.State(NAME, pattern, true));
 
-		assertEquals(new NegatedFilterState(pattern), filter.filters().get(NAME));
+		assertEquals(ColumnFilterState.invert(pattern), filter.filters().get(NAME));
 	}
 
 	/**
@@ -270,20 +271,20 @@ public class TestDeclaredFilters extends TestCase {
 	public void testInvertedValue() {
 		NamedFilter filter = resolveOne(new Criterion.Value(NAME, "Alice", true));
 
-		assertEquals(new NegatedFilterState(TextFilterState.contains("Alice")), filter.filters().get(NAME));
+		assertEquals(ColumnFilterState.invert(TextFilterState.contains("Alice")), filter.filters().get(NAME));
 	}
 
 	/**
-	 * Tests that inverting a filter that offers no inversion is reported.
+	 * Tests that every kind of filter can be inverted, a boolean one included.
 	 */
-	public void testInversionUnsupportedReported() {
+	public void testInvertedBoolean() {
 		BufferingProtocol log = new BufferingProtocol();
-		List<NamedFilter> filters = resolve(log,
-			new Criterion.State(ACTIVE, new BooleanFilterState(true, false, false), true));
+		BooleanFilterState accepted = new BooleanFilterState(true, false, false);
+		List<NamedFilter> filters = resolve(log, new Criterion.State(ACTIVE, accepted, true));
 
-		assertTrue("A filter that cannot be inverted must be reported.", log.hasErrors());
-		assertContains(ACTIVE, log.getErrors());
-		assertEquals(0, filters.size());
+		assertFalse(log.getErrors().toString(), log.hasErrors());
+		assertEquals(1, filters.size());
+		assertEquals(ColumnFilterState.invert(accepted), filters.get(0).filters().get(ACTIVE));
 	}
 
 	/**
@@ -332,7 +333,7 @@ public class TestDeclaredFilters extends TestCase {
 		BufferingProtocol log = new BufferingProtocol();
 		List<NamedFilter> filters = DeclaredFilters.resolve(log, "test", List.of(
 			new Declaration("mine", ResKey.text("My rows"), List.of(
-				Criterion.state(NAME, new TextFilterState("", false, false, false)),
+				Criterion.state(NAME, TextFilterState.contains("")),
 				Criterion.state(PRIORITY, new OptionsFilterState(Set.of(HIGH)))))),
 			columns());
 

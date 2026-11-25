@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
+description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), attributes readable with Discover (discover-attributes), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents (also restricted to operations, `operations` of an access parent), role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
 order: 20
 ---
 
@@ -22,10 +22,12 @@ Both must be satisfied. A role parent inherits **roles**, never grants: a type w
 rule but no grant is unreadable for every user except a technical admin, however many roles the
 user inherits from the container.
 
-A type that needs neither has an **access parent** instead: its objects delegate the *whole*
-decision, grants and roles, to another object. A composition part gets its container as access
-parent by default, so the rows of a composition table, the comments of a ticket or the attachments
-of a comment need no definition of their own. See [Access parent](#access-parent-delegating-the-whole-decision).
+A type that needs neither has an **access parent** instead: its objects delegate the decision,
+grants and roles, to another object - the *whole* decision, unless the access parent is restricted
+to some operations, see [Access parent](#access-parent-delegating-the-decision). A composition part
+gets its container as access parent by default, so the rows of a composition table, the comments of
+a ticket or the attachments of a comment need no definition of their own. See [Access
+parent](#access-parent-delegating-the-decision).
 
 The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, BoundCommandGroup)`.
 It applies to every persistent object, whatever its implementation class; a transient object (a
@@ -48,10 +50,16 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
    interaction, if it was made before (see [Caching](#caching-of-decisions)).
 3. A type marked `without-security` is not checked at all.
 4. A type with an access parent asks the object the relation leads to, with the same operation, or
-   with `Write` in place of `Create` and `Delete`; an operation [implying](#operations-which-operations-apply-to-a-type)
-   the requested one on the type is asked as well. The parent may delegate further. An object whose
-   relation leads nowhere (no container, an empty reference) is denied, as is one whose chain of
-   access parents runs in a cycle.
+   with `Write` in place of `Create` and `Delete`; an operation
+   [implying](#operations-which-operations-apply-to-a-type) the requested one on the type is asked
+   as well. With `operations` on the access parent, only the delegated operations (and delegated
+   implying ones) are asked; if the parent does not allow them, the decision continues at step 5
+   with the roles on the object itself, as for the operations not delegated. The parent may
+   delegate further. An object whose relation leads nowhere (no container, an empty reference) is
+   denied the delegated operations (without `operations`: every operation), unless the own grants
+   of the type imply them. The same holds where the chain of access parents runs in a cycle (and
+   is logged as an error): the check that reaches itself again is denied, so an unrestricted type
+   is denied altogether, while a restricted one is still decided by its own roles.
 5. The roles granted the operation, or an operation implying it, on the object's type are looked
    up (for a module singleton, the
    singleton's own grants take precedence; `Discover` on such a singleton is implied by its own
@@ -62,14 +70,24 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
    name are looked up (see [Attribute rights](#attribute-rights-which-types-a-part-applies-to)). If
    they grant the operation, they **replace** the class grant for this attribute - the user must
    hold one of those roles, on the object or, for a delegating object, on the end of its chain of
-   access parents; a grant without roles denies everyone. Without attribute-level grants the
-   class-level decision stands.
+   access parents (for an access parent restricted to operations: the chain is followed only while
+   the requested operation is delegated); a grant without roles denies everyone. Without
+   attribute-level grants the class-level decision stands.
+
+Model elements (types, attributes, modules, the classifiers of an enumeration, all objects of
+`tl.model`) are meta-data, not business objects: every user may discover and read them and the
+values of their attributes, without a grant on `tl.model`, so a reflective script (the target type
+of a reference, whether an attribute is multiple or composite) works for every user. This rule is applied
+before the steps above; a deleted model element stays inaccessible. Modifying, creating and deleting a model element is checked like for any other
+object, so no application needs a definition for `tl.model`.
 
 `Discover` - every right on an object or one of its attributes implies the operation `Discover`, see [the Discover specification](doc:access-discover-spec).
 How code and TL-Script ask for a decision (`ModelAccessRights`, `canRead`, ...) and which objects
 are exempt from the check is described in [checking access in Java and TL-Script](doc:access-checks).
 The classic layout UI does not check attribute rights; an application using model based security
 with `Discover`-only roles must use the React view layer for such types.
+On which object a view of the classic layout UI checks access (`securityObject`, `isSecurityMaster`)
+is described in [access checks of layouts](doc:access-layouts).
 
 ## Grants: which roles may do what on a type
 
@@ -213,6 +231,40 @@ check it on with `<access-control>` and are decided by these grants as well (art
 engine's administration views is declared on the security root (`<singleton
 name="SecurityStructure#ROOT">`) and granted there.
 
+### Discover attributes: what `Discover` makes readable
+
+An object a user may only discover shows its label, but none of its attributes (see
+[the Discover right](doc:access-discover-spec)). Where a user must tell the objects apart by more
+than their label - e.g. in an option list that shows the objects to choose from as a table - the
+class entry names the attributes that `Discover` makes readable:
+
+```xml
+<class name="my.module:Product" discover-attributes="name,number">
+	<grant inherit="true" operation="Read" roles="Editor"/>
+	<grant inherit="true" operation="Discover" roles="Buyer"/>
+</class>
+```
+
+A `Buyer` sees `name` and `number` of a `Product` it may discover, but no other attribute.
+
+- Only reading is extended. Writing a discover attribute still requires `Write`.
+- An attribute with a read grant of its own (`<part>` entry granting `Read`) is decided by that grant,
+  not by the discover attributes.
+- When a discover attribute is a reference, a target the user may not discover is still filtered
+  (TL-Script, tables) or masked (form fields).
+- The setting applies to the class and its specializations. A specialization with a setting of its own
+  replaces it; an empty setting (`discover-attributes=""`) withdraws all discover attributes. A class
+  entry without the setting keeps the setting of the generalizations.
+- If two independent generalizations pass on different settings and the type has none of its own, the
+  start fails with a configuration error.
+- An attribute name the class does not have is a configuration error. The editor of the access rights
+  offers the attributes of the class to choose from.
+- A module entry has no discover attributes: configure them on a common generalization instead.
+
+The question without an object is `ModelAccessRights.getDiscoverAttributes(TLClass)`. In the
+"Access rights…" dialog of a type, the `Read` cell of a discover attribute without a read grant of its
+own says that the attribute is readable with `Discover`.
+
 ### Operations: which operations apply to a type
 
 An operation is a command group with a global name: `Approve` on a project and `Approve` on a
@@ -229,9 +281,10 @@ that **applies** to a type may be granted on it:
 - The declarations of all configuration layers are appended, like the grants.
 - The operation must be a command group of the `CommandGroupRegistry` and needs labels
   `commandGroup.<Name>` and `commandGroup.<Name>.tooltip` in a resource bundle of the application.
-- A type with an access parent may declare operations, too (it still has no grants): a custom
-  operation on such a type is checked as the same operation on the parent, so it must apply to the
-  parent type as well, unless it is implied by an operation the parent has.
+- A type with an access parent may declare operations, too (it has no grants of its own for the
+  delegated operations): a custom operation on such a type, if delegated, is checked as the same
+  operation on the parent, so it must apply to the parent type as well, unless it is implied by an
+  operation the parent has.
 
 **`implied-by="X"`**: whoever holds the operation `X` on an object also holds the declared
 operation on it. This generalizes "every right implies `Discover`": an application that grants
@@ -241,7 +294,7 @@ later explicit `<grant operation="Show" .../>` changes no view. Implications are
 declarations of the same operation add their implying operations. The implied roles count
 everywhere a grant counts: `isAllowed`, `getAllowedRoles(TLClass, BoundCommandGroup)`,
 `getAccessibleTypes`, the checks on a singleton and the coverage check. For a type with an access
-parent, the implying operation is checked on the parent.
+parent, the implying operation is checked on the parent (with `operations`: only if it is delegated).
 
 **Configuration errors**, reported when the service starts:
 
@@ -279,15 +332,19 @@ the one mark when the other is set, and the access rights dialog refuses to save
 
 The engine sets these marks for its own types in `com.top_logic.element/…/ElementConf.config.xml`:
 the modules `tl.changelog` and `tl.imagegallery` are `internal` (maintained by the engine's own
-code), the class `tl.core:Revision` is `without-security` (commit metadata readable by everyone; a
+code; `tl.changelog` additionally grants `Read` to the role `PersonalProfile`, which every user holds
+on the own account, so that a table offers the columns of its transient change sets, see the
+section "Access rights" of the article `change-log` of `com.top_logic.element`), the class `tl.core:Revision` is `without-security` (commit metadata readable by everyone; a
 revision cannot hold roles).
 
-### Access parent: delegating the whole decision
+### Access parent: delegating the decision
 
 A `<class>` entry with an `<access-parent>` element other than `<self/>` makes the type
-delegate to its **access parent**, the object whose access definition decides. The type has no
+delegate to its **access parent**, the object whose access definition decides. Unless the access
+parent is restricted to some operations (see below), the type has no
 grants, no marks and no roles of its own (an entry combining them is rejected at startup and by the
-editor):
+editor); with `operations`, grants are allowed for the operations that are not delegated, while the
+marks `internal` and `without-security` remain rejected:
 
 - Read, Write and Export on the object are Read, Write and Export on the parent.
 - Create and Delete of the object are **Write** on the parent, since a part is created or deleted
@@ -296,10 +353,13 @@ editor):
   not restricted, since the object is inaccessible until it is put into a container, which is a
   write of the container.
 - The parent may delegate further; the chain is followed at runtime. An object whose relation
-  leads nowhere is not accessible, and a chain running in a cycle is denied (and logged as an
-  error).
+  leads nowhere is denied the delegated operations (without `operations`: every operation), unless
+  the own grants of the type imply them. A chain running in a cycle is logged as an error: the
+  check reaching itself again is denied, so an unrestricted type is denied altogether, while a
+  restricted one is still decided by its own roles.
 - Attribute-level `<part>` grants on the type are checked against the roles the user holds at the
-  end of the chain.
+  end of the chain (for an access parent restricted to operations: at the object deciding the
+  requested operation, the object itself where the operation is not delegated).
 - Specializations inherit the setting unless they have one of their own.
 
 The `<access-parent>` element holds exactly one definition of the relation. The kind of relation is
@@ -318,6 +378,49 @@ unambiguous:
 
 A reference not fitting the definition (a composition not holding the type for `container`, a
 multiple or foreign reference for `target`) and an empty `<access-parent/>` are configuration errors.
+
+**Delegating only some operations (`operations`).** The building blocks `<container>`, `<target>` and
+`<script>` take an optional attribute `operations="Read,Write,..."` (comma-separated, the operation
+names of the grants). Without it everything is delegated as described above. With it the access
+parent decides only the listed operations; the type decides all others itself:
+
+- The list is literal: **Create** and **Delete** are delegated only if listed, `Write` does not bring
+  them along. **Discover** is delegated whenever any operation is delegated.
+- The names are the operations on the delegating object. The mapping of Create and Delete to Write
+  on the parent happens afterwards.
+- An operation `Y` is allowed through the parent if `Y` is delegated and the parent allows `Y`, or
+  if a delegated operation `X` implies `Y`
+  (see [operations](#operations-which-operations-apply-to-a-type)) and the parent allows `X`, also
+  when `Y` itself is not delegated. Conversely, an operation `X` that is not delegated may imply a
+  delegated `Y`: holding `X` by a grant of the type on the object itself allows `Y` as well.
+- The operations that are not delegated fall back to the grants of the type itself, checked with
+  the roles the user holds on the object itself (assignments, role rules, role parents). Without a
+  grant the operation is denied.
+- A type with own grants for an operation it delegates is a configuration error (also for a
+  specialization inheriting the restricted access parent). Grants inherited with `inherit="true"` from
+  a generalization for delegated operations are dropped silently.
+- Unknown or inapplicable operation names are configuration errors. `operations` is not allowed on
+  `<self/>` nor on `<access-parent>` itself.
+- At runtime, the role holder (the object whose roles decide, see step 7 above), the explanation of
+  the effective access and the type-level checks (commands, view elements) work per operation.
+- In the tooling, the grants editor shows grant columns only for the operations the type decides
+  itself, and the coverage check treats the built-in operations of such a type like those of a
+  self-deciding type and reports declared operations that are neither delegated nor granted.
+
+Example: an entry of a catalog is readable by everybody who may read the catalog, but writing it is
+a right of its own, granted to a role the user holds on the entry itself:
+
+```xml
+<class name="my.module:Entry">
+	<access-parent>
+		<target reference="my.module:Entry#catalog" operations="Read"/>
+	</access-parent>
+	<grant operation="Write" roles="Editor"/>
+</class>
+```
+
+Read and Discover of an entry follow the catalog; Write is allowed to holders of `Editor` on the
+entry. A Read grant on `my.module:Entry` would be a configuration error.
 
 **Upgrading from `TL_8.0.0-alpha9`.** The attributes `access-parent="..."` and `access-reference="..."`
 of a `<class>` entry are gone and rejected at startup: `access-parent="container"` becomes
@@ -436,6 +539,10 @@ Roles on an object come from three sources, all collected by `ElementAccessManag
 - A role parent is the right choice where the type has grants of its own on top of the inherited
   roles (a sub-project with its own roles). Where the type has nothing of its own, an access parent
   is simpler and cheaper.
+- A role parent rule has **no operation filter**: it passes on roles, and the grants of the type
+  itself decide which operations those roles give. To treat roles of different sources differently,
+  derive distinct roles with role rules of type `inheritance` and grant them separately. (Delegating
+  selected operations to another object is what `operations` of an access parent does.)
 - A role rule of type `inheritance` (`source-role`, `source-meta-element`) derives the role from a
   role the user holds on the object the path leads to; a rule of type `reference` derives it from
   a relation to a group.
@@ -487,7 +594,7 @@ module not listed in its `excluded-modules` and reports, per type:
 |---|---|---|
 | no role source | neither a role rule nor a role parent rule applies and no composition holds the objects, so no user can hold a role and every access is denied (direct assignments do not count as a definition) | access parent through a to-one reference, role parent rule, role rule, or mark internal |
 | no read grant | no role is granted `Read` on the type (after module and inherited grants), so its objects are inaccessible to every user | grant on the type or its module, or mark internal |
-| dead grant | an operation is granted to roles that no rule can deliver where the operation is checked; the grant never takes effect. `Create` is checked where an object is created (`isAllowedCreate(person, type, context)`): on a container, i.e. a concrete class whose composition - as in effect on that class, a narrowing override included - holds the type or one of its generalizations, or on its role parents; on the security root for a type no composition holds. Every other operation is checked on the type or its role parents | add a rule delivering the role there, or grant a role delivered there |
+| dead grant | an operation is granted to roles that no rule can deliver where the operation is checked; the grant never takes effect. `Create` is checked on the context the caller passes (`isAllowedCreate(person, type, context)`, the security root without context). As the context is not known statically, a role counts when it can be delivered on one of the plausible contexts or their role parents: the security root; a container, i.e. a concrete class whose composition - as in effect on that class, a narrowing override included - holds the type or one of its generalizations; a type the created type references (the targets of its references in effect, inverse references included, and their specializations; computed references and its own compositions left out). Every other operation is checked on the type or its role parents | add a rule delivering the role there, or grant a role delivered there |
 | shadowed rules | the type has a configured access parent, but role rules or role parent rules apply to it; they have no effect | delete the rules, or drop the access parent |
 | ungranted operation | an operation declared for the type (not a built-in one) is held by no role there, neither by a grant nor through an implying operation, so every check of it on the type is refused | grant it to a role, or declare it `implied-by` an operation the roles hold |
 | inapplicable operation | a view unit, a command, a form or a privileged script checks an operation on the type that does not apply to it (a check on the security root is reported for the type of the root) | declare the operation for the type, or check another one |
@@ -500,7 +607,9 @@ The places checking an operation are reported to the check by the `OperationUseP
 privileged scripts of the configured TL-Script functions (see the section "Administration of
 grants" of the article `view-layer/access-control` of that module). A place
 naming the type it checks is checked against that type and its concrete specializations; a type
-delegating to an access parent is not checked for applicability. A place not declaring its type (a
+delegating to an access parent, restricted to operations or not, is not checked for applicability
+by the coverage analysis (the check at startup, which reports an operation not applying to the type
+of a place as a configuration error, covers every type). A place not declaring its type (a
 privileged script, a form, a command whose unit lies in another view file) is only checked for an
 unknown operation; such findings belong to no type and are reported by
 `SecurityCoverageAnalysis.getUnattachedFindings()`.
@@ -517,7 +626,10 @@ The unchecked grants are only reported when the places checking an operation are
 module contributes an `OperationUseProvider` (as `com.top_logic.layout.view` does).
 
 A type is **covered** when it has a role source and at least one role may read it, **delegated**
-when it has an access parent (whether the parent is accessible is reported with the parent's type),
+when it has an access parent (whether the parent is accessible is reported with the parent's type;
+a type whose access parent is restricted to operations is delegated, too, but additionally gets the
+findings of the operations it decides itself: no role source, an operation neither delegated nor
+granted, dead or unchecked grants),
 **exempt** when it is internal or without security, **incomplete** otherwise.
 
 - At startup the findings of the access definition are logged at INFO (`log-findings="false"`

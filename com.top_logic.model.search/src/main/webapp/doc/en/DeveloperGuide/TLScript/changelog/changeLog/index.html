@@ -10,6 +10,21 @@
 <p>The optional <code class="hljs inlineCode">author</code> parameter restricts the result to changes committed by the given account.</p>
 <p>The optional <code class="hljs inlineCode">includeTechnical</code> flag controls whether change sets that represent a purely technical change (one that does not reflect in the model) are also reported.</p>
 <p>The optional <code class="hljs inlineCode">excludedModules</code> parameter is a collection of modules whose changes must not be regarded. Each element may be either a <code class="hljs inlineCode">TLModule</code> reference or a module name as a string.</p>
+<h2>Access rights</h2>
+<p>The change log is not filtered by access rights: it contains the attribute values of every changed object. In an evaluation with security checks (a script of the user interface, of an API endpoint, of an agent tool or of the console), only administrators may call <code class="hljs inlineCode">changeLog</code>, with or without an object argument. Other users get an error. Without security checks (a privileged function, model logic), the function is not restricted.</p>
+<p>To show changes to a user who is no administrator, an application calls <code class="hljs inlineCode">changeLog</code> in a privileged function of the configured TL-Script functions and restricts every commit with <code class="hljs inlineCode">changeSetRestrict</code> to what the user may see. A commit with changes the user may not see is marked as incomplete (<code class="hljs inlineCode">tl.changelog:ChangeSet#incomplete</code>) and cannot be reverted. The engine ships such a function for the view "My latest changes":</p>
+<pre>	<code>&lt;privileged-script name="changeLogOfCurrentUser"
+	command-group="Read"
+	security-object="currentUser()"
+&gt;
+	&lt;parameters&gt;
+		&lt;parameter name="maxEntries"/&gt;
+	&lt;/parameters&gt;
+	&lt;implementation&gt;changeLog(null, $maxEntries, true, null, null, currentUser())
+		.map(cs -&gt; changeSetRestrict($cs, currentUser()))&lt;/implementation&gt;
+&lt;/privileged-script&gt;</code>
+</pre>
+<p>The check is the right to read the own account, which every user holds. A call <code class="hljs inlineCode">changeLogOfCurrentUser(30)</code> returns the 30 latest commits of the current user, restricted to what the user may see.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>

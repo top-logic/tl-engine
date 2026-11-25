@@ -18,6 +18,7 @@ import com.top_logic.table.filter.BooleanFilterState;
 import com.top_logic.table.filter.OptionsFilterState;
 import com.top_logic.table.filter.RangeFilterState;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.table.filter.TextMatchMode;
 
 /**
  * A declared filter criterion whose value expressions are compiled, ready to be evaluated into the
@@ -58,10 +59,10 @@ public interface FilterStateTemplate {
 		if (config instanceof FilterStateConfig.TextConfig text) {
 			QueryExecutor pattern = InputScript.compile(text, FilterStateConfig.TextConfig.PATTERN);
 			boolean caseSensitive = text.getCaseSensitive();
-			boolean regexp = text.getRegexp();
+			TextMatchMode mode = text.getRegexp() ? TextMatchMode.REGEXP : TextMatchMode.CONTAINS;
 			boolean wholeField = text.getWholeField();
 			return arguments -> new TextFilterState(SearchExpression.asString(pattern.execute(arguments)),
-				caseSensitive, regexp, wholeField);
+				caseSensitive, mode, wholeField);
 		}
 		if (config instanceof FilterStateConfig.RangeConfig range) {
 			QueryExecutor primary = InputScript.compile(range, FilterStateConfig.RangeConfig.PRIMARY);

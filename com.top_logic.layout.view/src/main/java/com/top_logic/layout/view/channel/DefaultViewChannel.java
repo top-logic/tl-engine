@@ -35,7 +35,8 @@ import com.top_logic.model.listen.ObservedObjects;
  * Before the value is written, all
  * {@link com.top_logic.layout.view.channel.ViewChannel.VetoListener}s are asked, and the handlers
  * they object with are collected into a single {@link ChannelVetoException}. A handler reachable
- * over several {@link VetoForwarder forwarding} paths is reported once.
+ * over several {@link VetoForwarder forwarding} paths is reported once, and a channel reached again
+ * over a cycle of forwardings is not asked again.
  * </p>
  *
  * <p>
@@ -101,6 +102,13 @@ public class DefaultViewChannel implements ObservingChannel {
 		_valueType = valueType;
 	}
 
+	/**
+	 * The channel name (for error messages and debugging).
+	 */
+	public String getName() {
+		return _name;
+	}
+
 	@Override
 	public TLClass getValueType() {
 		return _valueType;
@@ -118,14 +126,10 @@ public class DefaultViewChannel implements ObservingChannel {
 			return false;
 		}
 
-		if (!_vetoListeners.isEmpty()) {
-			VetoCollector dirtyHandlers = new VetoCollector();
-			for (VetoListener vl : _vetoListeners) {
-				dirtyHandlers.addAll(vl.checkVeto(this, oldValue, newValue));
-			}
-			if (!dirtyHandlers.isEmpty()) {
-				throw new ChannelVetoException(dirtyHandlers.toList(), () -> this.set(newValue));
-			}
+		List<StateHandler> dirtyHandlers =
+			VetoCollector.ask(this, _vetoListeners, vl -> vl.checkVeto(this, oldValue, newValue));
+		if (!dirtyHandlers.isEmpty()) {
+			throw new ChannelVetoException(dirtyHandlers, () -> this.set(newValue));
 		}
 
 		update(newValue);
@@ -226,14 +230,7 @@ public class DefaultViewChannel implements ObservingChannel {
 
 	@Override
 	public List<StateHandler> dirtyHandlers() {
-		if (_vetoListeners.isEmpty()) {
-			return List.of();
-		}
-		VetoCollector dirtyHandlers = new VetoCollector();
-		for (VetoListener vl : _vetoListeners) {
-			dirtyHandlers.addAll(vl.checkDirty(this));
-		}
-		return dirtyHandlers.toList();
+		return VetoCollector.ask(this, _vetoListeners, vl -> vl.checkDirty(this));
 	}
 
 	@Override

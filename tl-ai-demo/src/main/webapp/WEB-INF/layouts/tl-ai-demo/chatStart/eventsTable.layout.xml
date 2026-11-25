@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,startDate,endDate"
+		isSecurityMaster="false"
+		type="demo.events:Event"
+	>
+		<name key="dynamic.856a00e7-3351-4aff-875f-0a88195cab60">
+			<en>Events</en>
+			<de>Veranstaltungen</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model -> all(`demo.events:Event`)"
+			modelForElement="null"
+			supportsElement="true"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="ID_e9c812db_f953_45f2_8ae5_410a5ab7f6ac"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				image="css:fas fa-comments"
+				operation="x -> chatStart(&quot;classic&quot;, $x, &quot;Give me a short overview of this event.&quot;)"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.95511706-31ea-4b2b-a92b-77b7d58f098a">
+					<en>Start chat</en>
+					<de>Chat starten</de>
+				</resourceKey>
+				<postCreateActions>
+					<showComponent>
+						<global-target name="tl-chat/chat/tabLayout.layout.xml#TabLayout"/>
+					</showComponent>
+				</postCreateActions>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

@@ -32,8 +32,8 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * The host here binds one conversation to the page, as BOS/Consulting binds one per project: a
  * session the browser reports that is not the page's own is refused, and the page's own is written
- * back. The browser restored the conversation of the page it came from, so the report is exactly
- * such a session.
+ * back. The browser reports a conversation it opened that is not the page's own, so the report is
+ * exactly such a session.
  * </p>
  */
 public class TestSessionSelection extends BasicTestCase {
@@ -63,7 +63,7 @@ public class TestSessionSelection extends BasicTestCase {
 	}
 
 	/**
-	 * A page with no conversation of its own refuses the one the browser restored, and the browser
+	 * A page with no conversation of its own refuses the one the browser reported, and the browser
 	 * is told to start a fresh one - although {@code selected} reads {@code ""} before and after.
 	 */
 	public void testARefusedSessionLeavesTheChannelEmptyAndSaysSo() {

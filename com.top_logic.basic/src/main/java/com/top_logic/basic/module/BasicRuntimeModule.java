@@ -239,8 +239,8 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 		impl = newInstance;
 		try {
 			startUpImplementation(newInstance);
-		} catch (ModuleException ex) {
-			// mark module as not started.
+		} catch (Throwable ex) {
+			// Mark module as not started, also when the startup fails with an Error.
 			impl = null;
 			throw ex;
 		}

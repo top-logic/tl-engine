@@ -7,7 +7,6 @@ package com.top_logic.layout.view.command;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -23,10 +22,10 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowOptions;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.ViewRefFormat;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.util.Resources;
 
 /**
@@ -161,13 +160,9 @@ public class OpenViewWindowCommand implements ViewCommand {
 	}
 
 	private ReactControl createContent(ReactContext windowContext) {
-		ViewElement view;
-		try {
-			view = ViewLoader.getOrLoadView(_viewPath);
-		} catch (ConfigurationException ex) {
-			throw new RuntimeException("Failed to load window view: " + _viewPath, ex);
-		}
 		ViewContext viewContext = new DefaultViewContext(windowContext, _viewPath);
-		return (ReactControl) view.createControl(viewContext);
+		// A view that cannot be loaded or built is shown as a placeholder in the window.
+		return ViewUnitControl.create(viewContext, _viewPath,
+			ctx -> (ReactControl) ViewLoader.getOrLoadView(_viewPath).createControl(ctx));
 	}
 }

@@ -41,6 +41,7 @@ import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
@@ -532,7 +533,9 @@ public class SidebarElement implements UIElement {
 				guards.add(_access);
 			}
 			NavigationItem item = new NavigationItem(_id, label, _icon,
-				() -> createContent(_children, itemContext, dirtyChannel, guards, visible), dirtyChannel);
+				() -> ViewUnitControl.create(itemContext,
+					ctx -> createContent(_children, ctx, dirtyChannel, guards, visible)),
+				dirtyChannel);
 			String effectiveRoute = resolveRoute(_route, _id);
 			if (effectiveRoute != null) {
 				item.withRoute(effectiveRoute);

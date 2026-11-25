@@ -200,8 +200,8 @@ public class TestChatSessionAccessPolicy extends BasicTestCase {
 	}
 
 	/**
-	 * The owner may edit their session, which a rename form needs, and nobody else may read or edit
-	 * it; a memory is only read.
+	 * The owner may edit their session and their memory, which renaming and deleting them need, and
+	 * nobody else may read or edit them.
 	 */
 	public void testOwnerWritesOwnSessionOnly() {
 		assertTrue(rights(owner).canRead(ownedSession));
@@ -210,8 +210,9 @@ public class TestChatSessionAccessPolicy extends BasicTestCase {
 		assertFalse(rights(stranger).canWrite(ownedSession));
 
 		assertTrue(rights(owner).canRead(ownedMemory));
-		assertFalse(rights(owner).canWrite(ownedMemory));
+		assertTrue(rights(owner).canWrite(ownedMemory));
 		assertFalse(rights(stranger).canRead(ownedMemory));
+		assertFalse(rights(stranger).canWrite(ownedMemory));
 	}
 
 	private static ModelSecurity rights(Person account) {

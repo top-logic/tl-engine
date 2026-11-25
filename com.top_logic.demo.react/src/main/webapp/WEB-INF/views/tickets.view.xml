@@ -9,7 +9,13 @@
 	back/forward walks the selection history. The identifier is percent-encoded, so its
 	characters cannot break the path. An identifier of a ticket that no longer exists resolves
 	to no object, and the prefix and the segment leave the address bar again.
-	
+
+	A ticket also has a permalink naming it by its number, which the ticket is given when it is
+	created: /servlet/ticket-link?nr=<number> (TicketLinkServlet) leads to the page of the ticket,
+	and answers a link naming no ticket with an error page. The form of the Conversation panel shows
+	the number and the permalink, computed on the permalink channel, as a read-only preformatted
+	value with a button copying it.
+
 	The Open list carries a filter bar and demonstrates the other half of the address bar. It
 	offers four presets as chips - one of them names no criterion and therefore stands for the
 	list with nothing filtered out -, and the one named by initial= filters the list for a user
@@ -175,6 +181,16 @@
 			inputs="ticket"
 			reverse="$value.objectResolve(`demo.tickets:Ticket`)"
 		/>
+		<derived-channel name="permalink"
+			inputs="ticket"
+		>
+			<expr><![CDATA[{
+	nr = $ticket.get(`demo.tickets:Ticket#number`);
+	url = requestUrl();
+	origin = if($url == null, '', regex('^([^:/]+://[^/]+).*$').regexReplace($url, '$1'));
+	if($nr == null, null, $origin + contextPath() + '/servlet/ticket-link?nr=' + $nr);
+}]]></expr>
+		</derived-channel>
 		<derived-channel name="ticketName"
 			expr="$ticket.get(`demo.tickets:Ticket#name`)"
 			inputs="ticket"
@@ -730,6 +746,19 @@
 							input="ticket"
 							mode-switch="false"
 						>
+							<field attribute="number"/>
+							<value-input
+								readonly="true"
+								value="permalink"
+							>
+								<label>
+									<en>Permalink</en>
+									<de>Permalink</de>
+								</label>
+								<annotations>
+									<multi-line preformatted="true"/>
+								</annotations>
+							</value-input>
 							<field attribute="name"/>
 							<field attribute="key"/>
 							<field attribute="status"/>

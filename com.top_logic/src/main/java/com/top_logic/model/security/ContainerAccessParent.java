@@ -11,7 +11,6 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
-import com.top_logic.basic.config.annotation.Step;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
@@ -20,7 +19,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.resources.TLPartInOwnerResourceProvider;
-import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -48,10 +46,8 @@ public class ContainerAccessParent extends AbstractConfiguredInstance<ContainerA
 		 */
 		@Name(REFERENCE)
 		@Nullable
-		@Options(fun = AccessParentReferenceOptions.Compositions.class, args = @Ref(steps = {
-			@Step(OWNER),
-			@Step(AccessParentConfig.RIGHTS),
-			@Step(TLClassAccessRights.NAME_ATTRIBUTE) }), mapping = TLModelPartRef.PartMapping.class)
+		@Options(fun = AccessParentReferenceOptions.Compositions.class, args = @Ref(OWNER),
+			mapping = TLModelPartRef.PartMapping.class)
 		@OptionLabels(TLPartInOwnerResourceProvider.class)
 		TLModelPartRef getReference();
 

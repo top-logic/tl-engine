@@ -78,8 +78,8 @@ public final class RunStateFrame {
 	 * @param tracker
 	 *        The conversation of the window.
 	 * @param account
-	 *        The acting account; <code>null</code> lists no interactions and finds no run of another
-	 *        window.
+	 *        The acting account; <code>null</code> lists no interactions. Only the approvals and
+	 *        questions waiting for this account are listed.
 	 */
 	public static RunStateEvent of(TaskProgressTracker tracker, Person account) {
 		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
@@ -93,7 +93,7 @@ public final class RunStateFrame {
 		// Whether the chat is working is a fact about the chat, not about this window: the run may
 		// have been started in a tab that is now closed, and a window that says the conversation is
 		// idle offers a composer for a turn that is already under way and no way to stop it (#512).
-		boolean processing = tracker.hasActiveProcessingStateFor(sessionId) || runInFlight(account, sessionId) != null;
+		boolean processing = tracker.hasActiveProcessingStateFor(sessionId) || runInFlight(sessionId) != null;
 
 		RunStateEvent event = RunStateEvent.create()
 			.setSessionId(sessionId == null ? "" : sessionId)
@@ -121,23 +121,22 @@ public final class RunStateFrame {
 	}
 
 	/**
-	 * The state of the run this account has in flight in the given chat, or <code>null</code>.
+	 * The state of the run in flight in the given chat, or <code>null</code>.
 	 *
 	 * <p>
 	 * A run belongs to a conversation, not to the window it was started in, and everything about a
 	 * turn that is still being worked on lives in memory until the run ends. Asked through
-	 * {@link PendingInteractionRegistry}, so a second tab, a reloaded page and a new login find the
-	 * run exactly as the window that started it does - and an account that has no run there, or is
-	 * looking at somebody else's chat, finds nothing.
+	 * {@link PendingInteractionRegistry}, so a second tab, a reloaded page, a new login and a reader
+	 * of the chat find the run exactly as the window that started it does, whichever account started
+	 * it.
 	 * </p>
 	 *
-	 * @param owner
-	 *        The acting account; <code>null</code> finds nothing.
 	 * @param sessionId
-	 *        The id of the chat; <code>null</code> finds nothing.
+	 *        The id of the chat, which the caller has made sure the acting account may read;
+	 *        <code>null</code> finds nothing.
 	 */
-	public static ChatProcessor.AIProcessingState runInFlight(Person owner, String sessionId) {
-		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.findBySession(owner, sessionId);
+	public static ChatProcessor.AIProcessingState runInFlight(String sessionId) {
+		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.findRunOf(sessionId);
 		if (run == null || !run.state().isProcessing()) {
 			return null;
 		}

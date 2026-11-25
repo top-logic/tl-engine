@@ -46,7 +46,7 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
-import com.top_logic.layout.view.ReloadableControl;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.command.CommandCliqueService;
@@ -251,7 +251,7 @@ public class TestTileFrameDisposal extends BasicTestCase {
 	public void testAReloadedFrameDerivesItsChannelsAnew() {
 		TileFrame firstFrame = detail("first");
 		_path.set(List.of(firstFrame));
-		ReloadableControl frame = (ReloadableControl) activeFrame();
+		ViewUnitControl frame = (ViewUnitControl) activeFrame();
 		render();
 		int listeners = _path.listenerCount();
 		int vetoListeners = _path.vetoListenerCount();

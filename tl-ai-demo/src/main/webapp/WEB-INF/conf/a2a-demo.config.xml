@@ -25,13 +25,10 @@
 					<basic-authentication domain="a2a-demo" in-user-context="true"/>
 				</authentications>
 				<agents>
-					<agent path="albert" agent="TL_SingleAgent" display-name="Albert" allow-writes="true"
-						description="Albert knows this TopLogic application and builds in it: model, layouts, data, pages."
+					<agent path="albert" agent="TL_SingleAgent" display-name="Albert" allow-writes="false"
+						description="Albert knows this TopLogic application and answers questions about its model and data."
 					>
 						<skills>
-							<skill id="build" name="Build the application"
-								description="Creates types, attributes, layouts and data in the running application."
-								tags="toplogic, modeling"/>
 							<skill id="answer" name="Answer questions"
 								description="Answers questions about the application's model and data."
 								tags="toplogic, questions"/>
@@ -47,6 +44,28 @@
 					</remote-agent>
 				</remote-agents>
 				-->
+			</instance>
+		</config>
+
+		<!--
+			An A2A run is a background run: the calling agent answers its questions, but it approves no
+			tool call. So the background allowlist bounds it, in addition to the roles of the account.
+			Albert reads the model and the data, and calls other agents with a2a.askAgent (egress).
+			research.config.xml declares the same groups; they are declared here as well, so that this
+			aspect also works without it. These entries hold for every unattended run of the demo
+			(aiAgentChatAsync, MCP, detached subagents) while this aspect is on.
+
+			A served agent that must write gets allow-writes="true" and its single write tools in this
+			list, never a whole write group: a write group here opens writes without a person for every
+			unattended run of the demo.
+		-->
+		<config service-class="com.top_logic.ai.core.security.AiToolAccessService">
+			<instance>
+				<background-allowlist>
+					<grant group="model.read"/>
+					<grant group="data.read"/>
+					<grant group="egress"/>
+				</background-allowlist>
 			</instance>
 		</config>
 

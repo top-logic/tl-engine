@@ -12,6 +12,7 @@ import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.SwitchElement.SwitchCase;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
@@ -160,7 +161,7 @@ public class ReactSwitchControl extends ReactControl {
 
 	private ReactControl buildContent(int index, List<UIElement> elements) {
 		ViewContext childContext = _context.childContext("switch").withChildSlotPath(String.valueOf(index));
-		return ContentControls.toControl(elements, childContext);
+		return ViewUnitControl.create(childContext, ctx -> ContentControls.toControl(elements, ctx));
 	}
 
 	@Override

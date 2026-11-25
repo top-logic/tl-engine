@@ -55,7 +55,9 @@ public class TestSessionSelection extends BasicTestCase {
 			user = TestPerson.createPerson("selection-owner");
 		}
 		_channel = new DefaultViewChannel("chatSession");
-		_selection = new SessionSelection(_channel, _state::put, () -> user);
+		_selection = new SessionSelection(_channel, _state::put, () -> user, session -> {
+			// What the conversation derives from the selection is not under test here.
+		});
 		// The conversation's own listener first, as it is on a page: the element that shows the
 		// conversation is built before the helper that corrects it.
 		_follower = _selection.listener();

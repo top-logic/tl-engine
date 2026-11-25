@@ -134,7 +134,7 @@ public class HttpServletRequestTest extends ServletUnitTest {
         HttpServletRequest request = new ServletUnitHttpRequest( NULL_SERVLET_REQUEST, wr, _context, new Hashtable(), NO_MESSAGE_BODY );
         assertNull( "Authorization incorrectly specified", request.getAuthType() );
         assertNull( "Character encoding incorrectly specified", request.getCharacterEncoding() );
-        assertEquals( "Parameters unexpectedly specified", "", request.getQueryString() );
+        assertNull( "Parameters unexpectedly specified", request.getQueryString() );
         assertNotNull( "No input stream available", request.getInputStream() );
     }
 

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="testTypedObjectClasses">
+		<annotations>
+			<package-binding
+				implementation-package="test.com.top_logic.element.model.typed.impl"
+				interface-package="test.com.top_logic.element.model.typed"
+			/>
+		</annotations>
+
+		<datatype name="String"
+			db_type="varchar"
+			kind="String"
+		>
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+				application-type="java.lang.String"
+			/>
+			<annotations>
+				<field-provider impl="com.top_logic.element.meta.form.fieldprovider.StringFieldProvider"/>
+			</annotations>
+		</datatype>
+
+		<interface name="Named">
+			<attributes>
+				<property name="name"
+					type="String"
+				/>
+			</attributes>
+		</interface>
+
+		<interface name="Coded">
+			<attributes>
+				<property name="code"
+					type="String"
+				/>
+			</attributes>
+		</interface>
+
+		<class name="NamedItem">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+		</class>
+
+		<class name="Item">
+			<generalizations>
+				<generalization type="Named"/>
+				<generalization type="Coded"/>
+			</generalizations>
+		</class>
+
+		<class name="Plain">
+			<attributes>
+				<property name="value"
+					type="String"
+				/>
+			</attributes>
+		</class>
+
+		<class name="Node">
+			<attributes>
+				<property name="name"
+					type="String"
+				/>
+				<property name="label"
+					type="String"
+				/>
+				<reference name="children"
+					override="true"
+					type="Node"
+				/>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="Node"
+				/>
+			</attributes>
+			<generalizations>
+				<generalization type="tl.element:StructuredElementContainer"/>
+			</generalizations>
+		</class>
+
+		<class name="ModelClass">
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.model.TLClass"/>
+			</annotations>
+		</class>
+	</module>
+</model>

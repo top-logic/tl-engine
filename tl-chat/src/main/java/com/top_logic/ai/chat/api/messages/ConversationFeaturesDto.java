@@ -39,7 +39,7 @@ public class ConversationFeaturesDto extends de.haumacher.msgbuf.data.AbstractDa
 	/** @see #isMcpPicker() */
 	public static final String MCP_PICKER__PROP = "mcpPicker";
 
-	/** @see #isAttachments() */
+	/** @see #getAttachments() */
 	public static final String ATTACHMENTS__PROP = "attachments";
 
 	/** @see #isApprovals() */
@@ -57,7 +57,7 @@ public class ConversationFeaturesDto extends de.haumacher.msgbuf.data.AbstractDa
 
 	private boolean _mcpPicker = false;
 
-	private boolean _attachments = false;
+	private com.top_logic.ai.chat.api.messages.AttachmentPolicyDto _attachments = null;
 
 	private boolean _approvals = false;
 
@@ -191,23 +191,30 @@ public class ConversationFeaturesDto extends de.haumacher.msgbuf.data.AbstractDa
 	}
 
 	/**
-	 * Whether a message may carry files.
+	 * Which files a message may carry.
 	 */
-	public final boolean isAttachments() {
+	public final com.top_logic.ai.chat.api.messages.AttachmentPolicyDto getAttachments() {
 		return _attachments;
 	}
 
 	/**
-	 * @see #isAttachments()
+	 * @see #getAttachments()
 	 */
-	public com.top_logic.ai.chat.api.messages.ConversationFeaturesDto setAttachments(boolean value) {
+	public com.top_logic.ai.chat.api.messages.ConversationFeaturesDto setAttachments(com.top_logic.ai.chat.api.messages.AttachmentPolicyDto value) {
 		internalSetAttachments(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #isAttachments()} without chain call utility. */
-	protected final void internalSetAttachments(boolean value) {
+	/** Internal setter for {@link #getAttachments()} without chain call utility. */
+	protected final void internalSetAttachments(com.top_logic.ai.chat.api.messages.AttachmentPolicyDto value) {
 		_attachments = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getAttachments()} has a value.
+	 */
+	public final boolean hasAttachments() {
+		return _attachments != null;
 	}
 
 	/**
@@ -276,7 +283,7 @@ public class ConversationFeaturesDto extends de.haumacher.msgbuf.data.AbstractDa
 			case MODEL_PICKER__PROP: return isModelPicker();
 			case EFFORT_PICKER__PROP: return isEffortPicker();
 			case MCP_PICKER__PROP: return isMcpPicker();
-			case ATTACHMENTS__PROP: return isAttachments();
+			case ATTACHMENTS__PROP: return getAttachments();
 			case APPROVALS__PROP: return isApprovals();
 			default: return null;
 		}
@@ -291,7 +298,7 @@ public class ConversationFeaturesDto extends de.haumacher.msgbuf.data.AbstractDa
 			case MODEL_PICKER__PROP: internalSetModelPicker((boolean) value); break;
 			case EFFORT_PICKER__PROP: internalSetEffortPicker((boolean) value); break;
 			case MCP_PICKER__PROP: internalSetMcpPicker((boolean) value); break;
-			case ATTACHMENTS__PROP: internalSetAttachments((boolean) value); break;
+			case ATTACHMENTS__PROP: internalSetAttachments((com.top_logic.ai.chat.api.messages.AttachmentPolicyDto) value); break;
 			case APPROVALS__PROP: internalSetApprovals((boolean) value); break;
 		}
 	}
@@ -323,8 +330,10 @@ public class ConversationFeaturesDto extends de.haumacher.msgbuf.data.AbstractDa
 		out.value(isEffortPicker());
 		out.name(MCP_PICKER__PROP);
 		out.value(isMcpPicker());
-		out.name(ATTACHMENTS__PROP);
-		out.value(isAttachments());
+		if (hasAttachments()) {
+			out.name(ATTACHMENTS__PROP);
+			getAttachments().writeTo(out);
+		}
 		out.name(APPROVALS__PROP);
 		out.value(isApprovals());
 	}
@@ -338,7 +347,7 @@ public class ConversationFeaturesDto extends de.haumacher.msgbuf.data.AbstractDa
 			case MODEL_PICKER__PROP: setModelPicker(in.nextBoolean()); break;
 			case EFFORT_PICKER__PROP: setEffortPicker(in.nextBoolean()); break;
 			case MCP_PICKER__PROP: setMcpPicker(in.nextBoolean()); break;
-			case ATTACHMENTS__PROP: setAttachments(in.nextBoolean()); break;
+			case ATTACHMENTS__PROP: setAttachments(com.top_logic.ai.chat.api.messages.AttachmentPolicyDto.readAttachmentPolicyDto(in)); break;
 			case APPROVALS__PROP: setApprovals(in.nextBoolean()); break;
 			default: super.readField(in, field);
 		}

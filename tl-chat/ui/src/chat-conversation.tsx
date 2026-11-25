@@ -19,7 +19,7 @@ import {
 import { ThemeIcon } from './theme-icon'
 import { Thread } from './thread'
 import { preloadWorkingIndicator, workingIndicatorForm } from './working-indicator'
-import { gateComposerControls, gateThreadConfig } from './features'
+import { effectivePolicy, gateComposerControls, gateThreadConfig } from './features'
 
 const { useCallback, useEffect, useMemo, useRef } = React
 
@@ -310,9 +310,13 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // fresh object on every render would defeat that.
   // What the element configured, as far as the open conversation supports it.
   const config = useMemo(() => gateThreadConfig(readThreadConfig(state), chat.features), [state, chat.features])
+  const policy = useMemo(
+    () => effectivePolicy(chat.features, chat.publishedPolicy),
+    [chat.features, chat.publishedPolicy],
+  )
   const controls = useMemo(
-    () => gateComposerControls(readComposerControls(state), chat.features),
-    [state, chat.features],
+    () => gateComposerControls(readComposerControls(state), chat.features, policy),
+    [state, chat.features, policy],
   )
   const selected = typeof state.selected === 'string' ? state.selected : ''
   const corrections = typeof state.selectedCorrections === 'number' ? state.selectedCorrections : 0
@@ -675,6 +679,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
             onDismissNotice={() => actions.showNotice('')}
             onSend={onSend}
             attachments={chat.draftAttachments}
+            attachmentAccept={policy?.accept}
             onAttach={actions.attach}
             onRemoveAttachment={actions.removeAttachment}
             onStop={actions.stop}

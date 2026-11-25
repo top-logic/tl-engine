@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -33,6 +34,7 @@ import com.top_logic.ai.chat.layout.WelcomeName;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
@@ -186,6 +188,8 @@ public final class ChatViewBinding {
 	 * The files attached to the message being written in this conversation.
 	 */
 	private final ChatAttachments _attachments = new ChatAttachments();
+
+	private final List<Runnable> _chatAdoptedListeners = new CopyOnWriteArrayList<>();
 
 	/**
 	 * The chat controls of this conversation the window displays now.
@@ -460,6 +464,31 @@ public final class ChatViewBinding {
 	/** The files attached to the message being written in this conversation. */
 	public ChatAttachments attachments() {
 		return _attachments;
+	}
+
+	/**
+	 * Calls the given listener whenever a command of a chat element of this conversation has switched
+	 * it to another chat ({@link #chatAdopted()}).
+	 *
+	 * <p>
+	 * Such a switch is not announced to the listeners of the {@link #tracker()}, see
+	 * {@link TaskProgressTracker#adoptActiveSessionId(String, Person)}; a switch on the server's
+	 * initiative is.
+	 * </p>
+	 */
+	public Registration addChatAdoptedListener(Runnable listener) {
+		_chatAdoptedListeners.add(listener);
+		return Registration.onDispose(() -> _chatAdoptedListeners.remove(listener));
+	}
+
+	/**
+	 * Tells the {@link #addChatAdoptedListener(Runnable) listeners} that a command of a chat element
+	 * has switched this conversation to another chat.
+	 */
+	public void chatAdopted() {
+		for (Runnable listener : _chatAdoptedListeners) {
+			listener.run();
+		}
 	}
 
 	/**

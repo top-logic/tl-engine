@@ -121,7 +121,7 @@ const EN = {
   undoImprovement: 'Undo improvement',
   retry: 'Retry',
   reconnecting: 'Reconnecting…',
-  dropHint: 'Drop images or PDFs to attach',
+  dropHint: 'Drop files to attach',
   /** Stands in for the message text of a send that is nothing but an attachment. */
   attachmentOnly: 'Attachment',
   dismiss: 'Dismiss',
@@ -136,8 +136,10 @@ const EN = {
   staleWindow: 'This page is out of date because the sign-in has changed. Reload the page to continue.',
   /** Shown when the server refused a request but sent no reason of its own. */
   notAllowed: 'This agent, model or MCP server is not available to you.',
-  onlyImagesAndPdf: 'only images and PDF can be attached',
-  largerThan10Mb: 'larger than 10 MB',
+  noAttachments: 'this chat takes no files',
+  typeNotAllowed: (types: string) => `this file type cannot be attached; allowed: ${types}`,
+  largerThan: (limit: string) => `larger than ${limit}`,
+  messageLargerThan: (limit: string) => `the files of one message may be at most ${limit} in all`,
   atMostFiles: (max: number) => `at most ${max} files`,
   removeFile: (name: string) => `Remove ${name}`,
 
@@ -467,7 +469,7 @@ const DE: Bundle = {
   undoImprovement: 'Verbesserung rückgängig',
   retry: 'Erneut',
   reconnecting: 'Verbindung wird wiederhergestellt …',
-  dropHint: 'Bilder oder PDFs zum Anhängen hier ablegen',
+  dropHint: 'Dateien zum Anhängen hier ablegen',
   attachmentOnly: 'Anhang',
   dismiss: 'Schließen',
   busyHint:
@@ -477,8 +479,10 @@ const DE: Bundle = {
   staleWindow:
     'Diese Seite ist nicht mehr aktuell, weil sich die Anmeldung geändert hat. Bitte die Seite neu laden.',
   notAllowed: 'Dieser Agent, dieses Modell oder dieser MCP-Server steht dir nicht zur Verfügung.',
-  onlyImagesAndPdf: 'nur Bilder und PDF können angehängt werden',
-  largerThan10Mb: 'größer als 10 MB',
+  noAttachments: 'dieser Chat nimmt keine Dateien an',
+  typeNotAllowed: (types: string) => `dieser Dateityp kann nicht angehängt werden; erlaubt: ${types}`,
+  largerThan: (limit: string) => `größer als ${limit}`,
+  messageLargerThan: (limit: string) => `die Dateien einer Nachricht dürfen zusammen höchstens ${limit} groß sein`,
   atMostFiles: (max: number) => `höchstens ${max} Dateien`,
   removeFile: (name: string) => `${name} entfernen`,
 

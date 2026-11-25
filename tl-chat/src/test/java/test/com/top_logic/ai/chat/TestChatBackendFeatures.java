@@ -23,10 +23,12 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import com.top_logic.ai.chat.api.ChatTranscripts;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
+import com.top_logic.ai.chat.api.messages.AttachmentPolicyDto;
 import com.top_logic.ai.chat.api.messages.AttachmentUploadReply;
 import com.top_logic.ai.chat.api.messages.ChatSendReply;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
 import com.top_logic.ai.chat.api.messages.ConversationFeaturesDto;
+import com.top_logic.ai.chat.api.messages.SessionOpenReply;
 import com.top_logic.ai.chat.backend.AttachmentPolicy;
 import com.top_logic.ai.chat.backend.BackendFeatures;
 import com.top_logic.ai.chat.backend.BackendTurn;
@@ -38,13 +40,13 @@ import com.top_logic.ai.chat.layout.ScriptedBackend;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.view.ChatCommandDriver;
 import com.top_logic.ai.chat.view.ChatControl;
-import com.top_logic.ai.chat.view.ChatConversationControl;
 import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
@@ -92,7 +94,7 @@ public class TestChatBackendFeatures extends BasicTestCase {
 
 	private ChatCommandDriver _driver;
 
-	private ChatConversationControl _conversation;
+	private ChatCommandDriver.Conversation _conversation;
 
 	private TaskProgressTracker _window;
 
@@ -252,6 +254,67 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		assertEquals(List.of(), _turns);
 	}
 
+	/**
+	 * The limits an upload to the conversation is checked against follow the chat it shows: switching
+	 * between a backend's chat and a chat of the framework's own agent publishes them again.
+	 */
+	public void testPublishedLimitsFollowTheChatShown() throws Exception {
+		AgentSession internal = (AgentSession) ChatHistoryService.createSession("Internal " + getName(), anna);
+		HistoryUtils.updateSessionRevision();
+		claim(new BackendFeatures(false, false, false, false, false, false, CSV_AND_ZIP, false));
+
+		select(id());
+		assertEquals(Long.valueOf(UploadSupport.effectiveMaxUploadSize(CSV_AND_ZIP.maxFileSize())),
+			_conversation.state(UploadSupport.MAX_UPLOAD_SIZE));
+		AttachmentPolicyDto backendPolicy =
+			(AttachmentPolicyDto) _conversation.state(ChatControl.STATE_ATTACHMENT_POLICY);
+		assertEquals(List.of("text/csv", "*.zip"), backendPolicy.getTypes());
+		assertEquals("text/csv,.zip", backendPolicy.getAccept());
+
+		select(idOf(internal));
+		assertEquals(Long.valueOf(UploadSupport.effectiveMaxUploadSize(AttachmentPolicy.MODEL_READABLE_MAX_FILE_SIZE)),
+			_conversation.state(UploadSupport.MAX_UPLOAD_SIZE));
+		AttachmentPolicyDto internalPolicy =
+			(AttachmentPolicyDto) _conversation.state(ChatControl.STATE_ATTACHMENT_POLICY);
+		assertEquals(AttachmentPolicy.MODEL_READABLE.types(), internalPolicy.getTypes());
+
+		select(id());
+		assertEquals(Long.valueOf(UploadSupport.effectiveMaxUploadSize(CSV_AND_ZIP.maxFileSize())),
+			_conversation.state(UploadSupport.MAX_UPLOAD_SIZE));
+	}
+
+	/** The features of a backend's conversation carry the backend's attachment policy. */
+	public void testFeaturesCarryTheBackendsAttachmentPolicy() {
+		ConversationBackend backend = backend(new BackendFeatures(false, false, false, false, false, false, CSV_AND_ZIP, false));
+
+		AttachmentPolicyDto policy = ChatTranscripts.featuresDto(backend).getAttachments();
+
+		assertEquals("text/csv,.zip", policy.getAccept());
+		assertEquals(List.of("text/csv", "*.zip"), policy.getTypes());
+		assertEquals(CSV_AND_ZIP.maxFiles(), policy.getMaxFiles());
+		assertEquals(CSV_AND_ZIP.maxFileSize(), policy.getMaxFileSize());
+		assertEquals(CSV_AND_ZIP.maxMessageSize(), policy.getMaxMessageSize());
+	}
+
+	/** A backend that takes no files states no file at all. */
+	public void testFeaturesOfABackendWithoutAttachments() {
+		AttachmentPolicyDto policy = ChatTranscripts.featuresDto(backend(BackendFeatures.NONE)).getAttachments();
+
+		assertEquals(0, policy.getMaxFiles());
+		assertEquals(List.of(), policy.getTypes());
+	}
+
+	/** The features of a conversation of the framework's own agent carry the configured policy. */
+	public void testFeaturesOfTheOwnAgentCarryTheInternalPolicy() {
+		AttachmentPolicyDto policy = ChatTranscripts.featuresDto(null).getAttachments();
+
+		assertEquals(AttachmentPolicy.MODEL_READABLE.types(), policy.getTypes());
+		assertEquals("image/png,image/jpeg,image/gif,image/webp,application/pdf", policy.getAccept());
+		assertEquals(AttachmentPolicy.MODEL_READABLE_MAX_FILES, policy.getMaxFiles());
+		assertEquals(AttachmentPolicy.MODEL_READABLE_MAX_FILE_SIZE, policy.getMaxFileSize());
+		assertEquals(AttachmentPolicy.MODEL_READABLE_MAX_MESSAGE_SIZE, policy.getMaxMessageSize());
+	}
+
 	/** Loading a backend's conversation tells the client what it supports. */
 	public void testSessionDetailCarriesTheBackendsFeatures() throws Exception {
 		claim(BackendFeatures.NONE);
@@ -261,7 +324,7 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		assertTrue(body, body.contains("\"features\":{"));
 		assertTrue(body, body.contains("\"regenerate\":false"));
 		assertTrue(body, body.contains("\"editMessages\":false"));
-		assertTrue(body, body.contains("\"attachments\":false"));
+		assertTrue(body, body.contains("\"maxFiles\":0"));
 		assertTrue(body, body.contains("\"approvals\":false"));
 		assertFalse(body, body.contains("\":true"));
 	}
@@ -278,7 +341,13 @@ public class TestChatBackendFeatures extends BasicTestCase {
 	}
 
 	private void claim(BackendFeatures features) {
-		ConversationBackend backend = new ConversationBackend() {
+		ConversationBackend backend = backend(features);
+		AgentSession claimed = _chat;
+		ScriptedBackend.install(session -> session.equals(claimed) ? backend : null);
+	}
+
+	private ConversationBackend backend(BackendFeatures features) {
+		return new ConversationBackend() {
 			@Override
 			public String agentName() {
 				return "test-backend";
@@ -303,8 +372,6 @@ public class TestChatBackendFeatures extends BasicTestCase {
 				return ANSWER;
 			}
 		};
-		AgentSession claimed = _chat;
-		ScriptedBackend.install(session -> session.equals(claimed) ? backend : null);
 	}
 
 	private static void assertRefused(Map<String, Object> reply, ResKey reason) {
@@ -320,6 +387,12 @@ public class TestChatBackendFeatures extends BasicTestCase {
 			assertTrue("The run did not end.", System.currentTimeMillis() < deadline);
 			Thread.sleep(20);
 		}
+	}
+
+	/** Opens the given chat in the conversation, as a pick from the chat list does. */
+	private void select(String sessionId) {
+		Map<String, Object> reply = command(ChatControl.CMD_SELECT_SESSION, Map.of(ChatControl.ARG_SESSION_ID, sessionId));
+		assertEquals(reply.toString(), Boolean.TRUE, reply.get(SessionOpenReply.OPENED__PROP));
 	}
 
 	private Map<String, Object> command(String name, Map<String, Object> arguments) {

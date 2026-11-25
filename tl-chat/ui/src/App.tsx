@@ -20,7 +20,7 @@ import { seenCounts, unseenRailBadge, type RailBadge, type SectionCount } from '
 import { RailToggle, SideRail, SideStrip } from './rail'
 import { SHEET_MAX, SidePane } from './side-pane'
 import { readComposerControls } from './chat-conversation'
-import { gateComposerControls } from './features'
+import { effectivePolicy, gateComposerControls } from './features'
 import { Thread } from './thread'
 import { preloadWorkingIndicator, workingIndicatorForm } from './working-indicator'
 import {
@@ -63,9 +63,13 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   const chatId = chatIdOf(state, controlId)
   const { chat, actions, runs } = useChat(chatId, boot)
   // The composer offers what the open conversation supports; `App` configures nothing else away.
+  const policy = useMemo(
+    () => effectivePolicy(chat.features, chat.publishedPolicy),
+    [chat.features, chat.publishedPolicy],
+  )
   const composerControls = useMemo(
-    () => gateComposerControls(readComposerControls({}), chat.features),
-    [chat.features],
+    () => gateComposerControls(readComposerControls({}), chat.features, policy),
+    [chat.features, policy],
   )
   const labels = useMemo(() => bundle(chat.language), [chat.language])
   // Where this chat's requests go. Memoised, because the composer is `React.memo`d and a fresh
@@ -446,6 +450,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             onDismissNotice={() => actions.showNotice('')}
             onSend={onSend}
             attachments={chat.draftAttachments}
+            attachmentAccept={policy?.accept}
             onAttach={actions.attach}
             onRemoveAttachment={actions.removeAttachment}
             onStop={actions.stop}

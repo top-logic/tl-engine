@@ -615,6 +615,15 @@ describe('the host\'s context prefix', () => {
  * wait on the server.
  */
 describe('sending', () => {
+  /** The policy a chat control publishes for images and PDF. */
+  const IMAGES_AND_PDF = {
+    accept: 'image/png,image/jpeg,application/pdf',
+    types: ['image/png', 'image/jpeg', 'application/pdf'],
+    maxFiles: 5,
+    maxFileSize: 10 * 1024 * 1024,
+    maxMessageSize: 50 * 1024 * 1024,
+  }
+
   /** A labelled stand-in for a picked file. */
   function file(name: string, type: string, size = 4): File {
     return new File([new Uint8Array(size)], name, { type })
@@ -758,6 +767,8 @@ describe('sending', () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL, tlUpload)
 
+    store.takeAttachmentPolicy(IMAGES_AND_PDF)
+
     const refused = await store.actions.attach([
       file('eins.png', 'image/png'),
       file('zwei.png', 'image/png'),
@@ -765,7 +776,9 @@ describe('sending', () => {
     ])
 
     expect(uploads.map((files) => files.map((f) => f.name))).toEqual([['eins.png', 'zwei.png']])
-    expect(refused).toBe(`notiz.txt: ${bundle('de').onlyImagesAndPdf} · zwei.png: zu viele`)
+    expect(refused).toBe(
+      `notiz.txt: ${bundle('de').typeNotAllowed('image/png, image/jpeg, application/pdf')} · zwei.png: zu viele`,
+    )
 
     await settle()
     release()
@@ -801,6 +814,37 @@ describe('sending', () => {
     expect(store.getState().draftAttachments).toEqual([])
 
     await settle()
+    release()
+  })
+
+  it('checks the files against the policy the control publishes, counting what is attached', async () => {
+    answerUploads(async () => ({ success: true, [FIELD_REASON]: [] }))
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL, tlUpload)
+    store.takeAttachmentPolicy({ ...IMAGES_AND_PDF, maxFiles: 3, maxFileSize: 100, maxMessageSize: 150 })
+    store.takeAttachments([{ id: 'f1', fileName: 'a.pdf', mimeType: 'application/pdf', size: 90 }])
+
+    const refused = await store.actions.attach([
+      file('gross.png', 'image/png', 101),
+      file('passt.png', 'image/png', 50),
+      file('zuviel.png', 'image/png', 20),
+    ])
+
+    const labels = bundle('de')
+    expect(uploads.map((files) => files.map((f) => f.name))).toEqual([['passt.png']])
+    expect(refused).toBe(
+      `gross.png: ${labels.largerThan('100 B')} · zuviel.png: ${labels.messageLargerThan('150 B')}`,
+    )
+    release()
+  })
+
+  it('leaves the decision to the server while no policy is known', async () => {
+    answerUploads(async () => ({ success: true, [FIELD_REASON]: [] }))
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL, tlUpload)
+
+    expect(await store.actions.attach([file('notiz.txt', 'text/plain')])).toBe('')
+    expect(uploads.map((files) => files.map((f) => f.name))).toEqual([['notiz.txt']])
     release()
   })
 

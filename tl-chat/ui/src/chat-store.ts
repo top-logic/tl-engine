@@ -1,5 +1,14 @@
 import { isPageLeaving, React, useTLCommand, useTLDataUrl, useTLUpload } from 'tl-react-bridge'
-import { ALL_FEATURES, readFeatures, sameFeatures, type ConversationFeatures } from './features'
+import {
+  ALL_FEATURES,
+  effectivePolicy,
+  readAttachmentPolicy,
+  readFeatures,
+  sameFeatures,
+  samePolicy,
+  type AttachmentPolicy,
+  type ConversationFeatures,
+} from './features'
 import type { ReactNode } from 'react'
 import {
   autoTitle,
@@ -31,6 +40,7 @@ import {
   sendMessage,
   setApprovalMode,
   startPromptImprovement,
+  STATE_ATTACHMENT_POLICY,
   STATE_DRAFT_ATTACHMENTS,
   readRunState,
   readRunWaiting,
@@ -367,6 +377,11 @@ export interface ChatBootstrap {
   sessions?: unknown
   /** The files attached to the message, as the control state carries them (`readDraftAttachments`). */
   draftAttachments?: unknown
+  /**
+   * The files an upload may hold, as the control state carries them (`readAttachmentPolicy`): the
+   * policy of the chat the server's conversation shows.
+   */
+  attachmentPolicy?: unknown
 }
 
 /** Reads the bootstrap a chat element pushed into its control state. */
@@ -395,6 +410,7 @@ export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
     capabilities: state.capabilities,
     sessions: state.sessions,
     draftAttachments: state[STATE_DRAFT_ATTACHMENTS],
+    attachmentPolicy: state[STATE_ATTACHMENT_POLICY],
   }
 }
 
@@ -579,6 +595,12 @@ export interface ChatState {
    * wait on the server, which the send takes them from.
    */
   draftAttachments: DraftAttachment[]
+
+  /**
+   * The files an upload may hold as the chat controls state them, `null` before they did; applies
+   * where the conversation's {@link features} state no policy of their own (`effectivePolicy`).
+   */
+  publishedPolicy: AttachmentPolicy | null
 
   /**
    * What the badges of the mounted rail's sections show.
@@ -888,6 +910,9 @@ export class ChatStore {
   /** How many files are on their way to the server now. */
   private attaching = 0
 
+  /** The sizes of the files on their way to the server now, together. */
+  private attachingSize = 0
+
   /** Settles once the files on their way to the server have arrived. */
   private uploads: Promise<void> = Promise.resolve()
 
@@ -1137,12 +1162,14 @@ export class ChatStore {
       railDrawerOpen: false,
       conversationsOutsideDock: 0,
       draftAttachments: [],
+      publishedPolicy: null,
       railBadge: NO_RAIL_BADGE,
     })
     this.effects = this.declareEffects()
     this.actions = this.declareActions()
     this.takeLists(boot.capabilities, boot.sessions)
     this.takeAttachments(boot.draftAttachments)
+    this.takeAttachmentPolicy(boot.attachmentPolicy)
   }
 
   getState = (): ChatState => this.snapshot
@@ -1238,6 +1265,14 @@ export class ChatStore {
     const files = readDraftAttachments(raw)
     if (files && JSON.stringify(files) !== JSON.stringify(this.state.draftAttachments)) {
       this.patch({ draftAttachments: files })
+    }
+  }
+
+  /** Takes the files an upload may hold, when an element's control state brings a new policy. */
+  takeAttachmentPolicy = (raw: unknown): void => {
+    const policy = readAttachmentPolicy(raw)
+    if (policy && !samePolicy(policy, this.state.publishedPolicy)) {
+      this.patch({ publishedPolicy: policy })
     }
   }
 
@@ -2489,17 +2524,25 @@ export class ChatStore {
 
       attach: async (files: File[]) => {
         const labels = this.labels
+        const attached = this.state.draftAttachments
         const { usable, problems } = selectAttachments(
           files,
-          this.state.draftAttachments.length + this.attaching,
+          {
+            count: attached.length + this.attaching,
+            size: attached.reduce((sum, file) => sum + file.size, 0) + this.attachingSize,
+          },
+          effectivePolicy(this.state.features, this.state.publishedPolicy),
           labels,
         )
         if (usable.length > 0) {
+          const size = usable.reduce((sum, file) => sum + file.size, 0)
           this.attaching += usable.length
+          this.attachingSize += size
           const upload = uploadAttachments(this.upload, usable)
             .catch(() => [labels.attachFailed])
             .finally(() => {
               this.attaching -= usable.length
+              this.attachingSize -= size
             })
           // A send waits for what is on its way, so the file goes with the message it was meant for.
           const before = this.uploads
@@ -2813,5 +2856,6 @@ export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
   // The state's own values: they change only when the server sends new ones.
   useEffect(() => store.takeLists(boot.capabilities, boot.sessions), [store, boot.capabilities, boot.sessions])
   useEffect(() => store.takeAttachments(boot.draftAttachments), [store, boot.draftAttachments])
+  useEffect(() => store.takeAttachmentPolicy(boot.attachmentPolicy), [store, boot.attachmentPolicy])
   return { chat, actions: store.actions, runs: store.runs }
 }

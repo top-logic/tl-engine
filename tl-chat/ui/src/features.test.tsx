@@ -8,6 +8,8 @@ import {
   ALL_FEATURES,
   gateComposerControls,
   gateThreadConfig,
+  effectivePolicy,
+  readAttachmentPolicy,
   readFeatures,
   sameFeatures,
   type ConversationFeatures,
@@ -32,9 +34,12 @@ const NONE: ConversationFeatures = {
   modelPicker: false,
   effortPicker: false,
   mcpPicker: false,
-  attachments: false,
+  attachments: { accept: '', types: [], maxFiles: 0, maxFileSize: 0, maxMessageSize: 0 },
   approvals: false,
 }
+
+/** What a backend taking CSV and ZIP files states. */
+const CSV_AND_ZIP = { accept: 'text/csv,.zip', types: ['text/csv', '*.zip'], maxFiles: 2, maxFileSize: 1024, maxMessageSize: 2048 }
 
 describe('readFeatures', () => {
   it('reads an absent answer as everything', () => {
@@ -45,12 +50,33 @@ describe('readFeatures', () => {
 
   it('counts a function as unsupported only where it says false', () => {
     expect(readFeatures(NONE)).toEqual(NONE)
-    expect(readFeatures({ regenerate: false, attachments: true })).toEqual({ ...ALL_FEATURES, regenerate: false })
+    expect(readFeatures({ regenerate: false })).toEqual({ ...ALL_FEATURES, regenerate: false })
+  })
+
+  it('reads the attachment policy the conversation states', () => {
+    expect(readFeatures({ attachments: CSV_AND_ZIP }).attachments).toEqual(CSV_AND_ZIP)
+    expect(readAttachmentPolicy(undefined)).toBeNull()
+    expect(readAttachmentPolicy({ types: ['*/*'], maxFiles: 3 })).toEqual({
+      accept: '',
+      types: ['*/*'],
+      maxFiles: 3,
+      maxFileSize: 0,
+      maxMessageSize: 0,
+    })
+  })
+
+  it('applies the published policy where the conversation states none', () => {
+    const published = { ...CSV_AND_ZIP, types: ['image/png'] }
+    expect(effectivePolicy(ALL_FEATURES, published)).toBe(published)
+    expect(effectivePolicy({ ...ALL_FEATURES, attachments: CSV_AND_ZIP }, published)).toBe(CSV_AND_ZIP)
+    expect(effectivePolicy(ALL_FEATURES, null)).toBeNull()
   })
 
   it('compares by value', () => {
     expect(sameFeatures(readFeatures({}), ALL_FEATURES)).toBe(true)
     expect(sameFeatures(NONE, ALL_FEATURES)).toBe(false)
+    expect(sameFeatures(readFeatures({ attachments: CSV_AND_ZIP }), readFeatures({ attachments: { ...CSV_AND_ZIP } }))).toBe(true)
+    expect(sameFeatures(readFeatures({ attachments: CSV_AND_ZIP }), ALL_FEATURES)).toBe(false)
   })
 })
 
@@ -74,6 +100,12 @@ describe('the gates', () => {
       attachmentsEnabled: false,
       autoApproveSwitch: false,
     })
+  })
+
+  it('take the attachment button away where the policy allows no file', () => {
+    expect(gateComposerControls(controls, ALL_FEATURES, CSV_AND_ZIP).attachmentsEnabled).toBe(true)
+    expect(gateComposerControls(controls, ALL_FEATURES, NONE.attachments).attachmentsEnabled).toBe(false)
+    expect(gateComposerControls(controls, ALL_FEATURES, null).attachmentsEnabled).toBe(true)
   })
 
   it('never switch on what the element switched off', () => {
@@ -134,6 +166,7 @@ function composer(features: ConversationFeatures): string {
     React.createElement(Composer, {
       ...composerProps(),
       ...gateComposerControls(readComposerControls({}), features),
+      attachmentAccept: features.attachments?.accept,
     } as never),
   )
 }
@@ -178,6 +211,11 @@ describe('the composer of a conversation', () => {
     expect(markup).toContain('type="file"')
     expect(markup).toContain('class="model-menu"')
     expect(markup).toContain('approve-switch')
+  })
+
+  it('offers only the file types the conversation takes in the file picker', () => {
+    expect(composer({ ...ALL_FEATURES, attachments: CSV_AND_ZIP })).toContain('accept="text/csv,.zip"')
+    expect(composer(ALL_FEATURES)).not.toContain('accept=')
   })
 
   it('offers none of them where nothing beyond sending is supported', () => {

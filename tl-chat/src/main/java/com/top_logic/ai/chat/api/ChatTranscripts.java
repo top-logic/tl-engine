@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import com.top_logic.ai.chat.api.messages.AttachmentPolicyDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
 import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
@@ -21,6 +22,7 @@ import com.top_logic.ai.chat.api.messages.InFlightRunDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.api.messages.RecordedRunDto;
 import com.top_logic.ai.chat.api.messages.TokenUsageDto;
+import com.top_logic.ai.chat.backend.AttachmentPolicy;
 import com.top_logic.ai.chat.backend.BackendFeatures;
 import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.backend.ConversationBackendService;
@@ -28,6 +30,7 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.Logger;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -452,8 +455,22 @@ public final class ChatTranscripts {
 			.setModelPicker(features.modelPicker())
 			.setEffortPicker(features.effortPicker())
 			.setMcpPicker(features.mcpPicker())
-			.setAttachments(ConversationBackendService.attachmentPolicy(backend).allowsAny())
+			.setAttachments(attachmentPolicyDto(ConversationBackendService.attachmentPolicy(backend)))
 			.setApprovals(features.approvals());
+	}
+
+	/**
+	 * What the browser learns of an {@link AttachmentPolicy}: the files it offers in the file picker
+	 * and accepts before an upload.
+	 */
+	public static AttachmentPolicyDto attachmentPolicyDto(AttachmentPolicy policy) {
+		String accept = UploadSupport.acceptAttribute(policy.acceptedTypes());
+		return AttachmentPolicyDto.create()
+			.setAccept(accept == null ? "" : accept)
+			.setTypes(policy.types())
+			.setMaxFiles(policy.maxFiles())
+			.setMaxFileSize(policy.maxFileSize())
+			.setMaxMessageSize(policy.maxMessageSize());
 	}
 
 }

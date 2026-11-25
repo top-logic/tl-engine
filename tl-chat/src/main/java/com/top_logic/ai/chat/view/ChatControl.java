@@ -50,6 +50,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -330,6 +331,19 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	public static final String STATE_DRAFT_ATTACHMENTS = "draftAttachments";
 
 	/**
+	 * State key of the files an upload to this control may hold, an
+	 * {@link com.top_logic.ai.chat.api.messages.AttachmentPolicyDto}: the {@link AttachmentPolicy} of
+	 * the chat the conversation shows, see {@link #maxUploadSize()}.
+	 *
+	 * <p>
+	 * Published again whenever the conversation switches to another chat, together with the size
+	 * limit under {@link UploadSupport#MAX_UPLOAD_SIZE}. The browser applies it to a chat that states
+	 * no policy of its own with its features, a chat not created yet.
+	 * </p>
+	 */
+	public static final String STATE_ATTACHMENT_POLICY = "attachmentPolicy";
+
+	/**
 	 * Command that answers an approval or a question a run of the account waits for, whichever of
 	 * the account's windows started the run (#393).
 	 *
@@ -514,6 +528,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	/** Writes the attached files into this control's state; listens while the control is displayed. */
 	private final Runnable _publishAttachments = this::publishAttachments;
 
+	/** Follows the chat the conversation shows, to publish its {@link #STATE_ATTACHMENT_POLICY}. */
+	private Registration _policyWatch = Registration.NONE;
+
 	/**
 	 * Creates a {@link ChatControl}.
 	 *
@@ -539,13 +556,25 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		addCleanupAction(hidden);
 
 		// The browser refuses a larger file before it is transmitted.
-		putState(UploadSupport.MAX_UPLOAD_SIZE, Long.valueOf(maxUploadSize()));
+		publishAttachmentPolicy();
 		publishAttachments();
 		ChatAttachments attachments = _binding.attachments();
-		Runnable unlisten = () -> attachments.removeListener(_publishAttachments);
+		Runnable unlisten = () -> {
+			attachments.removeListener(_publishAttachments);
+			_policyWatch.dispose();
+		};
 		addAttachListener(() -> {
 			attachments.addListener(_publishAttachments);
 			publishAttachments();
+			_policyWatch.dispose();
+			Registration switched = _binding.tracker().addActiveSessionListener(
+				(sessionId, owner) -> publishAttachmentPolicy(attachmentPolicy(sessionId, owner)));
+			Registration adopted = _binding.addChatAdoptedListener(this::publishAttachmentPolicy);
+			_policyWatch = Registration.onDispose(() -> {
+				switched.dispose();
+				adopted.dispose();
+			});
+			publishAttachmentPolicy();
 		});
 		addDetachListener(unlisten);
 		addCleanupAction(unlisten);
@@ -570,10 +599,33 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		super.onBeforeWrite();
 		_binding.writeRenderState(this::putState);
 		publishAttachments();
+		publishAttachmentPolicy();
+	}
+
+	/**
+	 * Switches the conversation to the given chat for a command of this element, see
+	 * {@link TaskProgressTracker#adoptActiveSessionId(String, Person)}, and tells the conversation's
+	 * elements ({@link ChatViewBinding#chatAdopted()}).
+	 */
+	private boolean adopt(String sessionId, Person person) {
+		boolean adopted = _binding.tracker().adoptActiveSessionId(sessionId, person);
+		if (adopted) {
+			_binding.chatAdopted();
+		}
+		return adopted;
 	}
 
 	private void publishAttachments() {
 		putState(STATE_DRAFT_ATTACHMENTS, _binding.attachments().list());
+	}
+
+	private void publishAttachmentPolicy() {
+		publishAttachmentPolicy(attachmentPolicy());
+	}
+
+	private void publishAttachmentPolicy(AttachmentPolicy policy) {
+		putState(UploadSupport.MAX_UPLOAD_SIZE, Long.valueOf(maxUploadSize(policy)));
+		putState(STATE_ATTACHMENT_POLICY, ChatTranscripts.attachmentPolicyDto(policy));
 	}
 
 	/**
@@ -620,7 +672,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			return reply.setOpened(false);
 		}
 		TaskProgressTracker tracker = _binding.tracker();
-		boolean opened = tracker.adoptActiveSessionId(id, person);
+		boolean opened = adopt(id, person);
 		reply.setOpened(opened);
 		if (opened) {
 			reply.setRunState(RunStateFrame.of(tracker, person));
@@ -766,7 +818,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		}
 		boolean sent = false;
 		try {
-			if (!tracker.adoptActiveSessionId(sessionId, person)) {
+			if (!adopt(sessionId, person)) {
 				return status(STATUS_NOT_FOUND);
 			}
 			ChatSendReply reply = sendInto(tracker, person, sessionId, message, attached, shown, args, fromTurn);
@@ -880,7 +932,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		// Switches the conversation to the chat, as a send does: it starts a run, and a run is sent
 		// into the chat the conversation shows. The regenerate button sits under an answer of the chat
 		// on screen, so this is the chat it shows already.
-		tracker.adoptActiveSessionId(sessionId, person);
+		adopt(sessionId, person);
 		if (tracker.hasActiveProcessingState()) {
 			return status(STATUS_BUSY);
 		}
@@ -1211,7 +1263,11 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 */
 	@Override
 	public long maxUploadSize() {
-		return UploadSupport.effectiveMaxUploadSize(attachmentPolicy().maxFileSize());
+		return maxUploadSize(attachmentPolicy());
+	}
+
+	private static long maxUploadSize(AttachmentPolicy policy) {
+		return UploadSupport.effectiveMaxUploadSize(policy.maxFileSize());
 	}
 
 	/**
@@ -1219,8 +1275,13 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * answerer, that of the framework's own agent for a chat not created yet.
 	 */
 	private AttachmentPolicy attachmentPolicy() {
-		String sessionId = _binding.tracker().getActiveSessionId();
-		Person person = actingPerson();
+		return attachmentPolicy(_binding.tracker().getActiveSessionId(), actingPerson());
+	}
+
+	/**
+	 * Which files a message may carry in the given chat, as the given person reads it.
+	 */
+	private static AttachmentPolicy attachmentPolicy(String sessionId, Person person) {
 		TLObject session = sessionId == null || person == null ? null
 			: ChatSessionIds.accessibleSession(sessionId, person, SimpleBoundCommandGroup.READ);
 		return ConversationBackendService.attachmentPolicy(ChatTranscripts.backendOf(session));

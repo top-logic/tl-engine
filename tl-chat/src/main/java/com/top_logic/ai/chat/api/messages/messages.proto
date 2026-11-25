@@ -63,6 +63,38 @@ message DraftAttachmentDto {
 }
 
 /**
+ * Which files a message of a conversation may carry, as the answerer of the conversation states them
+ * in its {@link com.top_logic.ai.chat.backend.AttachmentPolicy}.
+ *
+ * <p>
+ * The browser offers and accepts only these files; the server checks them again on upload and send.
+ * </p>
+ */
+message AttachmentPolicyDto {
+	/**
+	 * The value of the <code>accept</code> attribute of the file input, empty when every file type
+	 * is allowed.
+	 */
+	string accept;
+
+	/**
+	 * The allowed file types one by one: MIME types like <code>text/csv</code>, MIME patterns like
+	 * <code>text/*</code> and file patterns like <code>*.zip</code>. Empty, or holding
+	 * <code>*&#47;*</code> or <code>*.*</code>, when every type is allowed.
+	 */
+	repeated string types;
+
+	/** How many files one message may carry; <code>0</code> when it may carry none. */
+	int maxFiles;
+
+	/** The largest file a message may carry, in bytes; <code>0</code> for no limit. */
+	long maxFileSize;
+
+	/** The largest sum of the sizes of all files of one message, in bytes; <code>0</code> for no limit. */
+	long maxMessageSize;
+}
+
+/**
  * Which functions beyond sending a message the answerer of a conversation supports.
  *
  * <p>
@@ -90,8 +122,8 @@ message ConversationFeaturesDto {
 	/** Whether the user can choose the MCP servers attached to the run. */
 	boolean mcpPicker;
 
-	/** Whether a message may carry files. */
-	boolean attachments;
+	/** Which files a message may carry. */
+	AttachmentPolicyDto attachments;
 
 	/** Whether the run asks the user for approvals in the chat, which the auto-approve switch answers. */
 	boolean approvals;

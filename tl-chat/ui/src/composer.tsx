@@ -1,7 +1,7 @@
 import { React } from 'tl-react-bridge'
 import { ForbiddenError } from './api'
 import type { InteractionAnswer, PromptImproved } from './api'
-import { ACCEPT_ATTRIBUTE, dragHasFiles } from './attachments'
+import { dragHasFiles } from './attachments'
 import { ContextUsage, formatTokens } from './context-usage'
 import type { RunStore } from './store'
 import type { bundle } from './i18n'
@@ -300,6 +300,7 @@ export const Composer = React.memo(
   extraMenuItems,
   referenceCandidates,
   attachmentsEnabled = true,
+  attachmentAccept = '',
   agentPicker = true,
   modelPicker: modelPickerEnabled = true,
   thinking = true,
@@ -386,6 +387,11 @@ export const Composer = React.memo(
   referenceCandidates?: (query: string) => ReferenceCandidate[]
   /** Whether files can be attached. Default on, matching today's composer. */
   attachmentsEnabled?: boolean
+  /**
+   * The file types the file picker offers, as the `accept` attribute of a file input takes them;
+   * empty for every type.
+   */
+  attachmentAccept?: string
   agentPicker?: boolean
   modelPicker?: boolean
   thinking?: boolean
@@ -900,7 +906,7 @@ export const Composer = React.memo(
             <input
               ref={file}
               type="file"
-              accept={ACCEPT_ATTRIBUTE}
+              accept={attachmentAccept || undefined}
               multiple
               hidden
               onChange={async (event) => {

@@ -288,6 +288,12 @@ export const STATUS_REJECTED = 'rejected'
 /** State key of the files attached to the message. Must match `ChatControl#STATE_DRAFT_ATTACHMENTS`. */
 export const STATE_DRAFT_ATTACHMENTS = 'draftAttachments'
 
+/**
+ * State key of the files an upload may hold (an `AttachmentPolicyDto`). Must match
+ * `ChatControl#STATE_ATTACHMENT_POLICY`.
+ */
+export const STATE_ATTACHMENT_POLICY = 'attachmentPolicy'
+
 /** Name of the multipart part of an uploaded file. Must match `UploadSupport#FILE_PART`. */
 const UPLOAD_FILE_PART = 'file'
 

@@ -457,7 +457,8 @@ public final class ModelAccessPolicy {
 	 * operation implying it) on the type or on one of its specializations, as
 	 * {@link AccessManager#hasRoleOnAnyObject(Person, Collection)} answers it. A type with an access
 	 * parent is decided, for each operation it delegates, by the types its access parent may
-	 * lead to, and for each operation it does not delegate by the grants of the type itself, with
+	 * lead to (for an access parent with several candidates, the types of all of them), and for
+	 * each operation it does not delegate by the grants of the type itself, with
 	 * {@link SimpleBoundCommandGroup#WRITE} in place of {@link SimpleBoundCommandGroup#CREATE} and {@link SimpleBoundCommandGroup#DELETE} (see
 	 * {@link ModelAccessRights#getAccessParentTypes(TLClass)}). A type without security, one whose
 	 * singletons have rights of their own, or one whose access parent types are not known statically
@@ -533,10 +534,10 @@ public final class ModelAccessPolicy {
 						}
 					}
 				}
-				if (accessParent.getOperations() != null
+				if (!accessParent.delegatesAll()
 					&& holdsAnyOf(user, rights.getAllowedRoles(candidate, operation))) {
-					// A restricted relation: the grants of the type itself decide the operations not
-					// delegated.
+					// An access parent not deciding every operation: the grants of the type itself
+					// decide the operations not delegated.
 					return true;
 				}
 				continue;

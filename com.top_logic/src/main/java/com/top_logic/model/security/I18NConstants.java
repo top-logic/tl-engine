@@ -29,6 +29,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY;
 
 	/**
+	 * @en "Own decision" is no candidate of "Any of": a type deciding for itself has no access
+	 *     parent. Remove it, or choose it instead of "Any of".
+	 */
+	public static ResKey ERROR_SELF_IN_ANY_OF;
+
+	/**
+	 * @en Referring objects never decide "Create": nothing refers to an object being created.
+	 *     Remove "Create" from the operations, the grants of the type decide it.
+	 */
+	public static ResKey ERROR_CREATE_FOR_REFERER;
+
+	/**
 	 * @en The access parent decides the operations {1} itself, since it is restricted to them and
 	 *     decides Discover together with them: either remove the grants of these operations from
 	 *     "{0}", or remove the operations from the access parent.
@@ -54,6 +66,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en target of {0}#{1}
 	 */
 	public static ResKey2 ACCESS_PARENT_TARGET__OWNER_REFERENCE;
+
+	/**
+	 * @en Objects referencing it via {1} of {0}
+	 */
+	public static ResKey2 ACCESS_PARENT_REFERER__OWNER_REFERENCE;
+
+	/**
+	 * @en One of: {0}
+	 */
+	public static ResKey1 ACCESS_PARENT_ANY_OF__CANDIDATES;
+
+	/**
+	 * @en {0}; {1}
+	 */
+	public static ResKey2 CANDIDATE_LIST__LIST_CANDIDATE;
 
 	/**
 	 * @en {0}, only for {1}

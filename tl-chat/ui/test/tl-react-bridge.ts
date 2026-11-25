@@ -37,6 +37,7 @@ export function resetTLBridge(): void {
   dispatched = []
   patchListeners.clear()
   uploads.length = 0
+  uploadForms.length = 0
   uploadAnswer = async () => ({ success: true })
   pageLeaving = false
   commandAnswer = async () => undefined
@@ -151,6 +152,9 @@ export function useTLCommand(): (
 /** The uploads `useTLUpload`'s function sent since the last reset: the files of each. */
 export const uploads: File[][] = []
 
+/** The uploads `useTLUpload`'s function sent since the last reset: the whole form of each. */
+export const uploadForms: FormData[] = []
+
 /** What an upload is answered with; a plain success by default. */
 let uploadAnswer: (files: File[]) => Promise<CommandResponse | undefined> = async () => ({ success: true })
 
@@ -163,6 +167,7 @@ export function answerUploads(answer: (files: File[]) => Promise<CommandResponse
 export const tlUpload = async (formData: FormData): Promise<CommandResponse | undefined> => {
   const files = formData.getAll('file').filter((value): value is File => value instanceof File)
   uploads.push(files)
+  uploadForms.push(formData)
   return uploadAnswer(files)
 }
 

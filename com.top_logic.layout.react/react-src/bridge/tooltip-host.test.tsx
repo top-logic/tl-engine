@@ -11,6 +11,10 @@ const CONTROL_ID = 'c1';
 vi.mock('./tl-react-bridge', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tl-react-bridge')>()),
   isMountedControl: (id: string) => id === CONTROL_ID,
+}));
+
+vi.mock('./page-context', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./page-context')>()),
   getApiBase: () => '/app/',
 }));
 

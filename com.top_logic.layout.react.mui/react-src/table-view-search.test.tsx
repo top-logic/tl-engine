@@ -2,7 +2,7 @@
 // gave later (#30102, K6): the term waits out a typing pause, but a click on a preset chip or a sort
 // header, leaving the field, and the table going away all send it first.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { replacePart } from 'tl-react-bridge';
@@ -14,7 +14,7 @@ import MuiMenuTriggerAdapter from './adapters/MuiMenuTriggerAdapter';
 import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiSkeletonAdapter from './adapters/MuiSkeletonAdapter';
-import { mountAdapter, settle, fakeDebounceTimers } from './adapters/wire-test-support';
+import { mountAdapter, settle, fakeDebounceTimers, resetTableView } from './adapters/wire-test-support';
 
 replacePart('Button', MuiButtonAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
@@ -31,8 +31,13 @@ class NoResizeObserver {
   disconnect() {}
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();

@@ -488,12 +488,15 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     [command],
   )
   useEffect(() => reporter.cancel, [reporter])
+  // The store keeps what the composer reports as the draft of the chat on screen; a switch to
+  // another chat puts that chat's draft into the composer, which then reports it here like typed text.
   const onDraft = useCallback(
     (text: string, settled: boolean) => {
+      actions.noteDraft(text)
       if (settled) reporter.flush(text)
       else reporter.report(text)
     },
-    [reporter],
+    [reporter, actions],
   )
   const channelDraft = channelName(state.draftText)
   const wroteDraft = useRef<string | undefined>(undefined)

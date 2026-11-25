@@ -548,13 +548,18 @@ public class SecurityCoverageAnalysis {
 	}
 
 	/**
-	 * Whether the given type grants an operation it decides itself, see
-	 * {@link AccessParentFunction#decidesItself(AccessParentFunction, BoundCommandGroup)}.
+	 * Whether the given type grants an operation its access parent does not delegate.
+	 *
+	 * <p>
+	 * Only such an operation is denied altogether without a role source. An operation the access
+	 * parent delegates is decided through it as well, also when it
+	 * {@link AccessParentFunction#includesSelf() includes} the object itself; a grant of the type
+	 * for it that no rule delivers is reported as dead grant.
+	 * </p>
 	 */
 	private boolean hasOwnGrant(TLClass type, AccessParentFunction accessParent) {
 		for (BoundCommandGroup operation : _accessRights.getOperations(type).getOperations()) {
-			if (AccessParentFunction.decidesItself(accessParent, operation)
-				&& !_accessRights.getAllowedRoles(type, operation).isEmpty()) {
+			if (!accessParent.delegates(operation) && !_accessRights.getAllowedRoles(type, operation).isEmpty()) {
 				return true;
 			}
 		}

@@ -610,6 +610,18 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		assertEquals(session.toString(), CoverageStatus.DELEGATED, session.status());
 	}
 
+	/**
+	 * A type deciding itself beside an access parent delegating every operation has a role source
+	 * through the access parent; its grant no rule delivers is a dead grant.
+	 */
+	public void testSelfCandidateWithoutRoleRule() {
+		TypeCoverage coverage = coverage("TestAccessParentAnyOf:SelfPart");
+		assertFalse("The folder decides every operation as well: " + coverage,
+			coverage.hasFinding(FindingKind.NO_ROLE_SOURCE));
+		CoverageFinding finding = singleFinding(coverage, FindingKind.DEAD_GRANT);
+		assertEquals(SimpleBoundCommandGroup.READ, finding.getOperation());
+	}
+
 	private TypeCoverage coverage(String qualifiedTypeName) {
 		TypeCoverage result = _coverage.get(qualifiedTypeName);
 		assertNotNull("No coverage computed for '" + qualifiedTypeName + "'.", result);

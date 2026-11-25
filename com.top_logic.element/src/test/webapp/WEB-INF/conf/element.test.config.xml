@@ -915,6 +915,19 @@
 							roles="TestAccessParentAnyOf.TaskOwner"
 						/>
 					</class>
+					<!-- The grant has no role source, the folder still decides every operation. -->
+					<class name="TestAccessParentAnyOf:SelfPart">
+						<access-parent>
+							<any-of>
+								<self/>
+								<container/>
+							</any-of>
+						</access-parent>
+						<grant
+							operation="Read"
+							roles="TestAccessParentAnyOf.DocReader"
+						/>
+					</class>
 					<!-- The own grants decide together with the subject, which decides Read only. -->
 					<class name="TestAccessParentAnyOf:Session">
 						<access-parent>

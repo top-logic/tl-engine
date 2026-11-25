@@ -39,6 +39,11 @@
 							multiple="true"
 							type="Nested"
 						/>
+						<reference name="selfParts"
+							composite="true"
+							multiple="true"
+							type="SelfPart"
+						/>
 					</attributes>
 				</class>
 
@@ -213,6 +218,9 @@
 						/>
 					</attributes>
 				</class>
+
+				<!-- Decides itself beside its folder, with a grant but without a role rule. -->
+				<class name="SelfPart"/>
 
 				<!-- Role rule and grants: the owner may read and write it; delegates Read to its subject in addition. -->
 				<class name="Session">

@@ -63,7 +63,8 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * A type whose access parent decides only some operations, see
  * {@link AccessParentFunction#getOperations()}, has grants of its own for the other operations:
  * it is offered with these operations only, and with its roles and attributes as a type deciding
- * for itself.
+ * for itself. A type whose access parent {@link AccessParentFunction#includesSelf() includes} the
+ * object itself has grants of its own for every operation, deciding beside the access parent.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -278,20 +279,21 @@ public class TypeGrants {
 	 * @param accessParent
 	 *        The access parent of the type, <code>null</code> when it decides for itself. The
 	 *        operations it {@link AccessParentFunction#delegates(BoundCommandGroup) delegates} are
-	 *        left out.
+	 *        left out, unless it {@link AccessParentFunction#includesSelf() includes} the object
+	 *        itself.
 	 */
 	private static List<BoundCommandGroup> operations(ApplicableOperations applicable,
 			AccessParentFunction accessParent) {
 		List<BoundCommandGroup> result = new ArrayList<>();
 		for (BoundCommandGroup builtIn : ApplicableOperations.BUILT_IN) {
-			if (applicable.appliesTo(builtIn) && !AccessParentFunction.isDelegated(accessParent, builtIn)) {
+			if (applicable.appliesTo(builtIn) && AccessParentFunction.decidesItself(accessParent, builtIn)) {
 				result.add(builtIn);
 			}
 		}
 		List<BoundCommandGroup> declared = new ArrayList<>();
 		for (BoundCommandGroup operation : applicable.getOperations()) {
 			if (!ApplicableOperations.isBuiltIn(operation)
-				&& !AccessParentFunction.isDelegated(accessParent, operation)) {
+				&& AccessParentFunction.decidesItself(accessParent, operation)) {
 				declared.add(operation);
 			}
 		}

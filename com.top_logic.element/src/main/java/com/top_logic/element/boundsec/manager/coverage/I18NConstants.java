@@ -55,6 +55,13 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 SHADOWED_RULES__TYPE_RULES;
 
 	/**
+	 * @en The operation "{1}" is granted on the type "{0}" to the roles "{2}", but the access parent
+	 *     of the type decides it alone, therefore the grant has no effect. Add "Own decision" as a
+	 *     candidate of "Any of" to the access parent, or revoke the grant.
+	 */
+	public static ResKey3 IGNORED_GRANT__TYPE_OPERATION_ROLES;
+
+	/**
 	 * @en The operation "{1}" is declared for the type "{0}", but no role holds it there: it is
 	 *     granted to no role, neither directly nor through an operation implying it. Every check
 	 *     of the operation on an object of the type is refused.

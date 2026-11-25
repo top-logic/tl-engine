@@ -233,6 +233,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_SOLUTION_REMOVE_SHADOWED_RULES;
 
 	/**
+	 * @en Ignored grant: the operation "{0}" is granted to the roles {1}, but the access parent of
+	 *     the type decides it alone, so the grant has no effect.
+	 */
+	public static ResKey2 COVERAGE_PROBLEM_IGNORED_GRANT__OPERATION_ROLES;
+
+	/**
+	 * @en Let the grants decide beside the access parent: add "Own decision" as a candidate of
+	 *     "Any of" to the access parent ("Access rights…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_SELF_CANDIDATE;
+
+	/**
+	 * @en Leave the operation to the access parent: revoke the grant in the access rights
+	 *     configuration of the type ("Access rights…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_REVOKE_IGNORED_GRANT;
+
+	/**
 	 * @en Drop the access parent of the type, so that the rules and its grants decide again
 	 *     ("Access rights…").
 	 */
@@ -354,6 +372,15 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 COVERAGE_DELEGATED_ANY_OF__CANDIDATES;
 
 	/**
+	 * @en The type decides itself and through several access parents, "{0}": a user may perform an
+	 *     operation on an object of the type when the grants of the type and the roles the user
+	 *     holds on the object allow it, or when the user may perform it on one of the access
+	 *     parents of the object deciding it, where deleting is writing it and creating is writing
+	 *     the container.
+	 */
+	public static ResKey1 COVERAGE_DELEGATED_WITH_SELF__CANDIDATES;
+
+	/**
 	 * @en The type delegates every access decision but Create to several access parents, "{0}":
 	 *     whether a user may perform an operation on an object of the type is whether the user may
 	 *     perform it on one of the access parents of the object deciding it, where deleting is
@@ -442,6 +469,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     parent deciding it allow it. The grants of the type itself decide all other operations.
 	 */
 	public static ResKey2 GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS;
+
+	/**
+	 * @en The type decides itself and through its access parents, "{0}": an operation is allowed
+	 *     as soon as the grants of the type itself or the grants of the type of one access parent
+	 *     deciding it allow it.
+	 */
+	public static ResKey1 GRANTS_DELEGATED_WITH_SELF__CANDIDATES;
 
 	/**
 	 * @en The type is excluded from access control or used by the application code only, so it
@@ -560,6 +594,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     the account holds on the object itself.
 	 */
 	public static ResKey3 EFFECTIVE_ACCESS_DELEGATED_RESTRICTED__TYPE_OBJECT_OPERATIONS;
+
+	/**
+	 * @en The type "{0}" decides itself and delegates to access parents as well: an operation is
+	 *     allowed by the grants of the type "{0}" and the roles the account holds on the object
+	 *     itself, and, as far as the access parents decide it, by the grants of the type of "{1}"
+	 *     and the roles the account holds on "{1}".
+	 */
+	public static ResKey2 EFFECTIVE_ACCESS_DELEGATED_WITH_SELF__TYPE_OBJECT;
 
 	/**
 	 * @en The access parents of the object lead to no object deciding its access, or run in a

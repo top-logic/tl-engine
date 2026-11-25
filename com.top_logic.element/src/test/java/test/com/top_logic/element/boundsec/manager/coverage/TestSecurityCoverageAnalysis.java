@@ -592,6 +592,24 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * A grant of an operation the access parent decides alone is reported as ignored; with the
+	 * object itself as candidate of the access parent, the grants decide as well.
+	 */
+	public void testIgnoredGrant() {
+		TypeCoverage entry = coverage("TestAccessParentOperations:Entry");
+		CoverageFinding finding = singleFinding(entry, FindingKind.IGNORED_GRANT);
+		assertEquals(SimpleBoundCommandGroup.READ, finding.getOperation());
+		assertEquals("Inherited from the generalization.", Set.of("TestAccessParentOperations.EntryEditor"),
+			roleNames(finding.getRoles()));
+		assertEquals(CoverageStatus.INCOMPLETE, entry.status());
+
+		TypeCoverage session = coverage("TestAccessParentAnyOf:Session");
+		assertFalse("The grants of a type naming itself as candidate decide: " + session,
+			session.hasFinding(FindingKind.IGNORED_GRANT));
+		assertEquals(session.toString(), CoverageStatus.DELEGATED, session.status());
+	}
+
 	private TypeCoverage coverage(String qualifiedTypeName) {
 		TypeCoverage result = _coverage.get(qualifiedTypeName);
 		assertNotNull("No coverage computed for '" + qualifiedTypeName + "'.", result);

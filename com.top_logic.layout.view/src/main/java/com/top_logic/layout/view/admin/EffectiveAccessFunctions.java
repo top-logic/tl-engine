@@ -205,7 +205,9 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 * An object whose access parent decides only some operations is described with these
 	 * operations and the object deciding them, also when the object decides
 	 * {@link SimpleBoundCommandGroup#READ} itself, which makes it the
-	 * {@link AccessExplanation#decidingObject() deciding object} of the explanation.
+	 * {@link AccessExplanation#decidingObject() deciding object} of the explanation. An object
+	 * whose access parent {@link AccessParentFunction#includesSelf() includes} the object itself is
+	 * described with the first other object deciding one of its operations.
 	 * </p>
 	 *
 	 * @param type
@@ -221,6 +223,11 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 */
 	static ResKey delegation(String type, AccessExplanation explanation, AccessParentFunction parent,
 			Function<Object, String> labels) {
+		if (parent != null && parent.includesSelf()) {
+			TLObject holder = otherRoleHolder(explanation);
+			return holder == null ? null
+				: I18NConstants.EFFECTIVE_ACCESS_DELEGATED_WITH_SELF__TYPE_OBJECT.fill(type, labels.apply(holder));
+		}
 		Set<BoundCommandGroup> operations = parent == null ? null : parent.getOperations();
 		if (operations != null) {
 			TLObject holder = delegatedRoleHolder(explanation, operations);
@@ -230,6 +237,20 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 			return null;
 		}
 		return delegation(type, labels.apply(explanation.decidingObject()), parent);
+	}
+
+	/**
+	 * The first object other than the object of the given explanation holding roles that decide
+	 * one of its operations, in the order of their names; <code>null</code> when there is none.
+	 */
+	private static TLObject otherRoleHolder(AccessExplanation explanation) {
+		TLObject object = explanation.object();
+		return explanation.operations().stream()
+			.sorted(Comparator.comparing(decision -> decision.operation().getID()))
+			.flatMap(decision -> decision.roleHolders().stream())
+			.filter(holder -> !holder.equals(object))
+			.findFirst()
+			.orElse(null);
 	}
 
 	/**
@@ -284,6 +305,9 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 *        the container does.
 	 */
 	static ResKey delegation(String type, String decidingObject, AccessParentFunction parent) {
+		if (parent != null && parent.includesSelf()) {
+			return I18NConstants.EFFECTIVE_ACCESS_DELEGATED_WITH_SELF__TYPE_OBJECT.fill(type, decidingObject);
+		}
 		Set<BoundCommandGroup> operations = parent == null ? null : parent.getOperations();
 		if (operations == null) {
 			return parent == null || parent.delegatesCreation()

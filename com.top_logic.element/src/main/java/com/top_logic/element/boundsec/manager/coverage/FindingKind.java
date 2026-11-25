@@ -74,6 +74,19 @@ public enum FindingKind {
 	SHADOWED_RULES,
 
 	/**
+	 * An operation is granted on the type, but its access parent decides the operation alone, so
+	 * that the grant has no effect. The grant may be declared by a module and the access parent by
+	 * an application: the access parent then names the object itself as candidate to let the grant
+	 * decide as well, or the grant is revoked.
+	 *
+	 * @see CoverageFinding#getOperation()
+	 * @see CoverageFinding#getRoles()
+	 * @see com.top_logic.model.security.ModelAccessRights#getIgnoredRoles(com.top_logic.model.TLClass,
+	 *      com.top_logic.tool.boundsec.BoundCommandGroup)
+	 */
+	IGNORED_GRANT,
+
+	/**
 	 * An operation is declared for the type, but no role holds it there: it is granted to no
 	 * role, neither directly nor through an operation implying it. Every place checking it on
 	 * an object of the type refuses every user.

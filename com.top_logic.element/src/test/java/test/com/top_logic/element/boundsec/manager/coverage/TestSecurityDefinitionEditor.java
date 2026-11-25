@@ -641,6 +641,29 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		assertEquals("Write is delegated.", 1, constraintFailures(_editor.editableAccessRights(contained)).size());
 	}
 
+	/**
+	 * An access parent naming the object itself as candidate keeps all grants of the type, which
+	 * decide beside the access parent.
+	 */
+	public void testSelfCandidateKeepsGrants() throws Exception {
+		TLClass contained = type(SINGLE_CONTAINED);
+		TLClassAccessRights entry = _editor.editableAccessRights(contained);
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.READ_NAME, READER_ROLE));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.WRITE_NAME, READER_ROLE));
+		_editor.putAccessRights(entry);
+
+		AnyOfAccessParent.Config anyOf = TypedConfiguration.newConfigItem(AnyOfAccessParent.Config.class);
+		anyOf.getCandidates().add(self());
+		anyOf.getCandidates().add(container(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, anyOf);
+
+		TLClassAccessRights stored = _editor.editableAccessRights(contained);
+		assertEquals("The grants decide beside the container.",
+			List.of(SimpleBoundCommandGroup.READ_NAME, SimpleBoundCommandGroup.WRITE_NAME),
+			stored.getGrants().stream().map(grant -> grant.getOperation().id()).toList());
+		assertEquals(List.of(), constraintFailures(stored));
+	}
+
 	private static RefererAccessParent.Config referer(String reference) {
 		RefererAccessParent.Config result = TypedConfiguration.newConfigItem(RefererAccessParent.Config.class);
 		result.setReference(TLModelPartRef.ref(reference));

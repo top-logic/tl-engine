@@ -182,6 +182,26 @@ public final class CoverageFinding {
 	}
 
 	/**
+	 * Creates a {@link FindingKind#IGNORED_GRANT} finding.
+	 *
+	 * @param type
+	 *        The type carrying the grant.
+	 * @param operation
+	 *        The granted operation its access parent decides alone.
+	 * @param roles
+	 *        The roles the operation is granted to.
+	 * @return The new finding.
+	 */
+	public static CoverageFinding ignoredGrant(TLClass type, BoundCommandGroup operation, Set<BoundedRole> roles) {
+		String roleNames =
+			roles.stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(DETAIL_SEPARATOR));
+		ResKey message = I18NConstants.IGNORED_GRANT__TYPE_OPERATION_ROLES
+			.fill(TLModelUtil.qualifiedName(type), operationLabel(operation), roleNames);
+		return new CoverageFinding(FindingKind.IGNORED_GRANT, type, message, operation,
+			Collections.unmodifiableSet(new LinkedHashSet<>(roles)), Collections.emptyList());
+	}
+
+	/**
 	 * Creates a {@link FindingKind#UNGRANTED_OPERATION} finding.
 	 *
 	 * @param type

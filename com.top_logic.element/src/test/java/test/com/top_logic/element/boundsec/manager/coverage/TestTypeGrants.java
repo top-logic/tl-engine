@@ -529,6 +529,21 @@ public class TestTypeGrants extends BasicTestCase {
 	}
 
 	/**
+	 * A type naming itself as candidate of its access parent offers every operation, the delegated
+	 * ones included, since its grants decide them beside the access parent.
+	 */
+	public void testSelfCandidateOffersAllOperations() throws Exception {
+		TypeGrants grants = grants("TestAccessParentAnyOf:Session");
+		assertTrue(grants.getAccessParent().includesSelf());
+		List<BoundCommandGroup> operations = grants.getOperations();
+		assertTrue("Read is delegated, but decided by the grants of the type as well: " + operations,
+			operations.contains(SimpleBoundCommandGroup.READ));
+		assertTrue(operations.toString(), operations.contains(SimpleBoundCommandGroup.WRITE));
+		BoundedRole owner = BoundedRole.getRoleByName("TestAccessParentAnyOf.SessionOwner");
+		assertTrue(grants.getCell(new Row(null, owner), SimpleBoundCommandGroup.READ).granted());
+	}
+
+	/**
 	 * A role holding only a grant of Create gets an effective row when it is delivered where the
 	 * objects are created, although it cannot be held on the objects.
 	 */

@@ -461,6 +461,7 @@ public class SecurityCoverageAnalysis {
 			if (!shadowed.isEmpty()) {
 				findings.add(CoverageFinding.shadowedRules(type, shadowed));
 			}
+			addIgnoredGrantFindings(type, findings);
 		} else {
 			// A type whose access parent decides only some operations decides the others itself.
 			if (roleRules.isEmpty() && parentRules.isEmpty()
@@ -478,6 +479,7 @@ public class SecurityCoverageAnalysis {
 			} else if (readRoles.isEmpty() && !readsThroughParent(type, accessParent)) {
 				findings.add(CoverageFinding.noReadGrant(type));
 			}
+			addIgnoredGrantFindings(type, findings);
 			addDeadGrantFindings(type, accessParent, findings);
 			addUngrantedOperationFindings(type, accessParent, findings);
 			addUncheckedGrantFindings(type, accessParent, findings);
@@ -533,11 +535,26 @@ public class SecurityCoverageAnalysis {
 	}
 
 	/**
-	 * Whether the given type grants an operation its access parent does not delegate.
+	 * Reports every operation granted on the given type that its access parent decides alone, see
+	 * {@link ModelAccessRights#getIgnoredRoles(TLClass, BoundCommandGroup)}.
+	 */
+	private void addIgnoredGrantFindings(TLClass type, List<CoverageFinding> findings) {
+		for (BoundCommandGroup operation : sortedById(_accessRights.getOperations(type).getOperations())) {
+			Set<BoundedRole> ignored = _accessRights.getIgnoredRoles(type, operation);
+			if (!ignored.isEmpty()) {
+				findings.add(CoverageFinding.ignoredGrant(type, operation, ignored));
+			}
+		}
+	}
+
+	/**
+	 * Whether the given type grants an operation it decides itself, see
+	 * {@link AccessParentFunction#decidesItself(AccessParentFunction, BoundCommandGroup)}.
 	 */
 	private boolean hasOwnGrant(TLClass type, AccessParentFunction accessParent) {
 		for (BoundCommandGroup operation : _accessRights.getOperations(type).getOperations()) {
-			if (!accessParent.delegates(operation) && !_accessRights.getAllowedRoles(type, operation).isEmpty()) {
+			if (AccessParentFunction.decidesItself(accessParent, operation)
+				&& !_accessRights.getAllowedRoles(type, operation).isEmpty()) {
 				return true;
 			}
 		}
@@ -556,7 +573,7 @@ public class SecurityCoverageAnalysis {
 			List<CoverageFinding> findings) {
 		for (BoundCommandGroup operation : _operations) {
 			if (SimpleBoundCommandGroup.DISCOVER.equals(operation)
-				|| AccessParentFunction.isDelegated(accessParent, operation)) {
+				|| !AccessParentFunction.decidesItself(accessParent, operation)) {
 				// Its roles are derived; every source grant is already checked on its own.
 				continue;
 			}
@@ -597,7 +614,7 @@ public class SecurityCoverageAnalysis {
 			List<CoverageFinding> findings) {
 		for (BoundCommandGroup operation : sortedById(_accessRights.getOperations(type).getOperations())) {
 			if (ApplicableOperations.isBuiltIn(operation)
-				|| AccessParentFunction.isDelegated(accessParent, operation)) {
+				|| !AccessParentFunction.decidesItself(accessParent, operation)) {
 				continue;
 			}
 			if (_accessRights.getAllowedRoles(type, operation).isEmpty()) {
@@ -638,7 +655,7 @@ public class SecurityCoverageAnalysis {
 		ApplicableOperations applicable = _accessRights.getOperations(type);
 		for (BoundCommandGroup operation : sortedById(applicable.getOperations())) {
 			if (ApplicableOperations.isBuiltIn(operation)
-				|| AccessParentFunction.isDelegated(accessParent, operation)) {
+				|| !AccessParentFunction.decidesItself(accessParent, operation)) {
 				continue;
 			}
 			Set<BoundedRole> granted = getGrantedRoles(type, operation);

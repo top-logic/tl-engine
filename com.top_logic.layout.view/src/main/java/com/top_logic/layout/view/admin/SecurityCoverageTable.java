@@ -1204,6 +1204,9 @@ public class SecurityCoverageTable implements UIElement {
 		if (parent == null) {
 			return null;
 		}
+		if (parent.includesSelf()) {
+			return I18NConstants.COVERAGE_DELEGATED_WITH_SELF__CANDIDATES.fill(parent.getLabel());
+		}
 		Set<BoundCommandGroup> operations = parent.getOperations();
 		if (operations == null && !parent.delegatesCreation()) {
 			return I18NConstants.COVERAGE_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.fill(parent.getLabel());
@@ -1249,6 +1252,9 @@ public class SecurityCoverageTable implements UIElement {
 						.collect(Collectors.joining(VALUE_SEPARATOR)));
 			case SHADOWED_RULES -> I18NConstants.COVERAGE_PROBLEM_SHADOWED_RULES__RULES
 				.fill(String.join(VALUE_SEPARATOR, finding.getRuleIds()));
+			case IGNORED_GRANT -> I18NConstants.COVERAGE_PROBLEM_IGNORED_GRANT__OPERATION_ROLES.fill(
+				finding.getOperationLabel(),
+				finding.getRoles().stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(VALUE_SEPARATOR)));
 			case UNGRANTED_OPERATION -> I18NConstants.COVERAGE_PROBLEM_UNGRANTED_OPERATION__OPERATION
 				.fill(finding.getOperationLabel());
 			case INAPPLICABLE_OPERATION -> I18NConstants.COVERAGE_PROBLEM_INAPPLICABLE_OPERATION__OPERATION_USERS
@@ -1295,6 +1301,10 @@ public class SecurityCoverageTable implements UIElement {
 			case SHADOWED_RULES -> {
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_SHADOWED_RULES);
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_ACCESS_PARENT);
+			}
+			case IGNORED_GRANT -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_SELF_CANDIDATE);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_REVOKE_IGNORED_GRANT);
 			}
 			case UNGRANTED_OPERATION -> {
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_GRANT_OPERATION);

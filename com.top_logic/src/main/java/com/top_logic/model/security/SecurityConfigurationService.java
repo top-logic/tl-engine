@@ -1878,6 +1878,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	@Override
+	public Set<BoundedRole> getIgnoredRoles(TLClass type, BoundCommandGroup commandGroup) {
+		return entry(type)._ignoredRights.getOrDefault(commandGroup, Collections.emptySet());
+	}
+
+	@Override
 	public Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
 		return partRights(attribute.getOwner(), attribute.getName()).getOrDefault(commandGroup, Collections.emptySet());
 	}

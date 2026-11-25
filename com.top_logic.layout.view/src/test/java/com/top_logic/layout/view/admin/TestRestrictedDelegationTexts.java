@@ -38,6 +38,7 @@ import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ContainerRelation;
 import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.security.RestrictedRelation;
+import com.top_logic.model.security.SelfRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -110,6 +111,29 @@ public class TestRestrictedDelegationTexts extends TestCase {
 		assertEquals("A type delegating everything keeps its text.",
 			I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.getKey(),
 			EffectiveAccessFunctions.delegation("Entry", delegating, ContainerRelation.ANY, LABELS).plain().getKey());
+	}
+
+	/**
+	 * A type naming itself as candidate of its access parent is told as deciding together with its
+	 * access parents, naming the access parent object, not the object itself.
+	 */
+	public void testSelfCandidateTexts() {
+		AnyOfRelation withSelf = new AnyOfRelation(List.of(SelfRelation.INSTANCE,
+			new RestrictedRelation(ContainerRelation.ANY, Set.of(SimpleBoundCommandGroup.READ))));
+
+		assertEquals(I18NConstants.GRANTS_DELEGATED_WITH_SELF__CANDIDATES.getKey(),
+			SecurityGrantFunctions.delegation(withSelf).plain().getKey());
+
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.explain");
+		TLClass object = TLModelUtil.addClass(module, "Session");
+		TLClass parentObject = TLModelUtil.addClass(module, "Document");
+		AccessExplanation explanation = explanation(object, object, List.of(
+			decision(SimpleBoundCommandGroup.READ, List.of(object, parentObject)),
+			decision(SimpleBoundCommandGroup.WRITE, List.of(object))));
+		ResKey text = EffectiveAccessFunctions.delegation("Session", explanation, withSelf, LABELS);
+		assertNotNull(text);
+		assertEquals(I18NConstants.EFFECTIVE_ACCESS_DELEGATED_WITH_SELF__TYPE_OBJECT.getKey(), text.plain().getKey());
+		assertEquals("The access parent object is named.", "Document", text.arguments()[1]);
 	}
 
 	/**

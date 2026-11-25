@@ -61,6 +61,22 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * The roles granted the given command group on the given type that take no effect, since the
+	 * access parent of the type decides the command group alone.
+	 *
+	 * <p>
+	 * An access parent {@link AccessParentFunction#includesSelf() including} the object itself lets
+	 * the grants of the type decide beside it, so none of them is ignored.
+	 * </p>
+	 *
+	 * @return An empty set when no grant of the command group is ignored, and for an implementation
+	 *         without access parents.
+	 */
+	default Set<BoundedRole> getIgnoredRoles(TLClass type, BoundCommandGroup commandGroup) {
+		return Set.of();
+	}
+
+	/**
 	 * Whether objects of the given type are not access controlled at all.
 	 *
 	 * <p>

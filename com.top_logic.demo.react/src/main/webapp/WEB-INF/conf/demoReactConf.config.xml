@@ -252,12 +252,12 @@
 		</config>
 		<!--
 			The database of this application was created before it had migrations of its own, and
-			before "tl-security-auth-pac4j" and "tl-layout-view" became migration modules. The minimum
-			modules make the migrations of these modules run on such a database instead of being
-			skipped as migrations of a module new to the application.
+			before "tl-security-auth-pac4j", "tl-security-passkey" and "tl-layout-view" became migration
+			modules. The minimum modules make the migrations of these modules run on such a database
+			instead of being skipped as migrations of a module new to the application.
 		-->
 		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
-			<instance minimum-modules="tl-security-auth-pac4j, tl-layout-view, tl-demo-react">
+			<instance minimum-modules="tl-security-auth-pac4j, tl-security-passkey, tl-layout-view, tl-demo-react">
 				<modules>
 					<module name="tl-demo-react"/>
 				</modules>

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	First migration of the migration module tl-security-passkey (Ticket #30419). It creates the model
+	module tl.security.passkey and the reference tl.accounts:Person#passkeys, which up to now reached
+	existing databases only through the automatic model upgrade, which an application may prevent.
+
+	A module without a stored version counts as new and without data (MigrationUtil.getNewVersions):
+	on an existing database this migration only runs, if the application lists tl-security-passkey in
+	the minimum-modules of the MigrationService. Otherwise its version is only stored, and the
+	automatic model upgrade creates the model elements. A database that already has them keeps them:
+	the processors skip what already exists.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_tl_security_passkey_migration_module"
+		module="tl-security-passkey"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30419_create_changelog_and_access_tokens"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_30419_changelog_storage_algorithms"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_30419_tl_layout_view_migration_module"
+			module="tl-layout-view"
+		/>
+	</dependencies>
+	<processors>
+		<create-module name="tl.security.passkey">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.security.passkey.model.impl"
+					interface-package="com.top_logic.security.passkey.model"
+				/>
+			</annotations>
+		</create-module>
+		<create-class name="tl.security.passkey:Passkey"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="Passkey"/>
+				<id-column value="label"/>
+				<main-properties properties="label,createdAt,lastUsed,backedUp"/>
+			</annotations>
+		</create-class>
+		<add-class-generalizations name="tl.security.passkey:Passkey">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-property name="tl.security.passkey:Passkey#label"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.security.passkey:Passkey#credentialId"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.passkey:Passkey#publicKey"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.passkey:Passkey#signatureCount"
+			mandatory="true"
+			type="tl.core:Long"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.passkey:Passkey#transports"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.passkey:Passkey#backupEligible"
+			mandatory="true"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.passkey:Passkey#backedUp"
+			mandatory="true"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.passkey:Passkey#createdAt"
+			mandatory="true"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.passkey:Passkey#lastUsed"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-reference name="tl.accounts:Person#passkeys"
+			composite="true"
+			multiple="true"
+			type="tl.security.passkey:Passkey"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-reference>
+	</processors>
+	<post-processors/>
+</migration>

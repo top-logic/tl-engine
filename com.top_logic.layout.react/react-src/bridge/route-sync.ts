@@ -34,6 +34,11 @@
  * of the document once the history is written, so that the entry is recorded under the title of
  * its page. A change of the title alone arrives with the URL the browser shows already, as a
  * replacement.</p>
+ *
+ * <p>A page another servlet of the application answered its request with - its {@code <body>}
+ * carries {@link FIXED_URL_ATTR} - is shown under the URL of that servlet, which is not one of the
+ * view application. Such a page leaves the address bar and the history unchanged: a reload asks
+ * that servlet again.</p>
  */
 
 import { enqueueCommand, type CommandResponse } from './command-channel';
@@ -80,6 +85,12 @@ const FIELD_CURRENT_URL = 'currentUrl';
  */
 const VIEW_FILE_SUFFIX = '.view.xml';
 
+/**
+ * Attribute of the page body marking a page shown under a URL that is not one of the view
+ * application. Must match {@code ViewServlet#FIXED_URL_ATTR}.
+ */
+export const FIXED_URL_ATTR = 'data-fixed-url';
+
 /** Key under which a history entry carries its {@link NavState}. */
 const NAV_STATE_KEY = 'tlNav';
 
@@ -92,6 +103,12 @@ interface NavState {
 }
 
 let _initialized = false;
+
+/**
+ * Whether the page keeps the browser history in step with the display: initialized, and shown
+ * under a URL of its own rather than under the {@link FIXED_URL_ATTR fixed URL} of another servlet.
+ */
+let _historySynced = false;
 
 /**
  * Identifies the current page load, so that an entry left in the history by an earlier load of
@@ -162,7 +179,7 @@ let _loadedTitle: string | null = null;
  *        Shows the page as the step leaves it, e.g. by scrolling to the section jumped to.
  */
 export function pushLocalStep(leave: () => void, arrive: () => void): void {
-  if (!_initialized) {
+  if (!_historySynced) {
     arrive();
     return;
   }
@@ -204,6 +221,12 @@ export function initRouteSync(): void {
   if (_initialized) return;
   _initialized = true;
   _loadedTitle = document.title;
+  if (document.body.hasAttribute(FIXED_URL_ATTR)) {
+    // The URL is the one of the servlet the page was forwarded from: neither it nor the history is
+    // the page's to write.
+    return;
+  }
+  _historySynced = true;
 
   window.addEventListener('popstate', (event: PopStateEvent) => {
     if (_restoredUrl !== null) {

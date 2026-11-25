@@ -1,5 +1,5 @@
 ---
-description: Read when the precise semantics of the agent security configuration matter - the reference of AiToolAccessService / ToolAccessPolicy (<tool-groups>, <tool-access>, <baseline>, <background-allowlist>, boot errors and warnings, the three names of a tool), the defaults for a new tool, approval decided from the call (SecurityContextFactory, RunPrincipal, SecurityContextProxy, <security-context> on AgentRuntimeService), the shipped read policy for Screenshot and CookiePool (tl-ai-core.binarySecurity.config.xml, AiBinaryOwner), and the shipped access policy for chat sessions and memories under model-based security (tl-ai-core.chatSecurity.config.xml, AiChatOwner).
+description: Read when the precise semantics of the agent security configuration matter - the reference of AiToolAccessService / ToolAccessPolicy (<tool-groups>, <tool-access>, <baseline>, <background-allowlist>, boot errors and warnings, the three names of a tool), the defaults for a new tool, approval decided from the call (SecurityContextFactory, RunPrincipal, SecurityContextProxy, <security-context> on AgentRuntimeService), the shipped read policy for Screenshot and CookiePool (tl-ai-core.binarySecurity.config.xml, AiBinaryOwner), and the shipped access policy for chat sessions and memories under model-based security (tl-ai-core.chatSecurity.config.xml, AiChatOwner), the Read and Write rights the chat asks for, and how an application lets further accounts read a conversation about its object (a grant on AgentSession plus a role rule over AgentSession#subject).
 order: 70
 ---
 
@@ -185,7 +185,60 @@ The chat sessions (`tl.ai.execution:AgentSession`) and the memories (`tl.ai.exec
 |---|---|
 | `InitialRolesManager` role `AiChatOwner` | a technical role meaning "this conversation, or this memory, is yours"; nobody holds it globally |
 | two `<role-rules>` of `type="reference"` | derive it, per object, from `AgentSession#owner` / `UserMemory#owner`. A session without an owner - of a background job, a schedule - has no holder |
-| `<security-config>` grants | `Read` and `Write` on a session (the owner edits its title in a form), `Read` on a memory |
+| `<security-config>` grants | `Read` and `Write` on a session and on a memory |
 | `<access-parent>` `<target>` | a run (`AgentExecution#session`) and a plan item (`AgentTask#session`) decide through their session, a question (`InteractionRequest#execution`) through its run |
 
-`Create` and `Delete` of a session or a memory are granted to nobody: sessions and memories are created and deleted by the `AgentExecutionStore`, which writes in a system context, and `aiSessionRename`, `aiSessionDelete` and `aiMemoryDelete` check the ownership themselves. A memory decides through its own owner and not through its session, since the session reference is optional and a memory outlives its conversation. Administrators and system contexts bypass the check as everywhere. `TestChatSessionAccessPolicy` pins the policy against the shipped configuration.
+`Create` and `Delete` of a session or a memory are granted to nobody: sessions and memories are created and deleted by the `AgentExecutionStore`, which writes in a system context, after the caller checked `Write`. A memory decides through its own owner and not through its session, since the session reference is optional and a memory outlives its conversation. Administrators and system contexts bypass the check as everywhere. `TestChatSessionAccessPolicy` pins the policy against the shipped configuration.
+
+**The chat decides through these rights alone.** There is no check of the owner in Java: every access to a session asks `ModelAccessRights.isAllowed` for the acting account.
+
+| Right on `tl.ai.execution:AgentSession` | What it allows |
+|---|---|
+| `Read` | open the session in a `<chat-conversation>` and see its history, the history of its subagents and its run state; take it over from the element's `input` channel; follow a running run live |
+| `Write` | send, edit and resend, regenerate, rate, answer approvals and questions, stop a run, change the approval mode, attach files, improve a prompt, rename (`aiSessionRename`), delete (`aiSessionDelete`), mark as seen, and every other change of the session's data |
+
+`Write` on a `tl.ai.execution:UserMemory` is what `aiMemoryDelete` asks for. The shipped policy gives both rights to the owner only, so without further configuration a chat is its owner's. A session somebody may read but not write shows no input line.
+
+**Letting further accounts read a conversation.** Which roles read or write a session is the application's decision, made with its usual means: a grant of its own on `tl.ai.execution:AgentSession` for a role of its own, and a role rule that brings that role to the session. A session points at what it is about through `tl.ai.execution:AgentSession#subject`, so the rule typically starts there. Example: the members of a workspace (role `my.module.Member` on a `my.module:Workspace`) read the conversations about it, without writing into them:
+
+```xml
+<config service-class="com.top_logic.base.services.InitialRolesManager">
+	<instance>
+		<roles>
+			<role name="my.module.ChatReader"/>
+		</roles>
+	</instance>
+</config>
+
+<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+	<instance>
+		<role-rules>
+			<rules>
+				<!-- Who is a member of the workspace a conversation is about reads that conversation. -->
+				<inheritance-rule id="my.module.ChatReader.subject"
+					meta-element="tl.ai.execution:AgentSession"
+					role="my.module.ChatReader"
+					source-meta-element="my.module:Workspace"
+					source-role="my.module.Member"
+				>
+					<path>
+						<step attribute="tl.ai.execution:AgentSession#subject"/>
+					</path>
+				</inheritance-rule>
+			</rules>
+		</role-rules>
+	</instance>
+</config>
+
+<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+	<instance>
+		<security-config>
+			<class name="tl.ai.execution:AgentSession">
+				<grant operation="Read" roles="my.module.ChatReader"/>
+			</class>
+		</security-config>
+	</instance>
+</config>
+```
+
+The grant adds to the owner's grants of the shipped policy, so the owner keeps reading and writing every session, and a session about another object, or about nothing, stays its owner's. Granting `Write` to such a role as well lets its holders write into the conversation; a run they start belongs to them. Whether a conversation that may be written is offered for writing at all - e.g. not for a closed workspace - is no question of rights: the `writable` function of `<chat-conversation>` decides it, together with `Write`.

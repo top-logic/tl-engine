@@ -2154,6 +2154,27 @@
 
 /* --- Composer ----------------------------------------------------------- */
 
+/*
+ * In place of the composer, for a conversation the user may only read: one quiet line in the
+ * composer's column, so the transcript ends where it ends above an input line.
+ */
+.read-only-note {
+  width: min(100%, var(--chat-column));
+  margin: 0 auto;
+  padding: 0 1.25rem 0.75rem;
+}
+
+.read-only-note span {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer);
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  text-align: center;
+}
+
 .composer {
   position: relative;
   width: min(100%, var(--chat-column));

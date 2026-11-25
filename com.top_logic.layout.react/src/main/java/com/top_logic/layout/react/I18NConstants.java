@@ -225,6 +225,20 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.drawer.close")
 	public static ResKey JS_DRAWER_CLOSE;
 
+	// -- Side rail client-side i18n keys --
+
+	/**
+	 * @en Sections
+	 */
+	@CustomKey("js.sideRail.strip")
+	public static ResKey JS_SIDE_RAIL_STRIP;
+
+	/**
+	 * @en Width of the side column
+	 */
+	@CustomKey("js.sideRail.resize")
+	public static ResKey JS_SIDE_RAIL_RESIZE;
+
 	// -- Client-side i18n keys (js.* prefix, names match keys used by React controls) --
 
 	/**
@@ -526,18 +540,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_BREADCRUMB_LABEL;
 
 	// -- Data list client-side i18n keys --
-
-	/**
-	 * @en Collapse list
-	 */
-	@CustomKey("js.dataList.collapse")
-	public static ResKey JS_DATA_LIST_COLLAPSE;
-
-	/**
-	 * @en Expand list
-	 */
-	@CustomKey("js.dataList.expand")
-	public static ResKey JS_DATA_LIST_EXPAND;
 
 	/**
 	 * @en Search

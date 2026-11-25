@@ -460,15 +460,6 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 	/** @see #isSearch() */
 	String SEARCH__PROP = "search";
 
-	/** @see #isCollapsible() */
-	String COLLAPSIBLE__PROP = "collapsible";
-
-	/** @see #isCollapsed() */
-	String COLLAPSED__PROP = "collapsed";
-
-	/** @see #getDrawerBelow() */
-	String DRAWER_BELOW__PROP = "drawerBelow";
-
 	/** @see #getButtons() */
 	String BUTTONS__PROP = "buttons";
 
@@ -537,38 +528,6 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 	 * @see #isSearch()
 	 */
 	com.top_logic.layout.react.state.DataListState setSearch(boolean value);
-
-	/**
-	 * Whether the header carries the toggle collapsing the list to a narrow strip.
-	 */
-	boolean isCollapsible();
-
-	/**
-	 * @see #isCollapsible()
-	 */
-	com.top_logic.layout.react.state.DataListState setCollapsible(boolean value);
-
-	/**
-	 * Whether the list starts collapsed; needs {@link #isCollapsible()}.
-	 */
-	boolean isCollapsed();
-
-	/**
-	 * @see #isCollapsed()
-	 */
-	com.top_logic.layout.react.state.DataListState setCollapsed(boolean value);
-
-	/**
-	 * The width of the element containing the list, in rem, below which a {@link #isCollapsible()} list
-	 * keeps only its strip and its toggle opens the list as a drawer over its neighbours. Zero: the
-	 * list never becomes a drawer.
-	 */
-	int getDrawerBelow();
-
-	/**
-	 * @see #getDrawerBelow()
-	 */
-	com.top_logic.layout.react.state.DataListState setDrawerBelow(int value);
 
 	/**
 	 * The command buttons of the list, in display order. Absent: none.

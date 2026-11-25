@@ -22,9 +22,7 @@ import com.top_logic.ai.core.agent.approval.ApprovalMode;
  * <p>
  * The switch belongs to the person: a new chat starts with the position the person chose last, in
  * whichever chat and window. A chat that exists keeps the mode stored with it (#658). The choice is
- * one for the whole account, not one per {@code chat-id} like the layout in
- * {@link ChatPreferencesStore}: it says how much the person wants to be asked, not how a place
- * looks.
+ * one for the whole account: it says how much the person wants to be asked.
  * </p>
  */
 public final class ApprovalChoice {

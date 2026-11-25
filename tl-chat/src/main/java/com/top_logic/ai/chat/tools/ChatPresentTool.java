@@ -29,8 +29,8 @@ import com.top_logic.util.TLContextManager;
  * <p>
  * What stands on the channel afterwards is a form's object for a {@link PresentAs#FORM form} - so
  * every element of the page that reads the channel as "the open object" goes on working - and the
- * {@link Presentation} itself for a table or a chart. A {@code <chat-rail input="…">} renders all of
- * them; see {@code PresentationPane}.
+ * {@link Presentation} itself for a table or a chart. A {@code <presentation-pane input="…">} renders
+ * all of them; see {@code PresentationPane}.
  * </p>
  *
  * <h2>What bounds it</h2>

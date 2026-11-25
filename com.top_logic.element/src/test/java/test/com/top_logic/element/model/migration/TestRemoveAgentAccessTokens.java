@@ -8,7 +8,6 @@ package test.com.top_logic.element.model.migration;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Test;
@@ -19,16 +18,11 @@ import org.w3c.dom.Element;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.TLID;
-import com.top_logic.basic.config.DefaultInstantiationContext;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.element.config.ModelConfig;
-import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.model.migration.model.MigrationUtils;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.migration.MigrationConfig;
@@ -147,24 +141,7 @@ public class TestRemoveAgentAccessTokens extends AbstractLinkTableMigrationTest 
 		assertNotNull("Migration '" + MIGRATION_FILE + "' of module '" + MIGRATION_MODULE + "' not found.",
 			migration);
 		assertFalse("Reading the migration failed: " + log.getErrors(), log.hasErrors());
-
-		InstantiationContext context = new DefaultInstantiationContext(TestRemoveAgentAccessTokens.class);
-		List<MigrationProcessor> processors = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends MigrationProcessor> config : migration.getProcessors()) {
-			processors.add(context.getInstance(config));
-		}
-		assertFalse("Migration has no processors.", processors.isEmpty());
-		return (migrationContext, migrationLog, connection) -> {
-			for (MigrationProcessor processor : processors) {
-				processor.doMigration(migrationContext, migrationLog, connection);
-			}
-		};
-	}
-
-	private static MigrationProcessor noProcessor() {
-		return (context, log, connection) -> {
-			// Only the context action is executed.
-		};
+		return processors(migration);
 	}
 
 	private static void revalidate(MigrationContext context, BufferingProtocol log, PooledConnection connection)
@@ -204,27 +181,6 @@ public class TestRemoveAgentAccessTokens extends AbstractLinkTableMigrationTest 
 		module.setAttribute("name", moduleName);
 		document.getDocumentElement().appendChild(module);
 		return DOMUtil.toString(document);
-	}
-
-	private static String readBaseline() throws SQLException {
-		PooledConnection connection = pool().borrowReadConnection();
-		try {
-			return DBProperties.getProperty(connection, DBProperties.GLOBAL_PROPERTY,
-				DynamicModelService.APPLICATION_MODEL_PROPERTY);
-		} finally {
-			pool().releaseReadConnection(connection);
-		}
-	}
-
-	private static void storeBaseline(String baseline) throws SQLException {
-		PooledConnection connection = pool().borrowWriteConnection();
-		try {
-			DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY,
-				DynamicModelService.APPLICATION_MODEL_PROPERTY, baseline);
-			connection.commit();
-		} finally {
-			pool().releaseWriteConnection(connection);
-		}
 	}
 
 	private static long id(TLID id) {

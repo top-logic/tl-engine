@@ -73,8 +73,8 @@ import com.top_logic.ai.core.tools.present.Presentation;
 import com.top_logic.util.Resources;
 
 /**
- * The pane of a {@code <chat-rail input="…">}: shows whatever stands on the rail's input channel, for
- * any type, and remembers what it showed before.
+ * The content of a {@link PresentationPaneElement} ({@code <presentation-pane input="…">}): shows
+ * whatever stands on its input channel, for any type, and remembers what it showed before.
  *
  * <p>
  * <b>What it shows.</b> One object as its form, several as a table with the columns of their type,

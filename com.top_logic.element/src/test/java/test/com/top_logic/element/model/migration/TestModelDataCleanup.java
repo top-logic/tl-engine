@@ -189,19 +189,6 @@ public class TestModelDataCleanup extends AbstractLinkTableMigrationTest {
 		insertFlexData(OBJECT_TABLE, id);
 	}
 
-	private void insertFlexData(String table, long id) throws SQLException {
-		Map<String, Object> values = new LinkedHashMap<>();
-		values.put(AbstractFlexDataManager.BRANCH_DBNAME, TRUNK);
-		values.put(AbstractFlexDataManager.TYPE_DBNAME, table);
-		values.put(AbstractFlexDataManager.IDENTIFIER_DBNAME, id);
-		values.put(BasicTypes.REV_MIN_DB_NAME, 1L);
-		values.put(BasicTypes.REV_MAX_DB_NAME, MAX);
-		values.put(AbstractFlexDataManager.ATTRIBUTE_DBNAME, "value");
-		values.put(AbstractFlexDataManager.DATA_TYPE_DBNAME, AbstractFlexDataManager.LONG_TYPE);
-		values.put(AbstractFlexDataManager.LONG_DATA_DBNAME, 42L);
-		insertRow(AbstractFlexDataManager.FLEX_DATA, values);
-	}
-
 	public static Test suite() {
 		return suite(TestModelDataCleanup.class);
 	}

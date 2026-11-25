@@ -159,7 +159,7 @@ public class TestRunSubjectCheck extends BasicTestCase {
 			String status = null;
 			for (int n = 0; n < 150 && (status == null || ExecutionStatus.RUNNING.name().equals(status)); n++) {
 				HistoryUtils.updateSessionRevision();
-				status = AIScriptFunctions.agentRunStatus(handle);
+				status = AIScriptFunctions.agentRunStatus(handle, false);
 				if (status == null || ExecutionStatus.RUNNING.name().equals(status)) {
 					pause();
 				}

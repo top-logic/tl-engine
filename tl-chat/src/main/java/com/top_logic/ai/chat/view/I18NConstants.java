@@ -94,7 +94,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * conversation's subject.
 	 *
 	 * @en Created the subject of a chat.
-	 * @de Gegenstand eines Chats angelegt.
+	 * @de Bezugsobjekt eines Chats angelegt.
 	 */
 	public static ResKey CREATED_CHAT_SUBJECT;
 
@@ -103,7 +103,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * conversation that could not be created.
 	 *
 	 * @en Deleted the subject of a chat that could not be created.
-	 * @de Gegenstand eines Chats gelöscht, der nicht angelegt werden konnte.
+	 * @de Bezugsobjekt eines Chats gelöscht, der nicht angelegt werden konnte.
 	 */
 	public static ResKey DISCARDED_CHAT_SUBJECT;
 
@@ -112,7 +112,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * message was not sent.
 	 *
 	 * @en The chat could not be started: its subject factory created no object of type {0}.
-	 * @de Der Chat konnte nicht begonnen werden: Seine Fabrik für den Gegenstand hat kein Objekt vom Typ {0} angelegt.
+	 * @de Der Chat konnte nicht begonnen werden: Seine Fabrik für das Bezugsobjekt hat kein Objekt vom Typ {0} angelegt.
 	 */
 	public static ResKey1 ERROR_SUBJECT_NOT_OF_TYPE__TYPE;
 

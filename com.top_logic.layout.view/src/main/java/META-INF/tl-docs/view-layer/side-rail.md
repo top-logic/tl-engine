@@ -123,7 +123,9 @@ sections it shows. The drawer is the one of the design system (`ReactDrawerContr
 `setModal`): a scrim over the area, the focus inside, Escape and a click on the scrim close it, and
 the focus returns to the strip icon. Escape is the innermost layer's: in a frame that closes on
 Escape itself, such as a chat dock, Escape closes the drawer first. The column choice of the user is
-left alone meanwhile and comes back when the area is wide enough again.
+left alone meanwhile and comes back when the area is wide enough again. The area is looked up anew whenever the
+rail or its area changes size, so a rail in a frame that is hidden at first, such as a closed chat
+dock, measures the area it stands in once the frame is shown; an area without width is not measured.
 
 ## A collapsible list
 

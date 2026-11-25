@@ -103,22 +103,33 @@ const TLSideRail: React.FC<TLCellProps> = ({ controlId }) => {
 
   useLayoutEffect(() => {
     const element = root.current;
-    const anchor = element ? anchorOf(element) : null;
-    if (drawerBelow <= 0 || !anchor) {
+    if (drawerBelow <= 0 || !element) {
       setNarrow(false);
       return;
     }
+    // The rail itself is watched as well: once the column is gone - in a split panel only after the
+    // server shrank the pane to the strip - the strip is what the drawer opens beside; and a rail in a
+    // frame that was hidden (a closed dock) gets a size when the frame is shown.
+    const observer = new ResizeObserver(() => measure());
+    let observed: HTMLElement | null = null;
     const measure = () => {
+      // Resolved anew on every measurement: the nearest positioned ancestor of a rail in a hidden
+      // frame is none, and the parent it falls back to then is not the area the rail stands in once
+      // the frame is shown.
+      const anchor = anchorOf(element);
+      if (anchor !== observed) {
+        if (observed) observer.unobserve(observed);
+        if (anchor) observer.observe(anchor);
+        observed = anchor;
+      }
+      // An area without width is not laid out (a hidden frame); the rail keeps what it has until it is.
+      if (!anchor || anchor.clientWidth === 0) return;
       const isNarrow = anchor.clientWidth < drawerBelow * remInPx();
       setNarrow(isNarrow);
-      if (isNarrow && element) setInset(drawerInset(element, anchor, end));
+      if (isNarrow) setInset(drawerInset(element, anchor, end));
     };
+    observer.observe(element);
     measure();
-    // The rail itself is watched as well: once the column is gone - in a split panel only after the
-    // server shrank the pane to the strip - the strip is what the drawer opens beside.
-    const observer = new ResizeObserver(measure);
-    observer.observe(anchor);
-    if (element) observer.observe(element);
     return () => observer.disconnect();
   }, [drawerBelow, end]);
 

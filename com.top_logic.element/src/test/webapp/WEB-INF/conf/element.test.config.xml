@@ -199,6 +199,22 @@
 								<step attribute="TestSecurityCoverage:CreateContainer#owner"/>
 							</path>
 						</rule>
+						<rule id="TestSecurityCoverage_createdAtReferenced"
+							meta-element="TestSecurityCoverage:CreatedAtReferenced"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreatedAtReferenced#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_createdAtInverse"
+							meta-element="TestSecurityCoverage:CreatedAtInverse"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreatedAtInverse#owner"/>
+							</path>
+						</rule>
 						<rule id="TestSecurityCoverage_createdInContainer"
 							meta-element="TestSecurityCoverage:CreatedInContainer"
 							role="TestSecurityCoverage.Reader"
@@ -369,6 +385,25 @@
 								/>
 							</path>
 						</rule>
+						<rule id="TestSecurityCoverage_abstractParent"
+							inherit="true"
+							meta-element="TestSecurityCoverage:AbstractParent"
+						>
+							<path>
+								<singleton module="SecurityStructure"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_childOfAbstract"
+							inherit="true"
+							meta-element="TestSecurityCoverage:ChildOfAbstract"
+						>
+							<path>
+								<step
+									attribute="TestSecurityCoverage:AbstractParent#children"
+									inverse="true"
+								/>
+							</path>
+						</rule>
 					</rules>
 				</security-parents>
 			</instance>
@@ -469,6 +504,19 @@
 							roles="TestSecurityCoverage.Reader"
 						/>
 					</class>
+					<class name="TestSecurityCoverage:ConcreteParent">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.RootCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:ChildOfAbstract">
+						<!-- Delivered on the security root, the role parent of the abstract end type. -->
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.RootCreator"
+						/>
+					</class>
 					<class name="TestSecurityCoverage:DeadGrant">
 						<!-- The ghost role is delivered by no rule on this type. -->
 						<grant
@@ -548,7 +596,7 @@
 							roles="TestSecurityCoverage.Reader"
 						/>
 					</part>
-					<!-- Create is checked on the container, or on the security root for a type without container. -->
+					<!-- Create is checked on the security root, on a container, or on a referenced object. -->
 					<class name="TestSecurityCoverage:CreatedAtRoot">
 						<grant
 							operation="Read"
@@ -582,6 +630,26 @@
 						/>
 					</class>
 					<class name="TestSecurityCoverage:CreatedInContainer">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							operation="Create"
+							roles="TestSecurityCoverage.ContainerCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:CreatedAtReferenced">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							operation="Create"
+							roles="TestSecurityCoverage.ContainerCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:CreatedAtInverse">
 						<grant
 							operation="Read"
 							roles="TestSecurityCoverage.Reader"

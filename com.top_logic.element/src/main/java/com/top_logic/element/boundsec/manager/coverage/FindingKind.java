@@ -53,9 +53,9 @@ public enum FindingKind {
 	 * </p>
 	 * 
 	 * <p>
-	 * The operation "Create" is checked where an object is created: in its container, or on the
-	 * security root for a type no composition holds. A role granted it must be deliverable there;
-	 * on the type itself it does not count.
+	 * The operation "Create" is checked where an object is created: on the security root, in a
+	 * container holding it in a composition, or in an object it references. A role granted it must
+	 * be deliverable on one of them; on the type itself it does not count.
 	 * </p>
 	 * 
 	 * @see SimpleBoundCommandGroup#CREATE

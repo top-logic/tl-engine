@@ -77,6 +77,44 @@ public class TestFlowDiagramScript extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that the empty area of the diagram selects the object its script computes from the
+	 * inputs, and clears the selection where the script computes <code>null</code>.
+	 */
+	public void testEmptyAreaSelection() throws Exception {
+		FlowDiagramElement.Config config = parse("<flow-diagram inputs='shown as product' selection='selection'"
+			+ " empty-area-selection=\"if($product == 'none', null, $product)\">"
+			+ "<createChart>reactFlowText($product)</createChart>"
+			+ "</flow-diagram>");
+		assertEquals("Editor scope.", List.of("product"), ScriptContextVariablesResolver.resolve(
+			new DefaultValueModel(config,
+				config.descriptor().getProperty(FlowDiagramElement.Config.EMPTY_AREA_SELECTION))));
+
+		ViewContext context = new DefaultViewContext(
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")));
+		DefaultViewChannel shown = new DefaultViewChannel("shown");
+		context.registerChannel("shown", shown);
+		DefaultViewChannel selection = new DefaultViewChannel("selection");
+		context.registerChannel("selection", selection);
+		shown.set("p1");
+
+		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(TestFlowDiagramScript.class);
+		FlowDiagramElement element = (FlowDiagramElement) instantiation.getInstance(config);
+		instantiation.checkErrors();
+		FlowDiagramControl control = (FlowDiagramControl) element.createControl(context);
+
+		control.selectForContextMenu(null);
+		assertEquals("The empty area selects the displayed object.", "p1", selection.get());
+
+		shown.set("p2");
+		control.selectForContextMenu(null);
+		assertEquals("The object is computed from the current inputs.", "p2", selection.get());
+
+		shown.set("none");
+		control.selectForContextMenu(null);
+		assertNull("No object clears the selection.", selection.get());
+	}
+
+	/**
 	 * Tests that a script declaring a parameter, and an input named like a handler, are rejected.
 	 */
 	public void testRejected() throws Exception {

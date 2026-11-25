@@ -97,6 +97,9 @@ public interface MenuState extends com.top_logic.layout.react.state.ControlState
 		/** @see #isDisabled() */
 		String DISABLED__PROP = "disabled";
 
+		/** @see #getTooltip() */
+		String TOOLTIP__PROP = "tooltip";
+
 		/** @see #isActive() */
 		String ACTIVE__PROP = "active";
 
@@ -155,6 +158,17 @@ public interface MenuState extends com.top_logic.layout.react.state.ControlState
 		 * @see #isDisabled()
 		 */
 		com.top_logic.layout.react.state.MenuState.Entry setDisabled(boolean value);
+
+		/**
+		 * The text explaining the item: for a disabled item the reason it cannot be chosen,
+		 * otherwise the description of its command. Absent where there is nothing to explain.
+		 */
+		String getTooltip();
+
+		/**
+		 * @see #getTooltip()
+		 */
+		com.top_logic.layout.react.state.MenuState.Entry setTooltip(String value);
 
 		/**
 		 * Whether the effect of the item's command is currently in force, marking the item as the

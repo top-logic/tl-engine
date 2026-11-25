@@ -842,13 +842,16 @@ public class ChatProcessor {
 			tracker.getSessionManager().getMemories(state.getSessionId(), tracker.getSessionOwner()));
 	}
 
-	/** The subject of the given chat session of the given account, or <code>null</code>. */
-	private static TLObject sessionSubject(String sessionId, Person owner) {
+	/**
+	 * The subject of the given chat session, or <code>null</code> if the given account may not read
+	 * the session.
+	 */
+	private static TLObject sessionSubject(String sessionId, Person person) {
 		if (sessionId == null) {
 			return null;
 		}
-		return ChatHistoryService.findOwnedSessionById(sessionId, owner) instanceof AgentSession session
-			? session.getSubject() : null;
+		return ChatHistoryService.findAccessibleSession(sessionId, person,
+			SimpleBoundCommandGroup.READ) instanceof AgentSession session ? session.getSubject() : null;
 	}
 
 	/** Takes the turn just opened out of the log again, for a run that is not going to fill it. */

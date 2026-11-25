@@ -33,6 +33,7 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -79,6 +80,9 @@ import com.top_logic.ai.core.provider.catalog.ResolvedModel;
 import com.top_logic.ai.core.provider.health.ModelAvailability;
 import com.top_logic.ai.core.provider.health.ModelHealthMark;
 import com.top_logic.ai.core.provider.health.ModelTarget;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Cause;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.ai.core.security.RunAuthorization;
 import com.top_logic.ai.core.security.RunEntryPoint;
 import com.top_logic.ai.core.security.RunPrincipal;
 import com.top_logic.ai.core.security.RunSecurity;
@@ -374,7 +378,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        </ul>
 	 * @param model
 	 *        The model name to use, or {@code null} to use the
-	 *        {@link AgentRuntimeService#defaultTarget() default model}.
+	 *        {@link AgentRuntimeService#defaultTarget() default model}. The call acts as the account
+	 *        that executed the script, and the section &lt;model-access&gt; of the tool access
+	 *        policy decides which models this account may use: the default model takes the place
+	 *        of the model of an agent, so another model needs a grant.
 	 * @param responseFormat
 	 *        The response format specification, which reaches the provider's request. Can be:
 	 *        <ul>
@@ -395,21 +402,25 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        no tools.
 	 * @return The assistant's response text.
 	 * @throws TopLogicException
-	 *         If the run did not reach an answer - an HTTP error, a stream error, a refusal, a
-	 *         cancellation or an exhausted turn budget - carrying the provider's error kind and
-	 *         message. It never returns the empty string for a failed call: a caller cannot tell
-	 *         that apart from a model that answered nothing.
+	 *         If the acting account may not use the model, with the reason of the policy, before
+	 *         any request is sent. If the run did not reach an answer - an HTTP error, a stream
+	 *         error, a refusal, a cancellation or an exhausted turn budget - carrying the provider's
+	 *         error kind and message. It never returns the empty string for a failed call: a caller
+	 *         cannot tell that apart from a model that answered nothing.
 	 */
 	public static String chat(List<Object> messages, String model, Object responseFormat,
 			Collection<String> tools) {
 		LLMProviderService registry = LLMProviderService.getInstance();
 		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+		// Also for a call that names a model: the policy decides against the default model. Without a
+		// default model no provider is available, and the call fails here, naming the missing secrets.
+		ModelTarget defaultTarget = runtime != null ? runtime.defaultTarget() : null;
+		String defaultModel = defaultTarget != null ? defaultTarget.model() : null;
 		String modelName = model;
 		String providerName = null;
-		if (modelName == null && runtime != null) {
-			ModelTarget target = runtime.defaultTarget();
-			modelName = target.model();
-			providerName = target.provider();
+		if (modelName == null && defaultTarget != null) {
+			modelName = defaultModel;
+			providerName = defaultTarget.provider();
 		}
 
 		// Build system prompt and user messages from the input
@@ -454,21 +465,23 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 		toolRegistry.freeze();
 
-		LLMProvider provider = registry.buildProvider(modelName, providerName);
-
-		AgentParams config = new AgentParams(
-			modelName, systemPrompt != null ? systemPrompt : "",
-			// A call without tools is one exchange. A call with tools needs the turns to use them:
-			// the answer comes after the tool results, so a one-turn budget would stop the loop
-			// with the tool calls made and nothing said.
-			toolRegistry.tools().isEmpty() ? 1 : AgentRuntimeService.maxTurns(),
-			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
-			Map.of(),
-			toResponseFormat(responseFormat));
-
-		AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
 		ToolContext context = ToolContext.forCurrentUser();
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
+			// Before the provider is built: a call the account may not make costs no round trip.
+			refuseModel(context.security().runAuthorization(), modelName, defaultModel);
+			LLMProvider provider = registry.buildProvider(modelName, providerName);
+
+			AgentParams config = new AgentParams(
+				modelName, systemPrompt != null ? systemPrompt : "",
+				// A call without tools is one exchange. A call with tools needs the turns to use them:
+				// the answer comes after the tool results, so a one-turn budget would stop the loop
+				// with the tool calls made and nothing said.
+				toolRegistry.tools().isEmpty() ? 1 : AgentRuntimeService.maxTurns(),
+				AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
+				Map.of(),
+				toResponseFormat(responseFormat));
+
+			AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
 			int messageCountBefore = conversation.size();
 
 			AgentSession session = createScriptSession("ai.chat (" + modelName + ")");
@@ -489,6 +502,40 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		} finally {
 			context.transaction().close();
 		}
+	}
+
+	/**
+	 * Refuses a call of {@link #chat(List, String, Object, Collection)} on a model the acting account
+	 * may not use.
+	 *
+	 * <p>
+	 * The rule of {@code <model-access>} for an agent run, with the default model in the place of the
+	 * model of the agent: such a call has no agent. The default model is therefore permitted unless a
+	 * role denies it, and another model needs a grant. Both cases are one question to the policy, and
+	 * not {@link RunAuthorization#assignedModelRefusal(String)} for the default model: that one reports
+	 * a denied default model as the model of an agent.
+	 * </p>
+	 *
+	 * @param authorization
+	 *        What the acting account may run.
+	 * @param modelName
+	 *        The model the call runs on.
+	 * @param defaultModel
+	 *        The default model of the installation; <code>null</code> only while the agent runtime is
+	 *        not running, and then every model needs a grant.
+	 * @throws TopLogicException
+	 *         With the reason of the policy, if the account may not use the model.
+	 */
+	private static void refuseModel(RunAuthorization authorization, String modelName, String defaultModel) {
+		Decision.Denied denied = authorization.modelRefusal(modelName, defaultModel);
+		if (denied == null) {
+			return;
+		}
+		// The sentence of the policy for this cause names the model of the agent.
+		ResKey reason = denied.cause() == Cause.NOT_THE_AGENTS
+			? I18NConstants.ERROR_MODEL_NOT_THE_DEFAULT__MODEL.fill(denied.name())
+			: denied.reason();
+		throw new TopLogicException(reason);
 	}
 
 	/**

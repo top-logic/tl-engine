@@ -94,7 +94,7 @@ public class TestCancelInterruptsNoTool extends TestCase {
 	 * not interrupt them.
 	 *
 	 * <p>
-	 * The batch path of the Pietro crash: {@code collectBatchResults} cancelled the batch's futures
+	 * The batch path of the crash: {@code collectBatchResults} cancelled the batch's futures
 	 * with {@code cancel(true)}, which interrupted the tool workers in the middle of their reads.
 	 * </p>
 	 */

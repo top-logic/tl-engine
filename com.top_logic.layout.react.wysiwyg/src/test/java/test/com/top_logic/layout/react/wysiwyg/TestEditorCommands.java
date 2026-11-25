@@ -79,8 +79,15 @@ public class TestEditorCommands extends TestCase {
 	/** A view declaring an editor with commands of its own. */
 	private static final String VIEW_FILE = "test-editor-commands.view.xml";
 
-	/** Markup a command writes to the insertion channel. */
-	private static final String MARKUP = "<a href=\"?id=42\" class=\"tlObject\">Some object</a>";
+	/**
+	 * Markup a command writes to the insertion channel.
+	 *
+	 * <p>
+	 * No object link: the insertion masks a link to an object that does not exist, see
+	 * {@link TestMaskedObjectLinks}.
+	 * </p>
+	 */
+	private static final String MARKUP = "<strong>Some text</strong>";
 
 	private ViewContext _context;
 

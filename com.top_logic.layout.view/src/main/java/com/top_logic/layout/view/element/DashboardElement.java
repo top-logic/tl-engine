@@ -24,6 +24,7 @@ import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -36,6 +37,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.security.UnitHiding;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
@@ -209,6 +211,8 @@ public class DashboardElement implements UIElement {
 			boolean visible = stored != null ? stored.booleanValue() : defaultVisibility(t);
 			Tile tile = new Tile(t.getId(), t.getWidth(), t.getRowSpan(), visible,
 				() -> createTileContent(context, t));
+			ResKey name = t.getName();
+			tile.withLabel(name == null ? null : Resources.getInstance().getString(name));
 			UnitHiding hiding = t.hiding(context);
 			if (hiding != null) {
 				tile.withWithheld(hiding.isHidden());

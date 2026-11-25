@@ -21,7 +21,7 @@
 			makes it reachable from the whole window, and a <page-selection> in a page writes into it
 			while that page is on screen - also from a tile-stack frame, which no <bind> reaches. The
 			dock binds it over the chat page's own "pageSelection", which states it to the agent while
-			the rail's pane shows nothing.
+			the pane in the rail shows nothing.
 			
 			Only <page-selection> writes it, and no table uses it as its selection: a page states what
 			it has open, it does not select rows on another page. When the page leaves the screen, the
@@ -35,6 +35,13 @@
 			nav items below do. See "Writing a channel across a view boundary" in tl-chat/CLAUDE.md.
 		-->
 		<channel name="chatDraft"/>
+		<!--
+			What is new in the rail of the chat in the dock, the badge of the launcher, and whether the
+			dock is open: bound into the chat page, so that its rail counts nothing as seen while the
+			dock is closed.
+		-->
+		<channel name="albertBadge"/>
+		<channel name="albertOpen"/>
 	</channels>
 
 	<app-shell>
@@ -72,7 +79,7 @@
 						Administration.
 						
 						It is the chat page tl-chat ships, tl-chat/albert.view.xml: a <data-list> of this
-						user's chats, a <chat-conversation>, and a <chat-rail> whose sections are
+						user's chats, a <chat-conversation>, and a <side-rail> whose sections are
 						configured. The demo's own parts - its facts, first questions, mentions, the
 						"createInvoice" command and the "Veranstaltungen" section - are a same-path
 						overlay, tl-chat/albert.view.xml of this module.
@@ -145,7 +152,7 @@
 					</nav-item>
 
 					<!--
-						The badges of a <chat-rail>: sections counting the demo's events and venues,
+						The badges of a <side-rail>: sections counting the demo's events and venues,
 						a number to try the rules of a badge and a dot, beside a conversation whose
 						rail button shows what the sections count together.
 					-->
@@ -193,7 +200,7 @@
 			The default conversation is the Chat page's own: this is the SAME conversation,
 			reachable from every other page without leaving it. On the Chat page itself there is
 			nothing for the dock to open, so it hides, and an open dock closes - showing it there would
-			put two composers on one draft channel and two rails on one remembered layout.
+			put two composers on one draft channel.
 			
 			A conversation in a closed dock offers the agent nothing - no channel to present on, no
 			page command, no facts - although the closed panel keeps it, hidden. What the agent
@@ -205,7 +212,11 @@
 				<page-selection> elements of the pages (Issue #928). It draws nothing.
 			-->
 			<chat-channels channels="pageSelection"/>
-			<chat-dock icon="css:bi bi-stars">
+			<chat-dock
+				badge="albertBadge"
+				icon="css:bi bi-stars"
+				open-channel="albertOpen"
+			>
 				<label>
 					<en>Albert</en>
 					<de>Albert</de>
@@ -214,7 +225,9 @@
 					The chat page tl-chat ships, with this demo's overlay, as on the Chat item. Its
 					"chatDraft" is the shell's own, so "Dazu fragen" on the page behind the dock puts
 					its question here (#440); its "pageSelection" is the shell's, so the conversation
-					states what that page has open.
+					states what that page has open. Its "railBadge" is the launcher's badge, and its
+					"chatShown" follows the dock, so that what comes in while the dock is closed stays
+					new.
 				-->
 				<view-ref view="tl-chat/albert.view.xml">
 					<bind
@@ -224,6 +237,14 @@
 					<bind
 						channel="pageSelection"
 						to="pageSelection"
+					/>
+					<bind
+						channel="railBadge"
+						to="albertBadge"
+					/>
+					<bind
+						channel="chatShown"
+						to="albertOpen"
 					/>
 				</view-ref>
 			</chat-dock>

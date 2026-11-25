@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.chat.view;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
@@ -16,7 +17,7 @@ import com.top_logic.basic.util.ResKey2;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * Title of the rail's pane while it shows several objects rather than one.
+	 * Title of the presentation pane while it shows several objects rather than one.
 	 *
 	 * <p>
 	 * One object titles the pane with its own label; a set of them has no label of its own, and the
@@ -29,7 +30,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 PANE_TITLE_OBJECTS__COUNT;
 
 	/**
-	 * Title of the rail's pane while it shows a table or a chart of objects of one type, and the
+	 * Title of the presentation pane while it shows a table or a chart of objects of one type, and the
 	 * agent named no title of its own.
 	 *
 	 * @en {0} ({1})
@@ -38,7 +39,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 PANE_TITLE_TYPE__TYPE_COUNT;
 
 	/**
-	 * Title of the rail's pane while it shows a chart or a table of data the agent computed, and the
+	 * Title of the presentation pane while it shows a chart or a table of data the agent computed, and the
 	 * agent named no title of its own.
 	 *
 	 * @en Analysis
@@ -87,6 +88,20 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @de {0}: An eine Nachricht können höchstens {1} Dateien angehängt werden.
 	 */
 	public static ResKey2 ERROR_TOO_MANY_ATTACHMENTS__FILE_MAX;
+
+	// -- Client-side i18n keys of the presentation pane --
+
+	/**
+	 * @en Back
+	 */
+	@CustomKey("js.presentationPane.back")
+	public static ResKey JS_PRESENTATION_PANE_BACK;
+
+	/**
+	 * @en Close
+	 */
+	@CustomKey("js.presentationPane.close")
+	public static ResKey JS_PRESENTATION_PANE_CLOSE;
 
 	static {
 		initConstants(I18NConstants.class);

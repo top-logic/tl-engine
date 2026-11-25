@@ -153,8 +153,8 @@ public interface TlCoreFactory {
 	/**
 	 * Lookup {@link com.top_logic.knowledge.service.Revision#AUTHOR_ATTR} of {@link com.top_logic.knowledge.service.Revision}.
 	 */
-	public static com.top_logic.model.TLProperty getAuthorRevisionAttr() {
-		return (com.top_logic.model.TLProperty) getRevisionType().getPart(com.top_logic.knowledge.service.Revision.AUTHOR_ATTR);
+	public static com.top_logic.model.TLReference getAuthorRevisionAttr() {
+		return (com.top_logic.model.TLReference) getRevisionType().getPart(com.top_logic.knowledge.service.Revision.AUTHOR_ATTR);
 	}
 
 	/**

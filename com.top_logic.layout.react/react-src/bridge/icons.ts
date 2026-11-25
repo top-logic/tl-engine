@@ -47,6 +47,9 @@ export const ICON_ADD = 'css:fa-solid fa-plus';
 /** The toggle of an expandable row; pointing right while closed, turned down by the stylesheet. */
 export const ICON_EXPAND = 'css:fa-solid fa-chevron-right';
 
+/** Opens an element: the open button of an item of a selectable list. */
+export const ICON_OPEN = 'css:fa-solid fa-chevron-right';
+
 /** The arrow of a closed list that opens downwards. */
 export const ICON_LIST_CLOSED = 'css:fa-solid fa-chevron-down';
 

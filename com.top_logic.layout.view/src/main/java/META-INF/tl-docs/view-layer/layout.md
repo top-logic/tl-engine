@@ -1,5 +1,5 @@
 ---
-description: Read before arranging content in a .view.xml with <stack>, <grid>, <divider> (a horizontal or vertical line, with a text in the line or inset), <columns>, <split-panel> (pane sizes, stacking when too narrow), <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), sizing a dialog with <window width height>, or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
+description: Read before arranging content in a .view.xml with <stack>, <grid>, <divider> (a horizontal or vertical line, with a text in the line or inset), <columns>, <split-panel> (pane sizes, stacking when too narrow), <object-list> (with <link-access> / <remove-access>, opening an element with <on-activate> and activation-button), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), sizing a dialog with <window width height>, or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
 order: 20
 ---
 
@@ -174,9 +174,17 @@ The client classes an application styles against are `.tl-columns`, `.tl-columns
 
 `<split-panel orientation="horizontal" resizable="true">` (`SplitPanelElement`) places its `<pane>`s side by side (`horizontal`) or below each other (`vertical`), with a handle between two open panes the user drags. A pane gives its `size` in `unit` `%` (the panes in percent share the room left, their sizes acting as weights) or `px`, and its `min-size` in pixels. The split panel fills its box, each pane scrolls what does not fit into it, and the sizes the user drags are remembered per user.
 
+**A pane shrinks with a content that collapses.** When the content of a pane collapses — a `<panel>` the user minimizes to its header, a [`<side-rail>`](doc:view-layer/side-rail) that closes to its strip, a nested `<split-panel>` all of whose panes are collapsed — the pane takes the size of the collapsed content, and the open panes share the room it gives up; expanding the content gives the pane its former size back. A nested split panel with all panes collapsed collapses itself in this way in the split panel around it. The last open pane of the outermost split panel cannot collapse. Which panes are collapsed is remembered per user, like the sizes. In Java, a control takes part through the interface `CollapsibleChild`, through which it reports collapsing and expanding to the split panel.
+
 **Too narrow for the panes side by side, a horizontal split panel stacks them.** When its own width is less than the `min-size`s of its open panes plus the handles between them, the panes stand below each other: each spans the full width and is as high as its content, the split panel scrolls vertically, and there are no handles. A collapsed pane stays collapsed. Once the width suffices again, the panes are side by side with the sizes they had. As with `<columns>`, it is the width of the element itself that counts, not that of the browser window, so a split panel in a narrow dialog or a sidebar stacks just as it does on a phone. Nothing is configured for it; a vertical split panel keeps its arrangement.
 
 The client classes are `.tl-split`, `.tl-split--horizontal` / `.tl-split--vertical`, `.tl-split__pane` and `.tl-split__handle` (design system, `split.css`); the stacked arrangement is `data-tl-state~="stacked"` on `.tl-split`.
+
+## A collapsible column: `<side-rail>`
+
+`<side-rail>` is a column of sections beside another element that collapses to a strip and, where
+the area is narrow, opens as a modal drawer; in a split panel its pane shrinks to the strip. See
+[the side rail](doc:view-layer/side-rail).
 
 ## Repeating a template over a computed list: `<object-list>`
 
@@ -187,6 +195,30 @@ The client classes are `.tl-split`, `.tl-split--horizontal` / `.tl-split--vertic
 - **Access of linking and removing.** `<link-access>` and `<remove-access>` declare what `link` and `remove` do in the model, with the checks of a command's `<access>` (`<operation name object type/>`, `<create type in reference/>`, see [the access of a command](doc:view-layer/access-control#commands-the-access-they-declare)). Their scripts see the same variables as `link` and `remove`: the inputs and the element. `<link-element>` and `<remove-element>` bring the declared checks as their own rule, decided on the main argument of their command as the element, so the command offering them is hidden or disabled where the list would refuse — it needs no `<access>` of its own. The `<new-element>` content is displayed only where the link access allows linking in the current context (the inputs, the composed element); a user who may not link sees no composer, as a unit the user may not see is hidden, and it reappears when an input changes to a context allowing it. Without a declaration nothing is checked: unlinking may need no right at all. With `inputs="ticket" element-as="comment"`: `<link-access><create in="$ticket" reference="demo.tickets:Ticket#comments"/></link-access>` and `<remove-access><operation name="Delete" object="$comment" type="demo.tickets:Comment"/></remove-access>`.
 - **Arrangement.** `layout="list"` (the default) stacks the elements in a column; `layout="grid"` places as many next to each other as fit, taking the shared grid options `min-column-width` (16rem by default), `max-columns`, `gap` and `max-width` — the same options `<grid>` takes (see [Layout: stack and grid](#layout-stack-and-grid)). `gap` and `max-width` apply to either arrangement, the column options to a grid.
 - **Selection.** `selection="ch"` makes the elements selectable like the entries of a list box: a click on an element writes its object to the channel, and the element of the object the channel holds is marked as selected (`aria-selected`; the design system draws a ring over the element, `layout.css`; `ItemSelectionBinding`, a `SelectionChannelBinding`; the arrangement container receives the elements together with their objects through `ReactLayoutControl.setItems`). `selection-mode="multi"` selects several elements with `Ctrl` and `Shift`; the channel then holds the set while several are selected. An element that leaves the list gives up the selection. Without `selection`, the list is display-only. A selection is recorded as `selectItem` with the key of the object in place of the client key of the element, see [object ids and keys](doc:view-layer/headless-interface#object-ids-and-keys).
+- **Opening an element.** `<on-activate>` (a command, `PolymorphicConfiguration` of `ViewCommand`, like the `<on-activate>` of a table) makes the elements openable: the command runs with the opened element as its main argument, under the name `element-as` gives it (`element` by default; there is no `activate-as` of its own). The gesture follows from the configuration, there is no option for it:
+  - *Without `selection`* (an entry page, e.g. the choice of a project): a click or tap on the element opens it, and so do `Enter` and `Space` on the focused element — like a `<tile>` with an `<action>` in a `<dashboard>`. The element shows by pointer and a highlighted border on hover that it opens. A click on interactive content of the element (a button, a link, a field, `isInteractiveTarget`) is that content's, and a click that ends a text selection in the element only marks the text. The keyboard reaches the element through a hidden button carrying the name of the action, and the element shows the focus ring for it.
+  - *With `selection`*: a click selects the element, and a double-click or `Enter` on the focused element open it — like a row of a table: the element becomes the selection first, then the command runs, so the command reading the selection channel sees it. Since a double-click is neither visible nor available on a touch device, every element shows an open button (a chevron in its top right corner); `activation-button="false"` switches it off, with the name and meaning it has at the table.
+  - The command's executability rules decide per element: an element the rules hide the command for cannot be opened (no pointer, no button); one they disable it for shows that (the open button is disabled, the tooltip gives the reason) and opening it has no effect — with `selection` it is only selected. The name of an element's action is the command's label, or "Open" with the label of the element.
+  - The mechanism belongs to every arrangement container (`ReactLayoutControl.setActivation` with an `ItemActivation`; `CommandItemActivation` binds a configured command), and the client shares it with the dashboard tiles (`activationProps`, `ActivationButton`, `ActivationOpenButton` in the bridge; the design-system class `tl-activatable`). An opening is recorded as `activateItem` with the key of the object, like `selectItem`.
+
+```xml
+<object-list
+	items="all(`tl.demo.projectManagement:Milestone`)"
+	layout="grid"
+	observed-types="tl.demo.projectManagement:Milestone"
+>
+	<item>
+		<view-ref view="demo/openable-cards/milestone-card.view.xml">
+			<bind channel="element" to="element"/>
+		</view-ref>
+	</item>
+	<on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
+		<show-object/>
+	</on-activate>
+</object-list>
+```
+
+  The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/openable-cards-demo.view.xml` (menu *Openable cards*): milestone cards a click opens, and selectable project cards beside a form of the selected project.
 - **Item wrapper and staggered entrance.** The client wraps every element in `<div class="tl-item tlObjectList__item" style="--item-index: 0">` carrying the 0-based position (`ObjectListElement.ITEM_CSS_CLASS`). The engine ships the position, not the animation: an application composes a per-item delay from it. The arrangement is what an application's rule addresses next to that class — a grid puts its items into a `.tl-grid`, a list into a `.tl-stack` — so an entrance can be given to the cards of a grid while the rows of a list keep appearing at once. Items are reused by key, so an element that stays through a change of the inputs keeps its DOM node and does not animate again — only the ones that appear do.
 
 ```xml

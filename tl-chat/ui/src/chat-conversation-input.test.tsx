@@ -8,7 +8,7 @@ import { answerCommands, resetTLBridge, setTLState, TL_DATA_URL, tlCommand, tlCo
 
 /**
  * `<chat-conversation input=…>` against a host that binds one conversation to what the page is
- * about, as BOS/Consulting binds one per project (#576).
+ * about, as an application may bind one per project (#576).
  *
  * Mounted in a live DOM because both faults live in the element's effects: what it reports onto
  * the channel when it mounts, and what it does when the server says the channel refused a report.

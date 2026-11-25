@@ -78,24 +78,18 @@ const FILTER_FROM = 6
 
 /**
  * The framework's `Quellen` section: what this chat has cited, with the markers that point at it.
- *
- * A host may hang its own list beside it as a further tab - the sources are the framework's, the
- * documents a host produces are not.
  */
 export function SourcesSection({
   sources,
   labels,
   onOpen,
   onGoTo,
-  tabs,
 }: {
   sources: CitedSource[]
   labels: Labels
   onOpen: (source: CitedSource) => void
   onGoTo: (messageId: string) => void
-  tabs?: { id: string; label: string; render: () => React.ReactNode }[]
 }) {
-  const [tab, setTab] = useState('sources')
   const [filter, setFilter] = useState('')
   const wanted = filter.trim().toLocaleLowerCase()
   const shown = useMemo(
@@ -110,38 +104,9 @@ export function SourcesSection({
     [sources, wanted],
   )
 
-  const hostTab = tabs?.find((item) => item.id === tab)
   return (
     <div className="sources">
-      {tabs && tabs.length > 0 ? (
-        <div className="sources-tabs" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'sources'}
-            className={`sources-tab${tab === 'sources' ? ' is-active' : ''}`}
-            onClick={() => setTab('sources')}
-          >
-            {labels.sourcesTitle}
-          </button>
-          {tabs.map((item) => (
-            <button
-              type="button"
-              key={item.id}
-              role="tab"
-              aria-selected={tab === item.id}
-              className={`sources-tab${tab === item.id ? ' is-active' : ''}`}
-              onClick={() => setTab(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      {hostTab ? (
-        hostTab.render()
-      ) : sources.length === 0 ? (
+      {sources.length === 0 ? (
         <p className="side-empty">{labels.sourcesEmpty}</p>
       ) : (
         <>

@@ -28,7 +28,7 @@ public class TestChatJoinLog extends TestCase {
 	public void testOneChatIdNeverWarns() {
 		ChatJoinLog log = new ChatJoinLog();
 		log.join("w1", "support", "chat-conversation");
-		log.join("w1", "support", "chat-rail");
+		log.join("w1", "support", "chat-dock");
 		log.join("w1", "support", "chat-progress");
 
 		List<Message> messages = log.messages();
@@ -60,9 +60,9 @@ public class TestChatJoinLog extends TestCase {
 	public void testTwoConversationsInOneWindowAreNotReported() {
 		ChatJoinLog log = new ChatJoinLog();
 		log.join("w1", "left", "chat-conversation");
-		log.join("w1", "left", "chat-rail");
+		log.join("w1", "left", "chat-dock");
 		log.join("w1", "right", "chat-conversation");
-		log.join("w1", "right", "chat-rail");
+		log.join("w1", "right", "chat-dock");
 
 		List<Message> messages = log.messages();
 		assertEquals(1, messages.size());
@@ -81,7 +81,7 @@ public class TestChatJoinLog extends TestCase {
 	public void testADockOnThePagesOwnChatIsSilent() {
 		ChatJoinLog log = new ChatJoinLog();
 		log.join("w1", "chat", "chat-conversation");
-		log.join("w1", "chat", "chat-rail");
+		log.join("w1", "chat", "chat-dock");
 		log.join("w1", "chat", "chat-dock");
 		log.join("w1", "chat", "chat-conversation");
 
@@ -95,7 +95,7 @@ public class TestChatJoinLog extends TestCase {
 		ChatJoinLog log = new ChatJoinLog();
 		log.join("w1", "support", "chat-conversation");
 		log.join("w1", "support", "chat-progress");
-		log.join("w1", "suport", "chat-rail");
+		log.join("w1", "suport", "chat-dock");
 
 		List<Message> messages = log.messages();
 		assertEquals(2, messages.size());
@@ -105,7 +105,7 @@ public class TestChatJoinLog extends TestCase {
 		Message warning = messages.get(1);
 		assertTrue(warning.warning());
 		assertTrue("Names the element that found nobody: " + warning.text(),
-			warning.text().startsWith("<chat-rail chat-id='suport'> joins no other chat element in window 'w1'."));
+			warning.text().startsWith("<chat-dock chat-id='suport'> joins no other chat element in window 'w1'."));
 		assertTrue("Names what it could have joined: " + warning.text(),
 			warning.text().contains("'support' (2)"));
 		assertTrue("Says what to do: " + warning.text(),
@@ -116,13 +116,13 @@ public class TestChatJoinLog extends TestCase {
 	public void testSeveralLoneElementsAreOneWarning() {
 		ChatJoinLog log = new ChatJoinLog();
 		log.join("w1", "a", "chat-conversation");
-		log.join("w1", "b", "chat-rail");
+		log.join("w1", "b", "chat-dock");
 
 		List<Message> messages = log.messages();
 		assertEquals(2, messages.size());
 		Message warning = messages.get(1);
 		assertTrue(warning.text().startsWith(
-			"<chat-conversation chat-id='a'>, <chat-rail chat-id='b'> joins no other chat element"));
+			"<chat-conversation chat-id='a'>, <chat-dock chat-id='b'> joins no other chat element"));
 		assertTrue("Nothing to point at: " + warning.text(),
 			warning.text().contains("No other chat id in window 'w1' holds more than one element."));
 	}
@@ -131,7 +131,7 @@ public class TestChatJoinLog extends TestCase {
 	public void testWindowsAreCountedApart() {
 		ChatJoinLog log = new ChatJoinLog();
 		log.join("w1", "support", "chat-conversation");
-		log.join("w2", "other", "chat-rail");
+		log.join("w2", "other", "chat-dock");
 
 		List<Message> messages = log.messages();
 		assertEquals("One tally each, no warning: each window has a single chat id.", 2, messages.size());
@@ -157,7 +157,7 @@ public class TestChatJoinLog extends TestCase {
 		try {
 			ThreadContext.inSystemContext(TestChatJoinLog.class, () -> {
 				ChatJoinLog.record("w1", "support", "chat-conversation");
-				ChatJoinLog.record("w1", "support", "chat-rail");
+				ChatJoinLog.record("w1", "support", "chat-dock");
 				assertTrue("Nothing is said while the render is still running.", said.isEmpty());
 			});
 			assertEquals(1, said.size());

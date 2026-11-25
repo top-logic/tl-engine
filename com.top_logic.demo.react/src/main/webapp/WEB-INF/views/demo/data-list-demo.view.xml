@@ -11,8 +11,9 @@
 	The rows are sorted by the key the groups are formed by - the last name, ignoring case - so the
 	groups stand in alphabetical order.
 	
-	The list and the form stand in a row: the list at its own width, the form taking the rest. A
-	collapsed list leaves only its strip, and the form gets the space (tl-demo-react.css).
+	The list and the form stand in a row: the list at its own width, the form taking the rest
+	(tl-demo-react.css). A list that collapses to a strip stands in a <side-rail>, see the demo
+	"Side rail".
 	
 	The list observes contacts and tickets: a contact created, changed or deleted - in the form, in
 	the menu, or anywhere else - and a ticket assigned to a contact or taken from it change the list.
@@ -38,7 +39,7 @@
 		>
 			<context-menu input="contact">
 				<data-list
-					css-class="tlDemoContactList"
+					css-class="tlDemoMasterList"
 					observed-types="Contacts:PersonContact, tl.demo.projectManagement:Ticket"
 					search="true"
 					selection="contact"

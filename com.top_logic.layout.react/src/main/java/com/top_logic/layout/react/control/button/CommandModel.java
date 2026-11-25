@@ -99,11 +99,13 @@ public interface CommandModel {
 	}
 
 	/**
-	 * Whether the command switches a setting on and off.
+	 * Whether the command is a toggle, which switches a setting on and off and is either
+	 * {@link #isActive() active} (on) or not.
 	 *
 	 * <p>
-	 * A menu renders such a command as a switch instead of an ordinary entry; {@link #isActive()}
-	 * then tells whether the setting is on.
+	 * The button of a toggle reports whether it is pressed or not, e.g. a button opening and closing
+	 * a panel; the button of another command reports only while it is active. A menu renders a
+	 * toggle as a switch instead of an ordinary entry.
 	 * </p>
 	 */
 	default boolean isToggle() {

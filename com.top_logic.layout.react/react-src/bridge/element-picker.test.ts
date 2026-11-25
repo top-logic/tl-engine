@@ -1,8 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./tl-react-bridge', () => ({
-  getApiBase: () => '/ctx/',
   isMountedControl: () => false,
+}));
+
+vi.mock('./page-context', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./page-context')>()),
+  getApiBase: () => '/ctx/',
 }));
 
 import { handlePick } from './element-picker';

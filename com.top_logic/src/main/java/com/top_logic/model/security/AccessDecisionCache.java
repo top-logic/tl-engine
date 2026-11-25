@@ -4,8 +4,7 @@
  */
 package com.top_logic.model.security;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -25,8 +24,9 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * delegating to it.
  * </p>
  * <p>
- * While a decision is being computed, its entry is marked. A delegation chain that reaches an
- * object whose decision is marked runs in a cycle and is denied instead of recursing forever.
+ * Decisions depending on each other in cycles of access parents are handled by
+ * {@link CyclicDecisions}: a chain reaching a decision under way is denied along that path, and a
+ * denial relying on such a decision is kept only provisionally, until that decision is made.
  * </p>
  * <p>
  * The memo is discarded together with the interaction, and it is replaced as soon as the knowledge
@@ -55,12 +55,9 @@ final class AccessDecisionCache {
 	private static final Property<AccessDecisionCache> PROPERTY =
 		TypedAnnotatable.property(AccessDecisionCache.class, "accessDecisions");
 
-	/** Marker of a decision that is being computed. */
-	private static final Object COMPUTING = new Object();
-
 	private final long _revision;
 
-	private final Map<Key, Object> _decisions = new HashMap<>();
+	private final CyclicDecisions<Key> _decisions = new CyclicDecisions<>();
 
 	private AccessDecisionCache(long revision) {
 		_revision = revision;
@@ -97,35 +94,21 @@ final class AccessDecisionCache {
 	}
 
 	/**
-	 * The stored decision for the given key.
-	 * 
-	 * @return <code>null</code> when no decision is stored and none is being computed.
+	 * Decides for the given key, answering from the memo where possible.
+	 *
+	 * @see CyclicDecisions#decide(Object, Predicate, Runnable)
 	 */
-	Boolean decision(Key key) {
-		Object stored = _decisions.get(key);
-		return stored instanceof Boolean decision ? decision : null;
+	boolean decide(Key key, Predicate<? super Key> computation, Runnable onCycle) {
+		return _decisions.decide(key, computation, onCycle);
 	}
 
 	/**
-	 * Whether the decision for the given key is being computed, i.e. whether asking for it again
-	 * closes a cycle.
+	 * Whether a cycle concerning the given subject is to be reported.
+	 *
+	 * @see CyclicDecisions#reportOnce(Object)
 	 */
-	boolean isComputing(Key key) {
-		return _decisions.get(key) == COMPUTING;
-	}
-
-	/**
-	 * Marks the decision for the given key as being computed.
-	 */
-	void computing(Key key) {
-		_decisions.put(key, COMPUTING);
-	}
-
-	/**
-	 * Stores the decision for the given key.
-	 */
-	void decided(Key key, boolean decision) {
-		_decisions.put(key, Boolean.valueOf(decision));
+	boolean reportOnce(Object subject) {
+		return _decisions.reportOnce(subject);
 	}
 
 }

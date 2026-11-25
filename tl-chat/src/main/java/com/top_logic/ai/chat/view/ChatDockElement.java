@@ -12,6 +12,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
@@ -27,7 +28,10 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.element.ContentControls;
+import com.top_logic.layout.view.element.WithBadge;
 
 /**
  * Declarative {@code <chat-dock/>} element: a floating launcher that opens the chat over the page.
@@ -36,7 +40,7 @@ import com.top_logic.layout.view.element.ContentControls;
  * The dock is a frame and nothing else. Closed it costs one button in the corner of the window;
  * opened it shows, in a card over the page, whatever the application nested inside it - normally
  * one {@code <chat>} holding a session list, a {@code <chat-conversation/>} and a
- * {@code <chat-rail/>}, but any view element will do. What the assistant is <em>made of</em> stays
+ * {@code <side-rail>}, but any view element will do. What the assistant is <em>made of</em> stays
  * the application's decision, exactly as it is on a page of its own.
  * </p>
  *
@@ -53,11 +57,11 @@ import com.top_logic.layout.view.element.ContentControls;
  * </p>
  *
  * <pre>
- * &lt;chat-dock chat-id="assistant" icon="css:bi bi-stars"&gt;
+ * &lt;chat-dock chat-id="assistant" icon="css:bi bi-stars" badge="railBadge" open-channel="dockOpen"&gt;
  *   &lt;label&gt;&lt;en&gt;Assistant&lt;/en&gt;&lt;de&gt;Assistent&lt;/de&gt;&lt;/label&gt;
  *   &lt;chat chat-id="assistant" direction="row"&gt;
  *     &lt;panel fill="true"&gt;&lt;chat-conversation input="dockSession"/&gt;&lt;/panel&gt;
- *     &lt;chat-rail&gt;...&lt;/chat-rail&gt;
+ *     &lt;side-rail badge-channel="railBadge" shown="dockOpen"&gt;...&lt;/side-rail&gt;
  *   &lt;/chat&gt;
  * &lt;/chat-dock&gt;
  * </pre>
@@ -68,24 +72,25 @@ import com.top_logic.layout.view.element.ContentControls;
  * </p>
  *
  * <p>
- * The dock needs the id for one thing only - the launcher's unseen count and its busy dot, which it
- * reads from the browser store of that conversation, the same store the transcript's rail button
- * reads. Neither gets a channel: they change many times a second while the agent works, and a
- * command round trip for a dot is not what a channel is for.
+ * The dock needs the id for its busy dot, which it reads from the browser store of that
+ * conversation: the dot changes many times a second while the agent works, and a command round trip
+ * for a dot is not what a channel is for. The launcher's count is the {@link Config#getBadge() badge}
+ * channel, typically the {@code badge-channel} of a {@code <side-rail>} inside, whose
+ * {@code shown} channel is the dock's {@link Config#getOpenChannel() open-channel}: what comes in
+ * while the dock is closed stays unseen.
  * </p>
  *
  * <p>
- * <b>TEMPORARY FORK.</b> Nothing about a floating launcher is chat-specific except where its badge
- * comes from. <b>Upstream target:</b> a generic {@code <dock>} shell in {@code tl-layout-view} that
- * hosts any element and takes its badge from a channel, leaving {@code tl-chat} the store-bound
- * launcher only.
+ * <b>TEMPORARY FORK.</b> Nothing about a floating launcher is chat-specific except its busy dot.
+ * <b>Upstream target:</b> a generic {@code <dock>} shell in {@code tl-layout-view} that hosts any
+ * element, leaving {@code tl-chat} the busy dot only.
  * </p>
  */
 public class ChatDockElement implements UIElement {
 
 	/** Configuration for {@link ChatDockElement}. */
 	@TagName("chat-dock")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, WithBadge {
 
 		/**
 		 * Configuration property name for {@link #getChatId()}.
@@ -121,6 +126,13 @@ public class ChatDockElement implements UIElement {
 		 * @see #getOpen()
 		 */
 		String OPEN = "open";
+
+		/**
+		 * Configuration property name for {@link #getOpenChannel()}.
+		 *
+		 * @see #getOpenChannel()
+		 */
+		String OPEN_CHANNEL = "open-channel";
 
 		/**
 		 * Configuration property name for {@link #getReactElement()}.
@@ -192,7 +204,7 @@ public class ChatDockElement implements UIElement {
 		/**
 		 * The glyph on the launcher button, e.g. {@code css:bi bi-stars}.
 		 *
-		 * The same vocabulary a {@code <nav-item>} or a rail {@code <section>} uses. While the panel
+		 * The same vocabulary a {@code <nav-item>} or a {@code <side-rail>} {@code <section>} uses. While the panel
 		 * is open the button shows a close cross instead, so this is the closed state's icon.
 		 */
 		@Name(ICON)
@@ -223,6 +235,22 @@ public class ChatDockElement implements UIElement {
 		@Label("Open")
 		@BooleanDefault(false)
 		boolean getOpen();
+
+		/**
+		 * Channel that follows whether the panel is open, and opens or closes it when written.
+		 *
+		 * <p>
+		 * Bind it into the content as the {@code shown} channel of a {@code <side-rail>}, so that the
+		 * rail counts nothing as seen while the dock is closed and its {@code badge-channel} - shown
+		 * on the launcher through {@link #getBadge() badge} - keeps counting what comes in. Leave it
+		 * empty when nothing needs to know.
+		 * </p>
+		 */
+		@Name(OPEN_CHANNEL)
+		@Label("Open channel")
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getOpenChannel();
 
 		/**
 		 * Registered React element that renders this dock.

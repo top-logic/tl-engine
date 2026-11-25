@@ -1062,12 +1062,18 @@ public class ElementAccessManager extends AccessManager {
 		} else {
 			roles = rights.getAdmittingRoles(owner, SimpleBoundCommandGroup.READ);
 		}
-		if (roles.isEmpty() || !(rights.getRoleHolder(owner) instanceof BoundObject holder)) {
+		if (roles.isEmpty()) {
 			return GateGroups.NONE;
 		}
+		// An access parent may lead to several objects: a role on any of them admits the reader.
 		Set<Group> groups = new HashSet<>();
-		for (BoundedRole role : roles) {
-			groups.addAll(getEffectiveGroups(holder, role));
+		for (TLObject roleHolder : rights.getRoleHolders(owner, SimpleBoundCommandGroup.READ)) {
+			if (!(roleHolder instanceof BoundObject holder)) {
+				continue;
+			}
+			for (BoundedRole role : roles) {
+				groups.addAll(getEffectiveGroups(holder, role));
+			}
 		}
 		return GateGroups.of(groups);
 	}

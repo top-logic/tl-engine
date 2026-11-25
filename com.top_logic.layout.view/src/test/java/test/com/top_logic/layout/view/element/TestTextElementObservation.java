@@ -37,6 +37,7 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.element.TextElement;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
@@ -269,7 +270,8 @@ public class TestTextElementObservation extends BasicTestCase {
 	 */
 	private ReactTextControl attachedControl() {
 		TextElement.Config config = TypedConfiguration.newConfigItem(TextElement.Config.class);
-		config.update(config.descriptor().getProperty(TextElement.Config.INPUT), new ChannelRef(TICKET_CHANNEL));
+		config.update(config.descriptor().getProperty(TextElement.Config.INPUT),
+			new InputRef(new ChannelRef(TICKET_CHANNEL)));
 
 		IReactControl control = new TextElement(null, config).createControl(_context);
 		ReactTextControl result = (ReactTextControl) control;

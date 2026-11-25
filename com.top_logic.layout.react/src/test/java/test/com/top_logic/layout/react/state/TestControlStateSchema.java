@@ -200,6 +200,7 @@ public class TestControlStateSchema extends TestCase {
 		RecordingButton button = new RecordingButton(createContext());
 		button.setDisabled(true);
 		button.setActive(true);
+		button.setToggle(true);
 		button.setImage(null);
 		button.setTooltip("tooltip");
 		button.setKeyGesture(KeyStroke.ENTER);

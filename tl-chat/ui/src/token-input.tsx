@@ -27,6 +27,11 @@ export interface TokenInputHandle {
   insertReference: (token: ReferenceToken) => void
   /** Replaces the whole draft, focuses the editor and puts the caret behind the new text. */
   setDraft: (text: string) => void
+  /**
+   * Replaces the whole draft without taking the focus; an editor that has it keeps the caret behind
+   * the new text.
+   */
+  restoreDraft: (text: string) => void
   /** Replaces the text between `from` and the caret, e.g. the "@query" that opened a picker. */
   replaceBefore: (length: number, text: string) => void
   /** The word being typed directly before the caret, for the "@" picker. */
@@ -157,6 +162,16 @@ export const TokenInput = React.forwardRef(function TokenInput(
         el.focus()
         atEnd(el)
         rememberCaret()
+        emit()
+      },
+      restoreDraft: (text: string) => {
+        const el = host.current
+        if (!el) return
+        writeDraft(el, text)
+        if (document.activeElement === el) {
+          atEnd(el)
+          rememberCaret()
+        }
         emit()
       },
       replaceBefore: (length: number, text: string) => {

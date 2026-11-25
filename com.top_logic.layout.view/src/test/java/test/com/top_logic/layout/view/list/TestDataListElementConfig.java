@@ -25,8 +25,8 @@ import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.list.DataListElement;
 
 /**
- * Checks the defaults of the {@code <data-list>} configuration: search and collapse on, no grouping
- * or selection until configured.
+ * Checks the defaults of the {@code <data-list>} configuration: search on, no grouping or selection
+ * until configured.
  */
 public class TestDataListElementConfig extends TestCase {
 
@@ -35,8 +35,6 @@ public class TestDataListElementConfig extends TestCase {
 		DataListElement.Config config = TypedConfiguration.newConfigItem(DataListElement.Config.class);
 
 		assertTrue("Search on by default.", config.getSearch());
-		assertTrue("Collapsible by default.", config.getCollapsible());
-		assertFalse("Expanded on arrival: a list starts showing what it holds.", config.getCollapsed());
 		assertNull("No grouping until a group-by expression is set.", config.getGroupBy());
 		assertNull("No lines configured by default.", config.getLines());
 		assertNull("No selection channel by default.", config.getSelection());
@@ -51,10 +49,26 @@ public class TestDataListElementConfig extends TestCase {
 			DataListElement.RowActions.HOVER, config.getRowActions());
 		assertTrue("No input channels by default.", config.getInputs().isEmpty());
 		assertTrue("A static list by default (no observed types).", config.getObservedTypes().isEmpty());
-		assertEquals("A column at every width until a drawer threshold is set.", 0, config.getDrawerBelow());
 		assertNull("Nothing in front of the lines by default.", config.getLeading());
 		assertNull("Nothing after the lines by default.", config.getTrailing());
 		assertEquals(DataListElement.class, config.getImplementationClass());
+	}
+
+	/**
+	 * A list has no collapse of its own: a collapsible list stands in a {@code <side-rail>}, and the
+	 * attributes of a collapse are refused.
+	 */
+	public void testNoCollapseOfItsOwn() {
+		for (String attribute : new String[] { "collapsible='true'", "collapsed='true'", "drawer-below='44'" }) {
+			String xml = "<data-list xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+				+ " config:interface='" + DataListElement.Config.class.getName() + "' " + attribute + "/>";
+			try {
+				TypedConfiguration.parse(CharacterContents.newContent(xml));
+				fail("A data-list has no attribute " + attribute + ".");
+			} catch (Exception ex) {
+				// Expected.
+			}
+		}
 	}
 
 	/** A header {@code <commands>} entry parses as a standard view command with its actions. */
@@ -167,7 +181,7 @@ public class TestDataListElementConfig extends TestCase {
 		assertHidden(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME);
 		for (String name : List.of(DataListElement.Config.ROWS, DataListElement.Config.SELECTION,
 			DataListElement.Config.SEARCH, DataListElement.Config.COUNT, DataListElement.Config.CSS_CLASS,
-			DataListElement.Config.COLLAPSED, DataListElement.Config.DRAWER_BELOW, DataListElement.Config.ROW_COMMANDS,
+			DataListElement.Config.ROW_COMMANDS,
 			DataListElement.Config.ROW_CHANNEL, DataListElement.Config.ROW_ACTIONS, DataListElement.Config.LEADING,
 			DataListElement.Config.TRAILING)) {
 			Hidden hidden = property(name).getAnnotation(Hidden.class);

@@ -1431,6 +1431,36 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * The author of a revision is readable only for an administrator and for the author itself,
+	 * whereas the other attributes of a revision stay readable for everybody.
+	 */
+	public void testRevisionAuthorOnlyForAdminAndAuthor() throws Exception {
+		becomeUser(_user);
+		Revision revision;
+		try (Transaction tx = beginTx()) {
+			_p1.tUpdateByName("budget", Integer.valueOf(101));
+			tx.commit();
+			revision = tx.getCommitRevision();
+		}
+		assertEquals(_user, revision.resolveAuthor());
+
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		TLStructuredTypePart author = revision.tType().getPart(Revision.AUTHOR_ATTR);
+		TLStructuredTypePart date = revision.tType().getPart(Revision.DATE_ATTR);
+		assertTrue(accessRights.isReadAllowed(_user, revision, author));
+		assertTrue(accessRights.isReadAllowed(_root, revision, author));
+		assertFalse(accessRights.isReadAllowed(_other, revision, author));
+		assertTrue(accessRights.isReadAllowed(_other, revision, date));
+
+		becomeUser(_other);
+		assertNull(execute(search("r -> $r.get(`tl.core:Revision#author`)"), revision));
+		assertNotNull(execute(search("r -> $r.get(`tl.core:Revision#date`)"), revision));
+
+		becomeUser(_root);
+		assertEquals(_user, execute(search("r -> $r.get(`tl.core:Revision#author`)"), revision));
+	}
+
+	/**
 	 * A persistent object that cannot hold roles (a knowledge item standing for itself) grants no
 	 * role: it is refused for a non-administrative user, on the object and on its attributes, but
 	 * stays accessible for a person bypassing the security.

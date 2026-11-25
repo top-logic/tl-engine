@@ -88,6 +88,9 @@ public interface ViewCommand {
 		/** Configuration name for {@link #getClique()}. */
 		String CLIQUE = "clique";
 
+		/** Configuration name for {@link #getTone()}. */
+		String TONE = "tone";
+
 		/** Configuration name for {@link #getCheckDirty()}. */
 		String CHECK_DIRTY = "check-dirty";
 
@@ -237,19 +240,44 @@ public interface ViewCommand {
 		 * The clique name for grouping related commands.
 		 *
 		 * <p>
-		 * A command in the clique "delete" is destructive: its button and the affirmative answer of
-		 * a confirmation in its chain are drawn as destructive.
+		 * The clique decides where the command is placed. Without a {@link #getTone() tone} of its
+		 * own, a command in the clique of deleting commands is destructive: its button and the
+		 * affirmative answer of a confirmation in its chain are drawn as destructive.
 		 * </p>
 		 *
-		 * @implNote The tone a clique gives a command is defined by
-		 *           {@link CommandCliques#tone(String)}, the clique of deleting commands is
-		 *           {@link CommandCliques#DELETE}.
+		 * @implNote The tone of a command is resolved by
+		 *           {@link CommandCliques#tone(ViewCommand.Config)}, the clique of deleting commands
+		 *           is {@link CommandCliques#DELETE}.
 		 *
 		 * @see CommandCliques
 		 */
 		@Name(CLIQUE)
 		@Nullable
 		String getClique();
+
+		/**
+		 * Whether the command is destructive.
+		 *
+		 * <p>
+		 * The tone of the command's button or menu entry, and of the affirmative answer of every
+		 * confirmation in its chain. A tone set here always applies, whatever the
+		 * {@link #getClique() clique} of the command and whatever its actions do: the ordinary tone
+		 * {@link ButtonTone#DEFAULT} draws also a command deleting an object as an ordinary one.
+		 * </p>
+		 *
+		 * <p>
+		 * If not set, the tone follows what the command does: a command with a destructive action,
+		 * such as deleting an object, is destructive, and so is a command in the clique of deleting
+		 * commands.
+		 * </p>
+		 *
+		 * @implNote The tone of a command is resolved by
+		 *           {@link CommandCliques#tone(ViewCommand.Config)}.
+		 */
+		@Name(TONE)
+		@Nullable
+		@NullDefault
+		ButtonTone getTone();
 
 		/**
 		 * Which unsaved changes this command asks about before it runs.
@@ -436,8 +464,10 @@ public interface ViewCommand {
 	 * The kind of action this command stands for, decided by what the command does.
 	 *
 	 * <p>
-	 * {@link ButtonTone#DANGER} for a command that destroys or discards what the user has. There is
-	 * no configuration for it: an author states what a command does, the command's UI shows it.
+	 * {@link ButtonTone#DANGER} for a command that destroys or discards what the user has. This is
+	 * the tone of a command without a configured one: a {@link Config#getTone() configured tone},
+	 * or the {@link Config#getClique() clique} of deleting commands, decides before it, see
+	 * {@link CommandCliques#tone(ViewCommand.Config)}.
 	 * </p>
 	 *
 	 * @return {@link ButtonTone#DEFAULT} for an ordinary command.

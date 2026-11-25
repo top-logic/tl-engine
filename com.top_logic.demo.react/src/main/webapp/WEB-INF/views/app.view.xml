@@ -432,6 +432,15 @@
 							<de>Repeater</de>
 						</label>
 					</nav-item>
+					<nav-item id="openable-cards"
+						icon="css:bi bi-box-arrow-up-right"
+					>
+						<view-ref view="demo/openable-cards-demo.view.xml"/>
+						<label>
+							<en>Openable cards</en>
+							<de>Öffenbare Karten</de>
+						</label>
+					</nav-item>
 					<nav-item id="images"
 						icon="css:bi bi-image"
 					>

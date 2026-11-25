@@ -39,8 +39,8 @@ import com.top_logic.layout.view.element.WithBadge;
  * <p>
  * The dock is a frame and nothing else. Closed it costs one button in the corner of the window;
  * opened it shows, in a card over the page, whatever the application nested inside it - normally
- * one {@code <chat>} holding a session list, a {@code <chat-conversation/>} and a
- * {@code <side-rail>}, but any view element will do. What the assistant is <em>made of</em> stays
+ * one {@code <chat>} holding a split panel with a session list, a {@code <chat-conversation/>} and
+ * a {@code <side-rail>}, but any view element will do. What the assistant is <em>made of</em> stays
  * the application's decision, exactly as it is on a page of its own.
  * </p>
  *
@@ -59,9 +59,17 @@ import com.top_logic.layout.view.element.WithBadge;
  * <pre>
  * &lt;chat-dock chat-id="assistant" icon="css:bi bi-stars" badge="railBadge" open-channel="dockOpen"&gt;
  *   &lt;label&gt;&lt;en&gt;Assistant&lt;/en&gt;&lt;de&gt;Assistent&lt;/de&gt;&lt;/label&gt;
- *   &lt;chat chat-id="assistant" direction="row"&gt;
- *     &lt;panel fill="true"&gt;&lt;chat-conversation input="dockSession"/&gt;&lt;/panel&gt;
- *     &lt;side-rail badge-channel="railBadge" shown="dockOpen"&gt;...&lt;/side-rail&gt;
+ *   &lt;chat chat-id="assistant"&gt;
+ *     &lt;split-panel orientation="horizontal" resizable="true"&gt;
+ *       &lt;panes&gt;
+ *         &lt;pane size="100" unit="%"&gt;
+ *           &lt;panel fill="true"&gt;&lt;chat-conversation input="dockSession"/&gt;&lt;/panel&gt;
+ *         &lt;/pane&gt;
+ *         &lt;pane size="300" unit="px"&gt;
+ *           &lt;side-rail side="right" badge-channel="railBadge" shown="dockOpen"&gt;...&lt;/side-rail&gt;
+ *         &lt;/pane&gt;
+ *       &lt;/panes&gt;
+ *     &lt;/split-panel&gt;
  *   &lt;/chat&gt;
  * &lt;/chat-dock&gt;
  * </pre>
@@ -187,7 +195,8 @@ public class ChatDockElement implements UIElement {
 		 * stand one below the other, and the ones that fill share the height the others leave.
 		 * </p>
 		 *
-		 * @implNote The dock's stylesheet stretches a {@code <chat>}, a {@code <stack>} or a
+		 * @implNote The dock's stylesheet stretches a {@code <split-panel>} (also as the content of a
+		 *           {@code <chat>}, which has no element of its own), a {@code <stack>} or a
 		 *           {@code <panel>} placed here over the panel's body, and the body ends the view
 		 *           layer's fill chain (the fill contract of the article {@code view-layer/basics}),
 		 *           so the conversation's {@code <panel fill="true">} resolves its height against the

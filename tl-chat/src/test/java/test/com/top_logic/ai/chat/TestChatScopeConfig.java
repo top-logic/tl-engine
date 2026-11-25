@@ -20,39 +20,50 @@ import com.top_logic.ai.chat.view.ChatScopeElement.Config;
 import com.top_logic.layout.view.list.DataListElement;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.element.SideRailElement;
+import com.top_logic.layout.view.element.SplitPanelElement;
 
 /**
- * The configuration surface of {@code <chat>}: the id it hands down and the children it lays out.
+ * The configuration surface of {@code <chat>}: the id it hands down and the one element it holds.
  */
 public class TestChatScopeConfig extends TestCase {
 
-	/** Unconfigured, a {@code <chat>} is the default conversation and an empty column. */
+	/** Unconfigured, a {@code <chat>} is the default conversation without content. */
 	public void testDefaults() {
 		Config config = TypedConfiguration.newConfigItem(Config.class);
 		assertEquals(ChatScope.DEFAULT_CHAT_ID, config.getChatId());
 		assertTrue(config.getChildren().isEmpty());
-		assertEquals("It lays out like a <stack>, which is a column unless told otherwise.",
-			StackDirection.COLUMN, config.getDirection());
 		assertEquals(ChatScopeElement.class, config.getImplementationClass());
 	}
 
-	/** The children are written directly, as in a {@code <stack>}, and keep their order. */
-	public void testChildrenParseInOrder() throws Exception {
-		Config config = parse("<chat %s chat-id='support' direction='row'>"
-			+ "<chat-conversation/>"
-			+ "<side-rail><section name='sources'><chat-sources/></section></side-rail>"
+	/** The content is written directly inside the {@code <chat>}; a layout element holds several. */
+	public void testContentParses() throws Exception {
+		Config config = parse("<chat %s chat-id='support'>"
+			+ "<split-panel orientation='horizontal' resizable='true'><panes>"
+			+ "<pane><chat-conversation/></pane>"
+			+ "<pane><side-rail><section name='sources'><chat-sources/></section></side-rail></pane>"
+			+ "</panes></split-panel>"
 			+ "</chat>");
 
 		assertEquals("support", config.getChatId());
-		assertEquals(StackDirection.ROW, config.getDirection());
 
 		List<UIElement.Config> children = config.getChildren();
-		assertEquals(2, children.size());
-		assertEquals(ChatConversationElement.class, children.get(0).getImplementationClass());
-		assertEquals(SideRailElement.class, children.get(1).getImplementationClass());
+		assertEquals(1, children.size());
+		assertEquals(SplitPanelElement.class, children.get(0).getImplementationClass());
+	}
+
+	/** A layout option of {@code <stack>} is no option of {@code <chat>}. */
+	public void testNoLayoutOptions() {
+		assertNull(TypedConfiguration.getConfigurationDescriptor(Config.class).getProperty("direction"));
+		assertNull(TypedConfiguration.getConfigurationDescriptor(Config.class).getProperty("gap"));
+		assertNull(TypedConfiguration.getConfigurationDescriptor(Config.class).getProperty("align"));
+	}
+
+	/** The side rail of a chat is a chat element's neighbour, not a property of {@code <chat>}. */
+	public void testRailIsContent() throws Exception {
+		Config config = parse("<chat %s><side-rail><section name='sources'><chat-sources/></section></side-rail></chat>");
+		assertEquals(SideRailElement.class, config.getChildren().get(0).getImplementationClass());
 	}
 
 	/** The point of the element: the nested elements say nothing about which chat they show. */

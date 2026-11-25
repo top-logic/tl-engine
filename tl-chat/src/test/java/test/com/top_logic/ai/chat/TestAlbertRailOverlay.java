@@ -32,6 +32,8 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.element.SideRailElement;
 import com.top_logic.layout.view.element.SideRailElement.SectionConfig;
+import com.top_logic.layout.view.element.SplitPanelElement;
+import com.top_logic.layout.view.element.SplitPanelElement.PaneConfig;
 
 /**
  * Tests that a same-path overlay of the shipped chat page {@code tl-chat/albert.view.xml} addresses
@@ -142,12 +144,18 @@ public class TestAlbertRailOverlay extends TestCase {
 
 	private static SideRailElement.Config rail(ViewElement.Config view) {
 		assertTrue("The page is one <chat>.", view.getContent() instanceof ChatScopeElement.Config);
-		for (UIElement.Config child : ((ChatScopeElement.Config) view.getContent()).getChildren()) {
-			if (child instanceof SideRailElement.Config rail && RAIL_ID.equals(rail.getId())) {
-				return rail;
+		List<UIElement.Config> content = ((ChatScopeElement.Config) view.getContent()).getChildren();
+		assertEquals("A <chat> holds one element.", 1, content.size());
+		assertTrue("The <chat> holds the split panel of list, conversation and rail.",
+			content.get(0) instanceof SplitPanelElement.Config);
+		for (PaneConfig pane : ((SplitPanelElement.Config) content.get(0)).getPanes()) {
+			for (UIElement.Config child : pane.getChildren()) {
+				if (child instanceof SideRailElement.Config rail && RAIL_ID.equals(rail.getId())) {
+					return rail;
+				}
 			}
 		}
-		fail("The page has no <side-rail id='" + RAIL_ID + "'>.");
+		fail("The page has no <side-rail id='" + RAIL_ID + "'> in a pane of its split panel.");
 		return null;
 	}
 

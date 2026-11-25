@@ -43,6 +43,7 @@
 
 import { enqueueCommand, type CommandResponse } from './command-channel';
 import { withoutWindowName } from './page-leave';
+import { getContextPath, getWindowName } from './page-context';
 
 export interface RouteChangeEventData {
   url: string;
@@ -202,16 +203,6 @@ function dropStepsBeyond(pos: number): void {
       _localSteps.delete(key);
     }
   }
-}
-
-/** The current page's window name (read from body data attribute). */
-function getWindowName(): string {
-  return document.body.dataset.windowName ?? '';
-}
-
-/** The context path for URL construction (read from body data attribute). */
-function getContextPath(): string {
-  return document.body.dataset.contextPath ?? '';
 }
 
 /**

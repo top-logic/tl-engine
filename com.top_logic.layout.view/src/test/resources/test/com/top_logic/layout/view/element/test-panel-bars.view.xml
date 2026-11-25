@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<stack>
+		<!-- A panel with nothing to show in its header. -->
+		<panel fill="true">
+			<text label="Content"/>
+		</panel>
+
+		<!-- A panel whose only toolbar command is hidden while its input is empty. -->
+		<panel>
+			<commands>
+				<generic-command
+					inputs="count"
+					label="Hidden"
+				>
+					<executability>
+						<null-input-hidden/>
+					</executability>
+				</generic-command>
+			</commands>
+			<text label="Content"/>
+		</panel>
+
+		<!-- A panel with a command in its button bar. -->
+		<panel>
+			<commands>
+				<generic-command
+					label="Apply"
+					placement="BUTTON_BAR"
+				/>
+			</commands>
+			<text label="Content"/>
+		</panel>
+	</stack>
+</view>

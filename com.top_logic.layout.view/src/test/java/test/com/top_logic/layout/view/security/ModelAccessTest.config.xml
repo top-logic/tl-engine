@@ -9,6 +9,7 @@
 					<declaration file="/WEB-INF/model/TestViewObjectFields.model.xml"/>
 					<declaration file="/WEB-INF/model/TestViewFallbackStorage.model.xml"/>
 					<declaration file="/WEB-INF/model/TestViewCheckDependencies.model.xml"/>
+					<declaration file="/WEB-INF/model/TestViewTypedBuffers.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

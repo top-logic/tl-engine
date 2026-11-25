@@ -87,7 +87,7 @@ public class TestRunObservers extends TestCase {
 	 * with who they are for, and the child names its parent.
 	 */
 	public void testObserverLearnsOfRunAndChild() throws InterruptedException {
-		ToolContext lead = new ToolContext(new Principal(new RunPrincipal(null, RunEntryPoint.A2A, false)),
+		ToolContext lead = new ToolContext(new Principal(new RunPrincipal(null, RunEntryPoint.A2A, true)),
 			ApprovalCallback.AUTO_APPROVE, TransactionScope.NOOP, new CancellationToken());
 
 		assertTrue(loop().run(asked("Hello"), lead, event -> {

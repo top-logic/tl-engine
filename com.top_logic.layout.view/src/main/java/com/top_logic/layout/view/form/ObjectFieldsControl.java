@@ -239,7 +239,7 @@ public class ObjectFieldsControl extends ReactFormGroupControl
 			dropOverlay();
 			_base = target;
 			if (editing) {
-				_overlay = new TLObjectOverlay(target);
+				_overlay = TLObjectOverlay.newOverlay(target);
 				_session = session;
 				session.addOverlay(_overlay, target);
 			}

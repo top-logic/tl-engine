@@ -723,8 +723,11 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	 * the selected objects the diagram does not display.</li>
 	 * <li>An element that is selected keeps the selection, also a selection of several elements,
 	 * and the menu acts on all of them.</li>
-	 * <li>The empty area of the diagram (no element) clears the selection, so that only commands
-	 * without an object apply.</li>
+	 * <li>The empty area of the diagram (no element) clears the selection of the diagram. The
+	 * {@link SelectionListener}s learn that the user left no element selected, as for a click on
+	 * the empty area: a selection channel bound through a {@link DiagramSelectionBinding} then
+	 * receives the object the empty area stands for, or no value if there is none, so that only
+	 * commands without an object apply.</li>
 	 * </ul>
 	 *
 	 * <p>

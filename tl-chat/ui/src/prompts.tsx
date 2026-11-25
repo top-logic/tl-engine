@@ -1,4 +1,4 @@
-import { React } from 'tl-react-bridge'
+import { React, isCompositionKey } from 'tl-react-bridge'
 import type { InteractionAnswer } from './api'
 import type { bundle } from './i18n'
 import type { ChatAction } from './reducer'
@@ -460,7 +460,8 @@ function QuestionCard({
               aria-label={labels.ownAnswer}
               onChange={(event) => setText(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter' && canContinue) {
+                // The Enter that ends a composition is the input method's: the answer is not finished.
+                if (event.key === 'Enter' && !isCompositionKey(event.nativeEvent) && canContinue) {
                   event.preventDefault()
                   send()
                 }
@@ -476,7 +477,8 @@ function QuestionCard({
           value={text}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === 'Enter' && text.trim()) {
+            // The Enter that ends a composition is the input method's: the answer is not finished.
+            if (event.key === 'Enter' && !isCompositionKey(event.nativeEvent) && text.trim()) {
               event.preventDefault()
               void submit(text.trim())
             }

@@ -76,10 +76,31 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
+	 * Lookup {@link Ticket#CHANNEL_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLProperty getChannelTicketAttr() {
+		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.CHANNEL_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Ticket#COMMENTS_ATTR} of {@link Ticket}.
 	 */
 	public static com.top_logic.model.TLReference getCommentsTicketAttr() {
 		return (com.top_logic.model.TLReference) getTicketType().getPart(Ticket.COMMENTS_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Ticket#CUSTOM_KEY_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLProperty getCustomKeyTicketAttr() {
+		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.CUSTOM_KEY_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Ticket#CUSTOM_PUBLIC_STATUS_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLReference getCustomPublicStatusTicketAttr() {
+		return (com.top_logic.model.TLReference) getTicketType().getPart(Ticket.CUSTOM_PUBLIC_STATUS_ATTR);
 	}
 
 	/**
@@ -97,6 +118,13 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
+	 * Lookup {@link Ticket#KEY_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLProperty getKeyTicketAttr() {
+		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.KEY_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Ticket#KEYWORDS_ATTR} of {@link Ticket}.
 	 */
 	public static com.top_logic.model.TLReference getKeywordsTicketAttr() {
@@ -111,10 +139,24 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
+	 * Lookup {@link Ticket#NUMBER_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLProperty getNumberTicketAttr() {
+		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.NUMBER_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Ticket#ORDER_ATTR} of {@link Ticket}.
 	 */
 	public static com.top_logic.model.TLProperty getOrderTicketAttr() {
 		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.ORDER_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Ticket#PUBLIC_STATUS_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLReference getPublicStatusTicketAttr() {
+		return (com.top_logic.model.TLReference) getTicketType().getPart(Ticket.PUBLIC_STATUS_ATTR);
 	}
 
 	/**
@@ -136,6 +178,13 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 */
 	public static com.top_logic.model.TLProperty getStatusLabelTicketAttr() {
 		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.STATUS_LABEL_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Ticket#SUGGESTED_KEY_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLProperty getSuggestedKeyTicketAttr() {
+		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.SUGGESTED_KEY_ATTR);
 	}
 
 	/**

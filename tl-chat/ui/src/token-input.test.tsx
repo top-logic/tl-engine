@@ -132,3 +132,61 @@ describe('Backspace behind a token', () => {
     expect(tokens()).toBe(2)
   })
 })
+
+/**
+ * The keys of an input method composition are the input method's (#30487): the editor takes no
+ * token with them and hands none to its owner - the composer, the edit of a sent message.
+ */
+describe('a key of an input method composition', () => {
+  /** A key as an input method reports it while it composes. */
+  function composing(key: string, init: KeyboardEventInit = {}): KeyboardEvent {
+    return new KeyboardEvent('keydown', {
+      key,
+      keyCode: 229,
+      isComposing: true,
+      bubbles: true,
+      cancelable: true,
+      ...init,
+    })
+  }
+
+  it('takes no token with Backspace', () => {
+    clickAtEnd()
+    const event = composing('Backspace')
+    act(() => {
+      editor().dispatchEvent(event)
+    })
+    expect(event.defaultPrevented).toBe(false)
+    expect(tokens()).toBe(2)
+  })
+
+  it('reaches no key handler of the owner, neither Enter nor Ctrl+Enter nor Escape', () => {
+    const keys: string[] = []
+    act(() =>
+      root.render(
+        React.createElement(TokenInput, {
+          value,
+          onChange: (next: string) => {
+            value = next
+          },
+          onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
+            keys.push(event.key)
+          },
+          placeholder: 'Ask',
+          ariaLabel: 'Message',
+        }),
+      ),
+    )
+    for (const event of [composing('Enter'), composing('Enter', { ctrlKey: true }), composing('Escape')]) {
+      act(() => {
+        editor().dispatchEvent(event)
+      })
+    }
+    expect(keys).toEqual([])
+
+    act(() => {
+      editor().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+    })
+    expect(keys).toEqual(['Escape'])
+  })
+})

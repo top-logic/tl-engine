@@ -65,6 +65,12 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	/** Type whose role source is a role parent rule pointing to {@link #COVERED}. */
 	private static final String CHILD_OF_COVERED = MODULE + ":ChildOfCovered";
 
+	/**
+	 * Type whose role source is a role parent rule ending at an abstract type, whose concrete
+	 * specialization has the security root as role parent.
+	 */
+	private static final String CHILD_OF_ABSTRACT = MODULE + ":ChildOfAbstract";
+
 	/** Type with a role rule and only an attribute grant. */
 	private static final String PART_ONLY = MODULE + ":PartOnly";
 
@@ -145,6 +151,18 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 
 	/** Type in a composition, granting Create to {@link #ROLE_ROOT_CREATOR}. */
 	private static final String CREATED_IN_CONTAINER_AT_ROOT = MODULE + ":CreatedInContainerAtRoot";
+
+	/** Type in no composition referencing the container type, granting Create to {@link #ROLE_CONTAINER_CREATOR}. */
+	private static final String CREATED_AT_REFERENCED = MODULE + ":CreatedAtReferenced";
+
+	/**
+	 * Type in no composition referenced by the container type with an inverse reference, granting
+	 * Create to {@link #ROLE_CONTAINER_CREATOR}.
+	 */
+	private static final String CREATED_AT_INVERSE = MODULE + ":CreatedAtInverse";
+
+	/** The type of the security root of the test application. */
+	private static final String ROOT_TYPE = "SecurityStructure:Root";
 
 	/**
 	 * Type held in the composition to its generalization, granting Create to
@@ -258,6 +276,20 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		assertTrue("The type has no role rule of its own.", coverage.roleRules().isEmpty());
 		assertEquals(1, coverage.roleParentRules().size());
 		assertNull("A type with a role parent rule decides for itself.", coverage.accessParent());
+	}
+
+	public void testRoleParentEndingAtAbstractType() {
+		TypeCoverage coverage = coverage(CHILD_OF_ABSTRACT);
+		assertEquals("A role delivered on a concrete specialization of the abstract end type takes effect.",
+			Set.of(), findingKinds(coverage));
+		assertEquals(CoverageStatus.COVERED, coverage.status());
+
+		SecurityCoverageAnalysis analysis = SecurityCoverageAnalysis.newInstance(Set.of(EXCLUDED_MODULE));
+		assertTrue(analysis.isLiveGrant(coverage.type(), SimpleBoundCommandGroup.READ,
+			BoundedRole.getRoleByName(ROLE_ROOT_CREATOR)));
+		assertFalse("A role delivered nowhere stays undeliverable.",
+			analysis.isLiveGrant(coverage.type(), SimpleBoundCommandGroup.READ,
+				BoundedRole.getRoleByName(ROLE_GHOST)));
 	}
 
 	public void testPartGrantCoversType() {
@@ -436,7 +468,7 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		assertEquals(SimpleBoundCommandGroup.CREATE, finding.getOperation());
 		assertEquals("A role delivered on the created type does not count for Create.",
 			Set.of(ROLE_SELF_CREATOR), roleNames(finding.getRoles()));
-		assertEquals(I18NConstants.DEAD_CREATE_GRANT_ROOT__TYPE_OPERATION_ROLES.getKey(),
+		assertEquals(I18NConstants.DEAD_CREATE_GRANT__TYPE_OPERATION_ROLES_CONTEXTS.getKey(),
 			finding.getMessage().plain().getKey());
 	}
 
@@ -450,16 +482,19 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 			findingKinds(coverage(CREATED_SPECIAL)));
 	}
 
-	public void testCreateInContainerNotCheckedOnRoot() {
-		TypeCoverage coverage = coverage(CREATED_IN_CONTAINER_AT_ROOT);
-		assertEquals(coverage.toString(), Set.of(FindingKind.DEAD_GRANT), findingKinds(coverage));
+	public void testCreateInContainerCheckedOnRoot() {
+		assertEquals("A type in a composition may also be created without context, on the security root.",
+			Set.of(), findingKinds(coverage(CREATED_IN_CONTAINER_AT_ROOT)));
+	}
 
-		CoverageFinding finding = singleFinding(coverage, FindingKind.DEAD_GRANT);
-		assertEquals(SimpleBoundCommandGroup.CREATE, finding.getOperation());
-		assertEquals("A type in a composition is created in its container, not on the security root.",
-			Set.of(ROLE_ROOT_CREATOR), roleNames(finding.getRoles()));
-		assertEquals(I18NConstants.DEAD_CREATE_GRANT_CONTAINER__TYPE_OPERATION_ROLES_CONTAINERS.getKey(),
-			finding.getMessage().plain().getKey());
+	public void testCreateCheckedOnReferencedType() {
+		assertEquals("An object the type references may be the context of its creation.", Set.of(),
+			findingKinds(coverage(CREATED_AT_REFERENCED)));
+	}
+
+	public void testCreateCheckedOnInverseReferencedType() {
+		assertEquals("An object referencing the type through a reference with an inverse may be the context.",
+			Set.of(), findingKinds(coverage(CREATED_AT_INVERSE)));
 	}
 
 	public void testCreateInOverriddenComposition() {
@@ -471,7 +506,8 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		assertEquals(SimpleBoundCommandGroup.CREATE, finding.getOperation());
 		assertEquals("A container narrowing the composition down to another type does not hold the type.",
 			Set.of(ROLE_ITEM_CREATOR), roleNames(finding.getRoles()));
-		assertEquals(List.of(CONTAINER_B), List.of(finding.getMessage().arguments()[3]));
+		assertEquals(String.join(", ", ROOT_TYPE, CONTAINER_B, "tl.accounts:Person"),
+			finding.getMessage().arguments()[3]);
 	}
 
 	public void testReadNotCheckedOnRoot() {

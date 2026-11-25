@@ -1105,6 +1105,14 @@ Behind a reverse proxy that sends forwarding headers (Forwarded, X-Forwarded-*),
 					anonymous="true"
 					view="browse.view.xml"
 				/>
+				<!--
+					The page a ticket link (TicketLinkServlet) answers a link with that leads to no
+					ticket: shown to every visitor, with or without an account.
+				-->
+				<entry-point
+					anonymous="true"
+					view="ticket-link-error.view.xml"
+				/>
 			</entry-points>
 		</config>
 	</configs>

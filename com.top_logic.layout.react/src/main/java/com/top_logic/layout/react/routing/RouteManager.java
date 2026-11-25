@@ -956,9 +956,16 @@ public final class RouteManager {
 	}
 
 	/**
-	 * Appends the given query parameters to the given URL, percent-encoded.
+	 * Appends the given query parameters to the given URL, percent-encoded, in the form a URL
+	 * {@link #adoptUrl(String) adopted} by a route manager carries them.
+	 *
+	 * @param url
+	 *        The URL without query string, to which the query is appended.
+	 * @param query
+	 *        The parameters, in the order they appear in the query; empty for none, which appends
+	 *        nothing.
 	 */
-	private static void appendQuery(StringBuilder url, Map<String, String> query) {
+	public static void appendQuery(StringBuilder url, Map<String, String> query) {
 		char separator = QUERY_START;
 		for (Map.Entry<String, String> parameter : query.entrySet()) {
 			url.append(separator);

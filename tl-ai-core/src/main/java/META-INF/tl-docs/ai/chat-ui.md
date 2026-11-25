@@ -160,7 +160,28 @@ public class TaskBackendResolver implements ConversationBackendResolver {
 }
 ```
 
-The subject is there before the first run asks: `<chat-conversation subject="…">` offers its channel to its chat while it is displayed, and the first `send` of a conversation, which creates its session before the message goes, creates it with what stands there. A conversation can also be started on the server, from a command - `chatStart(chatId, subject, text)` (`ChatStart`) creates the session about `subject` and sends `text` through the chat `chatId` of the window, as if typed there; written to that chat's `input` channel, the session shows the run while it is written.
+The subject stands on the session before its first run asks: `<chat-conversation subject="…">` offers its channel to its chat while it is displayed, and the first `send` of a conversation creates its session with what stands there, before the message goes. A conversation can also be started on the server, from a command - `chatStart(chatId, subject, text)` (`ChatStart`) creates the session about `subject` and sends `text` through the chat `chatId` of the window, as if typed there; written to that chat's `input` channel, the session shows the run while it is written.
+
+A page on which every conversation has an object of its own that comes into being with it - a task created by its first message - gives the element a factory for the subject and the type it creates:
+
+```xml
+<chat-conversation input="chatSession" subject="task"
+    subject-type="my.module:Task"
+    subject-factory="text -> attachments -> {
+        task = new(`my.module:Task`);
+        $task.set(`my.module:Task#name`, $text);
+        $task;
+    }"/>
+```
+
+`subject-factory` is a TL-Script function of the text of the first message and the list of its files (as binary data) that returns the subject; it returns the created object as its last expression, since `set` returns nothing. `subject-type` is required with it. An empty chat offers what a conversation about an object of `subject-type` offers (`featuresFor`). The factory only works for the send that creates a conversation, and only while the `subject` channel holds no object - one standing there is the subject as without a factory. The first message then goes like this:
+
+1. **Checks without a session.** Everything decidable before anything exists: the features for `subject-type` - when a resolver answers the type, the message is checked against its `featuresFor` (e.g. files); only when none answers does the agent policy apply (`SendRefusal.forRun`), as for every conversation the framework's own agent answers - and the room for the run. A refusal creates nothing.
+2. **The factory**, in a transaction of its own, as the signed-in account: what it may create is what that account may create. A `TopLogicException` it throws refuses the message with its text (`forbidden`); a result that is `null` or no object of `subject-type` refuses it with a sentence naming the type. Either way the transaction is rolled back, nothing exists, and the text stays in the composer.
+3. **The session** is created about the new object; a bound `subject` channel shows it.
+4. **A failure afterwards** - e.g. another run took the last place meanwhile - keeps the session with its subject: no subject is left without its conversation. The answer names the session, the browser opens it, the text stays in the composer and the message's files move to that session, so sending again goes into it.
+
+A draft that is never sent creates nothing. Without `subject-factory`, a first message that is refused - by the policy, the backend's features or the room - is refused before its session is created, so it leaves nothing behind either.
 
 - `send(turn, sink, cancel)` runs on the chat's worker thread and blocks until the run has ended. The backend reports its work as `AgentEvent`s into `sink`, from `RunStarted` to `RunCompleted`, and `RunRecording` records them as the conversation's execution with its transcript, tokens and cost, recorded under `agentName()`.
 - **Events only on that thread.** The thread carries the run's frame - the user's sub-session, the bound `ConversationLogListener`, the processing state - and the recording takes its events one at a time in run order. A backend that reads its process on a thread of its own queues what it reads and drains the queue inside `send`; the sink refuses an event from another thread, one after `send` returned and every event after a refused one, and the run then ends in an error.

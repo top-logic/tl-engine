@@ -455,7 +455,9 @@ public class ChatConversationElement implements UIElement {
 		 * message is sent, so that a {@link com.top_logic.ai.chat.backend.ConversationBackendResolver}
 		 * deciding from the subject already answers that message. Opening an older one while
 		 * another object stands here does not move it, and a conversation started while the channel
-		 * was empty keeps no subject rather than being given one later.
+		 * was empty keeps no subject rather than being given one later - unless the
+		 * {@link #getSubjectFactory() subject factory} creates one with its first message, which
+		 * this channel then shows.
 		 * </p>
 		 */
 		@Name(SUBJECT)

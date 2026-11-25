@@ -23,7 +23,7 @@ The browser component reaches the server only through the chat controls of its w
 
 2. **Sending** is a set of React commands of the chat controls (`ChatControl`) as well, so it travels the window's FIFO command channel like every other command:
    - **`send`** (`ChatControl.CMD_SEND`): arguments `text`, `sessionId`, `title`, and the turn settings `agent`, `model`, `mcpOverride`, `mcpServers`, `effort`, `approvalMode` (`ARG_*`). It checks that the account may write the chat (see "Access to a chat" below), switches the conversation's tracker to it, applies the approval mode the switch shows (`ApprovalChoice.applyToChat`, `ApprovalChoice.save`), asks `SendRefusal` (or, for a chat a `ConversationBackend` answers, what the backend supports) and starts the run (`ChatProcessor.sendMessage`). The answer is `status` - one of `processing`, `busy`, `forbidden` (the policy or the backend refuses, or the account may read the chat but not write it; `reason` is the sentence the composer shows), `rejected` (no room for the run right now, `reason`), `notFound` (a chat the account may not read answered exactly like one that does not exist, an agent no agent is called), `error` (`STATUS_*`) - and for a message that went `sessionId` and `features` (`ConversationFeaturesDto`). The browser shows `forbidden` as a sticky notice, `rejected` as one that goes by itself (`ForbiddenError` / `RefusedError` in `api.ts`), `busy` as the busy hint, everything else as "could not be sent".
-   - **A send without `sessionId` creates its chat**, titled `title` (the browser's `autoTitle` of the message), with the approval mode the switch shows and about the object the page offers as its `subject` (`ChatViewBinding.subject()`, see "`subject`" below), and answers with its id: one command where a create and an open used to be two. A chat the send created and could not send into is deleted again in the same command (as `ChatStart` does), so a refused first message leaves no empty row in the list.
+   - **A send without `sessionId` creates its chat**, titled `title` (the browser's `autoTitle` of the message), with the approval mode the switch shows and about the object the page offers as its `subject` (`ChatViewBinding.subject()`, see "`subject`" below), and answers with its id: one command where a create and an open used to be two. What refuses a first message without its chat - the agent policy or the backend's features, the room for the run - is asked before the chat is created (`ChatControl.firstSendRefusal`); a chat the send created and could not send into afterwards is deleted again in the same command (as `ChatStart` does), so a refused first message leaves no empty row in the list. A chat whose subject the send created (`subject-factory`, see "`subject`" below) is kept instead, and the answer names it.
    - **What the page states about the situation** (`<chat-conversation><context>` and `<selection/>`) is evaluated on the server when the message is sent: the displayed conversation offers its facts to its chat (`ChatViewBinding.offerFacts`), and `send` and `regenerate` read them there (`ChatViewBinding.facts()`). The browser carries none of it; the harness renders the stable facts into the run's system prompt and the message text stays untouched.
    - **`editSend`** (`CMD_EDIT_SEND`, plus `fromTurn`): drops the turn and everything after it and sends the edited message, in **one** command, so no other command of the window can come between the two. The busy check, the backend's `editMessages`, the send's refusal checks and the installation's room are all asked before anything is dropped, so a refused edit removes nothing; the browser puts the transcript back as it was. Answered like `send`, plus `removedTurns`. An edited message carries no files.
    - **`regenerate`** (`CMD_REGENERATE`): busy check, refusal (`SendRefusal` / the backend's `regenerate`), `ChatProcessor.noRoomReason`, then the last turn is dropped and its message sent again; answered with `status`, `reason`, `removedTurns` and the message sent again as `text`, which the browser puts back as the user bubble.
@@ -1030,7 +1030,7 @@ what writes it:
 | | |
 |--|--|
 | When | Once, by the command that brings the conversation into being - the first `send`, which creates the chat before its message goes. The element offers its channel to its chat (`ChatViewBinding.offerSubject`) while it is displayed, and the send reads it there (`ChatViewBinding.subject()`), so the subject stands before the first run asks the `ConversationBackendResolver`s. A conversation started on the server - `chatStart(chatId, subject, text)`, `ChatStart` - is created with its subject the same way. |
-| Never | On the way in. Which conversation is shown stays `input`'s business, and which ones the user may pick stays the `<data-list>`'s. A conversation opened beside another object is not moved there, and one started while the channel was empty is not given a subject later - `AgentExecutionStore.setSubject` refuses a session that already has one, and no path backfills the rest. |
+| Never | On the way in. Which conversation is shown stays `input`'s business, and which ones the user may pick stays the `<data-list>`'s. A conversation opened beside another object is not moved there, and one started while the channel was empty is not given a subject later (other than the one a `subject-factory` creates with its first message, below) - `AgentExecutionStore.setSubject` refuses a session that already has one, and no path backfills the rest. |
 | What counts | One model object, or a one-row selection. Several objects name no single subject, and nothing on the channel means the page was showing nothing; both stamp nothing (`ChatViewBinding.singleObject`). |
 | Scoping the list | The `<data-list>`'s own `rows`, by navigating back - which is the point of a reference rather than a remembered id (see below). `referers` is not a security boundary, so the owner filter stays. |
 | A deleted subject | Clears the reference (the default deletion policy): the conversation outlives the object it was about, and it drops out of that object's list. **But navigating back from the deleted object itself throws** - `TLObject.tReferers`, which TL-Script's `referers` calls, refuses a lookup from a deleted object, and TL-Script has no "is this still there" to guard with. So the expression below answers while the channel is empty and while it holds a live object, and fails in the window where it still holds one that was deleted meanwhile. That window is not this feature's: a `<form>` or a `<table>` over the same channel is in the same position, and a page that must survive it asks the sessions (`all(...).filter(s -> $s.get(...) == $x)`) instead of the object. `TestSessionSubject` pins both halves. |
@@ -1041,6 +1041,28 @@ what writes it:
         .filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
         .sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc()))</rows>
 ```
+
+**A subject that comes into being with the first message** - `subject-factory` and `subject-type`
+(`ChatConversationElement.Config`; `ChatSubjectFactory`, offered to the chat by
+`ChatViewBinding.offerSubjectFactory` while the element is displayed):
+
+```xml
+<chat-conversation input="chatSession" subject="task"
+    subject-type="my.module:Task"
+    subject-factory="text -> attachments -> {
+        task = new(`my.module:Task`);
+        $task.set(`my.module:Task#name`, $text);
+        $task;
+    }"/>
+```
+
+| | |
+|--|--|
+| When | Only in the `send` that creates a conversation, and only while `subject` holds no object (an object there wins). The function gets the text and the files of the message as a list of `BinaryData` and returns the subject - the created object as its last expression, since `set` returns nothing. `subject-type` is required with it (`ChatConversationElement.missingSubjectType`). |
+| Before it | Everything decidable without a session (`ChatControl.firstSendRefusal`), on the features of `subject-type` (`ConversationBackendService.backendFeaturesFor`): a resolver answers the type - the files are checked against its features; none does - the agent policy (`SendRefusal.forRun`). Then the room for the run. A refusal creates nothing. |
+| It | Its own transaction, as the signed-in account (the model-based security decides what it may create). A `TopLogicException` refuses the message with its text (`forbidden`); `null` or an object of another type refuses it with `ERROR_SUBJECT_NOT_OF_TYPE__TYPE`. Rolled back either way; the text stays in the composer. |
+| After it | The session is created about the object, `subject` shows it (`ChatSubjectFactory.show`). Should the session not come into being, the object is deleted again (`discard`). A send that fails afterwards keeps the session: the answer names it (`sessionId` beside a status other than `processing`), the files move to its draft (`ChatAttachments.moveTo`), and `chat-store` opens it with the text in the composer (`openKeptChat`). |
+| Empty chat | `subjectFeatures` are those of `subject-type` while `subject` is empty. |
 
 The shipped page `tl-chat/albert.view.xml` configures both halves: the conversation stamps what it
 creates with the object the rail's pane is showing, and the session list on the left offers that

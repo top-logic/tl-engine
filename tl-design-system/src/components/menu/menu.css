@@ -70,28 +70,13 @@
   flex-shrink: 0;
 }
 
-/* Eine Zeile, die etwas an- und abschaltet (#30102): Häkchen links (Werteliste) oder Schalter rechts (Ansicht). Die ganze
+/* Eine Zeile, die etwas an- und abschaltet (#30102): Häkchen links (Werteliste) oder Schalter rechts (Einstellung). Die ganze
    Zeile ist die Klickfläche, darum trägt sie Fläche, Zeigen und Drücken vom Eintrag und keine eigenen — Zeigen gibt es nur
    dort, wo ein Klick wirkt. Die Marke ist ein gezeichnetes tl-checkbox ohne Eingabe (choice.css liest aria-checked der
    Zeile) und nimmt keinen Zeiger an: Rand und Hof der Marke gehören dem Label tl-choice, das es in der Zeile nicht gibt;
    sonst läge beim Zeigen auf die Marke ein zweiter Rahmen auf der Zeilenfläche. */
 .tl-menu__item--check .tl-checkbox {
   pointer-events: none;
-}
-
-/* Ein Eintrag, der eine Seite weiter führt (Z9, #30102): Beschriftung links, am Zeilenende der Wert leise und das Chevron.
-   Fläche, Zeigen, Drücken und Fokus kommen vom Eintrag; der Modifier malt keine eigene. Wert und Chevron schrumpfen nicht,
-   die Beschriftung gibt nach (Ellipse). Das Chevron ist ein Icon mit tl-icon-sm in der Farbe des Griffs der Spaltenwahl. */
-.tl-menu__item--nav .tl-menu__value {
-  flex-shrink: 0;
-  margin-inline-start: auto;
-  color: var(--tl-text-secondary);
-  white-space: nowrap;
-}
-
-.tl-menu__item--nav .tl-menu__chevron {
-  flex-shrink: 0;
-  color: var(--tl-icon-secondary);
 }
 
 .tl-menu__label {

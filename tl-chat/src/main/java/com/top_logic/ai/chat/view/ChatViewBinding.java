@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -26,6 +27,7 @@ import com.top_logic.ai.chat.api.ApprovalChoice;
 import com.top_logic.ai.chat.api.ChatPreferencesStore;
 import com.top_logic.ai.chat.api.ChatSSEHandler;
 import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
+import com.top_logic.ai.chat.api.messages.DraftAttachmentDto;
 import com.top_logic.ai.chat.api.messages.PromptImprovedEvent;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -112,6 +114,12 @@ public final class ChatViewBinding {
 	/** State entry of {@link #writeRenderState(BiConsumer)}: the person's last auto-approve choice. */
 	public static final String STATE_APPROVAL_MODE = "approvalMode";
 
+	/**
+	 * The key of {@link #attachments(String)} and {@link #attachmentLists()} for the conversation the
+	 * next send creates, which has no session id yet.
+	 */
+	public static final String NEW_CONVERSATION = "";
+
 	/** The {@link #STATE_USER_NAME} of a window nobody is signed in to. */
 	private static final String DEFAULT_USER_NAME = "User";
 
@@ -183,9 +191,18 @@ public final class ChatViewBinding {
 	private volatile Supplier<List<EnvironmentFact>> _facts;
 
 	/**
-	 * The files attached to the message being written in this conversation.
+	 * The files attached to the message being written, per chat session of this conversation: by the
+	 * session's id, {@link #NEW_CONVERSATION} for the conversation the next send creates.
+	 *
+	 * <p>
+	 * The files belong to a chat session, not to the place that shows it: switching the place to
+	 * another chat shows that chat's files, and switching back shows the first chat's again.
+	 * </p>
 	 */
-	private final ChatAttachments _attachments = new ChatAttachments();
+	private final Map<String, ChatAttachments> _attachments = new LinkedHashMap<>();
+
+	/** Told whenever a file of any chat session of this conversation is attached or taken off. */
+	private final List<Runnable> _attachmentListeners = new CopyOnWriteArrayList<>();
 
 	/**
 	 * The chat controls of this conversation the window displays now.
@@ -457,9 +474,101 @@ public final class ChatViewBinding {
 		return facts == null ? List.of() : facts.get();
 	}
 
-	/** The files attached to the message being written in this conversation. */
-	public ChatAttachments attachments() {
-		return _attachments;
+	/**
+	 * The files attached to the message being written in the given chat session of this
+	 * conversation, created on first use.
+	 *
+	 * @param sessionId
+	 *        The chat session's id; <code>null</code> or empty for the conversation the next send
+	 *        creates ({@link #NEW_CONVERSATION}).
+	 */
+	public ChatAttachments attachments(String sessionId) {
+		String key = attachmentKey(sessionId);
+		synchronized (_attachments) {
+			ChatAttachments attachments = _attachments.get(key);
+			if (attachments == null) {
+				attachments = new ChatAttachments();
+				attachments.addListener(this::attachmentsChanged);
+				_attachments.put(key, attachments);
+			}
+			return attachments;
+		}
+	}
+
+	/**
+	 * What the composer shows of the files attached in this conversation: per chat session id
+	 * ({@link #NEW_CONVERSATION} for the conversation the next send creates), the files of every
+	 * session that has some.
+	 */
+	public Map<String, List<DraftAttachmentDto>> attachmentLists() {
+		List<Map.Entry<String, ChatAttachments>> all;
+		synchronized (_attachments) {
+			all = new ArrayList<>(_attachments.entrySet());
+		}
+		Map<String, List<DraftAttachmentDto>> result = new LinkedHashMap<>();
+		for (Map.Entry<String, ChatAttachments> entry : all) {
+			List<DraftAttachmentDto> files = entry.getValue().list();
+			if (!files.isEmpty()) {
+				result.put(entry.getKey(), files);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Drops the files attached in a chat session that was deleted.
+	 *
+	 * <p>
+	 * The listeners are not told: this is called from the request that deleted the session, which
+	 * need not be one of this window. The browser shows the files of the session it displays, which
+	 * is no longer the deleted one, and the state is written afresh with the next change.
+	 * </p>
+	 */
+	void dropAttachments(String sessionId) {
+		if (sessionId == null || sessionId.isEmpty()) {
+			return;
+		}
+		synchronized (_attachments) {
+			_attachments.remove(sessionId);
+		}
+	}
+
+	/**
+	 * Drops the files attached in the given deleted chat session from every conversation of the
+	 * given window.
+	 */
+	static void dropAttachments(TLSubSessionContext subSession, String sessionId) {
+		Map<String, ChatViewBinding> map = ChatSessionRegistry.windowScope(subSession).get(BINDINGS);
+		if (map == null) {
+			return;
+		}
+		List<ChatViewBinding> bindings;
+		synchronized (map) {
+			bindings = new ArrayList<>(map.values());
+		}
+		for (ChatViewBinding binding : bindings) {
+			binding.dropAttachments(sessionId);
+		}
+	}
+
+	/** Calls the given listener whenever a file of any chat session of this conversation changes. */
+	public void addAttachmentListener(Runnable listener) {
+		_attachmentListeners.add(listener);
+	}
+
+	/** Undoes {@link #addAttachmentListener(Runnable)}. */
+	public void removeAttachmentListener(Runnable listener) {
+		_attachmentListeners.remove(listener);
+	}
+
+	private void attachmentsChanged() {
+		for (Runnable listener : _attachmentListeners) {
+			listener.run();
+		}
+	}
+
+	private static String attachmentKey(String sessionId) {
+		return sessionId == null ? NEW_CONVERSATION : sessionId.trim();
 	}
 
 	/**

@@ -172,8 +172,9 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en Dead grant: the operation "{0}" is granted to the roles {1}, but no rule delivers any of
-	 *     them where an object of the type is created - on its container, or on the security root
-	 *     for a type no composition holds - so the grant never takes effect.
+	 *     them where an object of the type is created - on the security root, in a container
+	 *     holding it in a composition, or in an object it references - so the grant never takes
+	 *     effect.
 	 */
 	public static ResKey2 COVERAGE_PROBLEM_DEAD_CREATE_GRANT__OPERATION_ROLES;
 
@@ -345,6 +346,33 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 COVERAGE_DELEGATED_RESTRICTED_CONTAINER__CONTAINERS_OPERATIONS;
 
 	/**
+	 * @en The type delegates every access decision to several access parents, "{0}": whether a user
+	 *     may perform an operation on an object of the type is whether the user may perform it on
+	 *     one of the access parents of the object deciding it, where deleting is writing it and
+	 *     creating is writing the container. The type needs no grants and no roles of its own.
+	 */
+	public static ResKey1 COVERAGE_DELEGATED_ANY_OF__CANDIDATES;
+
+	/**
+	 * @en The type delegates every access decision but Create to several access parents, "{0}":
+	 *     whether a user may perform an operation on an object of the type is whether the user may
+	 *     perform it on one of the access parents of the object deciding it, where deleting is
+	 *     writing it. No access parent is the container, so Create is decided by the grants of the
+	 *     type itself and the roles the users hold on the context the object is created in.
+	 */
+	public static ResKey1 COVERAGE_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES;
+
+	/**
+	 * @en The type delegates the operations {1} to several access parents, "{0}": whether a user may
+	 *     perform one of them on an object of the type is whether the user may perform it on one of
+	 *     the access parents of the object deciding it, where deleting is writing it and creating,
+	 *     when listed, is writing the container. Discover is delegated together with them. All other
+	 *     operations are decided by the grants of the type itself and the roles the users hold on
+	 *     its objects.
+	 */
+	public static ResKey2 COVERAGE_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS;
+
+	/**
 	 * @en The type is marked as internal: it is used by the application code alone, so it is exempt
 	 *     from the check and no user gets access to its objects.
 	 */
@@ -392,6 +420,28 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     type itself decide all other operations.
 	 */
 	public static ResKey2 GRANTS_DELEGATED_RESTRICTED__PARENT_OPERATIONS;
+
+	/**
+	 * @en The type delegates every access decision to several access parents, "{0}", so it has no
+	 *     grants of its own. An operation is allowed as soon as the grants of the type of one access
+	 *     parent deciding it allow it.
+	 */
+	public static ResKey1 GRANTS_DELEGATED_ANY_OF__CANDIDATES;
+
+	/**
+	 * @en The type delegates every operation but Create to several access parents, "{0}": such an
+	 *     operation is allowed as soon as the grants of the type of one access parent deciding it
+	 *     allow it. No access parent is the container, so the grants of the type itself decide
+	 *     Create.
+	 */
+	public static ResKey1 GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES;
+
+	/**
+	 * @en The type delegates the operations {1} to several access parents, "{0}", Discover together
+	 *     with them: such an operation is allowed as soon as the grants of the type of one access
+	 *     parent deciding it allow it. The grants of the type itself decide all other operations.
+	 */
+	public static ResKey2 GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS;
 
 	/**
 	 * @en The type is excluded from access control or used by the application code only, so it
@@ -496,6 +546,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT;
 
 	/**
+	 * @en The type "{0}" delegates every access decision but Create to its access parents: the
+	 *     grants of the type of "{1}" and the roles the account holds on "{1}" decide. No access
+	 *     parent is the container, so Create is decided by the grants of the type "{0}" and the
+	 *     roles the account holds on the context the object is created in.
+	 */
+	public static ResKey2 EFFECTIVE_ACCESS_DELEGATED_OWN_CREATE__TYPE_OBJECT;
+
+	/**
 	 * @en The type "{0}" delegates the operations {2} to an access parent, Discover together with
 	 *     them: for these, the grants of the type of "{1}" and the roles the account holds on "{1}"
 	 *     decide. All other operations are decided by the grants of the type "{0}" and the roles
@@ -560,6 +618,17 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Checked as "{0}" on "{1}". {2}
 	 */
 	public static ResKey3 EFFECTIVE_ACCESS_CHECKED_ON__OPERATION_OBJECT_REASON;
+
+	/**
+	 * @en Checked as "{0}" on any of: {1}. {2}
+	 */
+	public static ResKey3 EFFECTIVE_ACCESS_CHECKED_ON_SEVERAL__OPERATION_OBJECTS_REASON;
+
+	/**
+	 * @en The access parent {0} combines its candidates itself; the roles shown may admit more than
+	 *     it does.
+	 */
+	public static ResKey1 EFFECTIVE_ACCESS_COMBINED__PARENT;
 
 	/**
 	 * @en Inherited from the role parent "{0}".

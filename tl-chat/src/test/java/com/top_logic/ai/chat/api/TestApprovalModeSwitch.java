@@ -39,6 +39,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.ai.core.agent.event.AgentEvent;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -343,6 +345,8 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestApprovalModeSwitch.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				ColumnProviderService.Module.INSTANCE,
 				FieldControlService.Module.INSTANCE,

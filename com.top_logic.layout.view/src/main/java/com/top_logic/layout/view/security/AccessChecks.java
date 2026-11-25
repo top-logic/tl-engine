@@ -9,6 +9,7 @@ import java.util.function.Function;
 
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.channel.ChannelCondition;
 
 /**
@@ -131,8 +132,10 @@ public class AccessChecks {
 		if (access == null || !access.isReactive()) {
 			return content.apply(contentContext);
 		}
+		// The content is built anew each time it becomes accessible again, from inside a channel
+		// notification: a failure replaces only the content.
 		return new AccessGuardControl(contentContext, access, access.bind(contentContext), visible,
-			() -> content.apply(contentContext));
+			() -> ViewUnitControl.create(contentContext, content::apply));
 	}
 
 }

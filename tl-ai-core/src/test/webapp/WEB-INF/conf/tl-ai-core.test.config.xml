@@ -39,6 +39,37 @@
 				question-timeout-minutes="11"
 			/>
 		</config>
+
+		<!--
+			A role that may read a conversation and a memory but not change them, given to an account
+			by an explicit role assignment on the object. For TestSessionScriptFunctions and
+			TestMemoryScriptFunctions: reading alone does not let an account rename or delete.
+		-->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="TestChatReader"/>
+				</roles>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.ai.execution:AgentSession">
+						<grant
+							operation="Read"
+							roles="TestChatReader"
+						/>
+					</class>
+					<class name="tl.ai.execution:UserMemory">
+						<grant
+							operation="Read"
+							roles="TestChatReader"
+						/>
+					</class>
+				</security-config>
+			</instance>
+		</config>
 	</services>
 	<configs>
 		<!-- The table of test.objectedit:Book, whose shelf is a column of its own row. -->

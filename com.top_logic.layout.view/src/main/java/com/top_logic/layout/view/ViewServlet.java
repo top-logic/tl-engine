@@ -6,8 +6,13 @@
 package com.top_logic.layout.view;
 
 import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.Collections;
+import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import jakarta.servlet.ServletException;
@@ -44,6 +49,7 @@ import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
+import com.top_logic.layout.react.control.table.TableViewPreferences;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.protocol.RouteChangeEvent;
 import com.top_logic.layout.react.routing.RouteEncoding;
@@ -106,6 +112,15 @@ import com.top_logic.util.TopLogicServlet;
  * page that checks or creates {@code window.name} and redirects to a URL that includes the window
  * name as the first path segment. This ensures that each tab gets its own independent subsession.
  * </p>
+ *
+ * <p>
+ * <b>Forwarded views:</b> Another servlet of the application answers a request with a view through
+ * {@link #forwardToView(HttpServletRequest, HttpServletResponse, String, int, Map)}. Such a request
+ * keeps the URL of the servlet it was sent to: it needs no cookie check and no bootstrap page, a
+ * visitor without a session is logged in anonymously and shown the page at once, and the page is
+ * rendered in a window whose name the server assigns. The page leaves the address bar and the
+ * history of the browser unchanged, see {@link #FIXED_URL_ATTR}.
+ * </p>
  */
 public class ViewServlet extends TopLogicServlet {
 
@@ -144,6 +159,145 @@ public class ViewServlet extends TopLogicServlet {
 	 */
 	public static final String BUSY_DELAY_ATTR = "data-busy-delay";
 
+	/**
+	 * Attribute of the page body marking a page whose URL is not one of the view application: the
+	 * page was {@link #forwardToView(HttpServletRequest, HttpServletResponse, String, int, Map)
+	 * forwarded to} by another servlet, whose URL the browser keeps showing.
+	 *
+	 * <p>
+	 * Such a page changes neither the address bar nor the history of the browser. Must match
+	 * {@code FIXED_URL_ATTR} in {@code route-sync.ts} of the React bridge.
+	 * </p>
+	 */
+	public static final String FIXED_URL_ATTR = "data-fixed-url";
+
+	/**
+	 * Request attribute carrying the {@link ForwardedView} a request was
+	 * {@link #forwardToView(HttpServletRequest, HttpServletResponse, String, int, Map) forwarded}
+	 * with.
+	 */
+	public static final String FORWARDED_VIEW_ATTRIBUTE = ViewServlet.class.getName() + ".forwardedView";
+
+	/**
+	 * The first character of every window name.
+	 *
+	 * @see #extractWindowName(String)
+	 */
+	private static final char WINDOW_NAME_PREFIX = 'v';
+
+	/**
+	 * The number of random bytes of a window name the server assigns, as many as the bootstrap page
+	 * draws for one.
+	 */
+	private static final int WINDOW_NAME_BYTES = 8;
+
+	/** The source of the window names the server assigns. */
+	private static final SecureRandom WINDOW_NAME_RANDOM = new SecureRandom();
+
+	/**
+	 * The view a request was forwarded to by
+	 * {@link ViewServlet#forwardToView(HttpServletRequest, HttpServletResponse, String, int, Map)}.
+	 *
+	 * @param viewFile
+	 *        The view file of an {@link ViewConfig.EntryPoint#isAnonymous() anonymous} entry point,
+	 *        relative to {@link ViewLoader#VIEW_BASE_PATH}.
+	 * @param status
+	 *        The HTTP status the page is answered with.
+	 * @param parameters
+	 *        The parameters the view receives as the query of its URL.
+	 */
+	private record ForwardedView(String viewFile, int status, Map<String, String> parameters) {
+
+		/**
+		 * The address of the page, as {@link PageAddress#parse(String)} reads it: the view file
+		 * followed by the parameters as query.
+		 */
+		String address() {
+			StringBuilder result = new StringBuilder();
+			for (String segment : viewFile.split(String.valueOf(PATH_SEPARATOR), -1)) {
+				if (result.length() > 0) {
+					result.append(PATH_SEPARATOR);
+				}
+				result.append(RouteEncoding.encodeSegment(segment));
+			}
+			RouteManager.appendQuery(result, parameters);
+			return result.toString();
+		}
+	}
+
+	/**
+	 * Answers the given request with a view of the view application, in this very response and
+	 * with the given HTTP status.
+	 *
+	 * <p>
+	 * Called by another servlet of the application to show a page of its own making - an error
+	 * page, say - instead of redirecting the browser elsewhere. The address bar keeps the URL the
+	 * request was sent to, so a reload asks the calling servlet again, which decides anew. The
+	 * page writes neither the address bar nor the history.
+	 * </p>
+	 *
+	 * <p>
+	 * Only an entry point declared {@link ViewConfig.EntryPoint#isAnonymous() anonymous} can be
+	 * shown this way: it is displayed in the session of the request, whether it belongs to an
+	 * account or not, and a visitor without a session is logged in anonymously, as on every first
+	 * visit of the view application.
+	 * </p>
+	 *
+	 * <p>
+	 * The request is {@link jakarta.servlet.RequestDispatcher#forward(jakarta.servlet.ServletRequest,
+	 * jakarta.servlet.ServletResponse) forwarded} to {@link #ROOT_PATH}, so the caller must not have
+	 * committed the response.
+	 * </p>
+	 *
+	 * @param request
+	 *        The request to answer.
+	 * @param response
+	 *        The response to the request.
+	 * @param viewFile
+	 *        The view file of the entry point, as the application's {@link ViewConfig} names it.
+	 * @param status
+	 *        The HTTP status of the response, e.g. {@link HttpServletResponse#SC_NOT_FOUND}.
+	 * @param parameters
+	 *        Values the view receives as the query of its URL, which its {@code query-bindings}
+	 *        write into its channels; in the order of the query.
+	 * @throws IllegalArgumentException
+	 *         If the given view is no anonymous entry point.
+	 */
+	public static void forwardToView(HttpServletRequest request, HttpServletResponse response, String viewFile,
+			int status, Map<String, String> parameters) throws ServletException, IOException {
+		ViewConfig config = ApplicationConfig.getInstance().getConfig(ViewConfig.class);
+		if (!isAnonymousEntryPoint(config, viewFile)) {
+			throw new IllegalArgumentException(
+				"View '" + viewFile + "' is no anonymous entry point of the view application.");
+		}
+		request.setAttribute(FORWARDED_VIEW_ATTRIBUTE,
+			new ForwardedView(viewFile, status, Collections.unmodifiableMap(new LinkedHashMap<>(parameters))));
+		request.getRequestDispatcher(ROOT_PATH).forward(request, response);
+	}
+
+	/**
+	 * The view the given request was forwarded to, or {@code null} for a request sent to this
+	 * servlet itself.
+	 */
+	private static ForwardedView forwardedView(HttpServletRequest request) {
+		return (ForwardedView) request.getAttribute(FORWARDED_VIEW_ATTRIBUTE);
+	}
+
+	/**
+	 * A fresh window name, in the form the bootstrap page creates one.
+	 */
+	private static String newWindowName() {
+		byte[] random = new byte[WINDOW_NAME_BYTES];
+		WINDOW_NAME_RANDOM.nextBytes(random);
+		return WINDOW_NAME_PREFIX + HexFormat.of().formatHex(random);
+	}
+
+	@Override
+	protected boolean isCookieCheckRequired(HttpServletRequest request) {
+		// A forwarded request is answered with the page itself: the check's redirect would replace it.
+		return forwardedView(request) == null && super.isCookieCheckRequired(request);
+	}
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -153,12 +307,18 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		String pathInfo = request.getPathInfo();
-		String windowName = extractWindowName(pathInfo);
-
-		if (windowName == null) {
-			writeBootstrapPage(request, response);
-			return;
+		ForwardedView forwarded = forwardedView(request);
+		String windowName;
+		if (forwarded != null) {
+			// The page is answered right away under the URL of the forwarding servlet, which cannot
+			// carry a window name: the page gets a window of its own.
+			windowName = newWindowName();
+		} else {
+			windowName = extractWindowName(request.getPathInfo());
+			if (windowName == null) {
+				writeBootstrapPage(request, response);
+				return;
+			}
 		}
 
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
@@ -188,20 +348,13 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		String address = extractAddress(rawPathInfo(request), windowName);
-		if (address == null) {
-			// Entered without naming a page, so the user's own choice of where to begin applies.
-			// A URL that does name one - a route, or the view file of an entry point - asks for that
-			// page and is never overridden.
-			address = startPage();
+		String address;
+		if (forwarded != null) {
+			address = forwarded.address();
+			// Not sendError(): the container would answer with its error page instead of the view.
+			response.setStatus(forwarded.status());
 		} else {
-			String query = request.getQueryString();
-			if (query != null && !query.isEmpty()) {
-				// The query belongs to the route: it carries the values that refine what the named page
-				// shows - a filter term, a sorting - and the display takes them up together with the
-				// path. Raw, because a query travels percent-encoded and the routing decodes it.
-				address = address + QUERY_START + query;
-			}
+			address = requestedAddress(request, windowName);
 		}
 
 		// Rendering the page attaches the window's tree, and that changes the display like any
@@ -229,6 +382,33 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * The address of the page the given request asks for: the one its URL names, or the start page
+	 * of the user where it names none.
+	 *
+	 * @param windowName
+	 *        The window name occupying the first segment of the path.
+	 * @return The address - see {@link #extractAddress(String, String)}; {@code null} where neither
+	 *         the URL nor the user name a page.
+	 */
+	private static String requestedAddress(HttpServletRequest request, String windowName) {
+		String address = extractAddress(rawPathInfo(request), windowName);
+		if (address == null) {
+			// Entered without naming a page, so the user's own choice of where to begin applies.
+			// A URL that does name one - a route, or the view file of an entry point - asks for that
+			// page and is never overridden.
+			return startPage();
+		}
+		String query = request.getQueryString();
+		if (query != null && !query.isEmpty()) {
+			// The query belongs to the route: it carries the values that refine what the named page
+			// shows - a filter term, a sorting - and the display takes them up together with the
+			// path. Raw, because a query travels percent-encoded and the routing decodes it.
+			return address + QUERY_START + query;
+		}
+		return address;
+	}
+
+	/**
 	 * Renders the page of the given window, reusing the control tree it already holds where possible.
 	 *
 	 * <p>
@@ -250,6 +430,8 @@ public class ViewServlet extends TopLogicServlet {
 			TLSubSessionContext subSession, ReactWindowRegistry windowRegistry, String windowName,
 			String address) throws IOException {
 		PageAddress page = PageAddress.parse(address);
+		// A page forwarded to from another servlet is shown under that servlet's URL.
+		boolean fixedUrl = forwardedView(request) != null;
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
 		// The page rendered now replaces the one the window displayed: the previous page's stream and
 		// poll end, and what is enqueued from here on waits for this page's client.
@@ -274,7 +456,7 @@ public class ViewServlet extends TopLogicServlet {
 			// The provider and the model of a window never change, so a tree it already has always
 			// fits - unlike a view, which has to be the same one.
 			if (displayed != null && !rebuildRequested) {
-				renderAgain(request, response, displayed, sseQueue, "", page.route(), false);
+				renderAgain(request, response, displayed, sseQueue, "", page.route(), false, fixedUrl);
 				return;
 			}
 			if (displayed != null) {
@@ -288,7 +470,7 @@ public class ViewServlet extends TopLogicServlet {
 				request.getContextPath(), windowName, sseQueue, windowRegistry);
 			// The window displays what its provider creates, not a view a URL may name: only the route
 			// is taken up.
-			wireRouteManager(baseContext, sseQueue, "", page.route(), false);
+			wireRouteManager(baseContext, sseQueue, "", page.route(), false, fixedUrl);
 			ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 			// The window's overlays report the results of their commands - a menu selection, say - to
 			// the window snackbar.
@@ -314,7 +496,9 @@ public class ViewServlet extends TopLogicServlet {
 		ViewResolution resolution = resolveNamedView(viewConfig, viewFile, anonymous);
 		String viewPath = resolution.viewPath();
 		boolean loginView = resolution.loginView();
-		boolean holdUrl = resolution.holdsUrl();
+		// The parameters of a forwarded page reach it as the query of its URL, which a held URL would
+		// withhold from the display.
+		boolean holdUrl = resolution.holdsUrl() && !fixedUrl;
 		if (viewPath == null) {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, "No such entry point.");
 			return;
@@ -356,7 +540,7 @@ public class ViewServlet extends TopLogicServlet {
 		RenderedView rendered = RenderedView.lookup(subSession);
 		if (displayed != null && !rebuildRequested && rendered != null
 			&& rendered.matches(viewPath, view, locale, user)) {
-			renderAgain(request, response, displayed, sseQueue, pagePath, url, holdUrl);
+			renderAgain(request, response, displayed, sseQueue, pagePath, url, holdUrl, fixedUrl);
 			return;
 		}
 		if (displayed != null) {
@@ -369,7 +553,7 @@ public class ViewServlet extends TopLogicServlet {
 
 		ReactContext baseContext = new DefaultReactContext(
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
-		wireRouteManager(baseContext, sseQueue, pagePath, url, holdUrl);
+		wireRouteManager(baseContext, sseQueue, pagePath, url, holdUrl, fixedUrl);
 		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 		// The window's overlays report the results of their commands - a menu selection, say - to
 		// the window snackbar.
@@ -379,8 +563,7 @@ public class ViewServlet extends TopLogicServlet {
 		ReactContext displayContext = withWindowContextMenu(reportingContext, createWindowMenuOpener(menu));
 		ViewContext viewContext = new DefaultViewContext(displayContext, viewPath);
 
-		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
-			(ReactControl) view.createControl(viewContext));
+		ViewUnitControl content = ViewUnitControl.forView(viewContext, viewPath, view);
 		ReactControl rootControl =
 			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);
@@ -402,22 +585,25 @@ public class ViewServlet extends TopLogicServlet {
 	 *
 	 * @param pagePath
 	 *        The page path of the displayed page - see
-	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, String, boolean)}.
+	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, String, boolean, boolean)}.
 	 * @param url
 	 *        The URL requested, adopted by the tree while it is rendered (a deep link entered in an
 	 *        existing tab).
 	 * @param holdUrl
 	 *        Whether the page keeps the requested URL instead of taking it up - the login view, and
 	 *        an entry point that {@link ViewConfig.EntryPoint#isHoldUrl() holds its URL}. See
-	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, String, boolean)}.
+	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, String, boolean, boolean)}.
+	 * @param fixedUrl
+	 *        Whether the page is shown under a URL that is not its own - see
+	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, String, boolean, boolean)}.
 	 */
 	private void renderAgain(HttpServletRequest request, HttpServletResponse response,
 			ReactControl rootControl, SSEUpdateQueue sseQueue, String pagePath, String url,
-			boolean holdUrl) throws IOException {
+			boolean holdUrl, boolean fixedUrl) throws IOException {
 		ReactContext context = rootControl.getReactContext();
 
 		sseQueue.setRootControl(rootControl);
-		wireRouteManager(context, sseQueue, pagePath, url, holdUrl);
+		wireRouteManager(context, sseQueue, pagePath, url, holdUrl, fixedUrl);
 
 		renderPage(request, response, rootControl, context);
 	}
@@ -568,7 +754,7 @@ public class ViewServlet extends TopLogicServlet {
 			// Contains a dot -> view file name, not a window name.
 			return null;
 		}
-		if (firstSegment.charAt(0) != 'v') {
+		if (firstSegment.charAt(0) != WINDOW_NAME_PREFIX) {
 			// Window names start with 'v'.
 			return null;
 		}
@@ -595,7 +781,7 @@ public class ViewServlet extends TopLogicServlet {
 	 *        The window name occupying the first segment.
 	 * @return The address without leading slash, or {@code null} where the URL names no page at all.
 	 */
-	private String extractAddress(String pathInfo, String windowName) {
+	private static String extractAddress(String pathInfo, String windowName) {
 		if (pathInfo == null || windowName == null) {
 			return null;
 		}
@@ -738,9 +924,14 @@ public class ViewServlet extends TopLogicServlet {
 	 *        holds} it. The login view is not the page the URL addresses, and an entry point that
 	 *        {@link ViewConfig.EntryPoint#isHoldUrl() holds its URL} carries what it is about in its
 	 *        address: both keep the address that was asked for.
+	 * @param fixedUrl
+	 *        Whether the page is shown under a URL that is not its own, because another servlet
+	 *        {@link #forwardToView(HttpServletRequest, HttpServletResponse, String, int, Map)
+	 *        forwarded} to it: the URL is taken up, but no change of the display is reported to the
+	 *        client, whose address bar keeps the URL of that servlet.
 	 */
 	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String pagePath,
-			String url, boolean holdUrl) {
+			String url, boolean holdUrl, boolean fixedUrl) {
 		RouteManager routeManager = context.getRouteManager();
 		if (routeManager == null) {
 			return;
@@ -758,13 +949,17 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		routeManager.setApplicationTitle(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
-		routeManager.setUrlChangeHandler((changedUrl, title, replace) -> {
-			RouteChangeEvent event = RouteChangeEvent.create()
-				.setUrl(changedUrl)
-				.setTitle(title)
-				.setReplace(replace);
-			sseQueue.enqueue(event);
-		});
+		if (fixedUrl) {
+			routeManager.setUrlChangeHandler(null);
+		} else {
+			routeManager.setUrlChangeHandler((changedUrl, title, replace) -> {
+				RouteChangeEvent event = RouteChangeEvent.create()
+					.setUrl(changedUrl)
+					.setTitle(title)
+					.setReplace(replace);
+				sseQueue.enqueue(event);
+			});
+		}
 
 		sseQueue.setRouteManager(routeManager);
 	}
@@ -1106,6 +1301,9 @@ public class ViewServlet extends TopLogicServlet {
 		// The density the user has selected, whatever the theme: the first paint is dense already, so
 		// that nothing jumps once the theme script has run.
 		themes.writeDensityAttribute(out);
+		// The table view the user has chosen - density, stripes, column lines - as start values for the
+		// tables, which read them from here.
+		TableViewPreferences.writeAttributes(out);
 		out.endBeginTag();
 
 		out.beginBeginTag(HTMLConstants.HEAD);
@@ -1146,6 +1344,9 @@ public class ViewServlet extends TopLogicServlet {
 		out.writeAttribute("data-context-path", context.getContextPath());
 		out.writeAttribute(PAGE_LOAD_ATTRIBUTE, pageLoad);
 		writeBusyDelay(out, ApplicationConfig.getInstance().getConfig(ViewConfig.class));
+		if (forwardedView(request) != null) {
+			out.writeAttribute(FIXED_URL_ATTR, true);
+		}
 		out.endBeginTag();
 
 		// Delegate rendering to the control itself. ReactControl.write() outputs a
@@ -1174,6 +1375,12 @@ public class ViewServlet extends TopLogicServlet {
 			SessionService.getInstance().loginUser(request, response, anonymous);
 		});
 
+		if (forwardedView(request) != null) {
+			// The page is the answer to this very request: it is served again, now that it belongs
+			// to a session, instead of being redirected to.
+			service(request, response);
+			return;
+		}
 		redirectToStartPage(request, response);
 	}
 

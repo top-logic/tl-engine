@@ -37,6 +37,7 @@ export function resetTLBridge(): void {
   dispatched = []
   patchListeners.clear()
   uploads.length = 0
+  uploadForms.length = 0
   uploadAnswer = async () => ({ success: true })
   pageLeaving = false
   commandAnswer = async () => undefined
@@ -48,6 +49,11 @@ let pageLeaving = false
 /** See `isPageLeaving` of the real bridge. */
 export function isPageLeaving(): boolean {
   return pageLeaving
+}
+
+/** The check of the real bridge, which the key handlers of the chat depend on. */
+export function isCompositionKey(event: KeyboardEvent): boolean {
+  return event.isComposing || event.keyCode === 229
 }
 
 /** Sets what `isPageLeaving` answers. */
@@ -146,6 +152,9 @@ export function useTLCommand(): (
 /** The uploads `useTLUpload`'s function sent since the last reset: the files of each. */
 export const uploads: File[][] = []
 
+/** The uploads `useTLUpload`'s function sent since the last reset: the whole form of each. */
+export const uploadForms: FormData[] = []
+
 /** What an upload is answered with; a plain success by default. */
 let uploadAnswer: (files: File[]) => Promise<CommandResponse | undefined> = async () => ({ success: true })
 
@@ -158,6 +167,7 @@ export function answerUploads(answer: (files: File[]) => Promise<CommandResponse
 export const tlUpload = async (formData: FormData): Promise<CommandResponse | undefined> => {
   const files = formData.getAll('file').filter((value): value is File => value instanceof File)
   uploads.push(files)
+  uploadForms.push(formData)
   return uploadAnswer(files)
 }
 

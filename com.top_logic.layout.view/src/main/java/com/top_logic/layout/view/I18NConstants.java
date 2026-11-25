@@ -113,6 +113,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_VIEW_NOT_LOADED;
 
 	/**
+	 * @en This view could not be displayed.
+	 */
+	public static ResKey ERROR_VIEW_NOT_DISPLAYED;
+
+	/**
+	 * @en Occurred at {0}.
+	 */
+	public static ResKey1 ERROR_VIEW_NOT_DISPLAYED_TIME__TIME;
+
+	/**
+	 * @en Try again
+	 * @tooltip Builds the view anew.
+	 */
+	public static ResKey VIEW_RETRY;
+
+	/**
 	 * @en Add element...
 	 */
 	public static ResKey DESIGNER_ADD_CHILD;

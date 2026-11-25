@@ -7,6 +7,7 @@ package com.top_logic.layout.view.login;
 
 import java.io.IOException;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -88,9 +89,26 @@ public class PendingSessionAction {
 		return true;
 	}
 
+	/**
+	 * The URL the browser requested, which it is sent back to.
+	 *
+	 * <p>
+	 * A request another servlet {@link RequestDispatcher#forward(jakarta.servlet.ServletRequest,
+	 * jakarta.servlet.ServletResponse) forwarded} reports the URL it was forwarded to; the browser
+	 * is sent back to the URL it asked for, so that the servlet it addressed decides anew.
+	 * </p>
+	 */
 	private static String currentUrl(HttpServletRequest request) {
-		String uri = request.getRequestURI();
-		String query = request.getQueryString();
+		String uri;
+		String query;
+		Object forwardedUri = request.getAttribute(RequestDispatcher.FORWARD_REQUEST_URI);
+		if (forwardedUri != null) {
+			uri = (String) forwardedUri;
+			query = (String) request.getAttribute(RequestDispatcher.FORWARD_QUERY_STRING);
+		} else {
+			uri = request.getRequestURI();
+			query = request.getQueryString();
+		}
 		return query == null ? uri : uri + '?' + query;
 	}
 

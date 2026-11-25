@@ -23,6 +23,9 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.ai.core.cost.Money;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
@@ -64,8 +67,6 @@ public class ChatHistoryService {
 	private static final String ATTR_LAST_UPDATED = "lastUpdated";
 
 	private static final String ATTR_METADATA = "metadata";
-
-	private static final String ATTR_OWNER = "owner";
 
 	private ChatHistoryService() {
 		// Static utility class
@@ -397,28 +398,50 @@ public class ChatHistoryService {
 	}
 
 	/**
-	 * Finds a session of the given owner by its {@link KnowledgeObject} ID.
+	 * Finds a session by its {@link KnowledgeObject} ID, if the given person may perform the given
+	 * operation on it.
 	 *
 	 * <p>
 	 * The lookup every request-handling path must use. Session IDs are small sequential integers, so
-	 * an ID taken from a request body names someone else's chat as easily as the caller's own;
+	 * an ID taken from a request body names another account's chat as easily as the caller's own;
 	 * anything that acts on it - and the three that remove turns above all - has to establish first
-	 * that it is theirs.
+	 * that the caller may. Whether the caller may is decided by the model-based security alone
+	 * ({@link ModelAccessRights#isAllowed(Person, TLObject, BoundCommandGroup)}):
+	 * {@link SimpleBoundCommandGroup#READ} for showing a chat, {@link SimpleBoundCommandGroup#WRITE}
+	 * for everything that changes it.
 	 * </p>
 	 *
 	 * @param objectId
 	 *        the string representation of the object ID
-	 * @param owner
-	 *        the person the session must belong to; {@code null} owns nothing
-	 * @return the session, or {@code null} when it does not exist or is not this person's
+	 * @param person
+	 *        the person acting; {@code null} may do nothing
+	 * @param operation
+	 *        the operation the person is about to perform on the session
+	 * @return the session, or {@code null} when it does not exist or the person may not perform the
+	 *         operation on it
 	 * @see #findAnySessionById(String)
 	 */
-	public static TLObject findOwnedSessionById(String objectId, Person owner) {
-		if (owner == null) {
+	public static TLObject findAccessibleSession(String objectId, Person person, BoundCommandGroup operation) {
+		if (person == null) {
 			return null;
 		}
 		TLObject session = findAnySessionById(objectId);
-		return session != null && isOwnedBy(session, owner) ? session : null;
+		return session != null && isAllowed(person, session, operation) ? session : null;
+	}
+
+	/**
+	 * Whether the given person may perform the given operation on the given session, as the
+	 * model-based security decides.
+	 *
+	 * @param person
+	 *        the person acting; {@code null} may do nothing
+	 * @see #findAccessibleSession(String, Person, BoundCommandGroup)
+	 */
+	public static boolean isAllowed(Person person, TLObject session, BoundCommandGroup operation) {
+		if (person == null || session == null) {
+			return false;
+		}
+		return ModelAccessRights.getInstance().isAllowed(person, session, operation);
 	}
 
 	/**
@@ -435,7 +458,7 @@ public class ChatHistoryService {
 	 * @param objectId
 	 *        the string representation of the object ID.
 	 * @return the session object, or null if not found.
-	 * @see #findOwnedSessionById(String, Person)
+	 * @see #findAccessibleSession(String, Person, BoundCommandGroup)
 	 */
 	public static TLObject findAnySessionById(String objectId) {
 		if (objectId == null || objectId.isEmpty()) {
@@ -463,22 +486,6 @@ public class ChatHistoryService {
 			Logger.error("Failed to find chat session " + objectId + ": " + ex.getMessage(), ex,
 				ChatHistoryService.class);
 			return null;
-		}
-	}
-
-	/**
-	 * Checks if the given session is owned by the given person.
-	 */
-	public static boolean isOwnedBy(TLObject session, Person person) {
-		if (person == null) {
-			return false;
-		}
-		try {
-			Object owner = session.tValueByName(ATTR_OWNER);
-			return person.equals(owner);
-		} catch (Exception ex) {
-			Logger.error("Failed to check session ownership: " + ex.getMessage(), ex, ChatHistoryService.class);
-			return false;
 		}
 	}
 

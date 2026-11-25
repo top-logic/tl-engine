@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.top_logic.element.boundsec.manager.rule.config.HistoryMode;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 
@@ -43,6 +45,8 @@ public class NavigationRule {
 	 */
 	private final List<PathElement> _path;
 
+	private RuleHistory _history = RuleHistory.HISTORIC;
+
 	/**
 	 * Creates a {@link NavigationRule}.
 	 *
@@ -72,6 +76,57 @@ public class NavigationRule {
 	 */
 	public String getId() {
 		return _id;
+	}
+
+	/**
+	 * How this rule treats historic versions of objects.
+	 */
+	public RuleHistory getHistory() {
+		return _history;
+	}
+
+	/**
+	 * Sets {@link #getHistory()}. Must only be called while the rule is being created.
+	 */
+	public void initHistory(RuleHistory history) {
+		_history = Objects.requireNonNull(history);
+	}
+
+	/**
+	 * The role parents of the given object.
+	 *
+	 * <p>
+	 * The path is navigated in the data {@link #getHistory()} selects for the given object. A rule
+	 * with mode {@link HistoryMode#ANCHORED} is navigated in the given version, the restriction to
+	 * the groups the version is anchored for is the business of the caller.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object to navigate from, a current object or a historic version.
+	 * @param out
+	 *        Receives the role parents.
+	 */
+	public void getRoleParents(TLObject object, Set<? super TLObject> out) {
+		boolean historic = RuleHistory.isHistoric(object);
+		switch (_history.getMode()) {
+			case CURRENT: {
+				TLObject current = historic ? WrapperHistoryUtils.getCurrent(object) : object;
+				if (current != null) {
+					getContent(current, out);
+				}
+				break;
+			}
+			case HISTORIC: {
+				getContent(object, out);
+				break;
+			}
+			case ANCHORED: {
+				if (historic) {
+					getContent(object, out);
+				}
+				break;
+			}
+		}
 	}
 
 	/**

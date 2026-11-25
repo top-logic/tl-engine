@@ -219,8 +219,13 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		String getDescription();
 
 		/**
-		 * Whether a run started over A2A may use tools that change the application. They then run
-		 * without an approval prompt. Off: those tools are not offered to the run.
+		 * Whether a run started over A2A may use tools that change the application.
+		 *
+		 * <p>
+		 * An A2A run is a background run, so the background allowlist of the tool access policy
+		 * bounds its tools. On: a tool that changes the application also needs an entry in that list,
+		 * and it then runs without an approval prompt. Off: those tools are not offered to the run.
+		 * </p>
 		 */
 		@Name("allow-writes")
 		boolean getAllowWrites();

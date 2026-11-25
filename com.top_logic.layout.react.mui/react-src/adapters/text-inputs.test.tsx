@@ -4,7 +4,7 @@
 // contract of the fields is unchanged.
 
 import React from 'react';
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -19,12 +19,13 @@ import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/
 import TLColumnSelect from '../../../com.top_logic.layout.react/react-src/controls/TLColumnSelect';
 import TLDropdownSelect from '../../../com.top_logic.layout.react/react-src/controls/TLDropdownSelect';
 import IconSelectPopup from '../../../com.top_logic.layout.react/react-src/controls/icon/IconSelectPopup';
+import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiFieldValueAdapter from './MuiFieldValueAdapter';
-import { CONTROL_ID, childControl, fakeDebounceTimers, mountAdapter, patchState, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, fakeDebounceTimers, mountAdapter, patchState, settle, resetTableView } from './wire-test-support';
 import MuiListboxAdapter from './MuiListboxAdapter';
 import type { MountOptions } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
@@ -32,6 +33,7 @@ import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import MuiProgressBarAdapter from './MuiProgressBarAdapter';
 import MuiSpinnerAdapter from './MuiSpinnerAdapter';
 
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('FieldValue', MuiFieldValueAdapter);
 // The fields, the table and the popups look up their buttons, checkboxes and toggles as well.
@@ -87,8 +89,13 @@ function expectMuiBox(box: HTMLElement) {
   expect(box.classList).not.toContain('tl-field');
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -813,6 +820,28 @@ describe('the search and the filter name of a table as MUI text fields', () => {
 
     expect(sent).toHaveBeenCalledWith('search', { term: 'beta' });
     expect(passedOn).toBe(false);
+  });
+
+  it('neither sends the term nor saves the filter on the Enter that ends an input method composition', async () => {
+    // The key code an input method reports for the Enter that ends its composition (#30487).
+    const compositionEnter = { key: 'Enter', keyCode: 229, isComposing: true };
+    // The pause after which the term is sent anyway never runs out, so only the Enter could send it.
+    fakeDebounceTimers();
+    const sent = mountTable({ filterSaving: true });
+    await settle();
+
+    fireEvent.change(screen.getByRole('searchbox', { name: LABEL_SEARCH }), { target: { value: 'beta' } });
+    fireEvent.keyDown(screen.getByRole('searchbox', { name: LABEL_SEARCH }), compositionEnter);
+    await settle();
+    expect(sent).not.toHaveBeenCalledWith('search', expect.anything());
+
+    fireEvent.click(screen.getByRole('button', { name: LABEL_SAVE_FILTER }));
+    const name = screen.getByRole('textbox', { name: LABEL_FILTER_NAME });
+    fireEvent.change(name, { target: { value: 'Meins' } });
+    fireEvent.keyDown(name, compositionEnter);
+    await settle();
+    expect(sent).not.toHaveBeenCalledWith('saveNamedFilter', expect.anything());
+    expect(screen.getByRole('textbox', { name: LABEL_FILTER_NAME })).toBe(name);
   });
 
   it('names a filter to save in a focused box, saved on Enter and given up on Escape', async () => {

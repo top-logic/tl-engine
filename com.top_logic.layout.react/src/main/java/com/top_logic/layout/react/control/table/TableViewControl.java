@@ -451,22 +451,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String COLUMN_SELECTION = "columnSelection";
 
 	/**
-	 * State key telling the client whether to offer the view options (density, stripes, column
-	 * lines); true for a table that {@link TableView#isPersonalized() keeps} the choice.
+	 * State key telling the client whether the table {@link TableView#isPersonalized() keeps its
+	 * state}.
 	 */
 	private static final String VIEW_OPTIONS = "viewOptions";
-
-	/**
-	 * State key holding the row density the person chose for this table: empty to follow the
-	 * surrounding application, {@code normal} or {@code compact}.
-	 */
-	private static final String VIEW_DENSITY = "viewDensity";
-
-	/** State key telling whether every other row is tinted. */
-	private static final String STRIPED = "striped";
-
-	/** State key telling whether a line separates the columns. */
-	private static final String COLUMN_LINES = "columnLines";
 
 	/** Per-column state key telling whether the rows can be grouped by that column. */
 	private static final String COLUMN_GROUPABLE = "groupable";
@@ -644,16 +632,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public static final String CMD_SET_FROZEN_COLUMN_COUNT = "setFrozenColumnCount";
 
 	/**
-	 * The command the client sends to change the view options of the table.
-	 *
-	 * @see SetViewOptionsArguments
-	 */
-	public static final String CMD_SET_VIEW_OPTIONS = "setViewOptions";
-
-	/**
 	 * The command the client sends to return the table to the arrangement it is defined with: its
-	 * columns, their widths, the frozen columns, the sort, the grouping and the view options. The
-	 * filters stay.
+	 * columns, their widths, the frozen columns, the sort and the grouping. The filters stay.
 	 */
 	public static final String CMD_RESET_VIEW = "resetView";
 
@@ -810,7 +790,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
 		putState(FILTER_BAR, Boolean.valueOf(_filterBar));
 		putState(VIEW_OPTIONS, Boolean.valueOf(view.isPersonalized()));
-		pushViewOptions();
 		pushGrouping();
 		buildFullState();
 	}
@@ -1316,22 +1295,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			columns.add(columnState);
 		}
 		return columns;
-	}
-
-	/**
-	 * Pushes the view options the person chose for this table.
-	 *
-	 * <p>
-	 * Needed after every change of the options: {@link TableView#setViewOptions(String, boolean,
-	 * boolean)} informs no {@link com.top_logic.table.TableViewListener}, and the reset restores
-	 * them silently.
-	 * </p>
-	 */
-	private void pushViewOptions() {
-		TableViewState state = _view.state();
-		putState(VIEW_DENSITY, state.getDensity());
-		putState(STRIPED, Boolean.valueOf(state.isStriped()));
-		putState(COLUMN_LINES, Boolean.valueOf(state.isColumnLines()));
 	}
 
 	private boolean isFilterActive(String column) {
@@ -2887,23 +2850,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Handles a change of the view options: density, stripes and column lines.
-	 */
-	@ReactCommandHandler(CMD_SET_VIEW_OPTIONS)
-	void handleSetViewOptions(SetViewOptionsArguments args) {
-		_view.setViewOptions(args.getDensity(), args.isStriped(), args.isColumnLines());
-		pushViewOptions();
-	}
-
-	/**
 	 * Handles the view reset: restores the arrangement the table is defined with - its columns,
-	 * their widths, the frozen columns, the sort and the grouping - and its view options, and keeps
-	 * the filters.
+	 * their widths, the frozen columns, the sort and the grouping - and keeps the filters.
 	 */
 	@ReactCommandHandler(CMD_RESET_VIEW)
 	void handleResetView() {
 		rearrange(_view::resetToDefaults);
-		pushViewOptions();
 	}
 
 	/**

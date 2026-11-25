@@ -64,6 +64,8 @@ public class TestChatFollowsActiveSession extends SecurityCheckedTestCase {
 
 	private static final String WITH_INPUT = "input='" + SELECTION + "'";
 
+	private static final String SUBJECT = "chatSubject";
+
 	private static final long TIMEOUT_MILLIS = 60_000;
 
 	private static Person anna;
@@ -245,8 +247,13 @@ public class TestChatFollowsActiveSession extends SecurityCheckedTestCase {
 	 * the browser knows it - the browser would open it as another chat, in the middle of its turn.
 	 */
 	public void testTheSendOfTheBrowserIsNotWritten() throws Exception {
-		ScriptedBackend.install(session -> new AnsweringBackend());
-		Conversation conversation = _driver.conversation(anna, WITH_INPUT, "");
+		TLObject subject = chat(anna, "what the sent chat is about");
+		ScriptedBackend.install(about -> new AnsweringBackend());
+		ViewChannel subjectChannel = new DefaultViewChannel(SUBJECT);
+		subjectChannel.set(subject);
+		_driver.registerChannel(SUBJECT, subjectChannel);
+		Conversation conversation =
+			_driver.conversation(anna, WITH_INPUT + " subject='" + SUBJECT + "'", "");
 		try {
 			_sending = tracker(conversation);
 			Map<String, Object> reply = _driver.command(conversation, ChatControl.CMD_SEND,

@@ -462,7 +462,9 @@ public class ChatSSEHandler implements ChatEventHandler {
 		try {
 			TLObject session = ChatHistoryService.findAccessibleSession(sessionId, owner, SimpleBoundCommandGroup.READ);
 			ConversationBackend backend =
-				session instanceof AgentSession agentSession ? ConversationBackendService.backendFor(agentSession) : null;
+				session instanceof AgentSession agentSession
+					? ConversationBackendService.backendFor(agentSession.getSubject())
+					: null;
 			return backend == null ? null : Integer.valueOf(backend.contextWindow());
 		} catch (RuntimeException ex) {
 			Logger.warn("Could not ask which backend answers chat " + sessionId + ".", ex, ChatSSEHandler.class);

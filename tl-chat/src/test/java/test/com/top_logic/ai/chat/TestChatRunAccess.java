@@ -33,6 +33,7 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
@@ -367,6 +368,30 @@ public class TestChatRunAccess extends BasicTestCase {
 		assertFalse(response.body(), response.body().contains(ChatSendReply.SESSION_ID__PROP));
 		HistoryUtils.updateSessionRevision();
 		assertEquals(List.of(), titled("Abgelehnt " + getName()));
+	}
+
+	/**
+	 * A first send the agent policy refuses is refused before its chat is created: nothing is
+	 * written, not even a chat that is taken back afterwards.
+	 */
+	public void testARefusedFirstSendCreatesNoChat() throws Exception {
+		ChatCommandDriver driver = new ChatCommandDriver("runAccessWindow", "run-access-" + getName());
+		ChatConversationControl conversation = driver.conversation(anna);
+		try {
+			long before = PersistencyLayer.getKnowledgeBase().getHistoryManager().getLastRevision();
+			Map<String, Object> reply = driver.command(conversation, ChatControl.CMD_SEND, Map.of(
+				ChatControl.ARG_TEXT, "Verbessere dich selbst.",
+				ChatControl.ARG_AGENT, INFRASTRUCTURE_AGENT,
+				ChatControl.ARG_TITLE, "Nie angelegt " + getName()));
+
+			assertEquals(reply.toString(), ChatControl.STATUS_FORBIDDEN, reply.get(ChatSendReply.STATUS__PROP));
+			assertEquals("A refused first send must not write anything: " + reply, before,
+				PersistencyLayer.getKnowledgeBase().getHistoryManager().getLastRevision());
+			assertNull(ChatCommandDriver.tracker(conversation).getActiveSessionId());
+		} finally {
+			conversation.cleanupTree();
+			driver.close();
+		}
 	}
 
 	/** The titles of Anna's chats that are the given title. */

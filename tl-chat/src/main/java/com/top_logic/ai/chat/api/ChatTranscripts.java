@@ -428,13 +428,24 @@ public final class ChatTranscripts {
 		if (!(session instanceof AgentSession agentSession)) {
 			return null;
 		}
+		return backendAbout(agentSession.getSubject());
+	}
+
+	/**
+	 * The backend that answers a chat about the given subject, or <code>null</code> for the
+	 * framework's own agent.
+	 *
+	 * @param subject
+	 *        What the chat is about; <code>null</code> for nothing.
+	 */
+	public static ConversationBackend backendAbout(TLObject subject) {
 		try {
-			return ConversationBackendService.backendFor(agentSession.getSubject());
+			return ConversationBackendService.backendFor(subject);
 		} catch (RuntimeException ex) {
 			// The run asks again and fails there, where the user is told; a request that only reads
 			// the conversation must not break on it.
-			Logger.warn("Could not ask which backend answers chat " + session.tHandle().getObjectName().toExternalForm() + ".", ex,
-				ChatTranscripts.class);
+			Logger.warn("Could not ask which backend answers a chat about "
+				+ subject.tHandle().getObjectName().toExternalForm() + ".", ex, ChatTranscripts.class);
 			return null;
 		}
 	}

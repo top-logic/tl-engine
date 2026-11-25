@@ -753,12 +753,22 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 
 		TaskProgressTracker tracker = _binding.tracker();
 		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
+		// One reading of the account's spend for the pre-checks, the send and the run (#835).
+		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
 		TLObject created = null;
 		if (sessionId == null) {
+			TLObject subject = _binding.subject();
+			// What refuses the first message without the chat is asked before the chat exists, so that
+			// a refused first message leaves nothing behind.
+			ChatSendReply refusal = firstSendRefusal(tracker, person, ChatTranscripts.backendAbout(subject),
+				runOptions(args, blankToNull(stringArg(args, ARG_EFFORT))), attached, spendReading);
+			if (refusal != null) {
+				return refusal;
+			}
 			// The first send is what brings a chat into being, titled after what was said, with the
 			// mode the user set on it before it existed, about what the page shows now.
 			created = ChatHistoryService.createSession(blankToDefault(stringArg(args, ARG_TITLE), DEFAULT_TITLE),
-				person, shown == null ? ApprovalMode.MANUAL : shown, _binding.subject());
+				person, shown == null ? ApprovalMode.MANUAL : shown, subject);
 			if (created == null) {
 				return status(STATUS_ERROR);
 			}
@@ -779,7 +789,8 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			if (!tracker.adoptActiveSessionId(sessionId, person)) {
 				return status(STATUS_NOT_FOUND);
 			}
-			ChatSendReply reply = sendInto(tracker, person, sessionId, message, attached, shown, args, fromTurn);
+			ChatSendReply reply =
+				sendInto(tracker, person, sessionId, message, attached, shown, args, fromTurn, spendReading);
 			sent = STATUS_PROCESSING.equals(reply.getStatus());
 			if (sent) {
 				draft.removeAll(attached);
@@ -794,10 +805,56 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		}
 	}
 
-	/** Sends a message into the chat the conversation has just been switched to. */
+	/**
+	 * Why the first message of a conversation that does not exist yet is not sent, or
+	 * <code>null</code> when nothing that is decidable without the conversation refuses it.
+	 *
+	 * @param backend
+	 *        The backend that will answer the conversation, <code>null</code> for the framework's own
+	 *        agent.
+	 */
+	private static ChatSendReply firstSendRefusal(TaskProgressTracker tracker, Person person,
+			ConversationBackend backend, ChatProcessor.ChatRunOptions options, List<ChatAttachments.Entry> attached,
+			RunLimits.SpendReading spendReading) {
+		SendRefusal refusal = sendRefusal(backend, person, options, attached);
+		if (refusal != null) {
+			return refused(refusal);
+		}
+		String noRoom = ChatProcessor.noRoomReason(tracker, spendReading);
+		if (noRoom != null) {
+			return status(STATUS_REJECTED).setReason(noRoom);
+		}
+		return null;
+	}
+
+	/**
+	 * Why a message with the given files and turn settings is not sent into a conversation the
+	 * given backend answers, or <code>null</code> when it may be sent.
+	 *
+	 * @param backend
+	 *        The backend that answers the conversation, <code>null</code> for the framework's own
+	 *        agent.
+	 */
+	private static SendRefusal sendRefusal(ConversationBackend backend, Person person,
+			ChatProcessor.ChatRunOptions options, List<ChatAttachments.Entry> attached) {
+		// A conversation a backend answers runs no agent of this application, so what the agent policy
+		// says about the account's agents does not apply to it; what the backend supports does.
+		return backend == null
+			? SendRefusal.forRun(person, options)
+			: (attached.isEmpty() ? null : SendRefusal.unsupported(backend.features().attachments(),
+				com.top_logic.ai.chat.backend.I18NConstants.ATTACHMENTS_NOT_SUPPORTED));
+	}
+
+	/**
+	 * Sends a message into the chat the conversation has just been switched to.
+	 *
+	 * @param spendReading
+	 *        The reading of the account's spend the send's checks share, see
+	 *        {@link RunLimits#spendReading}.
+	 */
 	private ChatSendReply sendInto(TaskProgressTracker tracker, Person person, String sessionId,
 			String message, List<ChatAttachments.Entry> attached, ApprovalMode shown, Map<String, Object> args,
-			Integer fromTurn) {
+			Integer fromTurn, RunLimits.SpendReading spendReading) {
 		// The turn runs with the mode the switch shows at the send, whatever reached the server
 		// before: a switch still on its way must not make the turn ask while the browser answers by
 		// itself, or approve while the person sees the switch off.
@@ -811,17 +868,10 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		ChatProcessor.ChatRunOptions options = runOptions(args, effort);
 		ConversationBackend backend =
 			ChatTranscripts.backendOf(ChatSessionIds.accessibleSession(sessionId, person, SimpleBoundCommandGroup.WRITE));
-		// A conversation a backend answers runs no agent of this application, so what the agent policy
-		// says about the account's agents does not apply to it; what the backend supports does.
-		SendRefusal refusal = backend == null
-			? SendRefusal.forRun(person, options)
-			: (attached.isEmpty() ? null : SendRefusal.unsupported(backend.features().attachments(),
-				com.top_logic.ai.chat.backend.I18NConstants.ATTACHMENTS_NOT_SUPPORTED));
+		SendRefusal refusal = sendRefusal(backend, person, options, attached);
 		if (refusal != null) {
 			return refused(refusal);
 		}
-		// One reading of the account's spend for the pre-check, the send and the run (#835).
-		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
 		int removedTurns = 0;
 		if (fromTurn != null) {
 			// Before the turns are dropped: an edit refused afterwards would have removed what the

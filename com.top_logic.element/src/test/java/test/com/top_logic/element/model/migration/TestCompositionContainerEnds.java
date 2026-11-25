@@ -12,10 +12,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import junit.framework.Test;
 
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.col.NameValueBuffer;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -37,6 +40,7 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.migration.MigrationConfig;
+import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.service.migration.MigrationUtil;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
@@ -54,7 +58,8 @@ import com.top_logic.util.TLContext;
 
 /**
  * Test of the {@link TLStructuredTypeColumns#SELF_ASSOCIATION_END_NAME own end} of the
- * associations of references created by a migration.
+ * associations of references created by a migration, and of the migration repairing the own ends
+ * of compositions.
  */
 @SuppressWarnings("javadoc")
 public class TestCompositionContainerEnds extends AbstractLinkTableMigrationTest {
@@ -80,6 +85,10 @@ public class TestCompositionContainerEnds extends AbstractLinkTableMigrationTest
 	private static final String LINKED = "linked";
 
 	private static final String LINKERS = "linkers";
+
+	private static final String REPAIR_MIGRATION_MODULE = "tl-element";
+
+	private static final String REPAIR_MIGRATION = "Ticket_30565_composition_container_ends";
 
 	private static final String TL_OBJECT = "tl.model:TLObject";
 
@@ -131,23 +140,82 @@ public class TestCompositionContainerEnds extends AbstractLinkTableMigrationTest
 	}
 
 	/**
+	 * The migration {@link #REPAIR_MIGRATION} makes the container end of a composition, which is
+	 * multiple and no aggregate, single and an aggregate, so that the inverse reference answers the
+	 * container of a part. The own end of a non-composite reference stays unchanged. A second run
+	 * changes nothing.
+	 */
+	public void testRepairMigration() throws Exception {
+		String baseline = readBaseline();
+		try {
+			migrate(processors(migration(createReferences() + createInverseReferences())), null);
+			migrate(noProcessor(), (context, log, connection) -> {
+				Util util = context.getSQLUtils();
+				// A container end that is multiple and no aggregate.
+				util.updateTLStructuredTypePart(connection, end(util, connection, CONTAINER_CLASS, PARTS), null,
+					null, null, null, null, null, Boolean.FALSE, Boolean.TRUE, null, null, null, null, null, null,
+					null);
+			});
+			assertEquals(end(false, true, false, false), selfEnd(CONTAINER_CLASS, PARTS));
+			Map<String, Boolean> referenced = selfEnd(CONTAINER_CLASS, REFERENCED);
+			Map<String, Boolean> linked = selfEnd(CONTAINER_CLASS, LINKED);
+
+			String repaired = "Made the container end '" + MODEL_MODULE + ":"
+				+ TLStructuredTypeColumns.syntheticAssociationName(CONTAINER_CLASS, PARTS) + "#"
+				+ TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME + "'";
+			BufferingProtocol log = migrate(repairMigration(), null);
+			assertInfo(log, repaired);
+
+			assertEquals(end(false, false, true, false), selfEnd(CONTAINER_CLASS, PARTS));
+			assertEquals(referenced, selfEnd(CONTAINER_CLASS, REFERENCED));
+			assertEquals(linked, selfEnd(CONTAINER_CLASS, LINKED));
+
+			BufferingProtocol secondLog = migrate(repairMigration(), null);
+			assertInfo(secondLog, "Repaired 0 container ends of compositions.");
+			assertFalse("Second run repaired an end: " + secondLog.getInfos(),
+				secondLog.getInfos().stream().anyMatch(info -> info.contains(repaired)));
+			assertEquals(end(false, false, true, false), selfEnd(CONTAINER_CLASS, PARTS));
+			assertEquals(referenced, selfEnd(CONTAINER_CLASS, REFERENCED));
+			assertEquals(linked, selfEnd(CONTAINER_CLASS, LINKED));
+
+			TLReference container = reference(PART_CLASS, CONTAINER_REFERENCE);
+			withPart(reference(CONTAINER_CLASS, PARTS), List.of(), (containerObject, partObject) -> {
+				assertSame("Inverse of a composition answers the container.", containerObject,
+					partObject.tValue(container));
+			});
+		} finally {
+			migrate(processors(migration("<delete-module name=\"" + MODEL_MODULE + "\"/>")), null);
+			storeBaseline(baseline);
+		}
+	}
+
+	/**
+	 * The processors of the migration {@link #REPAIR_MIGRATION} of the module
+	 * {@link #REPAIR_MIGRATION_MODULE}.
+	 */
+	private static MigrationProcessor repairMigration() {
+		BufferingProtocol log = new BufferingProtocol();
+		String file = REPAIR_MIGRATION + MigrationUtil.MIGRATION_FILE_SUFFIX;
+		MigrationConfig migration = MigrationUtil.readMigration(log, REPAIR_MIGRATION_MODULE, file);
+		assertNotNull("Migration '" + file + "' of module '" + REPAIR_MIGRATION_MODULE + "' not found.", migration);
+		assertFalse("Reading the migration failed: " + log.getErrors(), log.hasErrors());
+		return processors(migration);
+	}
+
+	private static TypePart end(Util util, PooledConnection connection, String ownerClass, String forwardsReference)
+			throws Exception {
+		return util.getTLTypePartOrFail(connection, TRUNK, MODEL_MODULE,
+			TLStructuredTypeColumns.syntheticAssociationName(ownerClass, forwardsReference),
+			TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME);
+	}
+
+	/**
 	 * Creates a container with a part referenced by all forwards references and checks the values
 	 * of the inverse references of the part.
 	 */
 	private void assertValues(TLReference parts, TLReference referenced, TLReference linked,
 			TLReference container, TLReference referrer, TLReference linkers) {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		TLObject containerObject;
-		TLObject partObject;
-		try (Transaction tx = kb.beginTransaction()) {
-			containerObject = newObject(kb, parts.getOwner());
-			partObject = newObject(kb, parts.getType());
-			containerObject.tUpdate(parts, Collections.singleton(partObject));
-			containerObject.tUpdate(referenced, Collections.singleton(partObject));
-			containerObject.tUpdate(linked, Collections.singleton(partObject));
-			tx.commit();
-		}
-		try {
+		withPart(parts, List.of(referenced, linked), (containerObject, partObject) -> {
 			assertSame("Inverse of a composition answers the container.", containerObject,
 				partObject.tValue(container));
 			assertSame("Single inverse of a non-composite reference answers the referrer.", containerObject,
@@ -155,6 +223,31 @@ public class TestCompositionContainerEnds extends AbstractLinkTableMigrationTest
 			assertEquals("Multiple inverse of a non-composite reference answers a collection.",
 				Collections.singletonList(containerObject),
 				new ArrayList<>((Collection<?>) partObject.tValue(linkers)));
+		});
+	}
+
+	/**
+	 * Creates a container with a part in the given composition and further given references,
+	 * performs the given check, and deletes both objects.
+	 *
+	 * @param check
+	 *        Check of the container (first argument) and the part (second argument).
+	 */
+	private void withPart(TLReference parts, List<TLReference> references, BiConsumer<TLObject, TLObject> check) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		TLObject containerObject;
+		TLObject partObject;
+		try (Transaction tx = kb.beginTransaction()) {
+			containerObject = newObject(kb, parts.getOwner());
+			partObject = newObject(kb, parts.getType());
+			containerObject.tUpdate(parts, Collections.singleton(partObject));
+			for (TLReference reference : references) {
+				containerObject.tUpdate(reference, Collections.singleton(partObject));
+			}
+			tx.commit();
+		}
+		try {
+			check.accept(containerObject, partObject);
 		} finally {
 			try (Transaction tx = kb.beginTransaction()) {
 				partObject.tDelete();
@@ -223,9 +316,7 @@ public class TestCompositionContainerEnds extends AbstractLinkTableMigrationTest
 	private Map<String, Boolean> selfEnd(String ownerClass, String forwardsReference) throws Exception {
 		TypePart[] end = { null };
 		migrate(noProcessor(), (context, log, connection) -> {
-			end[0] = context.getSQLUtils().getTLTypePartOrFail(connection, TRUNK, MODEL_MODULE,
-				TLStructuredTypeColumns.syntheticAssociationName(ownerClass, forwardsReference),
-				TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME);
+			end[0] = end(context.getSQLUtils(), connection, ownerClass, forwardsReference);
 		});
 		return endFlags(end[0]);
 	}

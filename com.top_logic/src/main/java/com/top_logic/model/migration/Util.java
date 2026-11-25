@@ -1840,6 +1840,95 @@ public class Util {
 		return result;
 	}
 
+	/**
+	 * Fetches the container ends of compositions in the stored model that are multiple or no
+	 * aggregate.
+	 *
+	 * <p>
+	 * A container end is the {@link TLStructuredTypeColumns#SELF_ASSOCIATION_END_NAME own end} of
+	 * an association whose other end is {@link TLAssociationEnd#isComposite() composite}. Such an
+	 * end refers to the single container of a part, it must be single and an
+	 * {@link TLAssociationEnd#isAggregate() aggregate}. Only the current state of the model is
+	 * considered.
+	 * </p>
+	 *
+	 * @return The found ends with their qualified names (<code>module:Association#self</code>),
+	 *         ordered by branch and identifier.
+	 */
+	public Map<BranchIdType, String> getInvalidCompositionContainerEnds(PooledConnection connection)
+			throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+
+		String self = "s";
+		String other = "o";
+		String owner = "t";
+		String module = "m";
+
+		String partTable = SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
+		String identifier = BasicTypes.IDENTIFIER_DB_NAME;
+		String revMax = BasicTypes.REV_MAX_DB_NAME;
+		String name = SQLH.mangleDBName(TLNamed.NAME);
+		String impl = SQLH.mangleDBName(ApplicationObjectUtil.IMPLEMENTATION_NAME);
+		String partOwner = refID(ApplicationObjectUtil.META_ELEMENT_ATTR);
+
+		String branchAlias = "branch";
+		String identifierAlias = "id";
+		String typeNameAlias = "typeName";
+		String moduleNameAlias = "moduleName";
+		CompiledStatement selectEnds = query(
+			select(
+				columns(
+					columnDef(branchColumnRef(self), branchAlias),
+					columnDef(identifier, self, identifierAlias),
+					columnDef(SQLH.mangleDBName(TLNamed.NAME_ATTRIBUTE), owner, typeNameAlias),
+					columnDef(SQLH.mangleDBName(ApplicationObjectUtil.MODULE_NAME_ATTR), module, moduleNameAlias)),
+				innerJoin(
+					innerJoin(
+						innerJoin(
+							table(partTable, self),
+							table(partTable, other),
+							and(
+								eqSQL(branchColumnRef(other), branchColumnRef(self)),
+								eqSQL(column(other, partOwner), column(self, partOwner)),
+								eqSQL(column(other, revMax), literalLong(Revision.CURRENT_REV)),
+								eqSQL(column(other, impl), literalString(TLStructuredTypeColumns.ASSOCIATION_END_IMPL)),
+								eqSQL(column(other, SQLH.mangleDBName(TLAssociationEnd.COMPOSITE_ATTR)),
+									literal(DBType.BOOLEAN, Boolean.TRUE)))),
+						table(SQLH.mangleDBName(ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE), owner),
+						and(
+							eqSQL(branchColumnRef(owner), branchColumnRef(self)),
+							eqSQL(column(owner, identifier), column(self, partOwner)),
+							eqSQL(column(owner, revMax), literalLong(Revision.CURRENT_REV)))),
+					table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_MODULE), module),
+					and(
+						eqSQL(branchColumnRef(module), branchColumnRef(self)),
+						eqSQL(column(module, identifier), column(owner, refID(PersistentType.MODULE_REF))),
+						eqSQL(column(module, revMax), literalLong(Revision.CURRENT_REV)))),
+				and(
+					eqSQL(column(self, impl), literalString(TLStructuredTypeColumns.ASSOCIATION_END_IMPL)),
+					eqSQL(column(self, name), literalString(TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME)),
+					eqSQL(column(self, revMax), literalLong(Revision.CURRENT_REV)),
+					or(
+						eqSQL(column(self, SQLH.mangleDBName(TLAssociationEnd.MULTIPLE_ATTR)),
+							literal(DBType.BOOLEAN, Boolean.TRUE)),
+						eqSQL(column(self, SQLH.mangleDBName(TLAssociationEnd.AGGREGATE_ATTR)),
+							literal(DBType.BOOLEAN, Boolean.FALSE)))),
+				orders(
+					order(branchColumnRef(self)),
+					order(column(self, identifier))))).toSql(sqlDialect);
+
+		Map<BranchIdType, String> result = new LinkedHashMap<>();
+		try (ResultSet dbResult = selectEnds.executeQuery(connection)) {
+			while (dbResult.next()) {
+				BranchIdType end = BranchIdType.newInstance(BranchIdType.class, dbResult.getLong(branchAlias),
+					tlId(dbResult, identifierAlias), ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
+				result.put(end, dbResult.getString(moduleNameAlias) + ":" + dbResult.getString(typeNameAlias) + "#"
+					+ TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME);
+			}
+		}
+		return result;
+	}
+
 	private List<TypePart> getTLStructuredTypeParts(PooledConnection connection, Type type) throws SQLException {
 		DBHelper sqlDialect = connection.getSQLDialect();
 

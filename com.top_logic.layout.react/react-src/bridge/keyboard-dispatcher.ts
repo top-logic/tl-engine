@@ -138,6 +138,27 @@ export function normalizeGesture(spec: string): string {
   return withModifiers(canonicalKeyName(key), ctrl, alt, shift, meta);
 }
 
+// -- Input methods ---------------------------------------------------------------
+
+/** The key code a browser reports for a key that an input method processes. */
+const KEY_CODE_INPUT_METHOD = 229;
+
+/**
+ * Whether the key belongs to the composition of an input method (for example for Japanese): a key
+ * that composes the text, or the Enter that ends the composition. Such a key is the input method's
+ * and triggers nothing.
+ *
+ * <p>A control that handles a key itself in an input - Enter to submit or to pick, Escape, the arrow
+ * keys - asks this first and leaves such a key alone. A React handler passes `event.nativeEvent`.</p>
+ *
+ * <p>`isComposing` alone is not sufficient: Safari ends the composition before it reports the Enter
+ * that ends it, with `isComposing` false. Every browser reports such a key with the key code of a key
+ * that an input method processes, which is why the deprecated `keyCode` is read.</p>
+ */
+export function isCompositionKey(event: KeyboardEvent): boolean {
+  return event.isComposing || event.keyCode === KEY_CODE_INPUT_METHOD;
+}
+
 // -- Focus / text-entry rules ---------------------------------------------------
 
 const TEXT_INPUT_TYPES = new Set([
@@ -192,6 +213,11 @@ function handleKeydown(e: KeyboardEvent): void {
   // key handler (e.g. a menu/dropdown's arrow + Enter navigation) gets first dibs and, by
   // calling preventDefault(), tells the dispatcher to stand down.
   if (e.defaultPrevented) {
+    return;
+  }
+  // A key of a composition is the input method's: Enter ends the composition, Escape cancels it,
+  // the arrow keys choose in its list. None of them is a gesture (a default button, closing a dialog).
+  if (isCompositionKey(e)) {
     return;
   }
   const active = document.activeElement;

@@ -28,6 +28,7 @@ import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
@@ -156,7 +157,8 @@ public class TabBarElement implements UIElement {
 			// context must already say where that content will sit.
 			ViewContext tabContext = context.withScope(RevealPath.class, here.append(this, section.getId()));
 			TabDefinition tabDef = new TabDefinition(section.getId(), section.label(),
-				() -> createContent(section, tabContext, dirtyChannel), dirtyChannel);
+				() -> ViewUnitControl.create(tabContext, ctx -> createContent(section, ctx, dirtyChannel)),
+				dirtyChannel);
 			if (section.getIcon() != null) {
 				tabDef.withIcon(section.getIcon());
 			}

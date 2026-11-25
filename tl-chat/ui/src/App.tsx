@@ -1,4 +1,4 @@
-import { React, useTLState } from 'tl-react-bridge'
+import { React, isCompositionKey, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
@@ -122,7 +122,8 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   useEffect(() => {
     if (!railOpen) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return
+      // The Escape of an input method composition cancels the composition only.
+      if (event.key !== 'Escape' || isCompositionKey(event)) return
       setRailOpen(false)
       window.setTimeout(() => {
         document.querySelector<HTMLButtonElement>(`#${CSS.escape(controlId)} .rail-toggle`)?.focus()

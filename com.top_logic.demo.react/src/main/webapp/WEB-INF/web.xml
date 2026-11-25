@@ -19,4 +19,15 @@
          <listener-class>com.top_logic.util.WebSocketEndpointListener</listener-class>
     </listener>
 
+    <!-- Permalink of a ticket, answering a link that leads to no ticket with an error page. -->
+    <servlet>
+        <servlet-name>TicketLinkServlet</servlet-name>
+        <servlet-class>com.top_logic.demo.react.servlet.TicketLinkServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>TicketLinkServlet</servlet-name>
+        <url-pattern>/servlet/ticket-link</url-pattern>
+    </servlet-mapping>
+
 </web-app>

@@ -1,4 +1,4 @@
-import { React } from 'tl-react-bridge'
+import { React, isCompositionKey } from 'tl-react-bridge'
 import { parseDraft, referenceSummary, serializeReference, type ReferenceToken } from './reference'
 
 const { useCallback, useEffect, useImperativeHandle, useRef } = React
@@ -212,6 +212,10 @@ export const TokenInput = React.forwardRef(function TokenInput(
 
   const onKey = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
+      // The keys of an input method composition are the input method's: Backspace edits the
+      // composition, Enter ends it, Escape cancels it. Neither this editor nor its owner - the
+      // composer, the edit of a sent message - sends, takes a token or closes anything with them.
+      if (isCompositionKey(event.nativeEvent)) return
       const el = host.current
       if (el && (event.key === 'Backspace' || event.key === 'Delete')) {
         // Explicit rather than left to the browser: a token comes out in one press, whole, in every

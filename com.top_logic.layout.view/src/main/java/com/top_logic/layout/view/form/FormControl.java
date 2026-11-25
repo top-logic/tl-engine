@@ -1109,7 +1109,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		_participants.clear();
 
 		stopObservingOverlay();
-		_overlay = new TLObjectOverlay(_currentObject);
+		_overlay = TLObjectOverlay.newOverlay(_currentObject);
 		_overlay.addValueChangeListener(_overlayListener);
 
 		// Participants announce a changed validity themselves, once they have applied the new

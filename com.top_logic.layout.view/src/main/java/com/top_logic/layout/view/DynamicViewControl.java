@@ -171,8 +171,8 @@ public class DynamicViewControl extends ReactControl {
 				DynamicViewControl.class);
 			return ViewLoadError.createControl(_context, _source, ex);
 		}
-		ViewContext childContext = ViewBindings.embeddedContext(_context, _bindings);
-		return (ReactControl) element.createControl(childContext);
+		return ViewUnitControl.create(_context,
+			ctx -> (ReactControl) element.createControl(ViewBindings.embeddedContext(ctx, _bindings)));
 	}
 
 	@Override

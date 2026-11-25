@@ -32,7 +32,7 @@ import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
-import com.top_logic.layout.view.ReloadableControl;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.command.CommandCliqueService;
@@ -165,8 +165,7 @@ public class TestWindowPage extends BasicTestCase {
 		SSEUpdateQueue queue = registry.getOrCreateQueue("window");
 		DefaultReactContext react = new DefaultReactContext("", "window", queue, registry);
 		ViewContext context = new DefaultViewContext(react, SHELL);
-		ReloadableControl content =
-			new ReloadableControl(SHELL, context, (ReactControl) ViewLoader.loadView(SHELL).createControl(context));
+		ViewUnitControl content = ViewUnitControl.forView(context, SHELL, ViewLoader.loadView(SHELL));
 		content.setViewSource(SHELL);
 		ReactControl root = new ReactStackControl(react, List.of(content));
 		queue.setRootControl(root);

@@ -51,6 +51,11 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * {@link ChannelVetoException} from writing the channel through its
  * {@link DiagramSelectionBinding}.
  * </p>
+ *
+ * <p>
+ * The same holds for leaving no element selected in a diagram whose empty area stands for an
+ * object: the channel receives that object, and a refusal restores the selection as for a node.
+ * </p>
  */
 public class TestDiagramSelectionVeto extends TestCase {
 
@@ -59,6 +64,9 @@ public class TestDiagramSelectionVeto extends TestCase {
 
 	/** Another node of the diagram under test, the one the refused change selects. */
 	private static final String NODE_B = "b";
+
+	/** The object the empty area of the diagram under test stands for, when it stands for one. */
+	private static final String DISPLAYED_OBJECT = "displayed";
 
 	private CapturingQueue _queue;
 
@@ -75,6 +83,9 @@ public class TestDiagramSelectionVeto extends TestCase {
 	private DiagramControl _control;
 
 	private DiagramSelectionBinding _binding;
+
+	/** The object the empty area of the diagram stands for, <code>null</code> for none. */
+	private Object _emptyAreaSelection;
 
 	/** The client's copy of the displayed diagram. */
 	private Client _client;
@@ -204,6 +215,148 @@ public class TestDiagramSelectionVeto extends TestCase {
 		assertEquals(Set.of(NODE_A), _client.marked());
 	}
 
+	/**
+	 * Tests that a plain click on the empty area writes the object the empty area stands for.
+	 */
+	public void testEmptyAreaClickSelectsItsObject() throws IOException {
+		_emptyAreaSelection = DISPLAYED_OBJECT;
+		display(diagram(false, NODE_A, NODE_B), NODE_A);
+		_unsavedChanges.resolve();
+
+		_client.clickEmptyArea();
+		_client.sendUpdate().run();
+
+		assertEquals(DISPLAYED_OBJECT, _channel.get());
+		assertEquals("No element is selected.", Set.of(), _control.getSelectedUserObjects());
+
+		_client.applyServerPatches();
+		assertEquals(Set.of(), _client.marked());
+	}
+
+	/**
+	 * Tests that a context menu opened on the empty area writes the object the empty area stands
+	 * for.
+	 */
+	public void testEmptyAreaContextMenuSelectsItsObject() throws IOException {
+		_emptyAreaSelection = DISPLAYED_OBJECT;
+		display(diagram(false, NODE_A, NODE_B), NODE_A);
+		_unsavedChanges.resolve();
+
+		_client.openContextMenu(null).run();
+
+		assertEquals(DISPLAYED_OBJECT, _channel.get());
+		assertEquals(Set.of(), _control.getSelectedUserObjects());
+	}
+
+	/**
+	 * Tests that giving up the last selected element by a click with {@code Ctrl} writes the
+	 * object the empty area stands for, too.
+	 */
+	public void testDeselectingTheLastElementSelectsTheEmptyAreaObject() throws IOException {
+		_emptyAreaSelection = DISPLAYED_OBJECT;
+		display(diagram(true, NODE_A, NODE_B), NODE_A);
+		_unsavedChanges.resolve();
+
+		_client.removeFromSelection(NODE_A);
+		_client.sendUpdate().run();
+
+		assertEquals(DISPLAYED_OBJECT, _channel.get());
+	}
+
+	/**
+	 * Tests that the object the empty area stands for stays the value when the diagram is changed
+	 * without touching the selection, and that selecting a node afterwards replaces it.
+	 */
+	public void testEmptyAreaObjectIsKeptAndReplaced() throws IOException {
+		_emptyAreaSelection = DISPLAYED_OBJECT;
+		display(diagram(false, NODE_A, NODE_B), NODE_A);
+		_unsavedChanges.resolve();
+		_client.clickEmptyArea();
+		_client.sendUpdate().run();
+		_client.applyServerPatches();
+
+		_control.setModel(diagram(false, NODE_A, NODE_B), true);
+		assertEquals("A refresh keeps the value.", DISPLAYED_OBJECT, _channel.get());
+		_client = new Client(_control.storedDiagram());
+		_queue.clear();
+
+		_client.selectOnly(NODE_B);
+		_client.sendUpdate().run();
+		assertEquals(NODE_B, _channel.get());
+	}
+
+	/**
+	 * Tests that the empty area clears the selection when it stands for no object - by
+	 * configuration, or because the object it stands for is <code>null</code>.
+	 */
+	public void testEmptyAreaWithoutObjectClearsTheSelection() throws IOException {
+		display(diagram(false, NODE_A, NODE_B), NODE_A);
+		_unsavedChanges.resolve();
+
+		_client.clickEmptyArea();
+		_client.sendUpdate().run();
+		assertNull(_channel.get());
+
+		_client.applyServerPatches();
+		_client.selectOnly(NODE_B);
+		_client.sendUpdate().run();
+		assertEquals(NODE_B, _channel.get());
+
+		_client.openContextMenu(null).run();
+		assertNull(_channel.get());
+	}
+
+	/**
+	 * Tests that a refresh dropping the selected element writes no value, also in a diagram whose
+	 * empty area stands for an object: only the user's selection selects that object.
+	 */
+	public void testRefreshDroppingTheSelectionWritesNoValue() throws IOException {
+		_emptyAreaSelection = DISPLAYED_OBJECT;
+		display(diagram(false, NODE_A, NODE_B), NODE_A);
+		_unsavedChanges.resolve();
+
+		_control.setModel(diagram(false, NODE_B), true);
+
+		assertNull(_channel.get());
+	}
+
+	/**
+	 * Tests that a click on the empty area the channel refuses keeps the element selected before,
+	 * in the control and in the client, and passes the veto on.
+	 */
+	public void testRefusedEmptyAreaClickIsRestored() throws IOException {
+		_emptyAreaSelection = DISPLAYED_OBJECT;
+		display(diagram(false, NODE_A, NODE_B), NODE_A);
+
+		_client.clickEmptyArea();
+		assertVetoed(_client.sendUpdate());
+
+		assertEquals(Set.of(NODE_A), _control.getSelectedUserObjects());
+		assertEquals("The channel keeps its value.", NODE_A, _channel.get());
+
+		_client.applyServerPatches();
+		assertEquals("The client marks the element selected before again.",
+			Set.of(NODE_A), _client.marked());
+		assertEquals(Set.of(NODE_A), _client.selection());
+	}
+
+	/**
+	 * Tests that a context menu on the empty area the channel refuses keeps the element selected
+	 * before.
+	 */
+	public void testRefusedEmptyAreaContextMenuIsRestored() throws IOException {
+		_emptyAreaSelection = DISPLAYED_OBJECT;
+		display(diagram(false, NODE_A, NODE_B), NODE_A);
+
+		assertVetoed(_client.openContextMenu(null));
+
+		assertEquals(Set.of(NODE_A), _control.getSelectedUserObjects());
+		assertEquals(NODE_A, _channel.get());
+
+		_client.applyServerPatches();
+		assertEquals(Set.of(NODE_A), _client.marked());
+	}
+
 	@Override
 	protected void tearDown() throws Exception {
 		if (_binding != null) {
@@ -219,7 +372,7 @@ public class TestDiagramSelectionVeto extends TestCase {
 	 */
 	private void display(Diagram diagram, String selected) throws IOException {
 		_control = new DiagramControl(_context, diagram);
-		_binding = new DiagramSelectionBinding(_control, _channel);
+		_binding = new DiagramSelectionBinding(_control, _channel, () -> _emptyAreaSelection);
 		_channel.set(selected);
 		_unsavedChanges.makeDirty();
 
@@ -286,6 +439,26 @@ public class TestDiagramSelectionVeto extends TestCase {
 			Widget node = node(cssClass);
 			_diagram.setSelection(Collections.singletonList(node));
 			SelectionUtil.setSelected(node, true);
+		}
+
+		/** Clears the selection, as a plain click on the empty area does. */
+		void clickEmptyArea() {
+			_diagram.setIncrementalSelection(false);
+			for (Widget selected : _diagram.getSelection()) {
+				SelectionUtil.setSelected(selected, false);
+			}
+			_diagram.setSelection(Collections.emptyList());
+		}
+
+		/**
+		 * Takes the node drawn with the given CSS class out of the selection, as a click with
+		 * {@code Ctrl} on a selected node does.
+		 */
+		void removeFromSelection(String cssClass) {
+			_diagram.setIncrementalSelection(true);
+			Widget node = node(cssClass);
+			_diagram.getSelection().remove(node);
+			SelectionUtil.setSelected(node, false);
 		}
 
 		/** Adds the node drawn with the given CSS class to the selection, as a modifier click does. */

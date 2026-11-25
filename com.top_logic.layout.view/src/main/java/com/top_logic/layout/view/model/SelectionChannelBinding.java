@@ -24,7 +24,8 @@ import com.top_logic.layout.view.channel.ViewChannel;
  *
  * <ul>
  * <li>The selection changed in the selector itself (the user picked an element): one selected key
- * is written as that object, several as the {@link Set} of keys, none as <code>null</code>.</li>
+ * is written as that object, several as the {@link Set} of keys, none as the
+ * {@link #noSelectionValue() value of no selection}, <code>null</code> by default.</li>
  * <li>A key this selector displayed as selected is gone after a {@link #refreshed() refresh} of its
  * elements - deleted, filtered away by a changed input, no longer matching the element criterion.
  * The value names something nobody can see any more, so the surviving selection is written in its
@@ -239,13 +240,41 @@ public abstract class SelectionChannelBinding {
 	 */
 	protected final void selectionChanged(Set<Object> selectedKeys, boolean replacing) {
 		if (!_applyingFromChannel) {
+			Set<Object> writtenKeys;
 			if (replacing || !keepsUndisplayedSelection()) {
-				writeSelection(selectedKeys);
+				writtenKeys = selectedKeys;
 			} else {
-				writeSelection(withUndisplayedKeys(selectedKeys));
+				writtenKeys = withUndisplayedKeys(selectedKeys);
+			}
+			if (writtenKeys.isEmpty()) {
+				_channel.set(noSelectionValue());
+			} else {
+				writeSelection(writtenKeys);
 			}
 		}
 		_displayedKeys = new LinkedHashSet<>(selectedKeys);
+	}
+
+	/**
+	 * The value written to the channel when a selection made in the selector leaves no key to
+	 * write.
+	 *
+	 * <p>
+	 * Used by {@link #selectionChanged(Set, boolean)} (and {@link #selectionChanged(Set)}) for a
+	 * selection the user made in the selector, after the keys of the channel value the selector
+	 * has no element for are kept or dropped: when no key is left, this value is written instead of
+	 * <code>null</code>. It is not used for the echo of an applied channel value, and not by
+	 * {@link #refreshed()}: a refresh dropping every displayed element writes <code>null</code>.
+	 * </p>
+	 *
+	 * <p>
+	 * By default <code>null</code>: the user gave up the selection. A selector whose "nothing
+	 * selected" stands for an object of its own - a diagram, whose empty area stands for the object
+	 * it displays - returns that object.
+	 * </p>
+	 */
+	protected Object noSelectionValue() {
+		return null;
 	}
 
 	/**

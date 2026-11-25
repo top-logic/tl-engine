@@ -51,7 +51,8 @@ A user holding `Discover` on an object
 - sees the object's **label**,
 - can select the object and set it as the value of a reference (see R7).
 
-`Discover` alone does **not** make any attribute readable.
+`Discover` alone does **not** make any attribute readable, except the discover attributes of the
+object's type (R3a).
 
 ### R2 - every right implies `Discover`
 
@@ -77,6 +78,21 @@ A role may read `A#bs` without being able to read any other attribute of `A`, an
 `Person#password` stays restricted to its own roles. By R2, a role holding an attribute right holds
 `Discover` on the object.
 
+### R3a - discover attributes are readable with `Discover`
+
+The class entry of a type may name **discover attributes** (`discover-attributes`, ticket #30430). An
+attribute is then readable for a user in this order:
+
+1. If the attribute has its own grants for `Read` (R3), they decide.
+2. Otherwise, if the attribute is a discover attribute of the object's type, `Discover` on the object
+   decides.
+3. Otherwise the class right `Read` decides.
+
+Only reading is extended; writing stays with R3. The setting applies to the type and its
+specializations, a specialization may replace it. The target of a discover attribute that is a
+reference is still filtered (R4) or masked (R11) unless the user may discover it. The configuration
+syntax is described in [the access configuration article](doc:access-configuration).
+
 ### R4 - every object source filters for `Discover`
 
 In a secured evaluation, every object source delivers only the objects the user holds `Discover`
@@ -98,10 +114,11 @@ for the owner type of the accessed attribute and its concrete specializations, e
 `Discover` also holds `Read`, no access parent is configured, no singleton of these types has grants
 of its own and the attribute has no read grant, neither for its owner type nor for one of its
 specializations. An access to a reference attribute on the root is never compiled; otherwise the filter is
-interpreted.
+interpreted. Discover attributes (R3a) need no condition of their own: when every role holding `Discover`
+also holds `Read`, they are readable for exactly the users who may read the class.
 
-Model elements (types, attributes, modules, the classifiers of an enumeration) are discoverable and
-readable for every user, without a grant on `tl.model`: they are meta-data, not business objects, so
+Model elements (types, attributes, modules, the classifiers of an enumeration) and the values of
+their attributes are discoverable and readable for every user, without a grant on `tl.model`: they are meta-data, not business objects, so
 they are neither filtered nor masked, the value of an enumeration attribute of a readable object
 reaches every reader of the attribute completely, and setting an enumeration attribute to a
 classifier passes the check of R7. Modifying, creating and deleting a model element stays protected. A form field showing the value of a
@@ -248,7 +265,7 @@ Whether a script is evaluated secured is decided by its kind, not by the script 
 | Unsecured (on behalf of the system) | Secured (on behalf of the user) |
 |---|---|
 | derived attributes (`AttributeByExpression`, `AttributeValueLocatorByExpression`) | option lists (`OptionsByExpression`, `TreeOptionsByExpression`, `DefaultSelectionProviderByExpression`, `CreateTypeOptionsByExpression`) |
-| constraints, including uniqueness checks (`ConstraintCheckByExpression`, `DeleteConstraintByExpression`), change and lifecycle handlers (`ChangeHandlerByExpression`, `LifecycleHandlerByExpression`) | default values (`DefaultByExpression`) |
+| constraints, including uniqueness checks (`ConstraintCheckByExpression`, `DeleteConstraintByExpression`), object initializers (`<object-initializers>`, `InitializerByExpression`), change and lifecycle handlers (`ChangeHandlerByExpression`, `LifecycleHandlerByExpression`) | default values (`DefaultByExpression`) |
 | **labels** (`LabelProviderByExpression`, the label script of `LabelByExpression`), the header labels of dynamic table columns (`column-label` of `<dynamic-columns>`, `columnLabel` of `DynamicColumnProviderByExpression`, `dynamicColumnLabel` of `ComputedColumnProviderByExpression`) | executability (`ExecutabilityByExpression`) |
 | role rules and access parents (`PathByExpression`, `ScriptAccessParent`, `SecurityObjectByExpression`) | process initialisation (`ProcessInitializerByExpression`) |
 | lock strategies (`LockStrategyByExpression`) | scripts in layouts and views, commands, the script console |

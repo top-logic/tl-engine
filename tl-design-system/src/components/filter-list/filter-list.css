@@ -1,0 +1,45 @@
+/* Werteliste des Spaltenfilters — #30102, docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W3).
+   Das Popover am Trichter einer Spalte: oben die Suche (ab acht Werten), darunter in einem Rollbereich
+   (tl-picker__scroll) die Zeile „Alle“ und die Werte, am Fuß zwei Aktionen. Jede Zeile ist ein Eintrag des Menüs mit
+   Häkchen (tl-menu__item--check): die ganze Zeile klickt, das Kästchen davor ist gezeichnet, nicht angeklickt. Hier
+   steht nur, was die Werteliste über Menü und Picker hinaus braucht — die Anzahl rechts, der leise Wert ohne Treffer,
+   die Linie unter „Alle“ und die Linie über dem Fuß. */
+
+/* Die Hülle tl-picker setzt eine Lücke von space-sm zwischen die Kinder; hier gilt die dichte Folge der Zeilen wie in
+   jedem Menü. Zwei Klassen gegen die eine von .tl-picker: die Regel gilt, gleich wo picker.css im Stylesheet steht. */
+.tl-popover.tl-filter-list {
+  gap: var(--tl-space-2xs);
+}
+
+/* Die Anzahl der Treffer je Wert steht rechts am Zeilenende, leise; die Ziffern setzt das Element (tl-nums, base.css). */
+.tl-filter-list__count {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  color: var(--tl-text-helper);
+}
+
+/* Ein Wert ohne Treffer tritt zurück, bleibt aber wählbar — text-helper, nicht text-disabled: die WCAG-Ausnahme für
+   Deaktiviertes gilt nur für Inaktives, und die Zeile klickt. Das Attribut sagt es, kein Modifier. */
+.tl-filter-list .tl-menu__item--check[data-tl-state~="empty"] {
+  color: var(--tl-text-helper);
+}
+
+/* Die Zeile „Alle“ steht über den Werten, getrennt durch eine Linie; ihr Eckenradius geht, damit die Linie die Zeile
+   ganz trennt, und die Lücke zur ersten Zeile hält der Abstand darunter. Zwei Klassen, weil menu.css später steht und dem
+   Eintrag `border: 0` und seinen Radius setzt. */
+.tl-menu__item.tl-filter-list__all {
+  margin-block-end: var(--tl-space-2xs);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: 0;
+}
+
+/* Der Fuß: zwei Aktionen (Filter entfernen, Auswahl umkehren) unter einer Linie, außerhalb des Rollbereichs. */
+.tl-filter-list__footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  padding-block-start: var(--tl-space-2xs);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-filter-list__footer[hidden] { display: none; }

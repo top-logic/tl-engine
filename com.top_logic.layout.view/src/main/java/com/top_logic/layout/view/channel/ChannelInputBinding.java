@@ -8,6 +8,7 @@ package com.top_logic.layout.view.channel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
@@ -36,8 +37,29 @@ import com.top_logic.model.listen.ModelScope;
  * Additionally, a {@link VetoForwarder} from every input to the computing channel makes unsaved
  * changes bound to the computed value block the write of the input it is computed from.
  * </p>
+ *
+ * <p>
+ * Channels may be computed from each other in a cycle. Such a cycle settles, since a channel tells
+ * its listeners only about a value that differs from the one it held. A computation reached again
+ * {@link #MAX_NESTING} times within the reports it causes itself does not settle, and fails with an
+ * {@link IllegalStateException} naming the channels of the cycle.
+ * </p>
  */
 public class ChannelInputBinding {
+
+	/**
+	 * How often the computation of a channel may be nested in the reports its own computation
+	 * causes, before the channels are considered a cycle that does not settle.
+	 */
+	public static final int MAX_NESTING = 16;
+
+	/**
+	 * The bindings whose computation is in progress on the current thread, outermost first;
+	 * {@code null} while none is.
+	 */
+	private static final ThreadLocal<List<ChannelInputBinding>> COMPUTING = new ThreadLocal<>();
+
+	private final String _name;
 
 	private final List<ViewChannel> _inputs;
 
@@ -53,6 +75,8 @@ public class ChannelInputBinding {
 	/**
 	 * Creates a {@link ChannelInputBinding} and registers it on the given inputs.
 	 *
+	 * @param name
+	 *        The name of the computing channel, reported for a cycle that does not settle.
 	 * @param target
 	 *        The channel computed from the inputs, the target of the {@link VetoForwarder}s.
 	 * @param inputs
@@ -67,16 +91,70 @@ public class ChannelInputBinding {
 	 *        Run when an observed object is changed while attached, and once when the observation
 	 *        resumes after a {@link #detach()}.
 	 */
-	public ChannelInputBinding(ViewChannel target, List<ViewChannel> inputs, Set<TLStructuredType> observedTypes,
-			Runnable onInputChange, Runnable onObjectChange) {
+	public ChannelInputBinding(String name, ViewChannel target, List<ViewChannel> inputs,
+			Set<TLStructuredType> observedTypes, Runnable onInputChange, Runnable onObjectChange) {
+		_name = name;
 		_inputs = inputs;
 		_objectObserver = new ChannelObjectObserver(inputs, observedTypes, onObjectChange);
 
-		ViewChannel.ChannelListener inputListener = (sender, oldValue, newValue) -> onInputChange.run();
+		ViewChannel.ChannelListener inputListener = (sender, oldValue, newValue) -> compute(onInputChange);
 		for (ViewChannel input : inputs) {
 			_inputRegistrations.add(input.addListener(inputListener));
 			_vetoForwarderRemovers.add(VetoForwarder.forward(input, target));
 		}
+	}
+
+	/**
+	 * Runs the computation of the channel in reaction to a new input value, failing for a cycle
+	 * that does not settle.
+	 */
+	private void compute(Runnable computation) {
+		List<ChannelInputBinding> computing = COMPUTING.get();
+		boolean outermost = computing == null;
+		if (outermost) {
+			computing = new ArrayList<>();
+			COMPUTING.set(computing);
+		}
+		try {
+			if (nesting(computing) >= MAX_NESTING) {
+				throw new IllegalStateException("Channels computed from each other do not settle: "
+					+ cycle(computing) + ".");
+			}
+			computing.add(this);
+			try {
+				computation.run();
+			} finally {
+				computing.remove(computing.size() - 1);
+			}
+		} finally {
+			if (outermost) {
+				COMPUTING.remove();
+			}
+		}
+	}
+
+	/**
+	 * How often the computation of this binding is in progress among the given ones.
+	 */
+	private int nesting(List<ChannelInputBinding> computing) {
+		int result = 0;
+		for (ChannelInputBinding binding : computing) {
+			if (binding == this) {
+				result++;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The names of the channels from the innermost computation of this binding on, closed by the
+	 * name of this one: {@code a -> b -> a}.
+	 */
+	private String cycle(List<ChannelInputBinding> computing) {
+		int start = computing.lastIndexOf(this);
+		List<ChannelInputBinding> cycle = new ArrayList<>(computing.subList(start, computing.size()));
+		cycle.add(this);
+		return cycle.stream().map(binding -> "'" + binding._name + "'").collect(Collectors.joining(" -> "));
 	}
 
 	/**

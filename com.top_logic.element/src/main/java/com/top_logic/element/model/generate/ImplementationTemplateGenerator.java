@@ -90,15 +90,33 @@ public class ImplementationTemplateGenerator extends TemplateGenerator {
 	 * </p>
 	 */
 	private String superTypeSpec(TLType type) {
-		List<TLClass> superTypes = generalizations(type);
-		if (superTypes.isEmpty()) {
+		TLClass superType = implementationSuperType(type);
+		if (superType == null) {
 			return AttributedWrapper.class.getName();
+		}
+		return dropPackage(implementationName(superType));
+	}
+
+	/**
+	 * The type whose implementation class the implementation class of the given type extends, see
+	 * {@link #superTypeSpec(TLType)}.
+	 * 
+	 * @return The generalization with an implementation class, or <code>null</code>, if the
+	 *         implementation class extends {@link AttributedWrapper}.
+	 */
+	static TLClass implementationSuperType(TLType type) {
+		if (!(type instanceof TLClass)) {
+			return null;
+		}
+		List<TLClass> superTypes = ((TLClass) type).getGeneralizations();
+		if (superTypes.isEmpty()) {
+			return null;
 		}
 		TLClass primary = superTypes.get(0);
 		if (hasImplementationClass(primary)) {
-			return dropPackage(implementationName(primary));
+			return primary;
 		}
-		return superTypeSpec(primary);
+		return implementationSuperType(primary);
 	}
 
 	/**

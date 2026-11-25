@@ -815,6 +815,28 @@ describe('the search and the filter name of a table as MUI text fields', () => {
     expect(passedOn).toBe(false);
   });
 
+  it('neither sends the term nor saves the filter on the Enter that ends an input method composition', async () => {
+    // The key code an input method reports for the Enter that ends its composition (#30487).
+    const compositionEnter = { key: 'Enter', keyCode: 229, isComposing: true };
+    // The pause after which the term is sent anyway never runs out, so only the Enter could send it.
+    fakeDebounceTimers();
+    const sent = mountTable({ filterSaving: true });
+    await settle();
+
+    fireEvent.change(screen.getByRole('searchbox', { name: LABEL_SEARCH }), { target: { value: 'beta' } });
+    fireEvent.keyDown(screen.getByRole('searchbox', { name: LABEL_SEARCH }), compositionEnter);
+    await settle();
+    expect(sent).not.toHaveBeenCalledWith('search', expect.anything());
+
+    fireEvent.click(screen.getByRole('button', { name: LABEL_SAVE_FILTER }));
+    const name = screen.getByRole('textbox', { name: LABEL_FILTER_NAME });
+    fireEvent.change(name, { target: { value: 'Meins' } });
+    fireEvent.keyDown(name, compositionEnter);
+    await settle();
+    expect(sent).not.toHaveBeenCalledWith('saveNamedFilter', expect.anything());
+    expect(screen.getByRole('textbox', { name: LABEL_FILTER_NAME })).toBe(name);
+  });
+
   it('names a filter to save in a focused box, saved on Enter and given up on Escape', async () => {
     const sent = mountTable({ filterSaving: true });
     await settle();
@@ -861,7 +883,7 @@ describe('the search of the column selection as MUI text field', () => {
   }
 
   it('narrows the listed columns to the ones matching the search', async () => {
-    mountAdapter(TLColumnSelect, { entries: entries(12) });
+    mountAdapter(TLColumnSelect, { revision: 0, entries: entries(12) });
     await settle();
 
     const search = screen.getByRole('searchbox', { name: LABEL_COLUMN_SEARCH }) as HTMLInputElement;
@@ -877,7 +899,7 @@ describe('the search of the column selection as MUI text field', () => {
   });
 
   it('offers no search for a short list', async () => {
-    mountAdapter(TLColumnSelect, { entries: entries(3) });
+    mountAdapter(TLColumnSelect, { revision: 0, entries: entries(3) });
     await settle();
 
     expect(screen.queryByRole('searchbox')).toBeNull();

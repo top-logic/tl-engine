@@ -95,7 +95,28 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ADD_ENTRY__COLLECTION;
 
+	/**
+	 * @en Move entry up
+	 */
+	public static ResKey MOVE_ENTRY_UP;
+
+	/**
+	 * @en Move entry down
+	 */
+	public static ResKey MOVE_ENTRY_DOWN;
+
+	/**
+	 * @en Remove entry
+	 */
+	public static ResKey REMOVE_ENTRY;
+
+	/**
+	 * @en Take over entry
+	 */
+	public static ResKey CONFIRM_ENTRY;
+
 	static {
 		initConstants(I18NConstants.class);
 	}
+
 }

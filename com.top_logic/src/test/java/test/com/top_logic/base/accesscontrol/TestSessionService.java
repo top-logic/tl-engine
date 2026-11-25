@@ -8,6 +8,8 @@ package test.com.top_logic.base.accesscontrol;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -52,6 +54,7 @@ import com.top_logic.knowledge.service.db2.UpdateChainView;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 
 
 /**
@@ -60,6 +63,8 @@ import com.top_logic.util.Resources;
  * @author     <a href="mailto:mvo@top-logic.com">Michael Vogt</a>
  */
 public class TestSessionService extends BasicTestCase {
+
+	private static final long REQUEST_TIMEOUT_MILLIS = 10000;
 
 	private UserSessionCleanup _userSessions;
 
@@ -295,6 +300,193 @@ public class TestSessionService extends BasicTestCase {
 			deleteIfValid(user);
 			deleteIfValid(guest);
 		}
+	}
+
+	/**
+	 * Tests that the window receiving the user in
+	 * {@link SessionService#loginUserInWindow(HttpServletRequest, HttpServletResponse, Person)}
+	 * sees an account committed after the window has fixed its revision, as an account created by
+	 * the login itself.
+	 */
+	public void testLoginUserInWindowSeesAccountCreatedAfterWindow() throws Exception {
+		SessionService service = SessionService.getInstance();
+		Person guest = createPerson("revisionWindowGuest");
+		Person user = null;
+		try {
+			InvocationContext invocation = newInvocation();
+			HttpServletRequest request = invocation.getRequest();
+			HttpSession session = ThreadContext.inSystemContext(TestSessionService.class,
+				() -> service.loginUser(request, invocation.getResponse(), guest));
+			TLSessionContext sessionContext = service.getSession(session);
+			TLSubSessionContext window = newWindow(sessionContext, "windowA", guest);
+
+			user = createPerson("revisionWindowUser");
+			Person created = user;
+			assertFalse("Precondition: The window does not see the account committed after it.",
+				inRequest(window, created::tValid));
+
+			inRequest(window, () -> service.loginUserInWindow(request, invocation.getResponse(), created));
+
+			assertLoggedIn(window, created);
+			service.terminateSession(session.getId());
+		} finally {
+			if (user != null) {
+				deleteIfValid(user);
+			}
+			deleteIfValid(guest);
+		}
+	}
+
+	/**
+	 * Tests that all sub-sessions receiving the user in
+	 * {@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)} see an
+	 * account committed after they have fixed their revision, as an account created by the login
+	 * itself.
+	 */
+	public void testLoginUserSeesAccountCreatedAfterWindows() throws Exception {
+		SessionService service = SessionService.getInstance();
+		Person guest = createPerson("revisionSessionGuest");
+		Person user = null;
+		try {
+			InvocationContext invocation = newInvocation();
+			HttpServletRequest request = invocation.getRequest();
+			HttpSession session = ThreadContext.inSystemContext(TestSessionService.class,
+				() -> service.loginUser(request, invocation.getResponse(), guest));
+			TLSessionContext sessionContext = service.getSession(session);
+			TLSubSessionContext window = newWindow(sessionContext, "windowA", guest);
+			TLSubSessionContext otherWindow = newWindow(sessionContext, "windowB", guest);
+
+			user = createPerson("revisionSessionUser");
+			Person created = user;
+			assertFalse("Precondition: The window does not see the account committed after it.",
+				inRequest(window, created::tValid));
+			assertFalse("Precondition: The window does not see the account committed after it.",
+				inRequest(otherWindow, created::tValid));
+
+			ThreadContext.inSystemContext(TestSessionService.class,
+				() -> service.loginUser(request, invocation.getResponse(), created));
+
+			assertLoggedIn(window, created);
+			assertLoggedIn(otherWindow, created);
+			service.terminateSession(session.getId());
+		} finally {
+			if (user != null) {
+				deleteIfValid(user);
+			}
+			deleteIfValid(guest);
+		}
+	}
+
+	/**
+	 * Tests that the window login of a locked account committed after the window has fixed its
+	 * revision is refused as locked, and that the window continues with its former user.
+	 */
+	public void testLoginUserInWindowRefusesLockedAccountCreatedAfterWindow() throws Exception {
+		SessionService service = SessionService.getInstance();
+		Person guest = createPerson("lockedWindowGuest");
+		Person user = null;
+		try {
+			InvocationContext invocation = newInvocation();
+			HttpServletRequest request = invocation.getRequest();
+			HttpSession session = ThreadContext.inSystemContext(TestSessionService.class,
+				() -> service.loginUser(request, invocation.getResponse(), guest));
+			String sessionId = session.getId();
+			TLSessionContext sessionContext = service.getSession(session);
+			TLSubSessionContext window = newWindow(sessionContext, "windowA", guest);
+
+			user = createPerson("lockedWindowUser");
+			Person locked = user;
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			try (Transaction tx = kb.beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+				locked.setLocked(true);
+				tx.commit();
+			}
+
+			try {
+				inRequest(window, () -> service.loginUserInWindow(request, invocation.getResponse(), locked));
+				fail("Login of a locked account must be refused.");
+			} catch (AssertionError ex) {
+				assertTrue("Expected the refusal of the locked account: " + ex.getCause(),
+					ex.getCause() instanceof Login.AccountLockedException);
+			}
+
+			assertEquals("Session ID must be kept.", sessionId, session.getId());
+			assertEquals(guest, service.getUser(sessionId));
+			assertEquals(guest, sessionContext.getOriginalUser());
+			assertEquals(guest, window.getPerson());
+			assertLoggedIn(window, guest);
+			service.terminateSession(sessionId);
+		} finally {
+			if (user != null) {
+				deleteIfValid(user);
+			}
+			deleteIfValid(guest);
+		}
+	}
+
+	/**
+	 * Tests that the login of an account that existed before the window fixed its revision works
+	 * in the window as well.
+	 */
+	public void testLoginUserInWindowWithAccountOlderThanWindow() throws Exception {
+		SessionService service = SessionService.getInstance();
+		Person guest = createPerson("olderWindowGuest");
+		Person user = createPerson("olderWindowUser");
+		try {
+			InvocationContext invocation = newInvocation();
+			HttpServletRequest request = invocation.getRequest();
+			HttpSession session = ThreadContext.inSystemContext(TestSessionService.class,
+				() -> service.loginUser(request, invocation.getResponse(), guest));
+			TLSessionContext sessionContext = service.getSession(session);
+			TLSubSessionContext window = newWindow(sessionContext, "windowA", guest);
+			assertTrue("Precondition: The window sees the account.",
+				inRequest(window, user::tValid));
+
+			inRequest(window, () -> service.loginUserInWindow(request, invocation.getResponse(), user));
+
+			assertLoggedIn(window, user);
+			service.terminateSession(session.getId());
+		} finally {
+			deleteIfValid(user);
+			deleteIfValid(guest);
+		}
+	}
+
+	/**
+	 * Asserts that a request in the given window is served for the given user, reading the account
+	 * of the user.
+	 */
+	private static void assertLoggedIn(TLSubSessionContext window, Person user) throws Exception {
+		inRequest(window, () -> {
+			assertFalse("The window must not be anonymous.", TLContext.isAnonymous());
+			assertEquals(user, TLContext.getContext().getPerson());
+			assertTrue("The account must be alive in the window.", user.tValid());
+			assertNotNull(user.getName());
+			return null;
+		});
+	}
+
+	/**
+	 * Runs the given action like a request of the given window: in an interaction of its own, which
+	 * reads at the revision of the window.
+	 */
+	private static <T> T inRequest(TLSubSessionContext window, Supplier<T> action) throws Exception {
+		AtomicReference<T> result = new AtomicReference<>();
+		AtomicReference<Throwable> problem = new AtomicReference<>();
+		Thread thread = new Thread(() -> {
+			try {
+				result.set(ThreadContextManager.inContext(window, action::get));
+			} catch (Throwable ex) {
+				problem.set(ex);
+			}
+		});
+		thread.start();
+		thread.join(REQUEST_TIMEOUT_MILLIS);
+		assertFalse("The request did not complete in time.", thread.isAlive());
+		if (problem.get() != null) {
+			throw new AssertionError("The request failed.", problem.get());
+		}
+		return result.get();
 	}
 
 	/**

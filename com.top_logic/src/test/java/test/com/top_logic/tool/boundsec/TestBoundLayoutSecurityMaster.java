@@ -31,6 +31,7 @@ import com.top_logic.tool.boundsec.BoundLayout;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.SecurityObjectProvider;
 import com.top_logic.tool.boundsec.securityObjectProvider.ModelSecurityObjectProvider;
+import com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider;
 import com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider;
 
 /**
@@ -103,6 +104,39 @@ public class TestBoundLayoutSecurityMaster extends BasicTestCase {
 		assertSame(((BoundLayout) dialog.getChild(0)).getSecurityObjectProvider(),
 			dialog.getSecurityObjectProvider());
 		assertProvider(SecurityRootObjectProvider.class, dialog);
+	}
+
+	/**
+	 * A tab created by the tab template without security parameters delegates to its single
+	 * child.
+	 */
+	public void testTabDelegatesToSingleChild() throws IOException, ConfigurationException {
+		BoundLayout tab = (BoundLayout) createLayout("testTabDelegatesToSingleChild.layout.xml");
+		assertEquals(1, tab.getChildCount());
+
+		assertProvider(ModelSecurityObjectProvider.class, tab);
+	}
+
+	/**
+	 * A tab created by the tab template and marked as security master checks access on its own
+	 * security object (the default security root), not on its single child.
+	 */
+	public void testTabAsSecurityMaster() throws IOException, ConfigurationException {
+		BoundLayout tab = (BoundLayout) createLayout("testTabAsSecurityMaster.layout.xml");
+		assertEquals(1, tab.getChildCount());
+
+		assertProvider(SecurityRootObjectProvider.class, tab);
+	}
+
+	/**
+	 * A tab created by the tab template with a security object of its own checks access on this
+	 * object, not on its single child.
+	 */
+	public void testTabSecurityObject() throws IOException, ConfigurationException {
+		BoundLayout tab = (BoundLayout) createLayout("testTabSecurityObject.layout.xml");
+		assertEquals(1, tab.getChildCount());
+
+		assertProvider(PathSecurityObjectProvider.class, tab);
 	}
 
 	private static void assertProvider(Class<? extends SecurityObjectProvider> expectedType, BoundLayout layout) {

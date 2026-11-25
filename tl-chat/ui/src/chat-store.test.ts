@@ -3245,20 +3245,15 @@ describe('a window the server no longer knows', () => {
 /**
  * Which chat a window shows when the choice changes while a transcript is still on its way (#576).
  *
- * A host's `input` channel and the tab's remembered chat both open chats, and an opening that
- * completed after a later one put its chat back on screen. The write-back then reported it, the
- * channel asked for the other one again, and the window switched between two conversations every
- * few milliseconds without end.
+ * The `input` channel opens chats, and an opening that completed after a later one put its chat
+ * back on screen. The write-back then reported it, the channel asked for the other one again, and
+ * the window switched between two conversations every few milliseconds without end.
  */
 describe('choosing a chat while another one loads', () => {
   /** The transcript loads that have not been answered yet, by session id. */
   let pending: Map<string, () => void>
-  /** The chats the conversation's state lists. */
-  let listed: { id: string; title: string }[]
-
   beforeEach(() => {
     pending = new Map()
-    listed = []
     const globals = globalThis as unknown as Record<string, unknown>
     const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
     globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
@@ -3279,10 +3274,6 @@ describe('choosing a chat while another one loads', () => {
       }
       return inner(url, init)
     })
-  })
-
-  afterEach(() => {
-    delete (globalThis as unknown as { window: Record<string, unknown> }).window.sessionStorage
   })
 
   const userTexts = (store: ReturnType<typeof chatStore>) =>
@@ -3317,31 +3308,6 @@ describe('choosing a chat while another one loads', () => {
 
     expect(store.getState().sessionId).toBeNull()
     expect(userTexts(store)).toEqual([])
-
-    release()
-  })
-
-  it('does not reopen the remembered chat over one the window was already given', async () => {
-    const window = (globalThis as unknown as { window: Record<string, unknown> }).window
-    window.sessionStorage = { getItem: () => 'previous', setItem: () => undefined, removeItem: () => undefined }
-    listed = [
-      { id: 'previous', title: 'Vorher' },
-      { id: 'current', title: 'Jetzt' },
-    ]
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    // The host's channel names the page's conversation as the element mounts, before the session
-    // list - which is what the restore waits for - has come back.
-    const chosen = store.actions.selectSession('current')
-    store.attach(BOOT)
-    store.takeLists(undefined, listed)
-    await settle()
-    pending.get('current')!()
-    await chosen
-    await settle()
-
-    expect(pending.has('previous')).toBe(false)
-    expect(store.getState().sessionId).toBe('current')
 
     release()
   })

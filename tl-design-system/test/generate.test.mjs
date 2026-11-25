@@ -46,6 +46,12 @@ test('hell ist der Standard, dunkel und kompakt sind Attribute', () => {
   assert.ok(!tok.includes('data-modus'), 'alte Attribute');
 });
 
+test('Dichte: der Block normal steht vor dem Block kompakt und setzt --tl-size-row', () => {
+  const i = tok.indexOf('[data-tl-density="normal"] {'), j = tok.indexOf('[data-tl-density="compact"] {');
+  assert.ok(i > 0 && j > i, 'normal-Block steht vor dem kompakt-Block');
+  assert.match(tok.slice(i, j), /--tl-size-row:/);
+});
+
 test('color-scheme folgt dem Modus', () => {
   assert.ok(tok.includes('color-scheme: light;'));
   assert.ok(tok.includes('color-scheme: dark;'));
@@ -160,4 +166,17 @@ test('components.css hängt jede Komponente unter src/components/**/ in Pfadreih
   assert.ok(out.includes('.tl-button {'), 'Inhalt fehlt');
   const names = comps.map((c) => c.name);
   assert.deepEqual(names, [...names].sort(), 'nicht nach Pfad sortiert');
+});
+
+test('#30477: auf dem Handy haben Felder 16 px Schrift, sonst zoomt iOS-Safari beim Antippen hinein', () => {
+  // 16 px ist die Schwelle von WebKit; text-3 ist 1rem.
+  assert.equal(T.measure['font-size-field-touch'], '{text-3}');
+  assert.equal(parseFloat(P.measure['text-3']), 1);
+  // Nach Gerät, nicht nach Maß: nur reine Finger-Geräte, in jeder Lage; Laptops mit Touchscreen haben ein Trackpad.
+  const m = /@media \(hover: none\) and \(pointer: coarse\) \{\n([\s\S]*?)\n\}/.exec(base);
+  assert.ok(m, 'Handy-Regel fehlt in base.css');
+  // :is() nimmt die Spezifität seines stärksten Arguments (.tl-field): die Regel schlägt die Typo-Klasse am Feld,
+  // die vor ihr steht.
+  assert.match(m[1], /:is\(input, textarea, select, \[contenteditable\]:not\(\[contenteditable="false"\]\), \.tl-field\) \{\s*font-size: var\(--tl-font-size-field-touch\);\s*\}/);
+  assert.ok(base.indexOf(m[0]) > base.indexOf('.tl-type-body {'), 'Handy-Regel muss nach den Typo-Klassen stehen');
 });

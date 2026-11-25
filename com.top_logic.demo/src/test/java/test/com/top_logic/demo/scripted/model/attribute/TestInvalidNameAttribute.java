@@ -20,8 +20,12 @@ import test.com.top_logic.layout.scripting.runtime.FailureMatchingTestWrapper;
  */
 public class TestInvalidNameAttribute extends TestCase {
 
+	/**
+	 * The logged error names the derived attribute and the type of the value its script delivers.
+	 */
 	private static final Pattern PATTERN_LOG_ERROR =
-		Pattern.compile("(?s).*\\QCannot cast com.top_logic.basic.util.ResKey$LiteralKey to java.lang.String\\E.*");
+		Pattern.compile(
+			"(?s).*\\Q\"test.invalidNameAttribute:MyType#other\"\\E.*\\Qcom.top_logic.basic.util.ResKey$LiteralKey\\E.*");
 
 	/**
 	 * Test suite.

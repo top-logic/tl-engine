@@ -197,12 +197,13 @@ test('der gelieferte Wert unter AA steht in der Datei und im Bericht, als gelief
   assert.ok(b && b.geliefert && b.ist < 4.5 && /^#[0-9A-F]{6}$/.test(b.vorschlag));
   assert.ok(ergebnis.css.includes('--tl-status-error-text: #F07070;'));
   // red-42 trägt status-error-text, und die Paarliste stellt jede Bedeutungsschrift gegen
-  // surface-base, surface-layer, surface-layer-nested und surface-overlay (4,5) und als Punkt des Badges
-  // gegen surface-interactive-hover, surface-selected und surface-brand-subtle (3:1): ein gelieferter Wert
-  // unter AA erzeugt damit sieben Befunde.
-  assert.equal(ergebnis.befunde.length, 7);
+  // surface-base, surface-layer, surface-layer-nested und surface-overlay (4,5), als Punkt des Badges
+  // gegen surface-interactive-hover, surface-selected und surface-brand-subtle (3:1) und als Pflichtzeichen
+  // der Tabelle (#30391) gegen surface-layer-muted, surface-interactive-strong und surface-field (3:1):
+  // ein gelieferter Wert unter AA erzeugt damit zehn Befunde.
+  assert.equal(ergebnis.befunde.length, 10);
   assert.ok(ergebnis.befunde.every((x) => x.fg === 'status-error-text' && x.geliefert));
-  assert.ok(ergebnis.css.includes('Findings: 7 pairs below its threshold'));
+  assert.ok(ergebnis.css.includes('Findings: 10 pairs below its threshold'));
 });
 
 // Welle 5c (Spec 2026-10-19 Planen und Ziehen §4): gefüllte Kategorie-Flächen und die Kandidaten als Rollen.
@@ -479,4 +480,66 @@ test('ein Programmfehler in aufKontrast hält derive an jeder der drei Aufrufste
     delete globalThis.tlAttrappeZeile;
     hooks.deregister();
   }
+});
+
+test('radius-mark: ein weiches corner-1 lässt das Kästchen eckig, ohne Befund (#30502, U69)', () => {
+  const r = derive(P, T, { theme: 'weich', measure: { 'corner-1': '0.75rem' } });
+  assert.ok('radius-sm' in r.rollen.measure);
+  assert.ok(!('radius-mark' in r.rollen.measure));
+  assert.deepEqual(r.formBefunde, []);
+  const leer = derive(P, T, { theme: 'a' });
+  assert.deepEqual(leer.formBefunde, []);
+  assert.deepEqual(leer.hinweise, []);
+});
+
+test('radius-mark ab einem Drittel der Kante ist ein Formbefund, darunter nicht', () => {
+  const befund = (measure) => derive(P, T, { theme: 'f', measure }).formBefunde;
+  assert.deepEqual(befund({ 'bevel-1': '0.5rem' }), [{ rolle: 'radius-mark', ist: '0.5rem', grenze: '5.33px', bezug: 'size-choice' }]);
+  assert.equal(befund({ 'bevel-1': '.5rem' }).length, 1);
+  assert.equal(befund({ 'bevel-1': '50%' }).length, 1);
+  assert.deepEqual(befund({ 'size-4': '0.5rem' }), [{ rolle: 'radius-mark', ist: '0.25rem', grenze: '2.66px', bezug: 'size-choice' }]);
+  const knapp = derive(P, T, { theme: 'f', measure: { 'bevel-1': '0.3rem' } });
+  assert.deepEqual(knapp.formBefunde, []);
+  assert.equal(knapp.rollen.measure['radius-mark'], '0.3rem');
+  const { css } = derive(P, T, { theme: 'f', measure: { 'bevel-1': '0.5rem' } });
+  assert.match(css, /Findings: 0 pairs below its threshold, 1 shape beyond its limit \(see report/);
+  assert.match(css, /finding {2}measure: radius-mark = 0\.5rem, required below 5\.33px \(a third of size-choice\)/);
+});
+
+test('radius-mark mit nicht prüfbarer Einheit ist ein Hinweis, kein Befund', () => {
+  for (const measure of [{ 'bevel-1': 'calc(1px + 1px)' }, { 'bevel-1': '4' }, { 'size-4': 'calc(1rem)' }]) {
+    const r = derive(P, T, { theme: 'f', measure });
+    assert.deepEqual(r.formBefunde, [], JSON.stringify(measure));
+    assert.ok(r.hinweise.some((h) => h.startsWith('radius-mark nicht geprüft')), JSON.stringify(measure));
+  }
+});
+
+test('radius-mark-Befund: ohne --strict Exit 0 mit Konsolenzeile, mit --strict Exit 1 ohne Datei', () => {
+  const json = { theme: 'rund', measure: { 'bevel-1': '0.5rem' } };
+  const ohne = lauf(json);
+  assert.equal(ohne.status, 0, ohne.stderr);
+  assert.ok(existsSync(ohne.datei));
+  assert.match(ohne.stdout, /Befund {2}Maß: radius-mark = 0\.5rem/);
+  const mit = lauf(json, '--strict');
+  assert.equal(mit.status, 1);
+  assert.ok(!existsSync(mit.datei));
+});
+
+test('radius-mark: die Grenze sitzt genau bei einem Drittel, Einheiten groß und klein, keine Kante ohne Länge', () => {
+  const n = (measure) => derive(P, T, { theme: 'f', measure }).formBefunde.length;
+  assert.equal(n({ 'bevel-1': '6px' }), 1);
+  assert.equal(n({ 'bevel-1': '5px' }), 0);
+  assert.equal(n({ 'bevel-1': '6PX' }), 1);
+  assert.equal(n({ 'bevel-1': ' 6px' }), 1, 'Leerraum um den Wert');
+  assert.equal(n({ 'bevel-1': '1px', 'size-4': '3px' }), 1, 'genau ein Drittel ist ein Befund');
+  assert.equal(n({ 'bevel-1': '0.7px', 'size-4': '2.1px' }), 1, 'Gleitkomma bei genau einem Drittel');
+  assert.equal(n({ 'bevel-1': '34%' }), 1);
+  assert.equal(n({ 'bevel-1': '33%' }), 0);
+  for (const measure of [{ 'size-4': '100%' }, { 'size-4': '0' }, { 'bevel-1': '-1px' }]) {
+    const r = derive(P, T, { theme: 'f', measure });
+    assert.equal(r.formBefunde.length, 0, JSON.stringify(measure));
+    assert.ok(r.hinweise.some((h) => h.startsWith('radius-mark nicht geprüft')), JSON.stringify(measure));
+  }
+  const { css } = derive(P, T, { theme: 'f', measure: { 'bevel-1': 'x*/y' } });
+  assert.ok(css.includes('x* /y') && !css.slice(css.indexOf('/* Report')).slice(0, -3).includes('*/'), 'ein */ im Hinweis schließt den Report nicht');
 });

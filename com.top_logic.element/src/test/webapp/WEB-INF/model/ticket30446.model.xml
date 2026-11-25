@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="ticket30446">
+			<annotations>
+				<package-binding
+					implementation-package="test.com.top_logic.element.meta.model.ticket30446.impl"
+					interface-package="test.com.top_logic.element.meta.model.ticket30446"
+				/>
+			</annotations>
+			<types>
+				<class name="Owner">
+					<attributes>
+						<property name="lastModified"
+							type="tl.core:DateTime"
+						>
+							<annotations>
+								<java-name value="configurationChanged"/>
+							</annotations>
+						</property>
+						<reference name="types"
+							multiple="true"
+							type="Item"
+						>
+							<annotations>
+								<java-name value="linkedItems"/>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+				<class name="Item"/>
+			</types>
+		</module>
+	</modules>
+</model>

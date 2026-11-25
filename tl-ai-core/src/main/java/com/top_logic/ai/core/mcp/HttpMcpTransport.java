@@ -6,10 +6,13 @@
 package com.top_logic.ai.core.mcp;
 
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -65,7 +68,14 @@ public class HttpMcpTransport implements McpTransportConfig {
 		String CREDENTIALS = "credentials";
 
 		/**
-		 * The URL of the MCP server endpoint (e.g., {@code "https://mcp.example.com/mcp"}).
+		 * The full address of the MCP server endpoint (e.g., {@code "https://mcp.example.com/mcp"}).
+		 *
+		 * <p>
+		 * It must be an absolute http or https URL with a host. The client uses the path and the
+		 * query of this URL as given, e.g. {@code "https://host/app/mcp"} for the MCP endpoint of
+		 * an application with the context path {@code /app}. A URL without a path addresses the
+		 * root path {@code /}.
+		 * </p>
 		 */
 		@Name(URL)
 		String getUrl();
@@ -108,9 +118,36 @@ public class HttpMcpTransport implements McpTransportConfig {
 	 */
 	@CalledByReflection
 	public HttpMcpTransport(InstantiationContext context, Config config) {
-		_url = config.getUrl();
+		_url = checkUrl(config.getUrl());
 		_headers = config.getHeaders();
 		_credentials = CredentialProvider.create(context, _url, config.getCredentials(), null, null, null);
+	}
+
+	/**
+	 * The given URL, if the transport can send requests to it.
+	 *
+	 * <p>
+	 * The library of the transport accepts a URL without a host (e.g. {@code "localhost:8080/mcp"}
+	 * or {@code "http:///mcp"}) when the transport is built, and fails with a
+	 * {@link NullPointerException} when it sends the first request.
+	 * </p>
+	 */
+	private static String checkUrl(String url) {
+		if (url == null || !isHttpUrl(url)) {
+			throw new ConfigurationError(I18NConstants.ERROR_INVALID_URL__URL.fill(url));
+		}
+		return url;
+	}
+
+	private static boolean isHttpUrl(String url) {
+		URI uri;
+		try {
+			uri = new URI(url);
+		} catch (URISyntaxException ex) {
+			return false;
+		}
+		String scheme = uri.getScheme();
+		return ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) && uri.getHost() != null;
 	}
 
 	/**
@@ -139,6 +176,9 @@ public class HttpMcpTransport implements McpTransportConfig {
 	 */
 	McpClientTransport createTransport(Supplier<CredentialHeaders> lastSucceeded, Runnable rejected) {
 		return HttpClientStreamableHttpTransport.builder(_url)
+			// Without an endpoint, the library resolves its default endpoint "/mcp" against the
+			// URL, which replaces the path and the query of the URL.
+			.endpoint(_url)
 			.addHttpRequestCustomizer((request, method, uri, body, context) -> {
 				if (_headers != null) {
 					for (NamedValueConfig entry : _headers.values()) {

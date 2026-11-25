@@ -1,5 +1,5 @@
 ---
-description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A9, object tools, closed doors P1-P2) and the SecDemo*Test classes asserting each.
+description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A9, model choice in TL-Script M1, object tools, closed doors P1-P3) and the SecDemo*Test classes asserting each.
 order: 6
 ---
 
@@ -168,6 +168,16 @@ A run with nobody to answer an approval prompt auto-approves every call, so it i
 | A8 | a write tool on the list follows `allow-writes` | `anna` | test | the gate admits `script-exec.changeData` with `allow-writes="true"` and refuses it with `"false"` by the served agent's switch; a change that it saves still needs `data.write`, which is off the list (A2) |
 | A9 | a READ or EXTERNAL tool off the list is refused over A2A | `root` | test | `a2a.listAgents` and `a2a.askAgent` (`egress`) refused naming the allowlist, whatever `allow-writes` says |
 
+### Model choice in TL-Script
+
+`aiChat` runs no agent, so the default model takes the place of the model of the agent ([run access](doc:ai/security/run-access)). `<model-access>` of the fixture grants `ticketReader` the Haiku model.
+
+| # | Behaviour | Persona | Do this (console) | You should see |
+|---|---|---|---|---|
+| M1 | `aiChat` follows `<model-access>` | `ben` | `aiChat(["Hello"], "claude-opus-5-5")`, then `aiChat(["Hello"])` | `The model claude-opus-5-5 is not available to you. Your roles do not include it.`, and no request is sent; then an answer of the default model (needs a key). `claude-haiku-5-5` answers too |
+
+As `anna`, whose role the section does not name, `claude-haiku-5-5` is refused as well, with `... A call without an agent runs on the default model of the application.` A `<deny>` of the default model for `ticketReader` refuses Ben's `aiChat(["Hello"])` too, naming the role. `SecDemoScriptModelAccessTest` asserts the row, the case of Anna and the deny with a scripted provider under the same model names.
+
 ### The object tools
 
 A write is checked by the tool that makes it, and the turn commits what its tools wrote ([the layers](doc:ai/security#the-layers)). The TL-Script tool `secdemo-editing.addTicket` writes through the engine's own checks of the acting account's rights. `updateObject`, `createObject` and `deleteObject` ask the model rights themselves, per object and attribute, before they write ([object tools](doc:ai/security/object-tools)); `SecDemoObjectEditTest`:
@@ -183,12 +193,13 @@ A write is checked by the tool that makes it, and the turn commits what its tool
 | `ben` | any of the three | not offered (no `data.write`), refused by the model rights when handed the tool anyway |
 | `anna`, unattended | any of the three | not offered: the background allowlist holds no `data.write` |
 
-### Two closed doors
+### Three closed doors
 
 | # | Behaviour | Where | You should see |
 |---|---|---|---|
 | P1 | `/mcp/*` is not served | `curl -i http://localhost:8080/tl-ai-demo/mcp` | HTTP 503 naming both steps: enable the module `MCPServerService$Module` and configure an authentication ([the MCP endpoint](doc:ai/security/mcp-endpoint)); `SecDemoMcpEndpointTest` asserts the authenticated surface against these personas |
 | P2 | a run without an account does not start | test | `SecDemoBackgroundAccessTest.testARunWithoutAPrincipalCannotBeBuilt` |
+| P3 | a script reads or stops a run of another account | script console as `ben`, with the handle that `aiAgentChatAsync` gave `anna` | `aiAgentRunStatus`, `aiAgentRunResult`, `aiAgentRunError` and `aiAgentRunTranscript` answer `null`, `aiAgentRunCancel` answers `false`; with `DEBUG` on for `AIScriptFunctions`, the log has a `Run handle denied` line that names `ben`; `SecDemoRunHandleTest` asserts the answers |
 
 ## The tests
 
@@ -208,6 +219,7 @@ mvn -B test -DskipTests=false -pl tl-ai-demo -Dtest='com.top_logic.ai.demo.SecDe
 | `SecDemoSkillAbsenceTest` | C1, C4-C6 | `SecDemoMcpEndpointTest` | P1 |
 | `SecDemoListToolsTest` | C3, C4, C8 | `SecDemoModelSecurityTest` | the worked example, persona by persona |
 | `SecDemoVectorIndexTest` | the vector index | `SecDemoA2ARunTest` (package `com.top_logic.ai.a2a.server`) | A6-A9 |
+| `SecDemoScriptModelAccessTest` | M1 | `SecDemoRunHandleTest` | P3 |
 
 `SecDemoSpawnFilterTest` (a spawn is decided per child context), `SecDemoDeclaredTypesTest` (a tool declaring `pm:Project` refuses a persona without read access before it runs), `SecDemoInfrastructureAgentTest` (an agent the application runs for a user, such as the prompt improver, cannot be run as a chat persona, whatever `<agent-access>` says), `SecDemoHarnessScriptsTest` (the harness compiles) and the tests of the [policy editor](doc:ai/security/tool-access-editor) (`SecDemoEffectiveAccessTest`, `SecDemoPolicyEditorTest`, `SecDemoApplyPolicyGuardTest`, `SecDemoToolDescriptionTest`, `SecDemoGermanTerminologyTest`) run in the same suite because they need the booted fixture. The unit-level counterparts in `tl-ai-core` use hand-built policies: `TestRoleToolAccess`, `TestToolAuthorization`, `TestAiToolAccessService`, `TestAgentCapabilities`, `TestDelegateFilter`, `TestSpawnFilter`, `TestDetachedSubagentCeiling`, `TestSkillTool`, `TestSkillAbsenceReason`, `TestTopLogicSecurityContext`, `TestReadFilter`.
 

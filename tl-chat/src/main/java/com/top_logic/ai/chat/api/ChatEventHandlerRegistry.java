@@ -21,7 +21,7 @@ import com.top_logic.knowledge.wrap.person.Person;
  * <p>
  * A {@link ChatEventHandler} registers itself when its connection opens and unregisters when it
  * closes; {@link ChatProcessor} looks up the handlers of the windows showing the conversation it is
- * running in ({@link #findStreamTargets(TaskProgressTracker, Person, String)}). Because the
+ * running in ({@link #findStreamTargets(TaskProgressTracker, String)}). Because the
  * registry is typed by the interface, a chat UI other than {@link ChatSSEHandler} can register and
  * receives the same events at the same points.
  * </p>
@@ -123,13 +123,76 @@ public final class ChatEventHandlerRegistry {
 	}
 
 	/**
-	 * The chat UIs a running run streams to: every window showing its conversation.
+	 * The active chat UIs of every account that are showing the given conversation.
 	 *
 	 * <p>
-	 * A conversation can be open in more than one window of its account, and each of them shows the
-	 * turn while it is being written - not only the window the message was sent from (issue #544).
-	 * That window is always among them while it is showing the conversation, also when its chat UI
-	 * does not {@link ChatEventHandler#getAccount() say whose} it is.
+	 * Whoever may read a conversation sees its run live, not only the account the run belongs to. A
+	 * window shows a conversation only after it was allowed to: its tracker's active session is set by
+	 * a switch that checks that the window's account may read it
+	 * ({@link TaskProgressTracker#getSessionOwner()} is the account the check was made for). The
+	 * right is therefore asked when the conversation is opened, not for every frame, and a window
+	 * whose account changed since - a login in the window - is left out until it opens the
+	 * conversation again.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The id of the chat; <code>null</code> matches nothing.
+	 * @return The matching handlers, in no particular order, at most one per window; never
+	 *         <code>null</code>.
+	 */
+	public static List<ChatEventHandler> findViewers(String sessionId) {
+		if (sessionId == null) {
+			return new ArrayList<>();
+		}
+		Map<TaskProgressTracker, ChatEventHandler> result = new LinkedHashMap<>();
+		for (ChatEventHandler handler : HANDLERS) {
+			TaskProgressTracker tracker = handler.getTracker();
+			if (tracker == null || !handler.isActive()) {
+				continue;
+			}
+			Person account = handler.getAccount();
+			if (account != null && account.equals(tracker.getSessionOwner())
+				&& sessionId.equals(tracker.getActiveSessionId())) {
+				result.put(tracker, handler);
+			}
+		}
+		return new ArrayList<>(result.values());
+	}
+
+	/**
+	 * The chat UIs a running run streams to: every window showing its conversation, of whichever
+	 * account may read it.
+	 *
+	 * <p>
+	 * A conversation can be open in more than one window, and each of them shows the turn while it
+	 * is being written - not only the window the message was sent from (issue #544). That window is
+	 * always among them while it is showing the conversation, also when its chat UI does not
+	 * {@link ChatEventHandler#getAccount() say whose} it is.
+	 * </p>
+	 *
+	 * <p>
+	 * What the run asks - an approval - is no frame for a window that may only watch: see
+	 * {@link #findAnswerTargets(TaskProgressTracker, Person, String)}.
+	 * </p>
+	 *
+	 * @param startedIn
+	 *        The tracker of the window the run was started in.
+	 * @param sessionId
+	 *        The id of the chat the run belongs to; <code>null</code> for a run that has none, which
+	 *        streams to the window it was started in alone.
+	 * @return Never <code>null</code>; at most one handler per window.
+	 */
+	public static List<ChatEventHandler> findStreamTargets(TaskProgressTracker startedIn, String sessionId) {
+		return withOwn(startedIn, sessionId, findViewers(sessionId));
+	}
+
+	/**
+	 * The chat UIs that are told what a running run asks its account - an approval it waits for,
+	 * and that it was answered: the windows of the run's account showing its conversation.
+	 *
+	 * <p>
+	 * Only the run's account answers what its run asks, so a window of another account that watches
+	 * the conversation is not shown the request.
 	 * </p>
 	 *
 	 * @param startedIn
@@ -138,16 +201,21 @@ public final class ChatEventHandlerRegistry {
 	 *        The account the run belongs to.
 	 * @param sessionId
 	 *        The id of the chat the run belongs to; <code>null</code> for a run that has none, which
-	 *        streams to the window it was started in alone.
+	 *        asks in the window it was started in alone.
 	 * @return Never <code>null</code>; at most one handler per window.
 	 */
-	public static List<ChatEventHandler> findStreamTargets(TaskProgressTracker startedIn, Person owner,
+	public static List<ChatEventHandler> findAnswerTargets(TaskProgressTracker startedIn, Person owner,
 			String sessionId) {
+		return withOwn(startedIn, sessionId, sessionId == null ? new ArrayList<>() : findForSession(owner, sessionId));
+	}
+
+	/** The given handlers, plus the one of the window the run was started in while it shows the chat. */
+	private static List<ChatEventHandler> withOwn(TaskProgressTracker startedIn, String sessionId,
+			List<ChatEventHandler> result) {
 		ChatEventHandler own = find(startedIn);
 		if (sessionId == null) {
 			return own == null ? List.of() : List.of(own);
 		}
-		List<ChatEventHandler> result = findForSession(owner, sessionId);
 		if (own != null && sessionId.equals(startedIn.getActiveSessionId())
 			&& result.stream().noneMatch(handler -> handler.getTracker() == startedIn)) {
 			result.add(own);
@@ -156,28 +224,26 @@ public final class ChatEventHandlerRegistry {
 	}
 
 	/**
-	 * The chat UIs showing that conversation, or the given one when none is.
+	 * The chat UIs showing that conversation, of whichever account may read it, or the given one
+	 * when none is.
 	 *
 	 * <p>
 	 * What a run says when it ends - the rendered answer, or the error that replaces it - is
-	 * addressed with this. The fallback is the window the run was started in, which is what every
-	 * run addressed before {@link #findForSession(Person, String)} existed, and it is used only when
-	 * nobody has the conversation open: the turn is recorded before the run reports it, so the next
-	 * window to open the chat reads it from the transcript.
+	 * addressed with this. The fallback is the window the run was started in, and it is used only
+	 * when nobody has the conversation open: the turn is recorded before the run reports it, so the
+	 * next window to open the chat reads it from the transcript.
 	 * </p>
 	 *
-	 * @param owner
-	 *        The account the run belongs to.
 	 * @param sessionId
 	 *        The id of the chat the run belongs to; <code>null</code> for a run that has none.
 	 * @param startedIn
 	 *        The handler of the window the run was started in, or <code>null</code> when it had
 	 *        none.
 	 * @return Never <code>null</code>; empty when nothing can be told.
+	 * @see #findViewers(String)
 	 */
-	public static List<ChatEventHandler> findForSession(Person owner, String sessionId,
-			ChatEventHandler startedIn) {
-		List<ChatEventHandler> attached = findForSession(owner, sessionId);
+	public static List<ChatEventHandler> findViewers(String sessionId, ChatEventHandler startedIn) {
+		List<ChatEventHandler> attached = findViewers(sessionId);
 		if (!attached.isEmpty()) {
 			return attached;
 		}

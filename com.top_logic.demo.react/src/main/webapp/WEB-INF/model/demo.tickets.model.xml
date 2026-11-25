@@ -34,6 +34,25 @@
 					<main-properties properties="name"/>
 				</annotations>
 				<attributes>
+					<!--
+						The number of a ticket identifies it for people, e.g. in its permalink
+						/servlet/ticket-link?nr=<number> (TicketLinkServlet). It is drawn from a sequence of
+						its own when the ticket is stored for the first time, so it is unique and never
+						changes; the user neither enters nor edits it.
+					-->
+					<property name="number"
+						type="tl.core:Long"
+					>
+						<annotations>
+							<default-value>
+								<provider class="com.top_logic.element.structured.util.SequenceDefaultProvider"
+									sequence-name="demo.tickets.Ticket"
+								/>
+							</default-value>
+							<create-visibility value="hidden"/>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
 					<property name="name"
 						mandatory="true"
 						type="tl.core:String"

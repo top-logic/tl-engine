@@ -118,6 +118,15 @@
 							<de>Projekte</de>
 						</label>
 					</nav-item>
+					<nav-item id="baselines"
+						icon="css:bi bi-bookmark-check"
+					>
+						<view-ref view="baselines.view.xml"/>
+						<label>
+							<en>Baselines</en>
+							<de>Abnahmestände</de>
+						</label>
+					</nav-item>
 				</section>
 				<!--
 					The technical demo pages, folded away under one heading. A group holds

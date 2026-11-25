@@ -9,6 +9,8 @@ order: 69
 
 `aiChat(messages, model, responseFormat, tools)` runs one exchange with a model. A call without tools is one turn; a call that passes tools gets the default turn limit, because the answer comes after the tool results.
 
+The call acts as the account that executed the script, and `<model-access>` decides which models this account may name: the default model needs no grant, another model does ([run access](doc:ai/security/run-access)). A refused call sends no request and records no run; only the audit log gets a warning. A call without an account, from a system context or a scheduled `ScriptTask`, is refused: a run that names no principal cannot be authorized.
+
 `responseFormat` takes four shapes:
 
 | Argument | Meaning |
@@ -49,6 +51,8 @@ The polling shape never reaches the exception:
 ```
 aiAgentRunStatus($handle) == "COMPLETE" ? aiAgentRunResult($handle) : null
 ```
+
+The model-based security decides who reads and who stops a run through its handle. A script that applies the access rights of the acting account reads a value of a run only with the right `Read` on the attribute that holds it (`status`, `response`, `errorMessage`, `transcript`), and stops a run (`aiAgentRunCancel`) only with the right `Write` on its attribute `cancelRequested`. Without a grant on the attribute, the right on the run decides. With the [shipped policy](doc:ai/security/administration#the-shipped-access-policy-for-conversations), these are the owner of the run and an administrator; a restricted account, which may only read, cannot stop even its own run. For every other account, each function answers as for an unknown handle (`null`, `false`). A script without access checks (a scheduler task, a privileged function) reads and stops every run.
 
 Read a handle in a later request than the one that started the run: the run's session is committed at a revision newer than the one the starting request read, so within that request `aiAgentRunStatus` answers `null`, however long the script waits. In the script console these are two executions in the same session, the handle carried over with `storeInSession` / `loadFromSession`. `aiAgentChat`, which runs inline, cannot be used from the script console for the same reason: its run commits past the revision the console request read, and the request fails rendering the result. `aiResearch` starts a [web research](doc:ai/deep-research#research-without-a-chat-window-airesearch) with the same kind of handle.
 

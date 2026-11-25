@@ -274,7 +274,7 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		windowB.getSessionManager().switchSession(chatId(), nina);
 		try (Watcher b = watch(windowB, nina)) {
 			assertEquals("The window showing the chat is what the answer is addressed to.",
-				List.of(b), ChatEventHandlerRegistry.findForSession(nina, chatId(), null));
+				List.of(b), ChatEventHandlerRegistry.findViewers(chatId(), null));
 		}
 	}
 
@@ -303,8 +303,8 @@ public class TestChatInFlightWindow extends BasicTestCase {
 	public void testWithNobodyAttachedTheRunsOwnWindowIsTheAddress() {
 		Watcher own = new Watcher(_windowA, nina);
 
-		assertEquals(List.of(own), ChatEventHandlerRegistry.findForSession(nina, chatId(), own));
-		assertEquals(List.of(), ChatEventHandlerRegistry.findForSession(nina, chatId(), null));
+		assertEquals(List.of(own), ChatEventHandlerRegistry.findViewers(chatId(), own));
+		assertEquals(List.of(), ChatEventHandlerRegistry.findViewers(chatId(), null));
 	}
 
 	/**
@@ -352,7 +352,7 @@ public class TestChatInFlightWindow extends BasicTestCase {
 			assertEquals("A window showing no chat of this run.", List.of(), elsewhere._seen);
 		}
 		assertEquals("A closed window is not addressed any more.",
-			List.of(), ChatEventHandlerRegistry.findStreamTargets(_windowA, nina, chatId()));
+			List.of(), ChatEventHandlerRegistry.findStreamTargets(_windowA, chatId()));
 	}
 
 	/**

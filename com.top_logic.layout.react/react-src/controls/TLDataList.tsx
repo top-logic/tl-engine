@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, useI18N, usePart, useFocusTrap, useStandaloneKeyboardScope, TLChild, rootClassName,
-  stateAttr, ThemeIcon, ICON_ROW_MENU,
+  stateAttr, ThemeIcon, ICON_ROW_MENU, isInteractiveTarget,
 } from 'tl-react-bridge';
 import type { TLCellProps, DataListStateJson, ChildControlJson } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
@@ -215,7 +215,7 @@ function ListParts(props: ListPartsProps) {
                           );
                         })}
                       </span>
-                      {row.trailing ? (
+                      {row.trailing && !row.trailing.control ? (
                         row.trailing.badge ? (
                           <span className="tl-list__trailing"><Badge content={row.trailing.text} /></span>
                         ) : (
@@ -223,6 +223,20 @@ function ListParts(props: ListPartsProps) {
                         )
                       ) : null}
                     </button>
+                    {row.trailing?.control ? (
+                      // Content of the application's template: beside the button of the entry, not
+                      // in it, since it may hold interactive elements of its own. A click on such an
+                      // element is left to it; a click on anything else selects the entry, like a
+                      // click on the button.
+                      <span
+                        className="tl-list__trailing"
+                        onClick={(event) => {
+                          if (!isInteractiveTarget(event.target)) props.onSelect(row);
+                        }}
+                      >
+                        <TLChild control={row.trailing.control} />
+                      </span>
+                    ) : null}
                     {props.showRowMenu ? (
                       <MenuTrigger
                         appearance="ghost"
@@ -252,8 +266,9 @@ function ListParts(props: ListPartsProps) {
  *
  * The state is described by DataListStateJson. The rows come from the server; search and collapse
  * are client-side, a row click sends {@link CMD_SELECT}, the trigger of a row {@link CMD_ROW_MENU}.
- * In front of the lines a row shows an icon or an avatar (part `Avatar`), after them metadata text or
- * a badge (part `Badge`). A right click on a row outside the selection selects it and lets the event
+ * In front of the lines a row shows an icon or an avatar (part `Avatar`), after them metadata text, a
+ * badge (part `Badge`), or the control of the application's template for the row, beside the button of
+ * the entry. A right click on a row outside the selection selects it and lets the event
  * go on to a context menu region (`<context-menu>`) around the list.
  *
  * Below `drawerBelow` rem of width of its host, a collapsible list keeps only its strip in the flow,

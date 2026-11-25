@@ -30,6 +30,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -41,6 +42,7 @@ import com.top_logic.layout.react.control.layout.ReactSideRailControl.Side;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -138,6 +140,9 @@ public class SideRailElement implements UIElement {
 		/** Configuration name for {@link #getDrawerBelow()}. */
 		String DRAWER_BELOW = "drawer-below";
 
+		/** Configuration name for {@link #getShown()}. */
+		String SHOWN = "shown";
+
 		/** Configuration name for {@link #getWidth()}. */
 		String WIDTH = "width";
 
@@ -216,6 +221,21 @@ public class SideRailElement implements UIElement {
 		ChannelRef getBadgeChannel();
 
 		/**
+		 * Channel saying whether the rail is on screen, for a rail inside a frame that may be closed,
+		 * e.g. a dock.
+		 *
+		 * <p>
+		 * While the channel holds {@code false}, nothing in the rail counts as seen, so that its
+		 * {@link #getBadgeChannel() badge-channel} keeps counting what comes in; whether the rail is
+		 * open does not change. Leave it empty for a rail that is on screen whenever its view is.
+		 * </p>
+		 */
+		@Name(SHOWN)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getShown();
+
+		/**
 		 * Width of the area the rail stands in, in rem, below which the rail is a drawer.
 		 *
 		 * <p>
@@ -273,6 +293,12 @@ public class SideRailElement implements UIElement {
 		/** Configuration name for {@link #getWidth()}. */
 		String WIDTH = "width";
 
+		/** Configuration name for {@link #getReveal()}. */
+		String REVEAL = "reveal";
+
+		/** Configuration name for {@link #getHeader()}. */
+		String HEADER = "header";
+
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
 
@@ -326,6 +352,34 @@ public class SideRailElement implements UIElement {
 		@Name(WIDTH)
 		@IntDefault(0)
 		int getWidth();
+
+		/**
+		 * Whether the section shows itself whenever an input of its {@link #getVisibility()
+		 * visibility condition} takes a new value for which the condition holds.
+		 *
+		 * <p>
+		 * The rail then opens - its column, or its drawer where it is one - with the section expanded,
+		 * e.g. for a section showing what an agent presented: each new presentation shows itself,
+		 * also after the user closed the rail on the one before. This is no choice of the user: what
+		 * the user chose for the rail and the section stays remembered as it was. A section without
+		 * visibility condition never shows itself.
+		 * </p>
+		 */
+		@Name(REVEAL)
+		boolean getReveal();
+
+		/**
+		 * Whether the section has a header that expands and collapses it.
+		 *
+		 * <p>
+		 * A section without header is always expanded and shows its content at once, for content that
+		 * brings a title bar of its own, e.g. a {@code <presentation-pane>}. Its label still names its
+		 * strip icon.
+		 * </p>
+		 */
+		@Name(HEADER)
+		@BooleanDefault(true)
+		boolean getHeader();
 
 		/**
 		 * The content of the section.
@@ -388,7 +442,7 @@ public class SideRailElement implements UIElement {
 			ViewContext sectionContext = context.childContext(name).withChildSlotPath(name);
 			String label = section.getLabel() == null ? null : resources.getString(section.getLabel(), null);
 			sections.add(new Section(name, StringServices.isEmpty(label) ? name : label,
-				StringServices.nonEmpty(section.getIcon()), Math.max(0, section.getWidth()),
+				StringServices.nonEmpty(section.getIcon()), Math.max(0, section.getWidth()), !section.getHeader(),
 				ContentControls.toControl(entry._children(), sectionContext)));
 			Object storedExpansion = storedSections.get(name);
 			if (storedExpansion instanceof Boolean value ? value.booleanValue() : section.getOpen()) {
@@ -400,6 +454,15 @@ public class SideRailElement implements UIElement {
 			_config.getDrawerBelow(), width, open, sections, expanded);
 		rail.setCssClass(_config.getCssClass());
 
+		// Before the badges: what a rail off screen shows at its start is not seen.
+		ViewChannel shownChannel = resolve(context, _config.getShown());
+		if (shownChannel != null) {
+			rail.setShown(!Boolean.FALSE.equals(shownChannel.get()));
+			ViewChannel.ChannelListener listener =
+				(sender, oldValue, newValue) -> rail.setShown(!Boolean.FALSE.equals(newValue));
+			rail.addCleanupAction(shownChannel.addListener(listener)::dispose);
+		}
+
 		for (SectionEntry entry : _sections) {
 			String name = entry._config().getName();
 			BadgeBinding badge = BadgeBinding.create(context, entry._config());
@@ -407,10 +470,22 @@ public class SideRailElement implements UIElement {
 				rail.setBadge(name, badge.current());
 				badge.bind(rail, display -> rail.setBadge(name, display));
 			}
-			UnitHiding hiding = AccessChecks.hiding(null, UnitVisibility.bind(entry._visibility(), context), context);
+			ChannelCondition visible = UnitVisibility.bind(entry._visibility(), context);
+			UnitHiding hiding = AccessChecks.hiding(null, visible, context);
 			if (hiding != null) {
 				rail.setHidden(name, hiding.isHidden());
 				hiding.bind(rail, hidden -> rail.setHidden(name, hidden.booleanValue()));
+			}
+			if (visible != null && entry._config().getReveal()) {
+				// Every new value of an input that leaves the section visible shows it: something new
+				// to see, even while the section was visible already.
+				Registration reveal = ChannelCondition.observe(List.of(visible), () -> {
+					if (visible.holds()) {
+						rail.setHidden(name, false);
+						rail.reveal(name);
+					}
+				});
+				rail.addCleanupAction(reveal::dispose);
 			}
 		}
 

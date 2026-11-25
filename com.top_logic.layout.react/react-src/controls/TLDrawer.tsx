@@ -30,6 +30,7 @@ const I18N_KEYS = {
  * - width: number | null  - explicit extent in pixels, overriding the named size
  * - title: string | null  (null = no header)
  * - modal: boolean  (default: false)
+ * - label: string | null  - the accessible name of a drawer without title
  * - child: ChildDescriptor
  */
 const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
@@ -46,6 +47,7 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
   const title = (state.title as string) ?? null;
   const child = state.child;
   const modal = state.modal === true;
+  const label = typeof state.label === 'string' && state.label ? state.label : undefined;
 
   const handleClose = useCallback(() => {
     sendCommand('close');
@@ -92,6 +94,7 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
       role={modal ? 'dialog' : undefined}
       aria-modal={modal ? true : undefined}
       aria-labelledby={title !== null ? titleId : undefined}
+      aria-label={title === null ? label : undefined}
       tabIndex={-1}
       ref={rootRef}
       style={style}

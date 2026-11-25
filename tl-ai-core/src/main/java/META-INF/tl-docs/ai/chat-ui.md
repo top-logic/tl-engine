@@ -1,5 +1,5 @@
 ---
-description: Read before changing the chat of tl-chat or tl-chat-classic, or a route tl-ai-core serves content on - the commands of the chat controls (ChatControl), ChatProcessor, ChatSSEHandler on the window's React event stream, the React chat (tl-chat/ui, <chat-conversation>, <chat-rail>, <chat-dock>), ReactViewComponent in classic layouts, ChatSessionManager / ChatHistoryService, approval, the page commands an agent may run (<agent-commands>, ChatCommandTool), a ConversationBackend answering a conversation in place of the framework's agent, and the routes /html/{id}, /screenshot/{id} and /archived-page/{handle}.
+description: Read before changing the chat of tl-chat or tl-chat-classic, or a route tl-ai-core serves content on - the commands of the chat controls (ChatControl), ChatProcessor, ChatSSEHandler on the window's React event stream, the React chat (tl-chat/ui, <chat-conversation>, <chat-dock>, <presentation-pane>), ReactViewComponent in classic layouts, ChatSessionManager / ChatHistoryService, approval, the page commands an agent may run (<agent-commands>, ChatCommandTool), a ConversationBackend answering a conversation in place of the framework's agent, and the routes /html/{id}, /screenshot/{id} and /archived-page/{handle}.
 order: 67
 ---
 
@@ -139,7 +139,7 @@ The subject is there before the first run asks: `<chat-conversation subject="…
 
 ### The front end
 
-One front end consumes that API: the React chat in `tl-chat/ui/` (TypeScript, Vite), mounted into the React view layer by the view elements `<chat-conversation>`, `<chat-rail>` and `<chat-dock>`. `tl-chat/CLAUDE.md` describes its toolchain and development loop. It is shown in two kinds of page:
+One front end consumes that API: the React chat in `tl-chat/ui/` (TypeScript, Vite), mounted into the React view layer by the view elements `<chat-conversation>`, `<chat-dock>`, `<chat-sources>` and `<presentation-pane>`; the column beside the conversation is the engine's `<side-rail>`. `tl-chat/CLAUDE.md` describes its toolchain and development loop. It is shown in two kinds of page:
 
 - **React pages** (`/view/`), where the view elements stand in a `.view.xml`.
 - **Classic LayoutServlet pages**, through `tl-chat-classic`: `ReactViewComponent` writes a React view into a classic tab, with the classic window as the React window. A host gets the chat tab by depending on `tl-chat-classic` and chooses the view it shows. The bridge works around gaps of the classic layout, each marked in the code; `tl-chat-classic/CLAUDE.md` lists them.

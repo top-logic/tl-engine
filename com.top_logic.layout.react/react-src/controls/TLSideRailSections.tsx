@@ -22,7 +22,9 @@ function idFragment(name: string): string {
  * it (design system: tl-side-rail). The state is described by SideRailSectionsStateJson.
  *
  * The header shows the label and the badge of the section. The content of a collapsed section stays
- * mounted and hidden, so that it keeps what the user did there and keeps reporting its badge.
+ * mounted and hidden, so that it keeps what the user did there and keeps reporting its badge. A
+ * `headless` section has no header and is always expanded: its content brings a title bar of its
+ * own, the section is named by its label.
  */
 const TLSideRailSections: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<SideRailSectionsStateJson>>();
@@ -32,8 +34,23 @@ const TLSideRailSections: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div id={controlId} className={rootClassName(state, 'tl-side-rail__sections')}>
       {sections.map((section) => {
-        const expanded = section.expanded === true;
+        const headless = section.headless === true;
+        const expanded = headless || section.expanded === true;
         const id = `${controlId}-${idFragment(section.name ?? '')}`;
+        if (headless) {
+          // The content brings a title bar of its own; the section is always expanded.
+          return (
+            <section key={section.name} className="tl-side-rail__section" data-tl-state="headless" aria-label={section.label}>
+              <div id={`${id}-body`} className="tl-side-rail__body tl-region">
+                {section.content ? (
+                  <FillBarrier>
+                    <TLChild control={section.content} />
+                  </FillBarrier>
+                ) : null}
+              </div>
+            </section>
+          );
+        }
         return (
           <section key={section.name} className="tl-side-rail__section">
             <button

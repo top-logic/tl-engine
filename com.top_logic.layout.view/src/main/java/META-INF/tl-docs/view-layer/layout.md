@@ -174,11 +174,38 @@ The client classes an application styles against are `.tl-columns`, `.tl-columns
 
 `<split-panel orientation="horizontal" resizable="true">` (`SplitPanelElement`) places its `<pane>`s side by side (`horizontal`) or below each other (`vertical`), with a handle between two open panes the user drags. A pane gives its `size` in `unit` `%` (the panes in percent share the room left, their sizes acting as weights) or `px`, and its `min-size` in pixels. The split panel fills its box, each pane scrolls what does not fit into it, and the sizes the user drags are remembered per user.
 
-**A pane shrinks with a content that collapses.** When the content of a pane collapses — a `<panel>` the user minimizes to its header, a nested `<split-panel>` all of whose panes are collapsed — the pane takes the size of the collapsed content, and the open panes share the room it gives up; expanding the content gives the pane its former size back. A nested split panel with all panes collapsed collapses itself in this way in the split panel around it. The last open pane of the outermost split panel cannot collapse. Which panes are collapsed is remembered per user, like the sizes. In Java, a control takes part through the interface `CollapsibleChild`, through which it reports collapsing and expanding to the split panel.
+**A pane shrinks with a content that collapses.** When the content of a pane collapses — a `<panel>` the user minimizes to its header, a [`<side-rail>`](#a-collapsible-column-side-rail) that closes to its strip, a nested `<split-panel>` all of whose panes are collapsed — the pane takes the size of the collapsed content, and the open panes share the room it gives up; expanding the content gives the pane its former size back. A nested split panel with all panes collapsed collapses itself in this way in the split panel around it. The last open pane of the outermost split panel cannot collapse. Which panes are collapsed is remembered per user, like the sizes. In Java, a control takes part through the interface `CollapsibleChild`, through which it reports collapsing and expanding to the split panel.
 
 **Too narrow for the panes side by side, a horizontal split panel stacks them.** When its own width is less than the `min-size`s of its open panes plus the handles between them, the panes stand below each other: each spans the full width and is as high as its content, the split panel scrolls vertically, and there are no handles. A collapsed pane stays collapsed. Once the width suffices again, the panes are side by side with the sizes they had. As with `<columns>`, it is the width of the element itself that counts, not that of the browser window, so a split panel in a narrow dialog or a sidebar stacks just as it does on a phone. Nothing is configured for it; a vertical split panel keeps its arrangement.
 
 The client classes are `.tl-split`, `.tl-split--horizontal` / `.tl-split--vertical`, `.tl-split__pane` and `.tl-split__handle` (design system, `split.css`); the stacked arrangement is `data-tl-state~="stacked"` on `.tl-split`.
+
+## A collapsible column: `<side-rail>`
+
+`<side-rail>` (`SideRailElement`, control `ReactSideRailControl`) is a column beside another element that collapses to a strip. Its `<section>`s stand one below the other in the column, each with a header that expands and collapses it; the strip shows the `icon` of every section, and a click on an icon opens the rail with that section expanded — a second click on the shown section closes the rail. A rail with one section is the collapsible column of any element, a list for instance:
+
+```xml
+<split-panel>
+	<pane size="280" unit="px">
+		<side-rail drawer-below="44" open-channel="listOpen">
+			<section name="list" icon="css:bi bi-list">
+				<label><en>Items</en></label>
+				<data-list .../>
+			</section>
+		</side-rail>
+	</pane>
+	<pane size="100">...</pane>
+</split-panel>
+```
+
+- **Attributes of the rail.** `side` (`left` or `right`, default `left`): the side of its neighbour the rail stands on, and the edge its drawer slides in from. `strip` (default `true`). `open` (default `true`): whether the rail starts open, for a user who has not opened or closed it yet. `width` (pixels, default 280): the width of the column outside a split panel, which the user drags at its inner edge; the drawer has it as well. `drawer-below` (rem, default 0 = never): see below.
+- **Attributes of a section.** `name` (mandatory, the key of the section within the rail; an overlay addresses a section by it), `label`, `icon`, `open` (default `true`, whether the section starts expanded), `width` (pixels, default 0): a width the section asks for while it is shown, e.g. for a document, `badge` / `badge-role` / `badge-label` as on every [badged element](doc:view-layer/badges), `<visibility>`: the section is left out of the rail — strip icon included — while its condition does not hold, `header="false"`: the section has no header and is always expanded, for content that brings a title bar of its own (its label still names its strip icon and the section), and `reveal="true"`: whenever an input of that condition takes a new value for which the condition holds, the rail opens with the section expanded. The content of a section is built at once and stays mounted while the section is collapsed or the rail closed.
+- **Channels.** `open-channel` follows whether the rail is open and opens or closes it when written, so a button or a command elsewhere opens the rail - a command toggling the channel shows whether the rail is open with an [`active-expr`](doc:view-layer/commands#a-toggle-active-expr). `badge-channel` receives what the badges of the sections count beyond what the user has seen, as a number — a badge counts as seen while its section is shown (the rail open, the section expanded and not hidden). `shown` (a channel holding a boolean) says whether the rail is on screen at all, for a rail in a frame that may be closed, such as a dock: while it holds `false`, nothing counts as seen.
+- **Remembered per user.** Whether the rail is open, which sections are expanded and the width the user dragged are stored in the personal configuration under the personalization key of the element. Opening caused by `reveal` or by the drawer is not stored.
+- **In a split panel** the rail takes part in the collapse of its pane: closed, its pane shrinks to the strip and the other panes take the room; open, the column fills the pane, whose size the split panel's handle and remembered sizes decide. A shown section with a `width` widens the pane for as long as it is shown, without changing the size the user gave the pane. The rail may close even as the last open pane, since its strip stays usable.
+- **Narrow areas.** Where the area the rail stands in — the element its drawer is anchored in, the nearest positioned element around the rail — is narrower than `drawer-below` rem, the rail keeps only its strip, and opening it opens a modal drawer over its neighbour, beside the strip, named by the labels of the sections it shows: the drawer of the design system with scrim, focus inside and Escape (`ReactDrawerControl` with `setModal`). Escape is the innermost layer's: in a frame that closes on Escape itself, such as a chat dock, Escape closes the drawer first. The column choice of the user is left alone meanwhile and comes back when the area is wide enough again.
+
+The client classes are `.tl-side-rail`, `.tl-side-rail--start` / `.tl-side-rail--end`, `.tl-side-rail__strip`, `.tl-side-rail__column`, `.tl-side-rail__handle` and the section parts `.tl-side-rail__section`, `__header`, `__body` (design system, `side-rail.css`, contract `side-rail.contract.md`); the states are `data-tl-state~="open"`, `~="drawer"` and `~="resizable"`.
 
 ## Repeating a template over a computed list: `<object-list>`
 

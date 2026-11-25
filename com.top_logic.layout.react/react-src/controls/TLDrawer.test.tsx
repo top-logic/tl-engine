@@ -13,7 +13,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 
 // The bridge first, as the page loads it.
 import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
-import { React, register, registerPart, TLChild } from 'tl-react-bridge';
+import { React, register, registerPart, TLChild, KeyboardScopeProvider, EscapeToClose } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import TLDrawer from './TLDrawer';
 import ButtonPart from './button/ButtonPart';
@@ -48,6 +48,21 @@ const Host: React.FC<TLCellProps> = () => (
   </div>
 );
 
+/** How often the Escape of the frame around the drawer closed that frame. */
+let frameClosed = 0;
+
+/**
+ * A frame around the drawer that closes itself on Escape, as a dock does: a keyboard scope of its
+ * own binding Escape.
+ */
+const Frame: React.FC<TLCellProps> = () => (
+  <KeyboardScopeProvider>
+    <EscapeToClose onClose={() => { frameClosed++; }} />
+    <button type="button" className="opener">Open</button>
+    <TLChild control={drawerControl} />
+  </KeyboardScopeProvider>
+);
+
 beforeAll(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   if (typeof globalThis.CSS === 'undefined') {
@@ -57,6 +72,7 @@ beforeAll(() => {
   register('TLDrawer', TLDrawer);
   register('TestContent', Content);
   register('TestHost', Host);
+  register('TestFrame', Frame);
 });
 
 afterEach(() => {
@@ -67,7 +83,7 @@ afterEach(() => {
 });
 
 /** Mounts a container-anchored drawer into a host, closed. */
-function mountDrawer(modal: boolean): void {
+function mountDrawer(modal: boolean, host = 'TestHost'): void {
   sent = [];
   vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? '{}'));
@@ -87,7 +103,7 @@ function mountDrawer(modal: boolean): void {
   const element = document.createElement('div');
   element.setAttribute(MOUNT_ATTRIBUTE, HOST_ID);
   document.body.appendChild(element);
-  act(() => mount(HOST_ID, 'TestHost', {}, 'w', '/ctx'));
+  act(() => mount(HOST_ID, host, {}, 'w', '/ctx'));
 }
 
 /** The server opens or closes the drawer. */
@@ -185,5 +201,27 @@ describe('a drawer that is not modal', () => {
     expect(aside().getAttribute('role')).toBeNull();
     act(() => opener().focus());
     expect(document.activeElement).toBe(opener());
+  });
+});
+
+describe('a modal drawer in a frame that closes on Escape', () => {
+  it('takes Escape itself while it is open, and leaves the frame open', async () => {
+    frameClosed = 0;
+    mountDrawer(true, 'TestFrame');
+    setOpen(true);
+
+    key(aside().querySelector('.content-button')!, 'Escape');
+    await vi.waitFor(() => expect(sent).toEqual(['close']));
+    expect(frameClosed).toBe(0);
+  });
+
+  it('leaves Escape to the frame while it is closed', () => {
+    frameClosed = 0;
+    mountDrawer(true, 'TestFrame');
+    opener().focus();
+
+    key(opener(), 'Escape');
+    expect(frameClosed).toBe(1);
+    expect(sent).toEqual([]);
   });
 });

@@ -45,9 +45,10 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Tests the label, tooltip and icon a {@link ViewCommandModel} computes from the arguments of its
- * command ({@link ViewCommand.Config#getLabelExpr()}, {@link ViewCommand.Config#getTooltipExpr()},
- * {@link ViewCommand.Config#getImageExpr()}).
+ * Tests the label, tooltip, icon and active state a {@link ViewCommandModel} computes from the
+ * arguments of its command ({@link ViewCommand.Config#getLabelExpr()},
+ * {@link ViewCommand.Config#getTooltipExpr()}, {@link ViewCommand.Config#getImageExpr()},
+ * {@link ViewCommand.Config#getActiveExpr()}).
  *
  * <p>
  * The computed values follow the input channel and the object it holds, like the executability
@@ -185,6 +186,25 @@ public class TestViewCommandAppearance extends BasicTestCase {
 
 		_input.set("empty");
 		assertFixedValues(model);
+	}
+
+	/**
+	 * Tests that whether the command is active follows the channel and is reported, and that a
+	 * command without an active expression is never active.
+	 */
+	public void testActiveFollowsTheChannel() throws Exception {
+		ViewCommand.Config config = computing(null, null, null);
+		TypedConfigUtil.setProperty(config, ViewCommand.Config.ACTIVE_EXPR, expr("$input == 'open'"));
+		_input.set("closed");
+		ViewCommandModel model = attachedModel(config, ViewExecutabilityRule.ALWAYS_EXECUTABLE);
+		assertFalse(model.isActive());
+
+		_input.set("open");
+		assertTrue(model.isActive());
+		assertEquals("A change of the active state alone is reported.", 1, _reported);
+
+		ViewCommandModel plain = attachedModel(computing("'Label'", null, null), ViewExecutabilityRule.ALWAYS_EXECUTABLE);
+		assertFalse("Without an expression, a command is never active.", plain.isActive());
 	}
 
 	/**

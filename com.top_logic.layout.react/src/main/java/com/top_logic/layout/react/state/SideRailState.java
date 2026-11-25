@@ -105,6 +105,9 @@ public interface SideRailState extends com.top_logic.layout.react.state.ControlS
 		/** @see #getBadge() */
 		String BADGE__PROP = "badge";
 
+		/** @see #isHeadless() */
+		String HEADLESS__PROP = "headless";
+
 		/** @see #getContent() */
 		String CONTENT__PROP = "content";
 
@@ -172,6 +175,17 @@ public interface SideRailState extends com.top_logic.layout.react.state.ControlS
 		 * Checks, whether {@link #getBadge()} has a value.
 		 */
 		boolean hasBadge();
+
+		/**
+		 * Whether the section has no header: it is always expanded, for content that brings a title
+		 * bar of its own.
+		 */
+		boolean isHeadless();
+
+		/**
+		 * @see #isHeadless()
+		 */
+		com.top_logic.layout.react.state.SideRailState.Section setHeadless(boolean value);
 
 		/**
 		 * The content of the section. Present in {@link SideRailSectionsState#getSections()} only.

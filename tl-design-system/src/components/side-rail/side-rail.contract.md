@@ -14,7 +14,7 @@ Die Controls sind `TLSideRail` (`ReactSideRailControl`, Zustand `SideRailState`)
 | `strip` | boolean | Streifen mit einem Icon je Abschnitt. |
 | `open` | boolean | Offen: die Spalte, als Schublade die Schublade (`data-tl-state~="open"`). |
 | `drawerBelow` | number | Breite des Bereichs in rem, unter der die Leiste eine Schublade ist; 0: nie. |
-| `sections` | Liste | Je Abschnitt `name`, `label`, `icon`, `expanded`, `hidden`, `badge`. |
+| `sections` | Liste | Je Abschnitt `name`, `label`, `icon`, `expanded`, `hidden`, `headless`, `badge`. |
 | `body` | Kind | Die Spalte, ein `TLSideRailSections`. |
 | `drawer` | Kind | Die modale Schublade (`TLDrawer` mit `modal`) mit der Spalte. |
 | `resizable` | boolean | Eigene Breite mit Griff (`data-tl-state~="resizable"`); sonst füllt die Spalte den Bereich. |
@@ -41,6 +41,7 @@ Die Controls sind `TLSideRail` (`ReactSideRailControl`, Zustand `SideRailState`)
 - **Schublade:** ist der Bereich der Leiste - das positionierte Element um sie, an dem die Schublade verankert ist -
   schmaler als `drawerBelow`, bleibt nur der Streifen, und an Stelle der Spalte steht die modale Schublade
   (`drawer.contract.md`): Scrim, Fokus darin, Escape und Scrim schließen, der Fokus kehrt zum Streifen-Icon zurück.
+  Sie steht neben dem Streifen, nicht über ihm, und ist nach den Beschriftungen der gezeigten Abschnitte benannt.
   Die Leiste selbst hat keine Scrim- oder Fokuslogik.
 
 ## Tokens
@@ -66,6 +67,7 @@ Die Controls sind `TLSideRail` (`ReactSideRailControl`, Zustand `SideRailState`)
 | `tl-side-rail__handle` | der Griff |
 | `tl-side-rail__sections` | die Abschnitte (`TLSideRailSections`) |
 | `tl-side-rail__section`, `tl-side-rail__header`, `tl-side-rail__chevron`, `tl-side-rail__label`, `tl-side-rail__body` | ein Abschnitt |
+| `data-tl-state~="headless"` | ein Abschnitt ohne Kopf, immer aufgeklappt, benannt durch `aria-label` |
 
 ## Konformität
 

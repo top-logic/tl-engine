@@ -110,8 +110,16 @@
 
 .tl-side-rail__section {
   display: flex;
+  flex: none;
   flex-direction: column;
   min-height: 0;
+}
+
+/* Aufgeklappte Abschnitte teilen sich die Höhe der Spalte; ein einziger füllt sie, z. B. ein Inhalt, der selbst
+   rollt und eine begrenzte Höhe braucht. */
+.tl-side-rail__section:has(> .tl-side-rail__header[aria-expanded="true"]),
+.tl-side-rail__section[data-tl-state~="headless"] {
+  flex: 1 1 0;
 }
 
 .tl-side-rail__section + .tl-side-rail__section {
@@ -162,11 +170,20 @@
   white-space: nowrap;
 }
 
-/* Ein aufgeklappter Abschnitt nimmt den Platz, den sein Inhalt braucht; der Inhalt rollt selbst. */
+/* Der Körper füllt seinen Abschnitt; was nicht hineinpasst und nicht selbst rollt, rollt hier. */
 .tl-side-rail__body {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .tl-side-rail__body[hidden] { display: none; }
+
+/* Als Schublade öffnet die Leiste neben ihrem Streifen, nicht über ihm: der Client misst, wie weit der Streifen
+   vom Rand des Ankers reicht, und rückt die Schublade um so viel ab. Geschlossen ist sie unsichtbar, damit sie,
+   vom Rand abgerückt, nicht über dem Streifen liegt. */
+.tl-side-rail > .tl-drawer--container:not([data-tl-state~="open"]) {
+  visibility: hidden;
+}

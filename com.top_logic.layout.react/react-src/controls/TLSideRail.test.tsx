@@ -267,6 +267,7 @@ describe('the rail in a narrow area', () => {
     expect(column()).toBeNull();
     expect(drawer()).not.toBeNull();
     expect(rail().getAttribute('data-tl-state')).toContain('drawer');
+    expect(drawer()!.style.insetInlineStart).toMatch(/^\d+px$/);
     expect(await sentCommand(CMD_SET_DRAWER)).toEqual({ [ARG_DRAWER]: true });
   });
 
@@ -311,6 +312,22 @@ describe('the rail in a narrow area', () => {
     expect(column()).not.toBeNull();
     expect(drawer()).toBeNull();
     expect(await sentCommand(CMD_SET_DRAWER)).toEqual({ [ARG_DRAWER]: false });
+  });
+});
+
+describe('a section without header', () => {
+  it('shows its content at once, named by its label, without a header to collapse it', async () => {
+    await mountRail({
+      body: {
+        controlId: BODY_ID,
+        module: 'TLSideRailSections',
+        state: { sections: sections(true, { tasks: { headless: true, expanded: true } }) },
+      },
+    });
+    const section = document.getElementById('content-tasks')!.closest('section')!;
+    expect(section.getAttribute('aria-label')).toBe('Tasks');
+    expect(section.querySelector('.tl-side-rail__header')).toBeNull();
+    expect(document.getElementById('content-tasks')!.closest('[hidden]')).toBeNull();
   });
 });
 

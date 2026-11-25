@@ -248,6 +248,13 @@ message ButtonState extends ControlState {
 	bool active;
 
 	/**
+	 * Whether the button is a toggle: it reports to assistive technology whether it is pressed -
+	 * {@link #active} - or not, e.g. a button opening and closing a panel. Absent for a button that
+	 * is no toggle, which reports pressed only while it is {@link #active}.
+	 */
+	bool toggle;
+
+	/**
 	 * The icon of the button, the encoded form of a theme image (e.g. {@code css:fas fa-edit} for
 	 * an icon font class, or the URL of an image file).
 	 */
@@ -2578,6 +2585,12 @@ message SideRailState extends ControlState {
 		 * The badge of the section, on its strip icon and in its header. Absent: none.
 		 */
 		Badge badge;
+
+		/**
+		 * Whether the section has no header: it is always expanded, for content that brings a title
+		 * bar of its own.
+		 */
+		bool headless;
 
 		/**
 		 * The content of the section. Present in {@link SideRailSectionsState#sections} only.

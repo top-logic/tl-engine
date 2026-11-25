@@ -47,9 +47,9 @@ import com.top_logic.layout.react.state.SideRailState;
  * </p>
  *
  * <p>
- * The badge of a section counts as seen when the section is shown: the rail is open and the
- * section expanded and not hidden. The rail reports the sum of what the sections count beyond what
- * was seen of them to {@link Listener#unseenChanged(int)}.
+ * The badge of a section counts as seen when the section is shown: the rail is open and
+ * {@link #setShown(boolean) shown}, and the section expanded and not hidden. The rail reports the sum
+ * of what the sections count beyond what was seen of them to {@link Listener#unseenChanged(int)}.
  * </p>
  *
  * <p>
@@ -145,10 +145,14 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 	 *        The encoded theme image of the strip icon, {@code null} for a generic glyph.
 	 * @param width
 	 *        The width in pixels the section asks for while it is shown, {@code 0} for none.
+	 * @param headless
+	 *        Whether the section has no header and is always expanded, for content that brings a
+	 *        title bar of its own.
 	 * @param content
 	 *        The content of the section.
 	 */
-	public record Section(String name, String label, String icon, int width, ReactControl content) {
+	public record Section(String name, String label, String icon, int width, boolean headless,
+			ReactControl content) {
 		// Sole record.
 	}
 
@@ -224,6 +228,8 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 
 	private int _unseen;
 
+	private boolean _shown = true;
+
 	/**
 	 * Creates a {@link ReactSideRailControl}.
 	 *
@@ -251,6 +257,9 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 		for (Section section : sections) {
 			if (_sections.put(section.name(), section) != null) {
 				throw new IllegalArgumentException("Duplicate section name: " + section.name());
+			}
+			if (section.headless()) {
+				_expanded.add(section.name());
 			}
 		}
 		for (String name : expanded) {
@@ -338,6 +347,30 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 	 * </p>
 	 */
 	public void setOpen(boolean open) {
+		changeOpen(open, true);
+	}
+
+	/**
+	 * Shows the section with the given name: opens the rail - its column, or its drawer while it is
+	 * one - and expands the section.
+	 *
+	 * <p>
+	 * Not a choice of the user: neither the open column nor the expanded section is reported as
+	 * one. Used for a section whose content appeared and asks to be seen, e.g. something an agent
+	 * presented.
+	 * </p>
+	 */
+	public void reveal(String name) {
+		checkSection(name);
+		if (_expanded.add(name)) {
+			writeSections();
+			reportLayout();
+			updateSeen();
+		}
+		changeOpen(true, false);
+	}
+
+	private void changeOpen(boolean open, boolean choice) {
 		if (isOpen() == open) {
 			return;
 		}
@@ -353,7 +386,7 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 		putState(SideRailState.OPEN__PROP, Boolean.valueOf(open));
 		reportLayout();
 		updateSeen();
-		if (!_drawerMode) {
+		if (choice && !_drawerMode) {
 			_listener.columnOpenChanged(open);
 		}
 		_listener.openChanged(open);
@@ -364,6 +397,10 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 	 */
 	public void setExpanded(String name, boolean expanded) {
 		checkSection(name);
+		if (!expanded && _sections.get(name).headless()) {
+			// Without a header, there is nothing to expand it again.
+			return;
+		}
 		boolean changed = expanded ? _expanded.add(name) : _expanded.remove(name);
 		if (!changed) {
 			return;
@@ -416,7 +453,7 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 		if (!_sections.containsKey(name)) {
 			return;
 		}
-		if (isShown(name)) {
+		if (isDisplayed(name)) {
 			setOpen(false);
 			return;
 		}
@@ -499,10 +536,35 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 	}
 
 	/**
-	 * Whether the section with the given name is shown: the rail is open, the section expanded and
-	 * not hidden.
+	 * Tells the rail whether it is on screen, e.g. {@code false} while the frame around it is
+	 * closed.
+	 *
+	 * <p>
+	 * While the rail is not on screen, nothing in it counts as seen; whether it is open is not
+	 * changed. Becoming shown again marks what it shows as seen.
+	 * </p>
+	 */
+	public void setShown(boolean shown) {
+		if (_shown == shown) {
+			return;
+		}
+		_shown = shown;
+		updateSeen();
+	}
+
+	/**
+	 * Whether the section with the given name is shown: the rail is on screen and open, the section
+	 * expanded and not hidden.
 	 */
 	public boolean isShown(String name) {
+		return _shown && isDisplayed(name);
+	}
+
+	/**
+	 * Whether the rail displays the section with the given name: the rail is open, the section
+	 * expanded and not hidden.
+	 */
+	private boolean isDisplayed(String name) {
 		return isOpen() && _expanded.contains(name) && !_hidden.contains(name);
 	}
 
@@ -513,7 +575,7 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 	public int getSectionWidth() {
 		int result = 0;
 		for (Section section : _sections.values()) {
-			if (isShown(section.name())) {
+			if (isDisplayed(section.name())) {
 				result = Math.max(result, section.width());
 			}
 		}
@@ -535,6 +597,9 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 			}
 			entry.put(SideRailState.Section.EXPANDED__PROP, Boolean.valueOf(_expanded.contains(name)));
 			entry.put(SideRailState.Section.HIDDEN__PROP, Boolean.valueOf(_hidden.contains(name)));
+			if (section.headless()) {
+				entry.put(SideRailState.Section.HEADLESS__PROP, Boolean.TRUE);
+			}
 			BadgeDisplay badge = _badges.get(name);
 			if (badge != null) {
 				entry.put(SideRailState.Section.BADGE__PROP, badge.toState());
@@ -550,6 +615,21 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 	private void writeSections() {
 		putState(SideRailState.SECTIONS__PROP, sectionState(false));
 		_body.writeSections();
+		_drawer.setLabel(drawerLabel());
+	}
+
+	/**
+	 * The name of the drawer for assistive technology: the labels of the sections it shows.
+	 */
+	private String drawerLabel() {
+		List<String> labels = new ArrayList<>();
+		for (Section section : _sections.values()) {
+			String name = section.name();
+			if (_expanded.contains(name) && !_hidden.contains(name)) {
+				labels.add(section.label());
+			}
+		}
+		return labels.isEmpty() ? null : String.join(", ", labels);
 	}
 
 	/**

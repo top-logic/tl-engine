@@ -5,8 +5,8 @@
 	com.top_logic.ai.chat.classic.ReactViewComponent.
 
 	Generic on purpose: the user's chats on the left, the conversation in the middle, the agent's plan
-	and its sources in a rail on the right, and the rail's pane, in which the agent shows what the user
-	asked to see. Nothing here knows the application. An application that wants its own agent, facts
+	and its sources in a <side-rail> on the right, which shows in their place what the agent presents
+	when the user asks to see something. Nothing here knows the application. An application that wants its own agent, facts
 	about its classic selection or its own rail sections points the component's `view` attribute at a
 	view of its own - this file is the example to start from.
 
@@ -16,8 +16,9 @@
 	- present="paneObject" on <chat-conversation>: the one channel the agent's `present` tool may
 	  write. Deny by default - without it the agent is not offered `present` at all and answers in
 	  text;
-	- input="paneObject" on <chat-rail>: the pane that renders what stands on the channel. Without it
-	  the agent shows a table on a channel nothing displays, and tells the user they see it.
+	- <presentation-pane input="paneObject"> in a section of the rail: the pane that renders what
+	  stands on the channel. Without it the agent shows a table on a channel nothing displays, and
+	  tells the user they see it.
 
 	<selection channel="paneObject"> is the fourth part worth keeping: it tells the agent which object
 	the pane shows, so that "change its date" works on the object the user opened from a table.
@@ -30,13 +31,16 @@
 	<channels>
 		<channel name="chatSession"/>
 		<!--
-			What the rail's pane shows: what the agent presented - a table, a chart or a form, of any
+			What the pane in the rail shows: what the agent presented - a table, a chart or a form, of any
 			type - and an object the user opens from it. Empty means the rail shows its sections; the
 			pane's close button empties it again.
 		-->
 		<channel name="paneObject"/>
 		<channel name="progressBadge"/>
 		<channel name="sourcesBadge"/>
+		<!-- Whether the rail is open, and what is new in it: the button at the head of the transcript. -->
+		<channel name="railOpen"/>
+		<channel name="railBadge"/>
 	</channels>
 	<chat chat-id="classic"
 		direction="row"
@@ -168,13 +172,32 @@
 		<panel fill="true">
 			<!--
 				`present` names the one channel of this view the agent may write: "show me all X as a
-				table" ends as that table in the rail's pane, in one tool call.
+				table" ends as that table in the pane in the rail, in one tool call.
 			-->
 			<chat-conversation
 				input="chatSession"
 				present="paneObject"
 			>
 				<actions rate="true"/>
+				<!-- The button that opens and closes the rail, pressed while it is open, with what is new in it as its badge. -->
+				<commands>
+					<generic-command
+						active-expr="$railOpen"
+						badge="railBadge"
+						image="css:bi bi-layout-sidebar-reverse"
+						inputs="railOpen"
+					>
+						<label>
+							<en>Side rail</en>
+							<de>Seitenleiste</de>
+						</label>
+						<execute-script function="!$railOpen">
+							<with-result>
+								<write-channel name="railOpen"/>
+							</with-result>
+						</execute-script>
+					</generic-command>
+				</commands>
 				<controls
 					attachments="true"
 					auto-approve="true"
@@ -189,22 +212,46 @@
 			</chat-conversation>
 		</panel>
 		<!--
-			While "paneObject" holds something, the rail shows it in its pane in place of the sections:
-			a table, a chart or a form, for any type. A row clicked in a table opens that object's form,
-			and the pane's "back" returns to the table as it was.
+			While "paneObject" holds something, the rail shows it in place of its other sections: a table,
+			a chart or a form, for any type. A row clicked in a table opens that object's form, and the
+			pane's "back" returns to the table as it was. Below 70 rem of width, the rail keeps only its
+			strip and opens as a drawer over the conversation.
 		-->
-		<chat-rail input="paneObject"
-			strip="true"
+		<side-rail
+			badge-channel="railBadge"
+			drawer-below="70"
+			open-channel="railOpen"
+			side="right"
+			width="300"
 		>
+			<section name="presented"
+				header="false"
+				icon="css:bi bi-easel"
+				reveal="true"
+				width="420"
+			>
+				<label>
+					<en>Presented</en>
+					<de>Angezeigt</de>
+				</label>
+				<visibility
+					expr="!isEmpty($paneObject)"
+					inputs="paneObject"
+				/>
+				<presentation-pane input="paneObject"/>
+			</section>
 			<section name="progress"
 				badge="progressBadge"
 				icon="css:bi bi-list-check"
-				open="true"
 			>
 				<label>
 					<en>Progress</en>
 					<de>Fortschritt</de>
 				</label>
+				<visibility
+					expr="isEmpty($paneObject)"
+					inputs="paneObject"
+				/>
 				<!-- The agent's plan: the AgentTask objects the run of the open chat writes. -->
 				<data-list
 					collapsible="false"
@@ -235,13 +282,18 @@
 			<section name="sources"
 				badge="sourcesBadge"
 				icon="css:bi bi-quote"
+				open="false"
 			>
 				<label>
 					<en>Sources</en>
 					<de>Quellen</de>
 				</label>
+				<visibility
+					expr="isEmpty($paneObject)"
+					inputs="paneObject"
+				/>
 				<chat-sources badge="sourcesBadge"/>
 			</section>
-		</chat-rail>
+		</side-rail>
 	</chat>
 </view>

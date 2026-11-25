@@ -51,6 +51,21 @@ function anchorOf(element: HTMLElement): HTMLElement | null {
 }
 
 /**
+ * How far the strip of a rail in drawer mode reaches into the area of its anchor, from the edge it
+ * stands at, in px: the drawer opens beside the strip, not over it.
+ */
+function drawerInset(rail: HTMLElement, anchor: HTMLElement, end: boolean): number {
+  const box = anchor.getBoundingClientRect();
+  const railBox = rail.getBoundingClientRect();
+  const inner = box.left + anchor.clientLeft;
+  const rtl = getComputedStyle(anchor).direction === 'rtl';
+  // The edge the rail stands at, in physical terms: the end of a left-to-right page is its right.
+  const atRight = end !== rtl;
+  const inset = atRight ? inner + anchor.clientWidth - railBox.left : railBox.right - inner;
+  return Math.max(0, Math.round(inset));
+}
+
+/**
  * A collapsible column beside another element, with sections (design system: tl-side-rail), the
  * client of `<side-rail>`. The state is described by SideRailStateJson.
  *
@@ -61,7 +76,7 @@ function anchorOf(element: HTMLElement): HTMLElement | null {
  *
  * Where the area of the rail - the element its drawer is anchored in - is narrower than `drawerBelow`
  * rem, the rail keeps only its strip and renders the child `drawer` instead of the column: a modal
- * drawer over the neighbour, which brings its own scrim, focus handling and Escape. The rail reports
+ * drawer over the neighbour, beside the strip, which brings its own scrim, focus handling and Escape. The rail reports
  * the change to the server, which then opens and closes the drawer. Measured before paint, so that a
  * narrow area does not first lay out the column it cannot hold.
  */
@@ -82,6 +97,7 @@ const TLSideRail: React.FC<TLCellProps> = ({ controlId }) => {
 
   const root = useRef<HTMLDivElement | null>(null);
   const [narrow, setNarrow] = useState(false);
+  const [inset, setInset] = useState(0);
   /** What the server was told last; it starts as a column. */
   const reported = useRef(false);
 
@@ -92,12 +108,34 @@ const TLSideRail: React.FC<TLCellProps> = ({ controlId }) => {
       setNarrow(false);
       return;
     }
-    const measure = () => setNarrow(anchor.clientWidth < drawerBelow * remInPx());
+    const measure = () => {
+      const isNarrow = anchor.clientWidth < drawerBelow * remInPx();
+      setNarrow(isNarrow);
+      if (isNarrow && element) setInset(drawerInset(element, anchor, end));
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(anchor);
     return () => observer.disconnect();
-  }, [drawerBelow]);
+  }, [drawerBelow, end]);
+
+  // Once the column is gone, the rail is its strip: measured again after the drawer mode was rendered.
+  useLayoutEffect(() => {
+    const element = root.current;
+    const anchor = element ? anchorOf(element) : null;
+    if (narrow && element && anchor) setInset(drawerInset(element, anchor, end));
+  }, [narrow, end]);
+
+  // The drawer opens beside the strip: moved off the edge of the area by as much as the strip takes.
+  useLayoutEffect(() => {
+    const drawer = narrow ? root.current?.querySelector<HTMLElement>(':scope > .tl-drawer') : null;
+    if (!drawer) return;
+    const property = end ? 'insetInlineEnd' : 'insetInlineStart';
+    drawer.style[property] = `${inset}px`;
+    return () => {
+      drawer.style[property] = '';
+    };
+  }, [narrow, end, inset, state.drawer]);
 
   useLayoutEffect(() => {
     if (reported.current === narrow) return;

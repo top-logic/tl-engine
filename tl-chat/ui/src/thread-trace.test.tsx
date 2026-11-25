@@ -61,9 +61,6 @@ async function openTrace(actions: ChatAction[], language: Language, entries = tr
       onEditSend: async () => true,
       onRegenerate: () => undefined,
       onRate: () => undefined,
-      onOpenRail: () => undefined,
-      railCollapsed: true,
-      onToggleRail: () => undefined,
       title: 'Titel',
     } as never),
   ))

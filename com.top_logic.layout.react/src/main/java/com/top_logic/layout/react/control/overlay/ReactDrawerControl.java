@@ -58,6 +58,9 @@ public class ReactDrawerControl extends ReactControl {
 
 	private static final String MODAL = "modal";
 
+	/** State: the accessible name of a drawer without title, see {@link #setLabel(String)}. */
+	public static final String LABEL = "label";
+
 	/**
 	 * The edge the drawer slides in from.
 	 */
@@ -261,6 +264,17 @@ public class ReactDrawerControl extends ReactControl {
 	 */
 	public void setWidth(int width) {
 		putState(WIDTH, width > 0 ? Integer.valueOf(width) : null);
+	}
+
+	/**
+	 * Sets the accessible name of a drawer without {@link #setTitle(String) title}.
+	 *
+	 * @param label
+	 *        The name assistive technology reads for the drawer, {@code null} for none. A drawer with
+	 *        a title is named by its title.
+	 */
+	public void setLabel(String label) {
+		putState(LABEL, label);
 	}
 
 	/**

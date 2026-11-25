@@ -175,6 +175,13 @@ export interface ButtonStateJson extends ControlStateJson {
 	active: boolean;
 
 	/**
+	 * Whether the button is a toggle: it reports to assistive technology whether it is pressed -
+	 * {@link ButtonStateJson.active} - or not, e.g. a button opening and closing a panel. Absent for a button that
+	 * is no toggle, which reports pressed only while it is {@link ButtonStateJson.active}.
+	 */
+	toggle: boolean;
+
+	/**
 	 * The icon of the button, the encoded form of a theme image (e.g. `css:fas fa-edit` for
 	 * an icon font class, or the URL of an image file).
 	 */
@@ -2642,6 +2649,12 @@ export namespace SideRailStateJson {
 		 * The badge of the section, on its strip icon and in its header. Absent: none.
 		 */
 		badge?: BadgeJson;
+
+		/**
+		 * Whether the section has no header: it is always expanded, for content that brings a title
+		 * bar of its own.
+		 */
+		headless: boolean;
 
 		/**
 		 * The content of the section. Present in {@link SideRailSectionsStateJson.sections} only.

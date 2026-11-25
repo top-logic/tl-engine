@@ -6,12 +6,16 @@
 		<channel name="present"/>
 		<channel name="railOpen"/>
 		<channel name="railBadge"/>
+		<channel name="railShown"/>
+		<channel name="other"/>
 	</channels>
 
-	<side-rail badge-channel="railBadge"
+	<side-rail
+		badge-channel="railBadge"
 		css-class="my-rail"
 		open="false"
 		open-channel="railOpen"
+		shown="railShown"
 		side="right"
 		width="320"
 	>
@@ -30,11 +34,22 @@
 			<panel/>
 		</section>
 		<section name="document"
+			header="false"
+			reveal="true"
 			width="560"
 		>
 			<visibility
 				expr="$present"
 				inputs="present"
+			/>
+			<panel/>
+		</section>
+		<section name="extra"
+			open="false"
+		>
+			<visibility
+				expr="$other"
+				inputs="other"
 			/>
 			<panel/>
 		</section>

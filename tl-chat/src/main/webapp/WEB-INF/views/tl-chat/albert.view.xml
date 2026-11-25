@@ -11,10 +11,11 @@
 
 	The page is generic: it knows nothing of the application. On the left the chats of the logged-in
 	account, grouped by the day of their last change, with "New chat" and, per row, rename and delete.
-	In the middle the conversation. On the right a rail, open at the first visit, with the plan of the
-	agent (Progress), the sources it cited, and what it remembers about the account; in its pane the
-	rail shows what the agent presents - a table, a chart or a form - and the object a user opens
-	from it.
+	In the middle the conversation. On the right a <side-rail>, open at the first visit, with the plan
+	of the agent (Progress), the sources it cited, and what it remembers about the account; while the
+	agent presents something - a table, a chart or a form - or the user opens an object from it, the
+	rail shows that in place of these sections. The button at the head of the transcript opens and
+	closes the rail and counts what is new in it.
 
 	A chat is about the object open in the pane ("paneItem"): the first message of a new chat writes
 	that object as the subject of the chat. While the pane shows an object that is the subject of chats
@@ -27,20 +28,26 @@
 
 	The pane needs three parts together, or "show me all X as a table" breaks: the channel
 	"paneObject", present="paneObject" on <chat-conversation> (the only channel the agent may write)
-	and input="paneObject" on <chat-rail> (what displays it). <selection channel="selected"> tells
-	the agent which object the user has open: the one in the pane, else the one of "pageSelection".
+	and <presentation-pane input="paneObject"> in the section "presented" of the rail (what displays
+	it). <selection channel="selected"> tells the agent which object the user has open: the one in the
+	pane, else the one of "pageSelection".
 
 	The page uses the default chat id, so a <chat-dock> without chat-id in the footer of the
 	application shell shows the same conversation as this page. Such a dock embeds this page:
 
 	  <chat-channels channels="pageSelection"/>
-	  <chat-dock icon="css:bi bi-stars">
+	  <chat-dock icon="css:bi bi-stars" badge="albertBadge" open-channel="albertOpen">
 	    <label><en>Albert</en><de>Albert</de></label>
 	    <view-ref view="tl-chat/albert.view.xml">
 	      <bind channel="chatDraft" to="chatDraft"/>
 	      <bind channel="pageSelection" to="pageSelection"/>
+	      <bind channel="railBadge" to="albertBadge"/>
+	      <bind channel="chatShown" to="albertOpen"/>
 	    </view-ref>
 	  </chat-dock>
+
+	The shell declares "albertBadge" and "albertOpen" as well: the launcher counts what is new in the
+	rail, and the rail counts nothing as seen while the dock is closed.
 
 	The shell declares "pageSelection", <chat-channels> publishes it, and the pages write it with
 	<page-selection>. A conversation in a closed dock offers the agent nothing;
@@ -51,8 +58,10 @@
 	  - "chatDraft", "chatReference", "chatQuote": the text in the composer, an object the composer
 	    inserts as a reference, and a passage of an object it inserts as a quote. A command of another
 	    page writes them to put a question into this composer;
-	  - "paneObject": what the rail's pane shows;
-	  - "pageSelection": what the page behind a dock has open.
+	  - "paneObject": what the pane in the rail shows;
+	  - "pageSelection": what the page behind a dock has open;
+	  - "railOpen": whether the rail is open, "railBadge": what is new in it, "chatShown": whether
+	    the page is on screen (false while a dock around it is closed).
 
 	An application changes the page with a same-path overlay (WEB-INF/views/tl-chat/albert.view.xml
 	of its own module, see the developer article view-layer/overlays). The ids to address:
@@ -61,10 +70,11 @@
 	  - "chats": the list of chats (its <row-commands>, <group-by>, <commands>);
 	  - "conversation": the <chat-conversation> (<placeholder>, <prompts>, <controls>, <actions>,
 	    <context>, <mention>, <agent-commands>, agent);
-	  - "rail": the <chat-rail>. Its sections are addressed by their name: "progress", "sources",
-	    "memories". A <section> with a new name is added; config:position="after"
+	  - "rail": the <side-rail>. Its sections are addressed by their name: "presented", "progress",
+	    "sources", "memories". A <section> with a new name is added; config:position="after"
 	    config:reference="sources" places it after "sources". A <section> with a shipped name changes
-	    that section, config:operation="remove" removes it.
+	    that section, config:operation="remove" removes it. A section of its own that is to give way
+	    to what is presented carries the same visibility as the shipped ones.
 
 	The developer article ai/adding-albert describes the steps around this page.
 -->
@@ -72,7 +82,7 @@
 	<channels>
 		<channel name="chatSession"/>
 		<!--
-			What the rail's pane shows: what the agent presented - a table, a chart or a form, of any
+			What the pane in the rail shows: what the agent presented - a table, a chart or a form, of any
 			type - and an object the user opens from it. Empty means the rail shows its sections; the
 			pane's close button empties it again.
 		-->
@@ -91,6 +101,14 @@
 		<channel name="sourcesBadge"/>
 		<channel name="memoriesBadge"/>
 		<!--
+			Whether the rail is open, which the button at the head of the transcript toggles; what is new
+			in it, the badge of that button; and whether the page is on screen at all - empty on its
+			own, false while a dock around it is closed - so that nothing counts as seen meanwhile.
+		-->
+		<channel name="railOpen"/>
+		<channel name="railBadge"/>
+		<channel name="chatShown"/>
+		<!--
 			The composer's unsent text, the object a command puts into it as a reference token, and the
 			passage of an object a command quotes into it. Declared here so that the page works on its
 			own; an embedding view binds its own channels over them.
@@ -104,7 +122,7 @@
 		-->
 		<channel name="pageSelection"/>
 		<!--
-			The object the agent is told the user has open: what the rail's pane shows, and while it
+			The object the agent is told the user has open: what the pane in the rail shows, and while it
 			shows nothing, what the page behind the dock has open.
 		-->
 		<derived-channel name="selected"
@@ -306,7 +324,7 @@
 		<panel fill="true">
 			<!--
 				`present` names the one channel of this view the agent may write: "show me all X as a
-				table" ends as that table in the rail's pane, in one tool call.
+				table" ends as that table in the pane in the rail, in one tool call.
 
 				`subject`: a chat this element creates (the first message of a new chat) is about the
 				object open in the pane. The chat list above is scoped by it.
@@ -324,6 +342,25 @@
 				subject="paneItem"
 			>
 				<actions rate="true"/>
+				<!-- The button that opens and closes the rail, pressed while it is open, with what is new in it as its badge. -->
+				<commands>
+					<generic-command
+						active-expr="$railOpen"
+						badge="railBadge"
+						image="css:bi bi-layout-sidebar-reverse"
+						inputs="railOpen"
+					>
+						<label>
+							<en>Side rail</en>
+							<de>Seitenleiste</de>
+						</label>
+						<execute-script function="!$railOpen">
+							<with-result>
+								<write-channel name="railOpen"/>
+							</with-result>
+						</execute-script>
+					</generic-command>
+				</commands>
 				<controls
 					attachments="true"
 					auto-approve="true"
@@ -341,23 +378,47 @@
 			</chat-conversation>
 		</panel>
 		<!--
-			While "paneObject" holds something, the rail shows it in its pane in place of the sections:
-			a table, a chart or a form, for any type. A row clicked in a table opens that object's form,
-			and the pane's "back" returns to the table as it was.
+			While "paneObject" holds something, the rail shows it in place of its other sections: a table,
+			a chart or a form, for any type. A row clicked in a table opens that object's form, and the
+			pane's "back" returns to the table as it was. Below 70 rem of width, the rail keeps only its
+			strip and opens as a drawer over the conversation.
 		-->
-		<chat-rail id="rail"
-			input="paneObject"
-			strip="true"
+		<side-rail id="rail"
+			badge-channel="railBadge"
+			drawer-below="70"
+			open-channel="railOpen"
+			shown="chatShown"
+			side="right"
+			width="300"
 		>
+			<section name="presented"
+				header="false"
+				icon="css:bi bi-easel"
+				reveal="true"
+				width="420"
+			>
+				<label>
+					<en>Presented</en>
+					<de>Angezeigt</de>
+				</label>
+				<visibility
+					expr="!isEmpty($paneObject)"
+					inputs="paneObject"
+				/>
+				<presentation-pane input="paneObject"/>
+			</section>
 			<section name="progress"
 				badge="progressBadge"
 				icon="css:bi bi-list-check"
-				open="true"
 			>
 				<label>
 					<en>Progress</en>
 					<de>Fortschritt</de>
 				</label>
+				<visibility
+					expr="isEmpty($paneObject)"
+					inputs="paneObject"
+				/>
 				<!-- The agent's plan: the AgentTask objects the run of the open chat writes. -->
 				<data-list
 					collapsible="false"
@@ -396,11 +457,16 @@
 			<section name="sources"
 				badge="sourcesBadge"
 				icon="css:bi bi-quote"
+				open="false"
 			>
 				<label>
 					<en>Sources</en>
 					<de>Quellen</de>
 				</label>
+				<visibility
+					expr="isEmpty($paneObject)"
+					inputs="paneObject"
+				/>
 				<chat-sources badge="sourcesBadge"/>
 			</section>
 			<!--
@@ -410,11 +476,16 @@
 			<section name="memories"
 				badge="memoriesBadge"
 				icon="css:bi bi-bookmark-heart"
+				open="false"
 			>
 				<label>
 					<en>Memory</en>
 					<de>Gedächtnis</de>
 				</label>
+				<visibility
+					expr="isEmpty($paneObject)"
+					inputs="paneObject"
+				/>
 				<data-list
 					collapsible="false"
 					count="memoriesBadge"
@@ -480,6 +551,6 @@
 						.sort((m -> $m.get(`tl.ai.execution:UserMemory#createdAt`)).comparator().desc())]]></rows>
 				</data-list>
 			</section>
-		</chat-rail>
+		</side-rail>
 	</chat>
 </view>

@@ -22,7 +22,7 @@ editing the engine. The canonical live example is `DataListElement`/`DataListCon
     or feeds channel values positionally to a `rows` expression.
 - `com.top_logic.layout.react.control.ReactControl` (extend it)
   - `protected void putState(String key, Object value)` — value may be a nested JSON tree
-    (`List<Map<String,Object>>` works; proven by `ChatRailControl`). React reads `useTLState()[key]`.
+    (`List<Map<String,Object>>` works; proven by `ReactSideRailControl`). React reads `useTLState()[key]`.
     An embedded `ReactControl` — anywhere in that tree — is serialized as a child descriptor and
     rendered by `<TLChild control={…}/>`; attach, detach and disposal follow the state automatically.
   - `@ReactCommandHandler(value="name", params={@ReactParam(name="x", type="string", description="…")})`

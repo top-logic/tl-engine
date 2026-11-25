@@ -21,6 +21,8 @@ public class SideRailState_Impl extends com.top_logic.layout.react.state.impl.Co
 
 		private com.top_logic.layout.react.state.Badge _badge = null;
 
+		private boolean _headless = false;
+
 		private com.top_logic.layout.react.state.ChildControl _content = null;
 
 		/**
@@ -134,6 +136,22 @@ public class SideRailState_Impl extends com.top_logic.layout.react.state.impl.Co
 		}
 
 		@Override
+		public final boolean isHeadless() {
+			return _headless;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.SideRailState.Section setHeadless(boolean value) {
+			internalSetHeadless(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #isHeadless()} without chain call utility. */
+		protected final void internalSetHeadless(boolean value) {
+			_headless = value;
+		}
+
+		@Override
 		public final com.top_logic.layout.react.state.ChildControl getContent() {
 			return _content;
 		}
@@ -176,6 +194,8 @@ public class SideRailState_Impl extends com.top_logic.layout.react.state.impl.Co
 				out.name(BADGE__PROP);
 				getBadge().writeTo(out);
 			}
+			out.name(HEADLESS__PROP);
+			out.value(isHeadless());
 			if (hasContent()) {
 				out.name(CONTENT__PROP);
 				getContent().writeTo(out);
@@ -191,6 +211,7 @@ public class SideRailState_Impl extends com.top_logic.layout.react.state.impl.Co
 				case EXPANDED__PROP: setExpanded(in.nextBoolean()); break;
 				case HIDDEN__PROP: setHidden(in.nextBoolean()); break;
 				case BADGE__PROP: setBadge(com.top_logic.layout.react.state.Badge.readBadge(in)); break;
+				case HEADLESS__PROP: setHeadless(in.nextBoolean()); break;
 				case CONTENT__PROP: setContent(com.top_logic.layout.react.state.ChildControl.readChildControl(in)); break;
 				default: super.readField(in, field);
 			}

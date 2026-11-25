@@ -16,6 +16,7 @@ Das Control ist `TLDrawer` (`ReactDrawerControl`).
 | `width` | number, optional | Ausdehnung in px statt des Maßes (Breite, unten Höhe). |
 | `title` | string, optional | Mit Titel steht ein `tl-titlebar` mit Schließen-Knopf. |
 | `modal` | boolean, optional | Modal: mit Scrim, Fokus gefangen (`ReactDrawerControl.setModal`). |
+| `label` | string, optional | Zugänglicher Name einer Schublade ohne Titel (`aria-label`). |
 
 ## Aktionen
 

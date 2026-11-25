@@ -22,8 +22,8 @@ import com.top_logic.layout.view.element.StackElement;
  * Declarative {@code <chat>} element: the conversation its nested chat elements show.
  *
  * <p>
- * The elements a chat is built from - a {@code <chat-conversation/>}, a {@code <chat-rail/>} and
- * the sections in it - show one conversation when they agree on a {@code chat-id}. Writing that id
+ * The elements a chat is built from - a {@code <chat-conversation/>}, a {@code <chat-dock>} and the
+ * chat's own elements in the sections of a {@code <side-rail>} - show one conversation when they agree on a {@code chat-id}. Writing that id
  * on every one of them makes the strongest coupling on the page the least visible thing about it:
  * a typo in one attribute opens a second, empty conversation and nothing says so. Wrapping them in
  * a {@code <chat>} writes the id once and every element inside inherits it, so the grouping is
@@ -33,7 +33,7 @@ import com.top_logic.layout.view.element.StackElement;
  * <pre>
  * &lt;chat chat-id="support" direction="row"&gt;
  *   &lt;panel fill="true"&gt;&lt;chat-conversation input="chatSession"/&gt;&lt;/panel&gt;
- *   &lt;chat-rail&gt;...&lt;/chat-rail&gt;
+ *   &lt;side-rail&gt;...&lt;/side-rail&gt;
  * &lt;/chat&gt;
  * </pre>
  *

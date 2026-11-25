@@ -220,6 +220,33 @@ public class TestReactSideRailControl extends TestCase {
 	}
 
 	/**
+	 * The drawer is named by the labels of the sections it shows, and follows them.
+	 */
+	public void testDrawerIsNamedByItsSections() {
+		ReactSideRailControl rail = rail(true, Set.of(TASKS));
+		assertEquals("Tasks", state(drawer(rail)).get(ReactDrawerControl.LABEL));
+
+		rail.setExpanded(SOURCES, true);
+		assertEquals("Tasks, Sources", state(drawer(rail)).get(ReactDrawerControl.LABEL));
+
+		rail.setHidden(TASKS, true);
+		assertEquals("Sources", state(drawer(rail)).get(ReactDrawerControl.LABEL));
+	}
+
+	/**
+	 * A section without header is always expanded: it starts expanded and cannot be collapsed.
+	 */
+	public void testHeadlessSectionStaysExpanded() {
+		ReactSideRailControl rail = new ReactSideRailControl(_context, Side.LEFT, true, 0, 280, true,
+			List.of(new Section(TASKS, "Tasks", null, 0, true, text())), Set.of());
+		assertTrue(rail.isExpanded(TASKS));
+
+		body(rail).executeCommand(ReactSideRailControl.TOGGLE_SECTION_COMMAND,
+			Map.of(ReactSideRailControl.NAME_ARG, TASKS));
+		assertTrue("There is nothing to expand it again.", rail.isExpanded(TASKS));
+	}
+
+	/**
 	 * Outside a split panel, the column has a width of its own; a drag reports it.
 	 */
 	public void testOwnWidthOutsideSplit() {
@@ -233,9 +260,9 @@ public class TestReactSideRailControl extends TestCase {
 
 	private ReactSideRailControl rail(boolean open, Set<String> expanded) {
 		List<Section> sections = List.of(
-			new Section(TASKS, "Tasks", "css:fa-solid fa-list-check", 0, text()),
-			new Section(SOURCES, "Sources", null, 0, text()),
-			new Section(WIDE, "Wide", null, 480, text()));
+			new Section(TASKS, "Tasks", "css:fa-solid fa-list-check", 0, false, text()),
+			new Section(SOURCES, "Sources", null, 0, false, text()),
+			new Section(WIDE, "Wide", null, 480, false, text()));
 		ReactSideRailControl rail =
 			new ReactSideRailControl(_context, Side.RIGHT, true, 44, 280, open, sections, expanded);
 		rail.setListener(new ReactSideRailControl.Listener() {

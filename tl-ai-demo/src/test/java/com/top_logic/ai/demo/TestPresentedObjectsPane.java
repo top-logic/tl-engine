@@ -18,14 +18,15 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
-import com.top_logic.ai.chat.view.ChatRailElement;
-import com.top_logic.ai.chat.view.ChatRailElement.SectionConfig;
+import com.top_logic.ai.chat.view.PresentationPaneElement;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.element.SideRailElement;
+import com.top_logic.layout.view.element.SideRailElement.SectionConfig;
 import com.top_logic.ai.core.tools.parameters.DeclaredParameters;
 import com.top_logic.ai.core.tools.parameters.DeclaredParameters.InvalidArguments;
 
@@ -33,7 +34,7 @@ import com.top_logic.ai.core.tools.parameters.DeclaredParameters.InvalidArgument
  * What the chat page shows for the objects an agent <code>present</code>s (Issues #493, #616).
  *
  * <p>
- * Since #616 the rail's pane renders whatever stands on its channel - one object as its form, several
+ * Since #616 the {@code <presentation-pane>} in the rail renders whatever stands on its channel - one object as its form, several
  * as a table with the columns of their type, a chart - for any type. What this application decides
  * is only <em>which</em> channel: the one its conversation lets the agent write. So the test pins
  * that the two name the same channel.
@@ -51,23 +52,23 @@ public class TestPresentedObjectsPane extends TestCase {
 	/** The chat page of this demo: the page tl-chat ships and this demo's overlay of it. */
 	private static final String VIEW = "/WEB-INF/views/tl-chat/albert.view.xml";
 
-	/** What the agent presents is what the rail's pane shows. */
+	/** What the agent presents is what the pane in the rail shows. */
 	public void testThePaneShowsWhatTheAgentPresents() throws Exception {
 		ViewElement.Config view = view();
-		ChatRailElement.Config rail = search(view, ChatRailElement.Config.class);
+		PresentationPaneElement.Config pane = search(view, PresentationPaneElement.Config.class);
 		ChatConversationElement.Config conversation = search(view, ChatConversationElement.Config.class);
-		assertNotNull("The chat page has a rail.", rail);
+		assertNotNull("The chat page has a presentation pane.", pane);
 		assertNotNull("The chat page has a conversation.", conversation);
 
-		assertEquals("paneObject", rail.getInput().getChannelName());
+		assertEquals("paneObject", pane.getInput().getChannelName());
 		assertTrue("The agent may write the channel the pane shows: " + conversation.getPresent(),
 			conversation.getPresent().stream().anyMatch(ref -> "paneObject".equals(ref.getChannelName())));
 	}
 
 	/** The overlay adds the demo's section after the shipped section "sources". */
 	public void testTheOverlayAddsTheEventsSection() throws Exception {
-		ChatRailElement.Config rail = search(view(), ChatRailElement.Config.class);
-		assertEquals(Arrays.asList("progress", "sources", "events", "memories"),
+		SideRailElement.Config rail = search(view(), SideRailElement.Config.class);
+		assertEquals(Arrays.asList("presented", "progress", "sources", "events", "memories"),
 			rail.getSections().stream().map(SectionConfig::getName).collect(Collectors.toList()));
 	}
 

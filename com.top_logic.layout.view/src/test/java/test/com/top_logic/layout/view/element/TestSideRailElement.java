@@ -56,6 +56,12 @@ public class TestSideRailElement extends BasicTestCase {
 
 	private static final String BADGE_CHANNEL = "railBadge";
 
+	private static final String SHOWN_CHANNEL = "railShown";
+
+	private static final String OTHER_CHANNEL = "other";
+
+	private static final String EXTRA = "extra";
+
 	private static final String TASKS = "tasks";
 
 	private static final String SOURCES = "sources";
@@ -78,6 +84,10 @@ public class TestSideRailElement extends BasicTestCase {
 
 	private ViewChannel _badge;
 
+	private ViewChannel _shown;
+
+	private ViewChannel _other;
+
 	private Locale _previousLocale;
 
 	@Override
@@ -92,6 +102,8 @@ public class TestSideRailElement extends BasicTestCase {
 		_present = register(PRESENT_CHANNEL);
 		_open = register(OPEN_CHANNEL);
 		_badge = register(BADGE_CHANNEL);
+		_shown = register(SHOWN_CHANNEL);
+		_other = register(OTHER_CHANNEL);
 		assertEquals(CONTEXT_KEY, _context.getPersonalizationKey());
 		PersonalConfiguration.getPersonalConfiguration().setJSONValue(KEY, null);
 	}
@@ -124,7 +136,7 @@ public class TestSideRailElement extends BasicTestCase {
 		assertEquals(320, ((Number) state.get(SideRailState.WIDTH__PROP)).intValue());
 
 		List<?> sections = (List<?>) state.get(SideRailState.SECTIONS__PROP);
-		assertEquals(3, sections.size());
+		assertEquals(4, sections.size());
 		Map<?, ?> tasks = (Map<?, ?>) sections.get(0);
 		assertEquals(TASKS, tasks.get(SideRailState.Section.NAME__PROP));
 		assertEquals("Tasks", tasks.get(SideRailState.Section.LABEL__PROP));
@@ -139,6 +151,8 @@ public class TestSideRailElement extends BasicTestCase {
 		Map<?, ?> document = (Map<?, ?>) sections.get(2);
 		assertEquals("The visibility condition does not hold.", Boolean.TRUE,
 			document.get(SideRailState.Section.HIDDEN__PROP));
+		assertEquals("A section without header.", Boolean.TRUE, document.get(SideRailState.Section.HEADLESS__PROP));
+		assertFalse(tasks.containsKey(SideRailState.Section.HEADLESS__PROP));
 	}
 
 	/**
@@ -195,6 +209,67 @@ public class TestSideRailElement extends BasicTestCase {
 		_open.set(Boolean.FALSE);
 		_count.set(Integer.valueOf(5));
 		assertEquals(Integer.valueOf(2), _badge.get());
+	}
+
+	/**
+	 * A rail that is not on screen, e.g. inside a closed dock, sees nothing although it is open;
+	 * coming on screen marks what it shows as seen. Its open state does not change.
+	 */
+	public void testShownChannel() {
+		_shown.set(Boolean.FALSE);
+		_count.set(Integer.valueOf(2));
+		ReactSideRailControl rail = rail();
+		_open.set(Boolean.TRUE);
+		assertTrue(rail.isOpen());
+		assertEquals("Open, but not on screen: nothing is seen.", Integer.valueOf(2), _badge.get());
+
+		_count.set(Integer.valueOf(4));
+		assertEquals(Integer.valueOf(4), _badge.get());
+
+		_shown.set(Boolean.TRUE);
+		assertEquals("On screen, the open section is seen.", Integer.valueOf(0), _badge.get());
+		assertTrue(rail.isOpen());
+
+		_shown.set(Boolean.FALSE);
+		_count.set(Integer.valueOf(5));
+		assertEquals(Integer.valueOf(1), _badge.get());
+		assertTrue("Leaving the screen does not close the rail.", rail.isOpen());
+	}
+
+	/**
+	 * A revealing section shows itself for every new value of its inputs for which it is visible,
+	 * also after the user closed the rail; this is no choice of the user and is not remembered.
+	 */
+	public void testReveal() {
+		ReactSideRailControl rail = rail();
+		assertFalse(rail.isOpen());
+
+		_present.set("table");
+		assertTrue("The section appearing opens the rail.", rail.isOpen());
+		assertTrue(rail.isExpanded(DOCUMENT));
+		assertNull("Revealing is no choice of the user.", stored());
+
+		_open.set(Boolean.FALSE);
+		_present.set("chart");
+		assertTrue("Something new while the section is visible opens the rail again.", rail.isOpen());
+
+		_open.set(Boolean.FALSE);
+		_present.set("chart");
+		assertFalse("The same value again shows nothing new.", rail.isOpen());
+
+		_present.set(null);
+		assertFalse("A section disappearing opens nothing.", rail.isOpen());
+	}
+
+	/**
+	 * A section without reveal does not open the rail when it appears.
+	 */
+	public void testNoRevealWithoutTheFlag() {
+		ReactSideRailControl rail = rail();
+		_other.set("x");
+		assertEquals(Boolean.FALSE, section(rail, 3).get(SideRailState.Section.HIDDEN__PROP));
+		assertFalse(rail.isOpen());
+		assertFalse(rail.isExpanded(EXTRA));
 	}
 
 	/**

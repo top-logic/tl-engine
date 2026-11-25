@@ -96,6 +96,7 @@ public class ReactButtonControl extends ReactControl {
 		setLabel(model.getLabel());
 		setDisabled(!model.isExecutable());
 		setActive(model.isActive());
+		setToggle(model.isToggle());
 		setHidden(!model.isVisible());
 		setImage(model.getImage());
 		setTooltip(model.getTooltip());
@@ -188,6 +189,15 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setActive(boolean active) {
 		putState(ButtonState.ACTIVE__PROP, active ? Boolean.TRUE : null);
+	}
+
+	/**
+	 * Makes the button a toggle, which reports whether it is pressed or not.
+	 *
+	 * @see CommandModel#isToggle()
+	 */
+	public void setToggle(boolean toggle) {
+		putState(ButtonState.TOGGLE__PROP, toggle ? Boolean.TRUE : null);
 	}
 
 	/**

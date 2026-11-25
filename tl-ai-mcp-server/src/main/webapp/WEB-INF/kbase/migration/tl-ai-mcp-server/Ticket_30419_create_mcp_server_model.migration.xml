@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	First migration of the migration module tl-ai-mcp-server (Ticket #30419). It creates the model
+	module tl.ai.mcp.server, which up to now reached existing databases only through the automatic
+	model upgrade, which an application may prevent.
+
+	A module without a stored version counts as new and without data (MigrationUtil.getNewVersions):
+	on an existing database this migration only runs, if the application lists tl-ai-mcp-server in
+	the minimum-modules of the MigrationService. Otherwise its version is only stored, and the
+	automatic model upgrade creates the model elements. A database that already has them keeps them:
+	the processors skip what already exists.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_create_mcp_server_model"
+		module="tl-ai-mcp-server"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_30419_create_changelog_and_access_tokens"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_30419_changelog_storage_algorithms"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_30419_tl_layout_view_migration_module"
+			module="tl-layout-view"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_30419_tl_security_auth_pac4j_migration_module"
+			module="tl-security-auth-pac4j"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_30419_create_ai_models"
+			module="tl-ai-core"
+		/>
+		<dependency name="Ticket_30419_process_execution_label"
+			module="tl-bpe"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_30419_instance_resolvers_and_admin_visibility"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+	</dependencies>
+	<processors>
+		<create-module name="tl.ai.mcp.server">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.ai.mcp.server.model.impl"
+					interface-package="com.top_logic.ai.mcp.server.model"
+				/>
+			</annotations>
+		</create-module>
+	</processors>
+	<post-processors/>
+</migration>

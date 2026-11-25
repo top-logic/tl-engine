@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	First migration of the migration module tl-layout-view (Ticket #30419). It creates the model
+	modules tl.view, tl.login and tl.admin, which up to now reached existing databases only through
+	the automatic model upgrade, which an application may prevent.
+
+	A module without a stored version counts as new and without data (MigrationUtil.getNewVersions):
+	on an existing database this migration only runs, if the application lists tl-layout-view in the
+	minimum-modules of the MigrationService. Otherwise its version is only stored, and the automatic
+	model upgrade creates the model elements. A database that already has them keeps them: the
+	processors skip what already exists.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_tl_layout_view_migration_module"
+		module="tl-layout-view"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30419_create_changelog_and_access_tokens"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_30419_changelog_storage_algorithms"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+	</dependencies>
+	<processors>
+		<create-module name="tl.view"/>
+		<create-datatype name="tl.view:ViewDefinition"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="CONFIGURATION"/>
+				<export-binding>
+					<store-config
+						root-tag="view"
+						root-type="com.top_logic.layout.view.ViewElement$Config"
+					/>
+				</export-binding>
+			</annotations>
+			<configuration-storage config-interface="com.top_logic.layout.view.ViewElement$Config"/>
+		</create-datatype>
+		<create-module name="tl.admin"/>
+		<create-datatype name="tl.admin:EncryptionFormat"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="ENUM"/>
+			</annotations>
+			<enum-storage enum="com.top_logic.layout.view.admin.system.EncryptionFormat"/>
+		</create-datatype>
+		<create-class name="tl.admin:MaintenanceMode"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.admin:NewAccount"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<id-column value="login"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.admin:NewLogger"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.admin:PasswordReset"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.admin:Reindexing"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-module name="tl.login"/>
+		<create-class name="tl.login:AccountCreation"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.login:Credentials"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.login:ForgotPassword"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.login:OtpEntry"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.login:PasswordChange"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.login:PasswordReset"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.login:RegistrationRequest"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<add-class-generalizations name="tl.admin:MaintenanceMode">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.admin:NewAccount">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.admin:NewLogger">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.admin:PasswordReset">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.admin:Reindexing">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.login:AccountCreation">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.login:Credentials">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.login:ForgotPassword">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.login:OtpEntry">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.login:PasswordChange">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.login:PasswordReset">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.login:RegistrationRequest">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-property name="tl.login:RegistrationRequest#email"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.login:PasswordReset#code"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.login:PasswordReset#newPassword"
+			type="tl.core:String"
+		>
+			<annotations>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<create-property name="tl.login:PasswordReset#newPasswordConfirm"
+			type="tl.core:String"
+		>
+			<annotations>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<create-property name="tl.admin:PasswordReset#password"
+			type="tl.core:String"
+		>
+			<annotations>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<create-property name="tl.admin:NewLogger#name"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.admin:Reindexing#types"
+			multiple="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<options>
+					<options-by-expression function="r -> indexingTypes()"/>
+				</options>
+			</annotations>
+		</create-property>
+		<create-property name="tl.admin:Reindexing#onlyNew"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.admin:NewAccount#login"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.admin:NewAccount#password"
+			type="tl.core:String"
+		>
+			<annotations>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<create-property name="tl.admin:NewAccount#language"
+			type="tl.util:Language"
+		/>
+		<create-property name="tl.admin:NewAccount#restrictedUser"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.admin:NewAccount#admin"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.login:PasswordChange#newPassword"
+			type="tl.core:String"
+		>
+			<annotations>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<create-property name="tl.login:PasswordChange#newPasswordConfirm"
+			type="tl.core:String"
+		>
+			<annotations>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<create-property name="tl.login:ForgotPassword#username"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.login:OtpEntry#code"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.login:Credentials#name"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.login:Credentials#password"
+			type="tl.core:String"
+		>
+			<annotations>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<create-property name="tl.login:AccountCreation#userName"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.login:AccountCreation#givenName"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.login:AccountCreation#surname"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.login:AccountCreation#newPassword"
+			type="tl.core:String"
+		>
+			<annotations>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<create-property name="tl.login:AccountCreation#newPasswordConfirm"
+			type="tl.core:String"
+		>
+			<annotations>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<create-property name="tl.admin:MaintenanceMode#delayMinutes"
+			type="tl.core:Integer"
+		/>
+		<create-property name="tl.admin:MaintenanceMode#allowLogin"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.admin:MaintenanceMode#message"
+			type="tl.core:String"
+		/>
+		<create-reference name="tl.admin:PasswordReset#account"
+			type="tl.accounts:Person"
+		/>
+		<create-reference name="tl.admin:NewAccount#initialData"
+			type="tl.model:TLObject"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-reference>
+		<!-- Establishes the order of the attributes in the model: moves each one to the end. -->
+		<reorder-part name="tl.admin:PasswordReset#account"/>
+		<reorder-part name="tl.admin:PasswordReset#password"/>
+	</processors>
+	<post-processors/>
+</migration>

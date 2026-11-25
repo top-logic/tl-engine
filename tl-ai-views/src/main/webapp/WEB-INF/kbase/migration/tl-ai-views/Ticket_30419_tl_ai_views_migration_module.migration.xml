@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	First migration of the migration module tl-ai-views (Ticket #30419). It creates the model
+	module tl.ai.views, which up to now reached existing databases only through the automatic
+	model upgrade, which an application may prevent.
+
+	A module without a stored version counts as new and without data (MigrationUtil.getNewVersions):
+	on an existing database this migration only runs, if the application lists tl-ai-views in
+	the minimum-modules of the MigrationService. Otherwise its version is only stored, and the
+	automatic model upgrade creates the model elements. A database that already has them keeps them:
+	the processors skip what already exists.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_tl_ai_views_migration_module"
+		module="tl-ai-views"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_30419_create_changelog_and_access_tokens"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_30419_changelog_storage_algorithms"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_30419_tl_layout_view_migration_module"
+			module="tl-layout-view"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_30419_tl_security_auth_pac4j_migration_module"
+			module="tl-security-auth-pac4j"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_30419_create_ai_models"
+			module="tl-ai-core"
+		/>
+		<dependency name="Ticket_30419_process_execution_label"
+			module="tl-bpe"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_30419_instance_resolvers_and_admin_visibility"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+	</dependencies>
+	<processors>
+		<create-module name="tl.ai.views"/>
+		<create-enumeration name="tl.ai.views:ViewChangeStatus"/>
+		<create-classifier name="tl.ai.views:ViewChangeStatus#APPLIED"/>
+		<create-classifier name="tl.ai.views:ViewChangeStatus#REVERTED"/>
+		<create-class name="tl.ai.views:ViewChange"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.ai.views:ViewChangeSet"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<instance-presentation icon="css:bi bi-git"/>
+			</annotations>
+		</create-class>
+		<add-class-generalizations name="tl.ai.views:ViewChange">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.views:ViewChangeSet">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-property name="tl.ai.views:ViewChangeSet#name"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.views:ViewChangeSet#author"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.views:ViewChangeSet#date"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.views:ViewChange#name"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.views:ViewChange#before"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.views:ViewChange#after"
+			type="tl.core:Text"
+		/>
+		<create-reference name="tl.ai.views:ViewChangeSet#status"
+			mandatory="true"
+			type="tl.ai.views:ViewChangeStatus"
+		/>
+		<create-reference name="tl.ai.views:ViewChangeSet#changes"
+			composite="true"
+			multiple="true"
+			ordered="true"
+			type="tl.ai.views:ViewChange"
+		/>
+		<!-- Establishes the order of the attributes in the model: moves each one to the end. -->
+		<reorder-part name="tl.ai.views:ViewChangeSet#name"/>
+		<reorder-part name="tl.ai.views:ViewChangeSet#status"/>
+		<reorder-part name="tl.ai.views:ViewChangeSet#author"/>
+		<reorder-part name="tl.ai.views:ViewChangeSet#date"/>
+		<reorder-part name="tl.ai.views:ViewChangeSet#changes"/>
+	</processors>
+	<post-processors/>
+</migration>

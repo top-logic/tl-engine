@@ -1,0 +1,1549 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Creates the model modules of tl-ai-core (tl.ai.core, tl.ai.execution, tl.ai.htmlpages,
+	tl.ai.monitor, tl.ai.screenshots) and tl.accounts:Person#aiPreferences (Ticket #30419). Up to now
+	they reached existing databases only through the automatic model upgrade, which an application
+	may prevent; the earlier migrations of this module only change an existing model.
+
+	A database that already has these model elements keeps them: the processors skip what already
+	exists.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_create_ai_models"
+		module="tl-ai-core"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30419_create_changelog_and_access_tokens"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_30419_changelog_storage_algorithms"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_30419_tl_layout_view_migration_module"
+			module="tl-layout-view"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_30419_tl_security_auth_pac4j_migration_module"
+			module="tl-security-auth-pac4j"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_30375_rename_ai_packages"
+			module="tl-ai-core"
+		/>
+	</dependencies>
+	<dropped-dependencies>
+		<module name="tl-bpe"/>
+		<module name="tl-doc"/>
+		<module name="tl-layout-formeditor"/>
+		<module name="tl-search-lucene"/>
+	</dropped-dependencies>
+	<added-dependencies>
+		<module name="tl-layout-view"/>
+		<module name="tl-security-auth-pac4j"/>
+	</added-dependencies>
+	<processors>
+		<create-module name="tl.ai.core">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.ai.core.model.impl"
+					interface-package="com.top_logic.ai.core.model"
+				/>
+			</annotations>
+		</create-module>
+		<create-class name="tl.ai.core:Agent"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="AIAgent"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.ai.core:Agent#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="displayName"
+							fullQualifiedName="tl.ai.core:Agent#displayName"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="description"
+							fullQualifiedName="tl.ai.core:Agent#description"
+							type="tl.core:String"
+						>
+							<annotations>
+								<label-position value="above-value"/>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="summary"
+							fullQualifiedName="tl.ai.core:Agent#summary"
+							type="tl.core:String"
+						>
+							<annotations>
+								<label-position value="above-value"/>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="infrastructure"
+							fullQualifiedName="tl.ai.core:Agent#infrastructure"
+							type="tl.core:Boolean"
+						/>
+						<field
+							attribute="systemPrompt"
+							fullQualifiedName="tl.ai.core:Agent#systemPrompt"
+							type="tl.core:Text"
+						>
+							<annotations>
+								<label-position value="above-value"/>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="tools"
+							fullQualifiedName="tl.ai.core:Agent#tools"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="mcpServers"
+							fullQualifiedName="tl.ai.core:Agent#mcpServers"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="skills"
+							fullQualifiedName="tl.ai.core:Agent#skills"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="delegations"
+							fullQualifiedName="tl.ai.core:Agent#delegations"
+							type="tl.core:String"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+		</create-class>
+		<create-class name="tl.ai.core:Skill"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="AISkill"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.ai.core:Skill#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="description"
+							fullQualifiedName="tl.ai.core:Skill#description"
+							type="tl.core:String"
+						>
+							<annotations>
+								<render-whole-line/>
+								<label-position value="above-value"/>
+							</annotations>
+						</field>
+						<field
+							attribute="content"
+							fullQualifiedName="tl.ai.core:Skill#content"
+							type="tl.core:Text"
+						>
+							<annotations>
+								<render-whole-line/>
+								<label-position value="above-value"/>
+							</annotations>
+						</field>
+						<field
+							attribute="tools"
+							fullQualifiedName="tl.ai.core:Skill#tools"
+							type="tl.core:String"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+		</create-class>
+		<create-module name="tl.ai.screenshots">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.ai.core.screenshots.model.impl"
+					interface-package="com.top_logic.ai.core.screenshots.model"
+				/>
+			</annotations>
+		</create-module>
+		<create-class name="tl.ai.screenshots:Screenshot"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="Screenshot"/>
+			</annotations>
+		</create-class>
+		<create-module name="tl.ai.htmlpages">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.ai.core.htmlpages.model.impl"
+					interface-package="com.top_logic.ai.core.htmlpages.model"
+				/>
+			</annotations>
+		</create-module>
+		<create-class name="tl.ai.htmlpages:GeneratedHtmlPage"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="GeneratedHtmlPage"/>
+			</annotations>
+		</create-class>
+		<create-module name="tl.ai.monitor"/>
+		<create-class name="tl.ai.monitor:Period"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<form-definition>
+					<form columns="TWO">
+						<field
+							attribute="fromDay"
+							fullQualifiedName="tl.ai.monitor:Period#fromDay"
+							type="tl.core:Date"
+						/>
+						<field
+							attribute="toDay"
+							fullQualifiedName="tl.ai.monitor:Period#toDay"
+							type="tl.core:Date"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+		</create-class>
+		<create-enumeration name="tl.ai.execution:SessionKind"/>
+		<create-classifier name="tl.ai.execution:SessionKind#CHAT"/>
+		<create-classifier name="tl.ai.execution:SessionKind#BACKGROUND"/>
+		<create-classifier name="tl.ai.execution:SessionKind#SCHEDULED"/>
+		<create-classifier name="tl.ai.execution:SessionKind#SCRIPT"/>
+		<create-enumeration name="tl.ai.execution:ExecutionStatus"/>
+		<create-classifier name="tl.ai.execution:ExecutionStatus#RUNNING"/>
+		<create-classifier name="tl.ai.execution:ExecutionStatus#COMPLETE"/>
+		<create-classifier name="tl.ai.execution:ExecutionStatus#ERROR"/>
+		<create-classifier name="tl.ai.execution:ExecutionStatus#CANCELLED"/>
+		<create-classifier name="tl.ai.execution:ExecutionStatus#REJECTED"/>
+		<create-enumeration name="tl.ai.execution:InteractionType"/>
+		<create-classifier name="tl.ai.execution:InteractionType#APPROVAL"/>
+		<create-classifier name="tl.ai.execution:InteractionType#QUESTION"/>
+		<create-classifier name="tl.ai.execution:InteractionType#CHOICE"/>
+		<create-enumeration name="tl.ai.execution:MemoryKind"/>
+		<create-classifier name="tl.ai.execution:MemoryKind#PREFERENCE"/>
+		<create-classifier name="tl.ai.execution:MemoryKind#FACT"/>
+		<create-classifier name="tl.ai.execution:MemoryKind#FEEDBACK"/>
+		<create-enumeration name="tl.ai.execution:ResearchEffort"/>
+		<create-classifier name="tl.ai.execution:ResearchEffort#QUICK"/>
+		<create-classifier name="tl.ai.execution:ResearchEffort#STANDARD"/>
+		<create-classifier name="tl.ai.execution:ResearchEffort#DEEP"/>
+		<create-enumeration name="tl.ai.execution:ResearchStatus"/>
+		<create-classifier name="tl.ai.execution:ResearchStatus#COMPLETE"/>
+		<create-classifier name="tl.ai.execution:ResearchStatus#PARTIAL"/>
+		<create-enumeration name="tl.ai.execution:InteractionState"/>
+		<create-classifier name="tl.ai.execution:InteractionState#PENDING"/>
+		<create-classifier name="tl.ai.execution:InteractionState#RESOLVED"/>
+		<create-classifier name="tl.ai.execution:InteractionState#TIMED_OUT"/>
+		<create-classifier name="tl.ai.execution:InteractionState#CANCELLED"/>
+		<create-class name="tl.ai.execution:AgentSession"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="AgentSession"/>
+				<id-column value="displayName"/>
+				<main-properties properties="title,kind,status,lastUpdated"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.ai.execution:AgentExecution"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="AgentExecution"/>
+				<id-column value="displayName"/>
+				<main-properties properties="runId,agentName,status,startedAt"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.ai.execution:InteractionRequest"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="AgentInteractionRequest"/>
+				<id-column value="displayName"/>
+				<main-properties properties="requestId,type,state,createdAt"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.ai.execution:AgentTask"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="AgentTask"/>
+				<id-column value="displayName"/>
+				<main-properties properties="taskId,subject,status,ordinal"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.ai.execution:UserMemory"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="UserMemory"/>
+				<id-column value="displayName"/>
+				<main-properties properties="text,kind,createdAt"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.ai.execution:ArchivedPage"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="ArchivedPage"/>
+				<main-properties properties="title,url,fetchedAt"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.ai.execution:ResearchRun"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<id-column value="question"/>
+				<main-properties properties="question,status,finished"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.ai.execution:ResearchSource"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<id-column value="displayName"/>
+				<main-properties properties="displayName,readAt"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.ai.execution:ResearchFinding"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<id-column value="findingId"/>
+				<main-properties properties="claim,source"/>
+			</annotations>
+		</create-class>
+		<create-property name="tl.accounts:Person#aiPreferences"
+			type="tl.core:Text"
+		>
+			<annotations>
+				<label-position value="above-value"/>
+				<constraints>
+					<constraint class="com.top_logic.ai.core.agent.environment.PreferencesLengthConstraint"/>
+				</constraints>
+			</annotations>
+		</create-property>
+		<add-class-generalizations name="tl.ai.core:Agent">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.core:Skill">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.screenshots:Screenshot">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.htmlpages:GeneratedHtmlPage">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.monitor:Period">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.execution:AgentSession">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.execution:AgentExecution">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.execution:InteractionRequest">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.execution:AgentTask">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.execution:UserMemory">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.execution:ArchivedPage">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.execution:ResearchRun">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.execution:ResearchSource">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.ai.execution:ResearchFinding">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-property name="tl.ai.execution:ResearchFinding#findingId"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:ResearchFinding#claim"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:ResearchFinding#quote"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.screenshots:Screenshot#id"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.screenshots:Screenshot#name"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.screenshots:Screenshot#image"
+			mandatory="true"
+			type="tl.core:Binary"
+		/>
+		<create-property name="tl.ai.screenshots:Screenshot#sourceUrl"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.screenshots:Screenshot#capturedAt"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.screenshots:Screenshot#contentType"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:UserMemory#displayName"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										m -> {
+											text = regex("\\s+").regexReplace($m.get(`tl.ai.execution:UserMemory#text`), " ");
+											excerpt = ifElse(length($text) > 80, $text.subString(0, 80) + "...", $text);
+											kind = $m.get(`tl.ai.execution:UserMemory#kind`);
+											ifElse(isEmpty($kind), "", $kind.label() + ": ") + $excerpt;
+										}
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:UserMemory#text"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:UserMemory#runId"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:UserMemory#createdAt"
+			mandatory="true"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.htmlpages:GeneratedHtmlPage#id"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.htmlpages:GeneratedHtmlPage#title"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.htmlpages:GeneratedHtmlPage#htmlContent"
+			mandatory="true"
+			type="tl.core:Binary"
+		/>
+		<create-property name="tl.ai.execution:ResearchRun#question"
+			mandatory="true"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:ResearchRun#started"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.execution:ResearchRun#finished"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.execution:ResearchRun#document"
+			type="tl.core:Binary"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.ai.core.execution.model.impl.ResearchRunImpl#computeDocument()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:ResearchRun#plan"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:ResearchRun#tokens"
+			type="tl.core:Long"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.ai.core.execution.model.impl.ResearchRunImpl#computeTokens()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:ResearchRun#report"
+			type="tl.core:Text"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:InteractionRequest#displayName"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										r -> {
+											header = $r.get(`tl.ai.execution:InteractionRequest#header`);
+											prompt = regex("\\s+").regexReplace($r.get(`tl.ai.execution:InteractionRequest#prompt`), " ");
+											excerpt = ifElse(length($prompt) > 60, $prompt.subString(0, 60) + "...", $prompt);
+											subject = ifElse(isEmpty($header), $excerpt, $header);
+											type = $r.get(`tl.ai.execution:InteractionRequest#type`);
+											createdAt = $r.get(`tl.ai.execution:InteractionRequest#createdAt`);
+											ifElse(isEmpty($type), "", $type.label())
+												+ ifElse(isEmpty($subject), "", ": " + $subject)
+												+ ifElse(isEmpty($createdAt), "", " (" + dateFormat("yyyy-MM-dd HH:mm:ss").format($createdAt) + ")");
+										}
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:InteractionRequest#requestId"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:InteractionRequest#header"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:InteractionRequest#prompt"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:InteractionRequest#payload"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:InteractionRequest#resolution"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:InteractionRequest#createdAt"
+			mandatory="true"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.execution:InteractionRequest#resolvedAt"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.execution:ArchivedPage#handle"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:ArchivedPage#url"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:ArchivedPage#title"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:ArchivedPage#fetchedAt"
+			mandatory="true"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.execution:ArchivedPage#contentHash"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:ArchivedPage#content"
+			mandatory="true"
+			type="tl.core:Binary"
+		/>
+		<create-property name="tl.ai.monitor:Period#preset"
+			type="tl.core:Integer"
+		/>
+		<create-property name="tl.ai.monitor:Period#fromDay"
+			mandatory="true"
+			type="tl.core:Date"
+		/>
+		<create-property name="tl.ai.monitor:Period#toDay"
+			mandatory="true"
+			type="tl.core:Date"
+		>
+			<annotations>
+				<constraints>
+					<constraint-by-expression>
+						<check><![CDATA[
+										value -> object -> ifElse(isEmpty($value), null, {
+											from = $object.get(`tl.ai.monitor:Period#fromDay`);
+											ifElse(isEmpty($from), null,
+												ifElse($from.isDateGreater($value),
+													#('The end of the period must not lie before its start.'@en,
+														'Das Ende des Zeitraums darf nicht vor seinem Anfang liegen.'@de),
+													null));
+										})
+									]]></check>
+					</constraint-by-expression>
+				</constraints>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.monitor:Period#firstDay"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										p -> {
+											from = $p.get(`tl.ai.monitor:Period#fromDay`);
+											ifElse(!isEmpty($from), $from.roundDay(), {
+												preset = $p.get(`tl.ai.monitor:Period#preset`);
+												ifElse($preset > 0,
+													now().roundDay().toSystemCalendar()
+														.withDayAdded(-$preset).toDate().roundDay(),
+													null);
+											});
+										}
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.monitor:Period#lastDay"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										p -> {
+											to = $p.get(`tl.ai.monitor:Period#toDay`);
+											ifElse(isEmpty($to), now().roundDay(), $to.roundDay());
+										}
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.monitor:Period#windowStart"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										p -> $p.get(`tl.ai.monitor:Period#firstDay`)
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.monitor:Period#windowEnd"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										p -> {
+											last = $p.get(`tl.ai.monitor:Period#lastDay`);
+											ifElse(isEmpty($last), null,
+												$last.toSystemCalendar().withDayAdded(1).toDate().roundDay());
+										}
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.monitor:Period#label"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										p -> {
+											preset = $p.get(`tl.ai.monitor:Period#preset`);
+											from = $p.get(`tl.ai.monitor:Period#fromDay`);
+											to = $p.get(`tl.ai.monitor:Period#toDay`);
+											name = ifElse($preset == 0, #('All'@en, 'Alle'@de),
+												ifElse($preset == 1, #('1 day'@en, '1 Tag'@de),
+													ifElse($preset > 1, #('{0} days'@en, '{0} Tage'@de).fill($preset),
+														#('Custom'@en, 'Benutzerdefiniert'@de))));
+											ifElse($preset >= 0 || isEmpty($from) || isEmpty($to),
+												$name.localize(),
+												{
+													thisYear = now().toSystemCalendar().year();
+													pattern = ifElse($from.toSystemCalendar().year() == $thisYear
+															&& $to.toSystemCalendar().year() == $thisYear,
+														'dd.MM.', 'dd.MM.yy');
+													dateFormat($pattern).format($from) + ' - '
+														+ dateFormat($pattern).format($to);
+												});
+										}
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:AgentSession#displayName"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										s -> {
+											title = $s.get(`tl.ai.execution:AgentSession#title`);
+											owner = $s.get(`tl.ai.execution:AgentSession#owner`);
+											createdAt = $s.get(`tl.ai.execution:AgentSession#createdAt`);
+											fallback =
+												ifElse(isEmpty($owner), "", $owner.label() + ifElse(isEmpty($createdAt), "", " - "))
+												+ ifElse(isEmpty($createdAt), "", dateFormat("yyyy-MM-dd HH:mm:ss").format($createdAt));
+											ifElse(isEmpty($title), $fallback, $title);
+										}
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:AgentSession#title"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:AgentSession#status"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:AgentSession#metadata"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:AgentSession#createdAt"
+			mandatory="true"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.execution:AgentSession#lastUpdated"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.core:Skill#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<constraints>
+					<constraint class="com.top_logic.ai.core.agent.ReservedPrefixConstraint"/>
+					<constraint class="com.top_logic.ai.core.agent.UniqueNameConstraint"/>
+				</constraints>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.core:Skill#description"
+			type="tl.core:String"
+		>
+			<annotations>
+				<multi-line/>
+				<size-constraint/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.core:Skill#content"
+			type="tl.core:Text"
+		>
+			<annotations>
+				<multi-line/>
+				<size-constraint/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.core:Skill#tools"
+			multiple="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<options>
+					<all-tool-names/>
+				</options>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:AgentTask#displayName"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										t -> {
+											ordinal = $t.get(`tl.ai.execution:AgentTask#ordinal`);
+											subject = $t.get(`tl.ai.execution:AgentTask#subject`);
+											ifElse(isEmpty($ordinal), "", $ordinal + ". ")
+												+ ifElse(isEmpty($subject), $t.get(`tl.ai.execution:AgentTask#taskId`), $subject);
+										}
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:AgentTask#taskId"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:AgentTask#subject"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:AgentTask#content"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:AgentTask#status"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:AgentTask#ordinal"
+			type="tl.core:Integer"
+		/>
+		<create-property name="tl.ai.execution:ResearchSource#displayName"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.ai.core.execution.model.impl.ResearchSourceImpl#computeDisplayName()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:ResearchSource#url"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:ResearchSource#title"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:ResearchSource#kind"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:ResearchSource#cited"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.ai.execution:ResearchSource#footnote"
+			type="tl.core:Integer"
+		/>
+		<create-property name="tl.ai.execution:ResearchSource#readAt"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.core:Agent#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<constraints>
+					<constraint class="com.top_logic.ai.core.agent.ReservedPrefixConstraint"/>
+					<constraint class="com.top_logic.ai.core.agent.UniqueNameConstraint"/>
+				</constraints>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.core:Agent#displayName"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.core:Agent#description"
+			type="tl.core:String"
+		>
+			<annotations>
+				<multi-line/>
+				<size-constraint/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.core:Agent#summary"
+			type="tl.core:String"
+		>
+			<annotations>
+				<multi-line/>
+				<size-constraint/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.core:Agent#infrastructure"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.ai.core:Agent#systemPrompt"
+			type="tl.core:Text"
+		>
+			<annotations>
+				<multi-line/>
+				<size-constraint/>
+				<constraints>
+					<constraint class="com.top_logic.ai.core.agent.environment.PlaceholderConstraint"/>
+				</constraints>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.core:Agent#tools"
+			multiple="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<options>
+					<all-tool-names/>
+				</options>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.core:Agent#mcpServers"
+			multiple="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<options>
+					<all-mcp-server-names/>
+				</options>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.core:Agent#skills"
+			multiple="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<options>
+					<all-skill-names/>
+				</options>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.core:Agent#delegations"
+			multiple="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<options>
+					<all-agent-names/>
+				</options>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:AgentExecution#displayName"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										e -> {
+											agentName = $e.get(`tl.ai.execution:AgentExecution#agentName`);
+											startedAt = $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+											runId = $e.get(`tl.ai.execution:AgentExecution#runId`);
+											shortId = ifElse(length($runId) > 6, $runId.subString(0, 6), $runId);
+											$agentName
+												+ ifElse(isEmpty($startedAt), "", " - " + dateFormat("yyyy-MM-dd HH:mm:ss").format($startedAt))
+												+ ifElse(isEmpty($shortId), "", " (" + $shortId + ")");
+										}
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:AgentExecution#runId"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#agentName"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#model"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#provider"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#stopReason"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#errorMessage"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#environment"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#inputTokens"
+			type="tl.core:Long"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#outputTokens"
+			type="tl.core:Long"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#cacheReadTokens"
+			type="tl.core:Long"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#cacheWriteTokens"
+			type="tl.core:Long"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#thinkingTokens"
+			type="tl.core:Long"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#cost"
+			type="tl.core:Double"
+		>
+			<annotations>
+				<format>
+					<decimal pattern="#,##0.00##"/>
+				</format>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:AgentExecution#displayCost"
+			type="tl.core:Double"
+		>
+			<annotations>
+				<format>
+					<decimal pattern="#,##0.00##"/>
+				</format>
+				<storage-algorithm>
+					<query expr="e -> aiCost($e)"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:AgentExecution#displayCurrency"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query expr="e -> aiCostCurrency($e)"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:AgentExecution#transcript"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#transcriptHtml"
+			type="tl.model.search:Macro"
+		>
+			<annotations>
+				<storage-algorithm>
+					<macro>
+						<expr><![CDATA[
+										e -> {
+											raw = $e.get(`tl.ai.execution:AgentExecution#transcript`);
+											maxChars = 500000;
+											time = dateFormat("HH:mm:ss");
+											stamp = ms -> ifElse(isEmpty($ms), "", $time.format($ms.toDate()));
+
+											// The discriminator of a part is a JSON token; the panel names the kind.
+											kindLabels = {
+												'text': #('Text'@en, 'Text'@de),
+												'thinking': #('Thinking'@en, 'Denken'@de),
+												'tool_call': #('Tool call'@en, 'Tool-Aufruf'@de),
+												'approval': #('Approval'@en, 'Freigabe'@de),
+												'interaction': #('Question'@en, 'Rückfrage'@de),
+												'compaction': #('Compaction'@en, 'Verdichtung'@de),
+												'error': #('Error'@en, 'Fehler'@de),
+												'transaction': #('Transaction'@en, 'Transaktion'@de),
+												'delegation': #('Delegation'@en, 'Delegation'@de),
+												'system': #('System'@en, 'System'@de)
+											};
+											kind = t -> ifElse(isEmpty($kindLabels[$t]), $t, $kindLabels[$t]);
+
+											// One expression per class attribute rather than literal text plus an embedding: the macro
+											// writer separates the parts of an attribute value with a space, which would break the
+											// modifier class in two.
+											stateClass = v -> 'aiTrState aiTrState-' + ifElse(isEmpty($v), 'UNKNOWN', $v);
+
+											// Everything a part can carry except the nested parts of a delegation.
+											// Shared by the top-level renderer and the renderer for a sub-agent's
+											// parts, so a tool call looks the same wherever it appears.
+											body = p -> {
+												text = $p['textData'];
+												thinking = $p['thinkingData'];
+												call = $p['toolCallData'];
+												approval = $p['approvalData'];
+												ask = $p['interactionData'];
+												compaction = $p['compactionData'];
+												error = $p['errorData'];
+												transaction = $p['transactionData'];
+												delegation = $p['delegationData'];
+												system = $p['systemData'];
+												{{{
+													<div class="aiTrHead">
+														<span class="aiTrKind">{$kind($p['type'])}</span>
+														<span class="aiTrTime">{$stamp($p['timestamp'])}</span>
+													</div>
+													{ isEmpty($text) ? "" : {{{
+														<div class="aiTrText">{$text['text']}</div>
+													}}} }
+													{ isEmpty($thinking) ? "" : {{{
+														<div class="aiTrThinking">{$thinking['text']}</div>
+													}}} }
+													{ isEmpty($system) ? "" : {{{
+														<div class="aiTrLine"><b>{$system['eventType']}</b> {$system['details']}</div>
+													}}} }
+													{ isEmpty($call) ? "" : {{{
+														<div class="aiTrLine">
+															<code class="aiTrName">{$call['toolName']}</code>
+															<span class="{$stateClass($call['status'])}">{$call['status']}</span>
+															<span class="aiTrTime">{$call['durationMs']} ms</span>
+														</div>
+														{ isEmpty($call['argsJson']) ? "" : {{{
+															<pre class="aiTrCode">{$call['argsJson']}</pre>
+														}}} }
+														{ isEmpty($call['result']) ? "" : {{{
+															<pre class="aiTrCode">{$call['result']}</pre>
+														}}} }
+														{ isEmpty($call['resultRef']) ? "" : {{{
+															<div class="aiTrLine">{$call['resultRef']}</div>
+														}}} }
+														{ isEmpty($call['errorMessage']) ? "" : {{{
+															<div class="aiTrAlert">{$call['errorMessage']}</div>
+														}}} }
+														{ isEmpty($call['denyReason']) ? "" : {{{
+															<div class="aiTrWarn">{$call['denyReason']}</div>
+														}}} }
+													}}} }
+													{ isEmpty($approval) ? "" : {{{
+														<div class="aiTrLine">
+															<code class="aiTrName">{$approval['toolName']}</code>
+															<span class="{$stateClass($approval['decision'])}">{$approval['decision']}</span>
+														</div>
+														{ isEmpty($approval['displayReason']) ? "" : {{{
+															<div class="aiTrText">{$approval['displayReason']}</div>
+														}}} }
+														{ isEmpty($approval['argsJson']) ? "" : {{{
+															<pre class="aiTrCode">{$approval['argsJson']}</pre>
+														}}} }
+														{ isEmpty($approval['userComment']) ? "" : {{{
+															<div class="aiTrAnswer">{$approval['userComment']}</div>
+														}}} }
+													}}} }
+													{ isEmpty($ask) ? "" : {{{
+														<div class="aiTrLine">
+															<b>{$ask['header']}</b>
+															<span class="aiTrState">{$ask['interactionType']}</span>
+														</div>
+														<div class="aiTrText">{$ask['question']}</div>
+														{ isEmpty($ask['options']) ? "" : {{{
+															<div class="aiTrLine">{foreach($ask['options'], o -> {{{ <span class="aiTrOption">{$o}</span> }}})}</div>
+														}}} }
+														{ isEmpty($ask['userResponse']) ? "" : {{{
+															<div class="aiTrAnswer">{$ask['userResponse']}</div>
+														}}} }
+													}}} }
+													{ isEmpty($transaction) ? "" : {{{
+														<div class="aiTrLine">
+															<span class="{$stateClass($transaction['type'])}">{$transaction['type']}</span>
+															<span class="aiTrTime">r{$transaction['revisionNumber']}</span>
+															{$transaction['reason']}
+														</div>
+													}}} }
+													{ isEmpty($compaction) ? "" : {{{
+														<div class="aiTrLine">
+															{$compaction['tokensBefore']} → {$compaction['tokensAfter']} Token
+															<span class="aiTrState">{$compaction['trigger']}</span>
+														</div>
+													}}} }
+													{ isEmpty($error) ? "" : {{{
+														<div class="aiTrAlert"><b>{$error['kind']}</b> {$error['errorMessage']}</div>
+													}}} }
+													{ isEmpty($delegation) ? "" : {{{
+														<div class="aiTrLine">
+															<code class="aiTrName">{$delegation['fromAgent']}</code>
+															→
+															<code class="aiTrName">{$delegation['toAgent']}</code>
+															<span class="{$stateClass($delegation['stopReason'])}">{$delegation['stopReason']}</span>
+														</div>
+														{ isEmpty($delegation['inputSummary']) ? "" : {{{
+															<div class="aiTrText">{$delegation['inputSummary']}</div>
+														}}} }
+														{ isEmpty($delegation['resultSummary']) ? "" : {{{
+															<div class="aiTrAnswer">{$delegation['resultSummary']}</div>
+														}}} }
+													}}} }
+												}}};
+											};
+
+											// A sub-agent's own parts. A delegation nested inside one of them is
+											// only announced by its header line: rendering it in full would need a
+											// self-referencing function, and a TL-Script closure captures its
+											// context before the name it would refer to is bound.
+											nested = p -> {{{
+												<div class="aiTrPart aiTrNested">{$body($p)}</div>
+											}}};
+
+											part = p -> {
+												children = ifElse(isEmpty($p['delegationData']), list(), $p['delegationData']['childParts']);
+												{{{
+													<div class="aiTrPart">
+														{$body($p)}
+														{ isEmpty($children) ? "" : {{{
+															<details class="aiTrChildren">
+																<summary>{#('{0} nested parts of the sub-agent'@en, '{0} verschachtelte Teile des Teilagenten'@de).fill($children.size())}</summary>
+																{foreach($children, c -> $nested($c))}
+															</details>
+														}}} }
+													</div>
+												}}};
+											};
+
+											turn = t -> {
+												usage = $t['usage'];
+												// What the host stated about this turn. Shown with the turn and not with the
+												// user's parts, because it is not the user's text: it travels beside it.
+												context = $t['turnContext'];
+												{{{
+													<details class="aiTrTurn" open="open">
+														<summary>
+															<span class="aiTrTurnNo">{#('Turn {0}'@en, 'Turn {0}'@de).fill($t['turnNumber'])}</span>
+															<span class="aiTrTime">{$stamp($t['timestamp'])}</span>
+															<span class="aiTrTime">{$t['model']}</span>
+															{ isEmpty($usage) ? "" : {{{
+																<span class="aiTrTime">{$usage['inputTokens'] + $usage['outputTokens']} Token</span>
+															}}} }
+														</summary>
+														{ isEmpty($context) ? "" : {{{
+															<div class="aiTrContext">
+																<div class="aiTrHead">
+																	<span class="aiTrKind">{#('Turn context'@en, 'Turn-Kontext'@de)}</span>
+																</div>
+																<pre class="aiTrCode">{$context}</pre>
+															</div>
+														}}} }
+														{foreach($t['userParts'], p -> {{{ <div class="aiTrUser">{$part($p)}</div> }}})}
+														{foreach($t['assistantParts'], p -> $part($p))}
+													</details>
+												}}};
+											};
+
+											isEmpty($raw) ? {{{
+												<div class="aiTrNote">{#('No transcript. It is written when the run finishes, so a running or a crashed run has none.'@en, 'Kein Transkript. Es wird beim Abschluss des Laufs geschrieben - ein laufender oder abgestürzter Lauf hat keines.'@de)}</div>
+											}}} : (length($raw) > $maxChars ? {{{
+												<div class="aiTrNote aiTrWarn">{#('The transcript is {0} characters long and is not rendered here. The raw value is in the group below.'@en, 'Das Transkript ist {0} Zeichen lang und wird hier nicht dargestellt. Der Rohwert steht in der Gruppe darunter.'@de).fill(length($raw))}</div>
+											}}} : {
+												turns = parseJson($raw)['turns'];
+												{{{
+													<div class="aiTr">
+														<div class="aiTrNote">{#('Recorded turns: {0}'@en, 'Aufgezeichnete Turns: {0}'@de).fill($turns.size())}</div>
+														{foreach($turns, t -> $turn($t))}
+													</div>
+												}}};
+											});
+										}
+									]]></expr>
+					</macro>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.ai.execution:AgentExecution#response"
+			type="tl.core:Text"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#cancelRequested"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#startedAt"
+			mandatory="true"
+			type="tl.core:DateTime"
+		/>
+		<create-property name="tl.ai.execution:AgentExecution#endedAt"
+			type="tl.core:DateTime"
+		/>
+		<create-reference name="tl.ai.execution:ResearchFinding#source"
+			type="tl.ai.execution:ResearchSource"
+		/>
+		<create-reference name="tl.ai.execution:ResearchFinding#recordedBy"
+			type="tl.ai.execution:AgentExecution"
+		/>
+		<create-reference name="tl.ai.screenshots:Screenshot#owner"
+			type="tl.accounts:Person"
+		/>
+		<create-reference name="tl.ai.execution:UserMemory#owner"
+			mandatory="true"
+			type="tl.accounts:Person"
+		/>
+		<create-reference name="tl.ai.execution:UserMemory#kind"
+			mandatory="true"
+			type="tl.ai.execution:MemoryKind"
+		/>
+		<create-reference name="tl.ai.execution:UserMemory#session"
+			type="tl.ai.execution:AgentSession"
+		/>
+		<create-reference name="tl.ai.htmlpages:GeneratedHtmlPage#owner"
+			type="tl.accounts:Person"
+		/>
+		<create-reference name="tl.ai.execution:ResearchRun#effort"
+			type="tl.ai.execution:ResearchEffort"
+		/>
+		<create-reference name="tl.ai.execution:ResearchRun#status"
+			type="tl.ai.execution:ResearchStatus"
+		/>
+		<create-reference name="tl.ai.execution:ResearchRun#execution"
+			type="tl.ai.execution:AgentExecution"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.ai.execution:ResearchRun#owner"
+			type="tl.accounts:Person"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.ai.execution:ResearchRun#sources"
+			composite="true"
+			multiple="true"
+			navigate="true"
+			ordered="true"
+			type="tl.ai.execution:ResearchSource"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.ai.execution:ResearchRun#citedSources"
+			multiple="true"
+			ordered="true"
+			type="tl.ai.execution:ResearchSource"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										r -> $r.get(`tl.ai.execution:ResearchRun#sources`)
+											.filter(s -> $s.get(`tl.ai.execution:ResearchSource#cited`))
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.ai.execution:ResearchRun#findings"
+			composite="true"
+			multiple="true"
+			navigate="true"
+			ordered="true"
+			type="tl.ai.execution:ResearchFinding"
+		/>
+		<create-reference name="tl.ai.execution:ResearchRun#alsoRead"
+			multiple="true"
+			ordered="true"
+			type="tl.ai.execution:ResearchSource"
+		>
+			<annotations>
+				<collapsed/>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[
+										r -> $r.get(`tl.ai.execution:ResearchRun#sources`)
+											.filter(s -> !$s.get(`tl.ai.execution:ResearchSource#cited`))
+									]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.ai.execution:InteractionRequest#execution"
+			mandatory="true"
+			type="tl.ai.execution:AgentExecution"
+		/>
+		<create-reference name="tl.ai.execution:InteractionRequest#type"
+			mandatory="true"
+			type="tl.ai.execution:InteractionType"
+		/>
+		<create-reference name="tl.ai.execution:InteractionRequest#state"
+			mandatory="true"
+			type="tl.ai.execution:InteractionState"
+		/>
+		<create-reference name="tl.ai.execution:InteractionRequest#responder"
+			type="tl.accounts:Person"
+		/>
+		<create-reference name="tl.ai.execution:ArchivedPage#owner"
+			type="tl.accounts:Person"
+		/>
+		<create-reference name="tl.ai.execution:AgentSession#kind"
+			mandatory="true"
+			type="tl.ai.execution:SessionKind"
+		/>
+		<create-reference name="tl.ai.execution:AgentSession#owner"
+			type="tl.accounts:Person"
+		/>
+		<create-reference name="tl.ai.execution:AgentSession#subject"
+			type="tl.model:TLObject"
+		/>
+		<create-reference name="tl.ai.execution:AgentSession#screenshots"
+			composite="true"
+			multiple="true"
+			navigate="true"
+			type="tl.ai.screenshots:Screenshot"
+		/>
+		<create-reference name="tl.ai.execution:AgentTask#session"
+			mandatory="true"
+			type="tl.ai.execution:AgentSession"
+		/>
+		<create-reference name="tl.ai.execution:AgentTask#lastTouchedByExecution"
+			type="tl.ai.execution:AgentExecution"
+		/>
+		<create-reference name="tl.ai.execution:ResearchSource#page"
+			type="tl.ai.execution:ArchivedPage"
+		/>
+		<create-reference name="tl.ai.execution:ResearchSource#object"
+			type="tl.model:TLObject"
+		/>
+		<create-reference name="tl.ai.execution:AgentExecution#session"
+			mandatory="true"
+			type="tl.ai.execution:AgentSession"
+		/>
+		<create-reference name="tl.ai.execution:AgentExecution#parentExecution"
+			type="tl.ai.execution:AgentExecution"
+		/>
+		<create-reference name="tl.ai.execution:AgentExecution#status"
+			mandatory="true"
+			type="tl.ai.execution:ExecutionStatus"
+		/>
+		<reorder-part name="tl.accounts:Person#aiPreferences"
+			before="oidcIdentities"
+		/>
+		<!-- Establishes the order of the attributes in the model: moves each one to the end. -->
+		<reorder-part name="tl.ai.execution:AgentSession#displayName"/>
+		<reorder-part name="tl.ai.execution:AgentSession#kind"/>
+		<reorder-part name="tl.ai.execution:AgentSession#owner"/>
+		<reorder-part name="tl.ai.execution:AgentSession#subject"/>
+		<reorder-part name="tl.ai.execution:AgentSession#title"/>
+		<reorder-part name="tl.ai.execution:AgentSession#status"/>
+		<reorder-part name="tl.ai.execution:AgentSession#metadata"/>
+		<reorder-part name="tl.ai.execution:AgentSession#createdAt"/>
+		<reorder-part name="tl.ai.execution:AgentSession#lastUpdated"/>
+		<reorder-part name="tl.ai.execution:AgentSession#screenshots"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#displayName"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#session"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#parentExecution"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#runId"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#agentName"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#model"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#provider"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#status"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#stopReason"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#errorMessage"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#environment"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#inputTokens"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#outputTokens"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#cacheReadTokens"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#cacheWriteTokens"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#thinkingTokens"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#cost"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#displayCost"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#displayCurrency"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#transcript"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#transcriptHtml"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#response"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#cancelRequested"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#startedAt"/>
+		<reorder-part name="tl.ai.execution:AgentExecution#endedAt"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#displayName"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#execution"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#requestId"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#type"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#state"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#header"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#prompt"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#payload"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#responder"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#resolution"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#createdAt"/>
+		<reorder-part name="tl.ai.execution:InteractionRequest#resolvedAt"/>
+		<reorder-part name="tl.ai.execution:AgentTask#displayName"/>
+		<reorder-part name="tl.ai.execution:AgentTask#session"/>
+		<reorder-part name="tl.ai.execution:AgentTask#lastTouchedByExecution"/>
+		<reorder-part name="tl.ai.execution:AgentTask#taskId"/>
+		<reorder-part name="tl.ai.execution:AgentTask#subject"/>
+		<reorder-part name="tl.ai.execution:AgentTask#content"/>
+		<reorder-part name="tl.ai.execution:AgentTask#status"/>
+		<reorder-part name="tl.ai.execution:AgentTask#ordinal"/>
+		<reorder-part name="tl.ai.execution:UserMemory#displayName"/>
+		<reorder-part name="tl.ai.execution:UserMemory#owner"/>
+		<reorder-part name="tl.ai.execution:UserMemory#kind"/>
+		<reorder-part name="tl.ai.execution:UserMemory#text"/>
+		<reorder-part name="tl.ai.execution:UserMemory#session"/>
+		<reorder-part name="tl.ai.execution:UserMemory#runId"/>
+		<reorder-part name="tl.ai.execution:UserMemory#createdAt"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#question"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#effort"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#status"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#started"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#finished"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#document"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#plan"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#tokens"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#report"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#execution"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#owner"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#sources"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#citedSources"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#findings"/>
+		<reorder-part name="tl.ai.execution:ResearchRun#alsoRead"/>
+		<reorder-part name="tl.ai.execution:ResearchSource#displayName"/>
+		<reorder-part name="tl.ai.execution:ResearchSource#page"/>
+		<reorder-part name="tl.ai.execution:ResearchSource#object"/>
+		<reorder-part name="tl.ai.execution:ResearchSource#url"/>
+		<reorder-part name="tl.ai.execution:ResearchSource#title"/>
+		<reorder-part name="tl.ai.execution:ResearchSource#kind"/>
+		<reorder-part name="tl.ai.execution:ResearchSource#cited"/>
+		<reorder-part name="tl.ai.execution:ResearchSource#footnote"/>
+		<reorder-part name="tl.ai.execution:ResearchSource#readAt"/>
+	</processors>
+	<post-processors/>
+</migration>

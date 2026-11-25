@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
@@ -40,6 +41,7 @@ import com.top_logic.ai.core.message.UserMessage;
 import com.top_logic.ai.core.provider.LLMProvider;
 import com.top_logic.ai.core.provider.ProviderException;
 import com.top_logic.ai.core.provider.StreamEvent;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.ai.core.tools.ToolCatalog;
@@ -122,6 +124,64 @@ public class SecDemoObjectEditTest extends SecDemoPersonaTest {
 		assertTrue("The call must be refused: " + turn.answer(), turn.failed());
 		assertTrue("The refusal must name the attribute: " + turn.answer(), turn.answer().contains("'partners'"));
 		assertEquals(before, List.copyOf((Collection<?>) project.tValue(partners)));
+	}
+
+	/**
+	 * A ticket of Alpha relates to a ticket of Beta, which the partner of Alpha may not read. She
+	 * relates it to the other ticket of Alpha with the list that she reads plus that ticket: the Beta
+	 * ticket stays, and no answer names it. The list that she reads, sent again, is no change.
+	 */
+	public void testARelatedTicketThatThePartnerMayNotReadStays() {
+		List<TLObject> alpha = ticketsOf(ALPHA);
+		TLObject ticket = alpha.get(0);
+		TLObject other = alpha.get(1);
+		TLObject foreign = ticketOf(BETA);
+		TLStructuredTypePart related = part("pm:Ticket#related");
+		setAsAdministrator(ticket, related, Set.of(foreign));
+		try {
+			String call = "{\"id\": \"" + ReadFilter.idOf(ticket) + "\", \"values\": {\"related\": [\""
+				+ ReadFilter.idOf(other) + "\"]}}";
+
+			Turn added = runAs(ANNA, UPDATE, call);
+
+			assertFalse("The call must succeed: " + added.answer(), added.failed());
+			assertTrue("The turn must commit.", added.committed());
+			assertEquals(Set.of(foreign, other), Set.copyOf((Collection<?>) ticket.tValue(related)));
+			assertNoSignOf(foreign, added);
+
+			Turn again = runAs(ANNA, UPDATE, call);
+
+			assertTrue("The value that she reads is no change: " + again.answer(),
+				again.answer().startsWith("No change"));
+			assertEquals(Set.of(foreign, other), Set.copyOf((Collection<?>) ticket.tValue(related)));
+			assertNoSignOf(foreign, again);
+		} finally {
+			setAsAdministrator(ticket, related, Set.of());
+		}
+	}
+
+	/**
+	 * A run that may read less than its person keeps what it does not read: a run of the partner
+	 * that may not read the other ticket of Alpha, which she herself may read, sees an empty value.
+	 * The empty list is no change for it, and the link stays.
+	 */
+	public void testARunThatReadsLessThanItsPersonKeepsWhatItDoesNotRead() {
+		List<TLObject> alpha = ticketsOf(ALPHA);
+		TLObject ticket = alpha.get(0);
+		TLObject other = alpha.get(1);
+		TLStructuredTypePart related = part("pm:Ticket#related");
+		setAsAdministrator(ticket, related, Set.of(other));
+		try {
+			Turn turn = runAs(ANNA, notReading(ANNA, other), UPDATE,
+				"{\"id\": \"" + ReadFilter.idOf(ticket) + "\", \"values\": {\"related\": []}}");
+
+			assertTrue("The empty list is the value that the run reads: " + turn.answer(),
+				turn.answer().startsWith("No change"));
+			assertEquals(Set.of(other), Set.copyOf((Collection<?>) ticket.tValue(related)));
+			assertNoSignOf(other, turn);
+		} finally {
+			setAsAdministrator(ticket, related, Set.of());
+		}
 	}
 
 	/**
@@ -264,6 +324,52 @@ public class SecDemoObjectEditTest extends SecDemoPersonaTest {
 				return real.executionMode();
 			}
 		};
+	}
+
+	/**
+	 * The persona's real rights, except that the run may not read the given object: a model security
+	 * that is narrower than the rights of its person.
+	 */
+	private SecurityContext notReading(String login, TLObject unread) {
+		SecurityContext real = securityFor(login);
+		ModelSecurity narrower = new ModelAccessRightsSecurity(account(login)) {
+			@Override
+			public boolean canRead(TLObject obj) {
+				return !obj.equals(unread) && super.canRead(obj);
+			}
+		};
+		return new SecurityContext() {
+
+			@Override
+			public boolean hasToolPermission(Tool tool) {
+				return real.hasToolPermission(tool);
+			}
+
+			@Override
+			public ModelSecurity modelSecurity() {
+				return narrower;
+			}
+
+			@Override
+			public ExecutionMode executionMode() {
+				return real.executionMode();
+			}
+		};
+	}
+
+	/** Neither the identifier nor the title of the given ticket is in the answer of the turn. */
+	private static void assertNoSignOf(TLObject ticket, Turn turn) {
+		assertFalse("The answer must not name a ticket that the run may not read: " + turn.answer(),
+			turn.answer().contains(ReadFilter.idOf(ticket))
+				|| turn.answer().contains((String) ticket.tValue(part("pm:Ticket#title"))));
+	}
+
+	/** The tickets of the given project, at least two. */
+	@SuppressWarnings("unchecked")
+	private static List<TLObject> ticketsOf(String projectName) {
+		List<TLObject> tickets = List.copyOf((Collection<TLObject>) project(projectName).tValueByName("tickets"));
+		assertTrue("Project '" + projectName + "' must contain two tickets.", tickets.size() >= 2);
+		return tickets;
 	}
 
 	/** The id the database records as the author of a commit made by the given persona. */

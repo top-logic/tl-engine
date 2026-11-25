@@ -77,10 +77,9 @@ import com.top_logic.util.TLContextManager;
  * follow-up continues it, also after a restart.</li>
  * <li>One task = one recorded run ({@link AgentRunner}), visible in the application's agent
  * activity.</li>
- * <li>The run acts as the calling account ({@link RunEntryPoint#A2A}). It is attended - the remote
- * agent answers its questions ({@link A2AInteractionStore}) - so the account's grants bound it, not
- * the background allowlist. Tool calls are approved automatically; an agent exposed without
- * {@code allow-writes} is not offered the tools that change the application ({@link WriteGuard}).</li>
+ * <li>The run acts as the calling account ({@link RunEntryPoint#A2A}), and it is a background run:
+ * the grants of the account and the {@code <background-allowlist>} bound its tools, also for an
+ * administrator account. See {@link #toolContext}.</li>
  * </ul>
  */
 public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
@@ -223,10 +222,8 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 				: createSession(store, person, task, agent, context, metadata, text);
 			persist(task, context);
 
-			SecurityContext security = RunSecurity.contextFor(
-				new RunPrincipal(person, RunEntryPoint.A2A, false, ExecutionRecorder.conversationIdOf(session)));
-			ToolContext toolContext = new ToolContext(agent.getAllowWrites() ? security : new WriteGuard(security),
-				ApprovalCallback.AUTO_APPROVE, new TransactionScope(token), token);
+			ToolContext toolContext =
+				toolContext(person, agent.getAllowWrites(), ExecutionRecorder.conversationIdOf(session), token);
 			run[0] = toolContext;
 
 			String prompt = header(message, task.peer(), context._subject) + text;
@@ -260,6 +257,43 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 				context._lock.unlock();
 			}
 		}
+	}
+
+	/**
+	 * The tool context of an A2A run that acts as the given account.
+	 *
+	 * <p>
+	 * The run is a background run. The calling agent answers the questions of the run, but it
+	 * approves no tool call, and the person of the account is not present. So the
+	 * {@code <background-allowlist>} bounds the tools of the run in addition to the grants of the
+	 * account, as for an MCP request. Each tool call that the ceiling admits is approved
+	 * automatically.
+	 * </p>
+	 *
+	 * <p>
+	 * The run stays attended for questions: {@code askUser} goes to the calling agent
+	 * ({@link A2AInteractionStore}). For this reason the context is not made
+	 * {@link ToolContext#unattended() unattended}, and it is not built with
+	 * {@link ToolContext#forBackgroundRun}, which makes a run unattended and names the entry point MCP.
+	 * </p>
+	 *
+	 * <p>
+	 * {@code allow-writes} of the served agent only narrows: without it, the run gets no tool that
+	 * changes the application ({@link WriteGuard}), and with it, a write tool also needs an entry in
+	 * the allowlist.
+	 * </p>
+	 *
+	 * <p>
+	 * Package-visible rather than private so a test can ask what an A2A run is given; it has one
+	 * production caller, {@link #run}.
+	 * </p>
+	 */
+	static ToolContext toolContext(Person person, boolean allowWrites, String conversationId,
+			CancellationToken token) {
+		SecurityContext security = RunSecurity.contextFor(
+			new RunPrincipal(person, RunEntryPoint.A2A, true, conversationId));
+		return new ToolContext(allowWrites ? security : new WriteGuard(security),
+			ApprovalCallback.AUTO_APPROVE, new TransactionScope(token), token);
 	}
 
 	/**

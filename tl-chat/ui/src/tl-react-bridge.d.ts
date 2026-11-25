@@ -42,6 +42,13 @@ declare module 'tl-react-bridge' {
   /** Whether the page is navigating away and must not talk to the server any more. */
   export function isPageLeaving(): boolean
 
+  /**
+   * Whether the key belongs to an input method composition (for example for Japanese), including the
+   * Enter that ends it, which Safari reports after the end of the composition. A key handler leaves
+   * such a key to the input method; a React handler passes `event.nativeEvent`.
+   */
+  export function isCompositionKey(event: KeyboardEvent): boolean
+
   /** Stops a listener `subscribe` added. */
   export function unsubscribe(controlId: string, listener: (patch: Record<string, unknown>) => void): void
 

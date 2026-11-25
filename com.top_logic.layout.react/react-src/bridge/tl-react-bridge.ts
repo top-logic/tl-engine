@@ -7,7 +7,7 @@ import { wrapRoot } from './root-wrapper';
 import { installTouchDrag } from './touch-drag';
 import { connect, subscribe, unsubscribe } from './sse-client';
 import { getApiBase, setMountContext } from './page-context';
-import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
+import { createScope, registerScope, addBinding, pageScope, isCompositionKey, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
 import { CMD_COMMIT, CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, parseResponse, registerPendingFlush, unregisterPendingFlush } from './command-channel';
 import type { CommandOptions, CommandResponse } from './command-channel';
@@ -895,6 +895,10 @@ export interface TLTypingField {
  * the text as typed, after the commit; only then is the key's default action prevented, so that
  * Enter otherwise still reaches what binds it around the field (a dialog's default button).</p>
  *
+ * <p>The Enter that ends the composition of an input method (for example for Japanese) is no plain
+ * Enter: it sends neither the commit nor the submit (see {@link isCompositionKey}). The next Enter
+ * does.</p>
+ *
  * <p>All commands go through the FIFO chain of {@link enqueueCommand}, so the value reaches the
  * server before the commit, and the commit before the submit.</p>
  */
@@ -955,7 +959,8 @@ export function useTLTypingField(options?: TLTypingFieldOptions): TLTypingField 
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) {
+      // The Enter that ends a composition is the input method's: the edit is not finished yet.
+      if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey || isCompositionKey(e.nativeEvent)) {
         return;
       }
       const input = e.currentTarget;

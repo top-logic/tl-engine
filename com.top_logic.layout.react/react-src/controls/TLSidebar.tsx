@@ -424,10 +424,12 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   const handleSelect = useCallback((itemId: string) => {
-    if (itemId !== activeItemId) {
+    // The active entry in the open drawer is sent as well: the server then closes the drawer. In the rail of a wide
+    // window that select would have no effect.
+    if (itemId !== activeItemId || drawerVisible) {
       sendCommand('selectItem', { itemId });
     }
-  }, [sendCommand, activeItemId]);
+  }, [sendCommand, activeItemId, drawerVisible]);
 
   const handleExecute = useCallback((itemId: string) => {
     sendCommand('executeCommand', { itemId });

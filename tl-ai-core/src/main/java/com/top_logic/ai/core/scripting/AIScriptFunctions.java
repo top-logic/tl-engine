@@ -1245,9 +1245,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * Refuses a session the acting account neither owns nor administers. The check is here and not
-	 * only in the view that calls it: a command's input is whatever a channel happens to hold, and
-	 * this function is reachable from a scheduler task and the TL-Script console as well.
+	 * Refuses a session the acting account may not write (the write right on the session, decided
+	 * by the model-based security). The check is here and not only in the view
+	 * that calls it: a command's input is whatever a channel happens to hold, and this function is
+	 * reachable from a scheduler task and the TL-Script console as well.
 	 * </p>
 	 *
 	 * @param session
@@ -1256,15 +1257,16 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        The new title; must not be blank.
 	 * @return The renamed session, so the call can be chained.
 	 * @throws TopLogicException
-	 *         If {@code session} is not a session, is someone else's, or {@code title} is blank.
+	 *         If {@code session} is not a session, may not be written, or {@code title} is blank.
+	 * @see SimpleBoundCommandGroup#WRITE The right checked on the session.
 	 */
 	public static AgentSession sessionRename(Object session, String title) {
-		AgentSession owned = ownedSession(session);
+		AgentSession writable = writableSession(session);
 		if (title == null || title.isBlank()) {
 			throw new TopLogicException(I18NConstants.ERROR_SESSION_TITLE_EMPTY);
 		}
-		AgentExecutionStore.getInstance().updateTitle(owned, title.trim());
-		return owned;
+		AgentExecutionStore.getInstance().updateTitle(writable, title.trim());
+		return writable;
 	}
 
 	/**
@@ -1281,17 +1283,16 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * Refuses a session the acting account neither owns nor administers, for the same reason
-	 * renaming one does.
+	 * Refuses a session the acting account may not write, for the same reason renaming one does.
 	 * </p>
 	 *
 	 * @param session
 	 *        The {@code tl.ai.execution:AgentSession} to delete.
 	 * @return Always {@code true}; a refusal is a {@link TopLogicException}, not a {@code false}.
 	 * @throws TopLogicException
-	 *         If {@code session} is not a session or is someone else's.
+	 *         If {@code session} is not a session or may not be written.
 	 * @see AgentExecutionStore#deleteSession(AgentSession) What the cancelling and the cascade are.
-	 * @see #sessionRename(Object, String) The same ownership check.
+	 * @see #sessionRename(Object, String) The same access check.
 	 */
 	public static boolean sessionDelete(Object session) {
 		AgentSession resolved = unwrapSession(session);
@@ -1300,7 +1301,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			// only throw.
 			return true;
 		}
-		AgentExecutionStore.getInstance().deleteSession(ownedSession(session));
+		AgentExecutionStore.getInstance().deleteSession(writableSession(session));
 		return true;
 	}
 
@@ -1315,7 +1316,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * Refuses a memory the acting account neither owns nor administers. The check is here and not
+	 * Refuses a memory the acting account may not write (the write right on the memory, decided by
+	 * the model-based security). The check is here and not
 	 * only in the view that calls it, for the same reason {@link #sessionDelete(Object)} has it
 	 * here: a command's input is whatever a channel happens to hold, and this function is reachable
 	 * from a scheduler task and the TL-Script console as well.
@@ -1325,10 +1327,11 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        The {@code tl.ai.execution:UserMemory} to delete.
 	 * @return Always {@code true}; a refusal is a {@link TopLogicException}, not a {@code false}.
 	 * @throws TopLogicException
-	 *         If {@code memory} is not a memory or is someone else's.
+	 *         If {@code memory} is not a memory or may not be written.
+	 * @see SimpleBoundCommandGroup#WRITE The right checked on the memory.
 	 */
 	public static boolean memoryDelete(Object memory) {
-		AgentExecutionStore.getInstance().deleteMemory(ownedMemory(memory));
+		AgentExecutionStore.getInstance().deleteMemory(writableMemory(memory));
 		return true;
 	}
 
@@ -1611,16 +1614,16 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * The given value as a {@link UserMemory} the acting account may delete.
+	 * The given value as a {@link UserMemory} the acting account may write.
 	 *
 	 * <p>
-	 * An administrator may delete any of them, which mirrors {@link #ownedSession(Object)} and is
-	 * what makes a {@code <data-list>} over all memories usable as an administration view. Nobody
-	 * else reaches another account's memory: the store's reader filters by owner, so a row of
-	 * somebody else can only arrive here by being guessed, and it is refused.
+	 * Decided like {@link #writableSession(Object)}: the shipped policy gives the owner
+	 * {@link SimpleBoundCommandGroup#WRITE} on their memories, and an administrator passes the
+	 * bypass of the model-based security, which makes a {@code <data-list>} over all memories usable
+	 * as an administration view.
 	 * </p>
 	 */
-	private static UserMemory ownedMemory(Object memory) {
+	private static UserMemory writableMemory(Object memory) {
 		UserMemory resolved = memory instanceof UserMemory found ? found : null;
 		if (resolved == null && memory instanceof Collection<?> many && many.size() == 1) {
 			Object only = many.iterator().next();
@@ -1629,9 +1632,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		if (resolved == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NOT_A_MEMORY);
 		}
-		Person actor = TLContext.currentUser();
-		if (actor == null || (!actor.equals(resolved.getOwner()) && !actor.isAdmin())) {
-			throw new TopLogicException(I18NConstants.ERROR_MEMORY_NOT_OWNED);
+		if (!mayWrite(resolved)) {
+			throw new TopLogicException(I18NConstants.ERROR_MEMORY_WRITE_DENIED);
 		}
 		return resolved;
 	}
@@ -1658,23 +1660,29 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * The given value as an {@link AgentSession} the acting account may change.
 	 *
 	 * <p>
-	 * An administrator may change any session. That mirrors {@code ToolAuthorization} and
-	 * {@code RunAuthorization}, where an administrator already bypasses the layer, and it is what
-	 * makes a {@code <data-list>} over all sessions usable as an administration view. It does not
-	 * loosen the commands of the chat controls, which stay strictly owner-only: there the guard also defends
-	 * against a guessed id arriving from a browser, and no administration surface asks for it.
+	 * Whether it may is {@link SimpleBoundCommandGroup#WRITE} on the session, decided by the
+	 * model-based security: the shipped policy gives it to the owner, an application may give it to
+	 * further roles, and an administrator passes the bypass, which makes a {@code <data-list>} over
+	 * all sessions usable as an administration view.
 	 * </p>
 	 */
-	private static AgentSession ownedSession(Object session) {
+	private static AgentSession writableSession(Object session) {
 		AgentSession resolved = unwrapSession(session);
 		if (resolved == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NOT_A_SESSION);
 		}
-		Person actor = TLContext.currentUser();
-		if (actor == null || (!actor.equals(resolved.getOwner()) && !actor.isAdmin())) {
-			throw new TopLogicException(I18NConstants.ERROR_SESSION_NOT_OWNED);
+		if (!mayWrite(resolved)) {
+			throw new TopLogicException(I18NConstants.ERROR_SESSION_WRITE_DENIED);
 		}
 		return resolved;
+	}
+
+	/**
+	 * Whether the acting account may write the given object, as the model-based security decides.
+	 */
+	private static boolean mayWrite(TLObject object) {
+		return ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), object,
+			SimpleBoundCommandGroup.WRITE);
 	}
 
 	/**

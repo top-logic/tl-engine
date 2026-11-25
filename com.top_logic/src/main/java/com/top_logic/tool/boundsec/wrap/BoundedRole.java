@@ -26,6 +26,8 @@ import com.top_logic.basic.Protocol;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.CloseableIterator;
+import com.top_logic.basic.col.SimpleCloseableIteratorAdapter;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.basic.col.NameValueBuffer;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
@@ -625,6 +627,7 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 * @return Whether when anything was actually removed.
 	 */
 	public static boolean removeRoleAssignments(TLObject context, Group group, BoundedRole role) {
+		checkAssignmentContext(context);
 		KnowledgeObject contextHandle = (KnowledgeObject) context.tHandle();
 		KnowledgeObject groupHandle = group.tHandle();
 		try (CloseableIterator<KnowledgeObject> it = roleAssignmentsForContextAndGroup(contextHandle, groupHandle)) {
@@ -653,6 +656,7 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 * @return Whether something was actually removed.
 	 */
 	public static boolean removeRoleAssignments(TLObject context, BoundedRole aRole) {
+		checkAssignmentContext(context);
 		{
 			KnowledgeObject contextItem = (KnowledgeObject) context.tHandle();
 			KnowledgeObject roleItem = aRole.tHandle();
@@ -671,6 +675,7 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 * @return Whether anything has been actually removed.
 	 */
 	public static boolean removeRoleAssignments(TLObject context) {
+		checkAssignmentContext(context);
 		{
 			KnowledgeObject item = (KnowledgeObject) context.tHandle();
 			try (CloseableIterator<KnowledgeObject> iter = roleAssignmentsForContext(item)) {
@@ -693,6 +698,14 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	}
 
 	private static CloseableIterator<KnowledgeObject> queryAssignedRoles(TLObject context, Group group) {
+		if (!WrapperHistoryUtils.isCurrent(context)) {
+			// A role assignment holds for each version of the object: it is found at the current
+			// object.
+			context = WrapperHistoryUtils.getCurrent(context);
+			if (context == null) {
+				return new SimpleCloseableIteratorAdapter<>(Collections.<KnowledgeObject> emptyIterator());
+			}
+		}
 		KnowledgeObject ko = (KnowledgeObject) context.tHandle();
 		CloseableIterator<KnowledgeObject> it;
 		if (group == null) {
@@ -714,12 +727,31 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 * Assigns the given {@link BoundedRole} to the given {@link Group} in the given context.
 	 */
 	public static void assignRole(TLObject context, Group group, BoundedRole role) {
+		checkAssignmentContext(context);
 		if (group == null) {
 			return;
 		}
 
 		if (!hasRoleAssigned(context, group, role)) {
 			internalAssignRole(context.tHandle(), group.tHandle(), role.tHandle());
+		}
+	}
+
+	/**
+	 * Checks that the given object can be the context of a role assignment.
+	 *
+	 * <p>
+	 * A role assignment holds for each version of an object. A historic version is therefore no
+	 * context of an assignment.
+	 * </p>
+	 *
+	 * @throws IllegalArgumentException
+	 *         If the given object is a historic version.
+	 */
+	private static void checkAssignmentContext(TLObject context) {
+		if (!WrapperHistoryUtils.isCurrent(context)) {
+			throw new IllegalArgumentException(
+				"A historic version cannot be the context of a role assignment: " + context);
 		}
 	}
 

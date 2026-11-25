@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The baselines of the projects, showing the access to historic versions of objects.
+	
+	A baseline refers to the deliverables of its project in the versions they had when the baseline
+	was created: Baseline#deliverables is a historic reference. A baseline is created with the
+	command "Create baseline" in the deliverables of a project (see projects/deliverables.view.xml).
+	
+	The upper table lists the baselines the user reads: the baselines of the projects the user is a
+	member or an administrator of, and the baselines naming the user as reviewer. The lower table
+	lists the deliverables of the selected baseline in their approved versions, which stay as they
+	are when the deliverables are renamed or deleted later on.
+	
+	A reviewer of a baseline holds no role on the project. The reviewer reads the baseline and the
+	versions of the deliverables the baseline refers to, by the role rule
+	ReviewersOnBaselinedDeliverables, which navigates the historic reference backwards. The current
+	deliverables and their other versions stay hidden from the reviewer.
+	
+	Selecting an approved deliverable shows that version below: its estimate, the readers of its
+	estimate and its sections, all as they were when the baseline was created. The sections are read
+	by the reviewer through the role rule ReviewersOnBaselinedSections (history="historic"). The
+	estimate is read by a reviewer the approved version names as reader of the estimate, through the
+	role rule EstimateReadersOfBaselinedDeliverables (history="anchored"); the other reviewers do
+	not read it.
+-->
+<view>
+	<channels>
+		<channel name="baseline"/>
+		<channel name="deliverable"/>
+	</channels>
+
+	<split-panel orientation="vertical">
+		<panes>
+			<pane>
+				<panel>
+					<title>
+						<en>Baselines</en>
+						<de>Abnahmestände</de>
+					</title>
+					<table
+						observed-types="tl.demo.projectManagement:Baseline"
+						selection="baseline"
+						types="tl.demo.projectManagement:Baseline"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="reviewers"/>
+						</columns>
+						<rows>all(`tl.demo.projectManagement:Baseline`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane>
+				<panel>
+					<title>
+						<en>Approved deliverables</en>
+						<de>Abgenommene Liefergegenstände</de>
+					</title>
+					<form
+						input="baseline"
+						with-inset="true"
+					>
+						<field attribute="name"/>
+						<field attribute="reviewers"/>
+					</form>
+					<table
+						observed-types="tl.demo.projectManagement:Baseline"
+						selection="deliverable"
+						types="tl.demo.projectManagement:Deliverable"
+					>
+						<columns>
+							<column attribute="name"/>
+							<computed-column name="kind"
+								type="tl.core:String"
+							>
+								<label>
+									<en>Kind</en>
+									<de>Art</de>
+								</label>
+								<value>$row.type().label()</value>
+							</computed-column>
+						</columns>
+						<inputs>
+							<input channel="baseline"/>
+						</inputs>
+						<rows>if($baseline == null, [], $baseline.get(`tl.demo.projectManagement:Baseline#deliverables`))</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane>
+				<panel>
+					<title>
+						<en>Approved version</en>
+						<de>Abgenommener Stand</de>
+					</title>
+					<form
+						input="deliverable"
+						mode-switch="false"
+						with-inset="true"
+					>
+						<field attribute="name"/>
+						<field attribute="estimate"/>
+						<field attribute="estimateReaders"/>
+					</form>
+					<table types="tl.demo.projectManagement:Section">
+						<columns>
+							<column attribute="name"/>
+							<column attribute="text"/>
+						</columns>
+						<inputs>
+							<input channel="deliverable"/>
+						</inputs>
+						<rows>if($deliverable == null, [], $deliverable.get(`tl.demo.projectManagement:Deliverable#sections`))</rows>
+					</table>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

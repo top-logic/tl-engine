@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Adds the annotations that tl-layout-formeditor declares for types of other modules (Ticket
+	#30419): the instance resolvers of tl.accounts:Group, tl.accounts:Person and
+	Contacts:PersonContact, and the dynamic visibility of tl.accounts:Person#admin. Up to now they
+	reached existing databases only through the automatic model upgrade, which an application may
+	prevent.
+
+	An annotation replaces an existing one of the same kind; a model element that does not exist is
+	skipped.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_instance_resolvers_and_admin_visibility"
+		module="tl-layout-formeditor"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30419_create_changelog_and_access_tokens"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_30419_changelog_storage_algorithms"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_30183_account_lock"
+			module="tl-layout-formeditor"
+		/>
+	</dependencies>
+	<processors>
+		<add-annotations name="tl.accounts:Group">
+			<annotations>
+				<instance-resolver>
+					<resolver-by-attribute attribute="tl.accounts:Group#name"/>
+				</instance-resolver>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.accounts:Person">
+			<annotations>
+				<instance-resolver>
+					<resolver-by-attribute attribute="tl.accounts:Person#name"/>
+				</instance-resolver>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.accounts:Person#admin">
+			<annotations>
+				<dynamic-visibility>
+					<mode-selector class="com.top_logic.element.layout.formeditor.implementation.additional.AdministrativeAttributeModeSelector"/>
+				</dynamic-visibility>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:PersonContact">
+			<annotations>
+				<instance-resolver>
+					<resolver-by-expression>
+						<identity><![CDATA[contact -> {
+    account = $contact.get(`Contacts:PersonContact#account`);
+    $account == null 
+    ? "name:" + $contact.get(`Contacts:PersonContact#fullName`)
+    : "account:" + $account.get(`tl.accounts:Person#name`)
+}]]></identity>
+						<resolver><![CDATA[id -> switch {
+    $id.stringStartsWith("account:"): {
+        login = $id.subString("account:".length());
+        all(`tl.accounts:Person`)
+            .filter(p -> $p.get(`tl.accounts:Person#name`) == $login)
+            .singleElement()
+            .get(`tl.accounts:Person#contact`)
+    };
+    
+    $id.stringStartsWith("name:"): {
+        fullName = $id.subString("name:".length());
+        all(`Contacts:PersonContact`)
+            .filter(p -> $p.get(`Contacts:PersonContact#fullName`) == $fullName)
+            .singleElement()
+    };
+    
+    default: throw("Invalid contact ID: " + $id);
+}]]></resolver>
+					</resolver-by-expression>
+				</instance-resolver>
+			</annotations>
+		</add-annotations>
+	</processors>
+	<post-processors/>
+</migration>

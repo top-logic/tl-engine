@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Creates the attributes that tl-model-search adds to the model module tl.changelog of tl-element
+	(Ticket #30419): Change#changeType and ChangeSet#name, both computed by an expression. Up to now
+	they reached existing databases only through the automatic model upgrade, which an application
+	may prevent.
+
+	A database that already has these attributes keeps them: the processors skip what already exists.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_changelog_storage_algorithms"
+		module="tl-model-search"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30419_create_changelog_and_access_tokens"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+	</dependencies>
+	<processors>
+		<create-property name="tl.changelog:ChangeSet#name"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[cs -> "{0} ({1})".fill(
+    $cs.get(`tl.changelog:ChangeSet#message`).localize(),
+    $cs.get(`tl.changelog:ChangeSet#date`)
+)]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-reference name="tl.changelog:Change#changeType"
+			mandatory="true"
+			navigate="true"
+			type="tl.changelog:ChangeType"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[self -> switch ($self.type()) {
+    `tl.changelog:Creation`: `tl.changelog:ChangeType#CREATE`;
+    `tl.changelog:Deletion`: `tl.changelog:ChangeType#DELETE`;
+    `tl.changelog:Update`: `tl.changelog:ChangeType#UPDATE`;
+}]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<!-- The attributes added by tl-model-search follow the attributes of tl-element. -->
+		<reorder-part name="tl.changelog:Change#changeType"/>
+		<reorder-part name="tl.changelog:ChangeSet#name"/>
+	</processors>
+	<post-processors/>
+</migration>

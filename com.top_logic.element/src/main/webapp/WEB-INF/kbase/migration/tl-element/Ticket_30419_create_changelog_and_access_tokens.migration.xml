@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Creates the model module tl.changelog and the access token types tl.accounts:AccessToken and
+	tl.accounts:AccessTokenRequest (Ticket #30419). Up to now they reached existing databases only
+	through the automatic model upgrade, which an application may prevent.
+
+	A database that already has these model elements, through the automatic model upgrade or through
+	the migration of tl-ai-core that moves the access tokens of the agent endpoints, keeps them: the
+	processors skip what already exists.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_create_changelog_and_access_tokens"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30183_account_lock"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<create-module name="tl.changelog">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.element.changelog.model.impl"
+					interface-package="com.top_logic.element.changelog.model"
+				/>
+			</annotations>
+		</create-module>
+		<create-enumeration name="tl.changelog:ChangeType"/>
+		<create-classifier name="tl.changelog:ChangeType#CREATE">
+			<annotations>
+				<instance-presentation icon="css:fa-solid fa-circle-plus"/>
+			</annotations>
+		</create-classifier>
+		<create-classifier name="tl.changelog:ChangeType#DELETE">
+			<annotations>
+				<instance-presentation icon="css:fa-solid fa-trash-can"/>
+			</annotations>
+		</create-classifier>
+		<create-classifier name="tl.changelog:ChangeType#UPDATE">
+			<annotations>
+				<instance-presentation icon="css:fa-solid fa-pencil"/>
+			</annotations>
+		</create-classifier>
+		<create-enumeration name="tl.changelog:ErrorAction"/>
+		<create-classifier name="tl.changelog:ErrorAction#IGNORE">
+			<annotations>
+				<instance-presentation icon="css:bi bi-skip-end-fill"/>
+			</annotations>
+		</create-classifier>
+		<create-enumeration name="tl.changelog:WarningAction"/>
+		<create-classifier name="tl.changelog:WarningAction#IGNORE">
+			<annotations>
+				<instance-presentation icon="css:fa-solid fa-play"/>
+			</annotations>
+		</create-classifier>
+		<create-classifier name="tl.changelog:WarningAction#SKIP">
+			<annotations>
+				<instance-presentation icon="colored:tl-icon cross"/>
+			</annotations>
+		</create-classifier>
+		<create-class name="tl.changelog:Change"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:Creation"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:Deletion"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:Update"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:ChangeConfirmation"
+			abstract="true"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:ErrorMessage"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:WarningMessage"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:ChangeSet"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:Modification"
+			abstract="true"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:Operation"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:CreateOp"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:DeleteOp"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:UpdateOp"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.changelog:SetOp"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.accounts:AccessToken"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<implementation-binding class-name="com.top_logic.element.accesstoken.AccessTokenImpl"/>
+				<table name="PersonalAccessToken"/>
+				<main-properties properties="name,owner,hint,permissions,createdAt,expiresAt,lastUsed"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.accounts:AccessTokenRequest"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<add-class-generalizations name="tl.changelog:Change">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:Creation">
+			<generalizations>
+				<generalization type="tl.changelog:Change"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:Deletion">
+			<generalizations>
+				<generalization type="tl.changelog:Change"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:Update">
+			<generalizations>
+				<generalization type="tl.changelog:Change"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:ChangeConfirmation">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:ErrorMessage">
+			<generalizations>
+				<generalization type="tl.changelog:ChangeConfirmation"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:WarningMessage">
+			<generalizations>
+				<generalization type="tl.changelog:ChangeConfirmation"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:ChangeSet">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:Modification">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:Operation">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:CreateOp">
+			<generalizations>
+				<generalization type="tl.changelog:Operation"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:DeleteOp">
+			<generalizations>
+				<generalization type="tl.changelog:Operation"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:UpdateOp">
+			<generalizations>
+				<generalization type="tl.changelog:Operation"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.changelog:SetOp">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.accounts:AccessToken">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.accounts:AccessTokenRequest">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-property name="tl.accounts:AccessTokenRequest#name"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.accounts:AccessTokenRequest#validForDays"
+			type="tl.core:Integer"
+		/>
+		<create-property name="tl.accounts:AccessTokenRequest#token"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+				<multi-line
+					preformatted="true"
+					rows="1"
+				/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:AccessTokenRequest#invitation"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+				<multi-line
+					preformatted="true"
+					rows="3"
+				/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.changelog:ChangeSet#message"
+			type="tl.model.i18n:I18NString"
+		/>
+		<create-property name="tl.changelog:ChangeSet#date"
+			mandatory="true"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<format>
+					<format-ref format-id="date-time"/>
+				</format>
+			</annotations>
+		</create-property>
+		<create-property name="tl.changelog:ChangeSet#incomplete"
+			mandatory="true"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<default-value>
+					<boolean/>
+				</default-value>
+			</annotations>
+		</create-property>
+		<create-property name="tl.changelog:ChangeSet#isRevert"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.element.changelog.model.ChangeSet#isRevert()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.changelog:ChangeSet#isRedo"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.element.changelog.model.ChangeSet#isRedo()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.changelog:ChangeConfirmation#info"
+			mandatory="true"
+			type="tl.model.i18n:I18NString"
+		/>
+		<create-property name="tl.accounts:AccessToken#name"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.accounts:AccessToken#hint"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:AccessToken#secretHash"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:AccessToken#permissions"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:AccessToken#sessionKey"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:AccessToken#createdAt"
+			mandatory="true"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:AccessToken#expiresAt"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:AccessToken#lastUsed"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.changelog:SetOp#value"
+			type="tl.util:Any"
+		/>
+		<create-property name="tl.changelog:Modification#oldValue"
+			bag="true"
+			multiple="true"
+			type="tl.util:Any"
+		/>
+		<create-property name="tl.changelog:Modification#newValue"
+			bag="true"
+			multiple="true"
+			type="tl.util:Any"
+		/>
+		<create-property name="tl.changelog:Change#implicit"
+			mandatory="true"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<default-value>
+					<boolean/>
+				</default-value>
+			</annotations>
+		</create-property>
+		<create-property name="tl.changelog:CreateOp#id"
+			type="tl.core:Long"
+		/>
+		<create-reference name="tl.changelog:ChangeSet#changes"
+			composite="true"
+			multiple="true"
+			navigate="true"
+			type="tl.changelog:Change"
+		/>
+		<create-reference name="tl.changelog:ChangeSet#revision"
+			mandatory="true"
+			type="tl.core:Revision"
+		/>
+		<create-reference name="tl.changelog:ChangeSet#author"
+			history-type="historic"
+			mandatory="true"
+			navigate="true"
+			type="tl.accounts:Person"
+		/>
+		<create-reference name="tl.changelog:ChangeSet#parentRev"
+			mandatory="true"
+			navigate="true"
+			type="tl.core:Revision"
+		/>
+		<create-reference name="tl.changelog:ChangeSet#revertedBy"
+			navigate="true"
+			type="tl.changelog:ChangeSet"
+		/>
+		<create-reference name="tl.changelog:Operation#confirmations"
+			composite="true"
+			multiple="true"
+			navigate="true"
+			ordered="true"
+			type="tl.changelog:ChangeConfirmation"
+		/>
+		<create-reference name="tl.changelog:DeleteOp#target"
+			mandatory="true"
+			navigate="true"
+			type="tl.model:TLObject"
+		/>
+		<create-reference name="tl.changelog:WarningMessage#action"
+			mandatory="true"
+			navigate="true"
+			type="tl.changelog:WarningAction"
+		/>
+		<create-reference name="tl.accounts:AccessToken#owner"
+			deletion-policy="delete-referer"
+			mandatory="true"
+			type="tl.accounts:Person"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.changelog:SetOp#property"
+			mandatory="true"
+			navigate="true"
+			type="tl.model:TLStructuredTypePart"
+		/>
+		<create-reference name="tl.changelog:Modification#part"
+			mandatory="true"
+			navigate="true"
+			type="tl.model:TLStructuredTypePart"
+		/>
+		<create-reference name="tl.changelog:ErrorMessage#action"
+			mandatory="true"
+			navigate="true"
+			type="tl.changelog:ErrorAction"
+		/>
+		<create-reference name="tl.changelog:Change#object"
+			history-type="historic"
+			mandatory="true"
+			navigate="true"
+			type="tl.model:TLObject"
+		/>
+		<create-reference name="tl.changelog:Change#oldObject"
+			history-type="historic"
+			mandatory="true"
+			navigate="true"
+			type="tl.model:TLObject"
+		/>
+		<create-reference name="tl.changelog:Change#belongsTo"
+			navigate="true"
+			type="tl.changelog:Change"
+		/>
+		<create-reference name="tl.changelog:Update#modifications"
+			composite="true"
+			multiple="true"
+			navigate="true"
+			type="tl.changelog:Modification"
+		/>
+		<create-reference name="tl.changelog:UpdateOp#target"
+			mandatory="true"
+			navigate="true"
+			type="tl.model:TLObject"
+		/>
+		<create-reference name="tl.changelog:UpdateOp#updates"
+			composite="true"
+			multiple="true"
+			navigate="true"
+			ordered="true"
+			type="tl.changelog:SetOp"
+		/>
+		<create-reference name="tl.changelog:CreateOp#type"
+			mandatory="true"
+			navigate="true"
+			type="tl.model:TLClass"
+		/>
+		<create-reference name="tl.changelog:CreateOp#initializers"
+			composite="true"
+			multiple="true"
+			navigate="true"
+			ordered="true"
+			type="tl.changelog:SetOp"
+		/>
+		<create-inverse-reference name="tl.changelog:Change#partChanges"
+			inverse-reference="tl.changelog:Change#belongsTo"
+			multiple="true"
+			navigate="true"
+		/>
+		<!-- Establishes the order of the attributes in the model: moves each one to the end. -->
+		<reorder-part name="tl.changelog:Change#object"/>
+		<reorder-part name="tl.changelog:Change#oldObject"/>
+		<reorder-part name="tl.changelog:Change#implicit"/>
+		<reorder-part name="tl.changelog:Change#belongsTo"/>
+		<reorder-part name="tl.changelog:Change#partChanges"/>
+		<reorder-part name="tl.changelog:ChangeSet#changes"/>
+		<reorder-part name="tl.changelog:ChangeSet#revision"/>
+		<reorder-part name="tl.changelog:ChangeSet#message"/>
+		<reorder-part name="tl.changelog:ChangeSet#author"/>
+		<reorder-part name="tl.changelog:ChangeSet#date"/>
+		<reorder-part name="tl.changelog:ChangeSet#parentRev"/>
+		<reorder-part name="tl.changelog:ChangeSet#revertedBy"/>
+		<reorder-part name="tl.changelog:ChangeSet#incomplete"/>
+		<reorder-part name="tl.changelog:ChangeSet#isRevert"/>
+		<reorder-part name="tl.changelog:ChangeSet#isRedo"/>
+		<reorder-part name="tl.changelog:CreateOp#type"/>
+		<reorder-part name="tl.changelog:CreateOp#id"/>
+		<reorder-part name="tl.changelog:CreateOp#initializers"/>
+		<reorder-part name="tl.changelog:SetOp#property"/>
+		<reorder-part name="tl.changelog:SetOp#value"/>
+		<reorder-part name="tl.changelog:Modification#part"/>
+		<reorder-part name="tl.changelog:Modification#oldValue"/>
+		<reorder-part name="tl.changelog:Modification#newValue"/>
+		<reorder-part name="tl.accounts:AccessToken#name"/>
+		<reorder-part name="tl.accounts:AccessToken#owner"/>
+		<reorder-part name="tl.accounts:AccessToken#hint"/>
+		<reorder-part name="tl.accounts:AccessToken#secretHash"/>
+		<reorder-part name="tl.accounts:AccessToken#permissions"/>
+		<reorder-part name="tl.accounts:AccessToken#sessionKey"/>
+		<reorder-part name="tl.accounts:AccessToken#createdAt"/>
+		<reorder-part name="tl.accounts:AccessToken#expiresAt"/>
+		<reorder-part name="tl.accounts:AccessToken#lastUsed"/>
+	</processors>
+	<post-processors/>
+</migration>

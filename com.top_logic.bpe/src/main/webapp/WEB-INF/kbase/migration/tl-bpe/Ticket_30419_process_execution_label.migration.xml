@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Adds the label of tl.bpe.execution:ProcessExecution (Ticket #30419). Up to now it reached existing
+	databases only through the automatic model upgrade, which an application may prevent.
+
+	The annotation replaces an existing one of the same kind.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_process_execution_label"
+		module="tl-bpe"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30419_create_changelog_and_access_tokens"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_30419_changelog_storage_algorithms"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_29037_Update_diagram_attribute"
+			module="tl-bpe"
+		/>
+	</dependencies>
+	<dropped-dependencies>
+		<module name="tl-layout-formeditor"/>
+	</dropped-dependencies>
+	<processors>
+		<add-annotations name="tl.bpe.execution:ProcessExecution">
+			<annotations>
+				<label>
+					<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+						<label><![CDATA[execution -> {
+  process = $execution.get(`tl.bpe.execution:ProcessExecution#process`);
+  collaboration = $process.get(`tl.bpe.bpml:Process#collaboration`);
+  participant = $process.get(`tl.bpe.bpml:Process#participant`);
+  ($collaboration.get(`tl.bpe.bpml:Collaboration#name`) || "?") + " - " + ($participant.get(`tl.bpe.bpml:Participant#name`) || "?")
+}]]></label>
+					</label-provider>
+				</label>
+			</annotations>
+		</add-annotations>
+	</processors>
+	<post-processors/>
+</migration>

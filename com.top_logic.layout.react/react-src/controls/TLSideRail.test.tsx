@@ -333,6 +333,25 @@ describe('the rail in a narrow area', () => {
     expect(drawer()).toBeNull();
     expect(await sentCommand(CMD_SET_DRAWER)).toEqual({ [ARG_DRAWER]: false });
   });
+
+  it('measures the area it stands in once a hidden frame around it is shown', async () => {
+    // In a hidden frame the rail has no positioned ancestor, and its parent - e.g. the pane of a
+    // split panel - has no width.
+    await mountRail({}, 0);
+    expect(column()).not.toBeNull();
+    expect(drawer()).toBeNull();
+
+    // The frame is shown: the rail now stands in a positioned area that is wide enough.
+    const area = document.createElement('div');
+    Object.defineProperty(area, 'clientWidth', { get: () => 1100 });
+    document.body.appendChild(area);
+    Object.defineProperty(rail(), 'offsetParent', { get: () => area });
+    act(() => observers.filter((observer) => observer.targets.includes(rail())).forEach((observer) => observer.fire()));
+    expect(column()).not.toBeNull();
+    expect(drawer()).toBeNull();
+    expect(observers.some((observer) => observer.targets.includes(area))).toBe(true);
+    expect(sent.find((entry) => entry.command === CMD_SET_DRAWER)).toBeUndefined();
+  });
 });
 
 describe('a section without header', () => {

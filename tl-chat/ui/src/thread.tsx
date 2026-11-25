@@ -1,4 +1,4 @@
-import { React } from 'tl-react-bridge'
+import { React, isCompositionKey } from 'tl-react-bridge'
 import {
   cardsForTurn,
   REVEAL_CARD_EVENT,
@@ -535,7 +535,8 @@ function AnswerFooter({
             placeholder={labels.feedbackNotePlaceholder}
             autoFocus
             onKeyDown={(event) => {
-              if (event.key !== 'Enter') return
+              // The Enter that ends a composition is the input method's: the note is not finished.
+              if (event.key !== 'Enter' || isCompositionKey(event.nativeEvent)) return
               event.preventDefault()
               onRate?.('down', draft || undefined)
               setNoteOpen(false)

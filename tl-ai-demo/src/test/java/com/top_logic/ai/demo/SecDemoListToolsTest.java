@@ -250,7 +250,7 @@ public class SecDemoListToolsTest extends SecDemoPersonaTest {
 
 		String writeTool = tool(CLASSIFIED_WRITE_SCRIPT_TOOL).name();
 		assertTrue("The run must be named as the reason: " + listing,
-			listing.contains("`" + writeTool + "` - out of reach because this run is unattended"));
+			listing.contains("`" + writeTool + "` - out of reach because this is a background run"));
 		assertTrue("...and what would change it: " + listing,
 			listing.contains("background allowlist"));
 		assertTrue("...and it must say the roles are not the reason: " + listing,

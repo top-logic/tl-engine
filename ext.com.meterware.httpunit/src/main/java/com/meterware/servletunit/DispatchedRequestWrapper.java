@@ -117,9 +117,28 @@ class ForwardRequestWrapper extends DispatchedRequestWrapper {
 
     private RequestDispatcherImpl _requestContext;
 
+    /** The paths of the original request, which a forward reports as attributes (Servlet spec 9.4.2). **/
+    private Hashtable _attributes = new Hashtable();
+
     ForwardRequestWrapper( HttpServletRequest request, RequestDispatcher dispatcher ) {
         super( request, dispatcher );
         _requestContext = (RequestDispatcherImpl) dispatcher;
+        putIfNotNull( RequestDispatcher.FORWARD_REQUEST_URI, request.getRequestURI() );
+        putIfNotNull( RequestDispatcher.FORWARD_CONTEXT_PATH, request.getContextPath() );
+        putIfNotNull( RequestDispatcher.FORWARD_SERVLET_PATH, request.getServletPath() );
+        putIfNotNull( RequestDispatcher.FORWARD_PATH_INFO, request.getPathInfo() );
+        putIfNotNull( RequestDispatcher.FORWARD_QUERY_STRING, request.getQueryString() );
+    }
+
+
+    private void putIfNotNull( String name, String value ) {
+        if (value != null) _attributes.put( name, value );
+    }
+
+
+    public Object getAttribute( String s ) {
+        Object result = _attributes.get( s );
+        return (result != null) ? result : super.getAttribute( s );
     }
 
 

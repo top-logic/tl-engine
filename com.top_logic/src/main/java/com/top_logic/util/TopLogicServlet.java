@@ -250,7 +250,7 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 			return;
 		}
 
-		boolean cookieCheck = isCookieCheckRequired();
+		boolean cookieCheck = isCookieCheckRequired(request);
 		if (cookieCheck && !processSessionCheck(request)) {
 			this.forwardToPage(ApplicationPages.getInstance().getNoCookiePage(), request, response);
 			return;
@@ -369,6 +369,24 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 	 */
 	protected boolean isCookieCheckRequired() {
 		return true;
+	}
+
+	/**
+	 * Whether the given request without a valid session must pass the check that the browser
+	 * accepts cookies.
+	 *
+	 * <p>
+	 * A servlet answering some of its requests in a way the check does not fit - e.g. a request
+	 * another servlet has forwarded to it, whose response must be the page itself rather than a
+	 * redirect - decides here per request.
+	 * </p>
+	 *
+	 * @param request
+	 *        The request being served.
+	 * @return Whether to run the check; {@link #isCookieCheckRequired()} by default.
+	 */
+	protected boolean isCookieCheckRequired(HttpServletRequest request) {
+		return isCookieCheckRequired();
 	}
 
 	/** Sets a log mark with the session id while executing the runnable. */

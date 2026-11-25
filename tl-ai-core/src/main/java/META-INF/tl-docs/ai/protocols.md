@@ -31,6 +31,7 @@ The module ships switched off (`MCPServerService$Module` is `false`). Every requ
 
 - One A2A `contextId` is one `AgentSession`, one `taskId` one recorded run acting as the account the caller's credential names (`RunEntryPoint.A2A`).
 - The calling agent is the run's user: `askUser` parks the run as in a chat, and the task goes to `INPUT_REQUIRED`; the caller's reply completes the parked question, so the same run resumes.
+- The calling agent approves no tool call, so the run is a background run, as an MCP request is: the `<background-allowlist>` bounds its tools in addition to the roles of the account, also for an administrator account ([capping unattended runs](doc:ai/security/tool-access-recipes#cap-what-an-unattended-run-can-do)). `allow-writes` of a served agent only narrows: a write tool needs `allow-writes="true"` and an entry in the list.
 - Remote answers reach a local model inside `UntrustedEnvelope.A2A_RESULT`, cut short, with artifacts as `tl-artifact://<app>/<kind>/<id>` references that `fetchArtifact` reads section by section.
 - A served context lives in its session's metadata and run transcripts and survives a restart.
 - An `A2AObserver` (`<observers>` on `A2AService`) learns of every exchange in both directions with context, task and message ids, through the same `ObserverQueue` as the run observers.

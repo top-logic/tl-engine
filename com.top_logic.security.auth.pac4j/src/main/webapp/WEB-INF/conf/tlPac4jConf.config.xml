@@ -18,6 +18,14 @@
 			</instance>
 		</config>
 
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-security-auth-pac4j" />
+				</modules>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory">
 			<instance class="com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory">
 				<callback-url>%PAC_CALLBACK_URL%</callback-url>

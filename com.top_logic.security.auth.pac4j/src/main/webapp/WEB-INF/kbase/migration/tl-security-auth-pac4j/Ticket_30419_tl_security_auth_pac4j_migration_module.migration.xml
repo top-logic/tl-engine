@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	First migration of the migration module tl-security-auth-pac4j (Ticket #30419). It creates the
+	model module tl.security.pac4j and the reference tl.accounts:Person#oidcIdentities, which up to
+	now reached existing databases only through the automatic model upgrade, which an application may
+	prevent.
+
+	A module without a stored version counts as new and without data (MigrationUtil.getNewVersions):
+	on an existing database this migration only runs, if the application lists tl-security-auth-pac4j
+	in the minimum-modules of the MigrationService. Otherwise its version is only stored, and the
+	automatic model upgrade creates the model elements. A database that already has them keeps them:
+	the processors skip what already exists.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_tl_security_auth_pac4j_migration_module"
+		module="tl-security-auth-pac4j"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30419_create_changelog_and_access_tokens"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_30419_changelog_storage_algorithms"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+	</dependencies>
+	<processors>
+		<create-module name="tl.security.pac4j">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.security.auth.pac4j.model.impl"
+					interface-package="com.top_logic.security.auth.pac4j.model"
+				/>
+			</annotations>
+		</create-module>
+		<create-class name="tl.security.pac4j:OidcIdentity"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="OidcIdentity"/>
+				<id-column value="subject"/>
+				<main-properties properties="client,subject"/>
+			</annotations>
+		</create-class>
+		<add-class-generalizations name="tl.security.pac4j:OidcIdentity">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-property name="tl.security.pac4j:OidcIdentity#client"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.pac4j:OidcIdentity#subject"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-reference name="tl.accounts:Person#oidcIdentities"
+			composite="true"
+			multiple="true"
+			type="tl.security.pac4j:OidcIdentity"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.security.pac4j:OidcIdentity#grantedGroups"
+			multiple="true"
+			type="tl.accounts:Group"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-reference>
+		<reorder-part name="tl.accounts:Person#oidcIdentities"/>
+	</processors>
+	<post-processors/>
+</migration>

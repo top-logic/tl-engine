@@ -49,6 +49,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -2258,6 +2259,27 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return null;
 	}
 
+	/**
+	 * Whether the given person may read the {@link Revision#AUTHOR_ATTR author} of the given
+	 * revision.
+	 *
+	 * <p>
+	 * A revision is readable for everybody (its type is without security), but the authors of all
+	 * commits would form an activity profile of every person. Therefore a person reads the author
+	 * of the own commits only; an administrator, who reads every author, does not reach this check.
+	 * </p>
+	 *
+	 * @implNote The rule is decided here and not by the security configuration, since the
+	 *           configuration cannot express it: the revision itself and its author would need
+	 *           different objects deciding the same operation Read (everybody for the revision, the
+	 *           author account for the attribute), whereas the attribute-level grants of a type are
+	 *           checked at the same object as the type. A revision cannot hold roles, and a type
+	 *           without security can have no access parent.
+	 */
+	private static boolean isRevisionAuthorReadable(Person person, Revision revision) {
+		return person.equals(revision.resolveAuthor());
+	}
+
 	@Override
 	public boolean isAllowed(Person person, TLObject instance, TLStructuredTypePart attribute,
 			BoundCommandGroup commandGroup) {
@@ -2280,6 +2302,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		Boolean allowedBypass = BoundChecker.isAllowedBypass(person, commandGroup);
 		if (allowedBypass != null) {
 			return allowedBypass;
+		}
+		if (instance instanceof Revision revision && Revision.AUTHOR_ATTR.equals(attribute.getName())) {
+			return isRevisionAuthorReadable(person, revision);
 		}
 		if (isWithoutSecurity(instance)) {
 			// An object of a type without security is not access controlled, neither on the object,

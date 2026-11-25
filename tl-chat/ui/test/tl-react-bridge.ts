@@ -50,6 +50,11 @@ export function isPageLeaving(): boolean {
   return pageLeaving
 }
 
+/** The check of the real bridge, which the key handlers of the chat depend on. */
+export function isCompositionKey(event: KeyboardEvent): boolean {
+  return event.isComposing || event.keyCode === 229
+}
+
 /** Sets what `isPageLeaving` answers. */
 export function setPageLeaving(leaving: boolean): void {
   pageLeaving = leaving

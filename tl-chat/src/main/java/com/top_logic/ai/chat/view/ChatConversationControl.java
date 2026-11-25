@@ -46,9 +46,12 @@ import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.ai.core.security.ReadFilter;
@@ -103,6 +106,23 @@ public class ChatConversationControl extends ChatControl {
 	public static final String STATE_CAPABILITIES = "capabilities";
 
 	/**
+	 * State key: whether the conversation shown may only be read - the acting account may not write
+	 * it, or the element's {@link ChatConversationElement.Config#getWritable() writable} function
+	 * refuses it. The browser then shows no input line and no action that changes the conversation.
+	 * A new conversation, which has no session yet, is never read-only.
+	 */
+	public static final String STATE_READ_ONLY = "readOnly";
+
+	/**
+	 * Command by which the browser reports the conversation it shows, see
+	 * {@link #publishSession(Map)}. Takes {@link #ARG_PUBLISHED_ID}.
+	 */
+	public static final String CMD_PUBLISH_SESSION = "publishSession";
+
+	/** Argument of {@link #CMD_PUBLISH_SESSION}: the id of the conversation, empty for a fresh one. */
+	public static final String ARG_PUBLISHED_ID = "id";
+
+	/**
 	 * Name of the channel that holds the open conversation of an element that wires no
 	 * {@code input}.
 	 */
@@ -124,6 +144,9 @@ public class ChatConversationControl extends ChatControl {
 	private String _activeWhenHidden;
 
 	private final ViewChannel _busyChannel;
+
+	/** The compiled {@link ChatConversationElement.Config#getWritable()}, <code>null</code> for none. */
+	private final QueryExecutor _writable;
 
 	/** The account's chat list, as the browser is told it. */
 	private final SessionListWatch _sessions;
@@ -311,7 +334,10 @@ public class ChatConversationControl extends ChatControl {
 		ChannelRef inputRef = config.getInput();
 		ViewChannel input =
 			inputRef == null ? new DefaultViewChannel(INTERNAL_INPUT) : context.resolveChannel(inputRef);
-		_selection = new SessionSelection(input, this::putState, ChatConversationControl::currentPerson);
+		Expr writable = config.getWritable();
+		_writable = writable == null ? null : QueryExecutor.compile(writable);
+		_selection = new SessionSelection(input, this::putState, ChatConversationControl::currentPerson,
+			this::writeReadOnly);
 		ViewChannel.ChannelListener listener = _selection.listener();
 		input.addListener(listener);
 		addCleanupAction(() -> input.removeListener(listener));
@@ -443,9 +469,25 @@ public class ChatConversationControl extends ChatControl {
 	protected void onBeforeWrite() {
 		super.onBeforeWrite();
 		_sessions.write();
+		writeReadOnly(_selection.selected());
 		Person person = signedInPerson();
 		putState(STATE_CAPABILITIES, person == null ? ChatCapabilitiesResponse.create()
 			: ChatCapabilities.build(person, binding().tracker().getPromptImproverAgentName()));
+	}
+
+	/**
+	 * Writes {@link #STATE_READ_ONLY} for the given session, the one the conversation shows.
+	 *
+	 * @param session
+	 *        The session shown, <code>null</code> for a new conversation.
+	 */
+	private void writeReadOnly(TLObject session) {
+		putState(STATE_READ_ONLY, Boolean.valueOf(session != null && !mayWrite(currentPerson(), session)));
+	}
+
+	@Override
+	protected boolean isWritable(TLObject session) {
+		return _writable == null || SearchExpression.isTrue(_writable.execute(session));
 	}
 
 	/**
@@ -531,14 +573,15 @@ public class ChatConversationControl extends ChatControl {
 	 * </p>
 	 *
 	 * @param args
-	 *        {@code id} is the owned chat session id, or empty to clear.
+	 *        {@link #ARG_PUBLISHED_ID} is the id of a chat the account may read, or empty to clear.
 	 */
-	@ReactCommandHandler(value = "publishSession", params = {
-		@ReactParam(name = "id", type = "string", description = "Owned chat session id, or empty to clear.")
+	@ReactCommandHandler(value = CMD_PUBLISH_SESSION, params = {
+		@ReactParam(name = ARG_PUBLISHED_ID, type = "string", description = "Id of a readable chat session, or empty to clear.")
 	})
 	public void publishSession(Map<String, Object> args) {
-		String id = args == null ? "" : String.valueOf(args.getOrDefault("id", "")).trim();
-		TLObject session = id.isEmpty() ? null : ChatSessionIds.ownedSession(id, currentPerson());
+		String id = args == null ? "" : String.valueOf(args.getOrDefault(ARG_PUBLISHED_ID, "")).trim();
+		TLObject session =
+			id.isEmpty() ? null : ChatSessionIds.accessibleSession(id, currentPerson(), SimpleBoundCommandGroup.READ);
 		_selection.publish(id, session);
 	}
 

@@ -25,6 +25,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.memory.CompactionStrategies;
 import com.top_logic.ai.core.memory.CompactionStrategy;
 import com.top_logic.ai.core.memory.ConversationMemory;
@@ -116,6 +117,17 @@ public class ChatSessionManager {
 	 * </p>
 	 */
 	private volatile Person _activeOwner;
+
+	/**
+	 * Whether {@link #_activeOwner} may write the active session, decided when the session was
+	 * activated.
+	 *
+	 * <p>
+	 * A window of an account that may only read the chat watches it: it is not registered to answer
+	 * what a subagent of the chat asks, and starts no lead turn for a subagent's news.
+	 * </p>
+	 */
+	private volatile boolean _activeWritable;
 
 	/**
 	 * The state of the window when it shows no chat; created on first use.
@@ -268,7 +280,7 @@ public class ChatSessionManager {
 	 * </p>
 	 *
 	 * @param sessionId
-	 *        The chat; the caller has established that it is the given account's.
+	 *        The chat; the caller has established that the given account may act on it.
 	 * @param owner
 	 *        The account acting.
 	 * @return The chat's state, or <code>null</code> when no chat is named.
@@ -402,7 +414,8 @@ public class ChatSessionManager {
 	/**
 	 * Listens to the given registry for the session's state: the register that lets any window of the
 	 * account find and answer what a subagent asks, and the waker that starts a lead turn when there is
-	 * news - which, for a registry that worked on while nobody listened, may already be there.
+	 * news - which, for a registry that worked on while nobody listened, may already be there. Both
+	 * only for an account that may write the chat.
 	 */
 	private void attachSubagents(SessionState state) {
 		Person owner = _activeOwner;
@@ -420,6 +433,10 @@ public class ChatSessionManager {
 		// Before the window's own listener: that one is removed with the window, while a subagent it
 		// registered works on and must still be dropped when it ends.
 		PendingInteractionRegistry.forgetEndedOf(registry);
+		if (!_activeWritable) {
+			// A window that only watches the chat answers no subagent and wakes no lead turn.
+			return;
+		}
 		state._subagentListeners.add(
 			PendingInteractionRegistry.subagentListener(owner, tracker, _activeSessionId));
 		state._subagentWaker = new SubagentWaker(registry, ChatProcessor.wakeHost(tracker, owner, _activeSessionId));
@@ -499,7 +516,7 @@ public class ChatSessionManager {
 	 * <p>
 	 * Subagent ids are unique within a chat, over all its windows; the id of the lead's tool call that
 	 * started it, when given, makes sure a card finds the subagent it shows and no other. Does not check
-	 * who asks: the caller makes sure the chat is theirs.
+	 * who asks: the caller makes sure the account may act on the chat.
 	 * </p>
 	 *
 	 * @param sessionId
@@ -641,7 +658,8 @@ public class ChatSessionManager {
 	 * @param sessionId
 	 *        The session ID to switch to.
 	 * @param owner
-	 *        The person acting; the session must be theirs. {@code null} owns nothing.
+	 *        The person acting; they must be allowed to read the session. {@code null} may read
+	 *        nothing.
 	 * @return whether the session is now the active one.
 	 *
 	 * @see #switchSession(String, Person, boolean)
@@ -656,7 +674,8 @@ public class ChatSessionManager {
 	 * @param sessionId
 	 *        The session ID to switch to.
 	 * @param owner
-	 *        The person acting; the session must be theirs. {@code null} owns nothing.
+	 *        The person acting; they must be allowed to read the session. {@code null} may read
+	 *        nothing.
 	 * @param announce
 	 *        Whether a switch to another session is announced to the
 	 *        {@link #addActiveSessionListener(ActiveSessionListener) listeners}. <code>false</code>
@@ -672,16 +691,18 @@ public class ChatSessionManager {
 			&& !_changedElsewhere.contains(sessionId)) {
 			return true;
 		}
-		TLObject incoming = ChatHistoryService.findOwnedSessionById(sessionId, owner);
+		TLObject incoming = ChatHistoryService.findAccessibleSession(sessionId, owner, SimpleBoundCommandGroup.READ);
 		if (incoming == null) {
-			Logger.warn("Refused to activate chat session " + sessionId + ": not "
-				+ (owner == null ? "anybody's" : "this user's") + ".", ChatSessionManager.class);
+			Logger.warn("Refused to activate chat session " + sessionId + ": not readable for "
+				+ (owner == null ? "nobody" : "this user") + ".", ChatSessionManager.class);
 			return false;
 		}
+		boolean writable = ChatHistoryService.isAllowed(owner, incoming, SimpleBoundCommandGroup.WRITE);
 		PersistJob outgoing;
 		synchronized (_lock) {
 			if (sessionId.equals(_activeSessionId)) {
 				_activeOwner = owner;
+				_activeWritable = writable;
 				if (_changedElsewhere.remove(sessionId)) {
 					// What the session's metadata says is read afresh with it.
 					disposeSessionState(_sessions.remove(sessionId));
@@ -706,17 +727,22 @@ public class ChatSessionManager {
 			if (cached != null) {
 				_activeSessionId = sessionId;
 				_activeOwner = owner;
+				_activeWritable = writable;
 			} else {
 				SessionState newState = loadFromDatabase(sessionId, owner);
 				_sessions.put(sessionId, newState);
 				_activeSessionId = sessionId;
 				_activeOwner = owner;
+				_activeWritable = writable;
 				reattachSubagents(newState);
 			}
 		}
 		persistOutsideLock(outgoing);
-		// The window shows the chat from now on: a subagent's result that ended before is no news.
-		ChatHistoryService.markSeen(incoming);
+		// The window shows the chat from now on: a subagent's result that ended before is no news. A
+		// reader who may not write the chat leaves it as it is.
+		if (writable) {
+			ChatHistoryService.markSeen(incoming);
+		}
 		if (announce) {
 			notifyActiveSessionChanged(sessionId, owner);
 		}
@@ -797,7 +823,7 @@ public class ChatSessionManager {
 		String metadataJson = null;
 
 		try {
-			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, owner);
+			TLObject session = ChatHistoryService.findAccessibleSession(sessionId, owner, SimpleBoundCommandGroup.READ);
 			if (session != null) {
 				String json = ChatHistoryService.loadConversationJson(session);
 				if (json != null && !json.isEmpty()) {
@@ -848,6 +874,7 @@ public class ChatSessionManager {
 			if (wasActive) {
 				_activeSessionId = null;
 				_activeOwner = null;
+				_activeWritable = false;
 				// Nothing of the deleted chat carries over to what the window shows next.
 				_noChat = null;
 			}
@@ -894,9 +921,9 @@ public class ChatSessionManager {
 	 * Snapshot of what to persist, taken under {@link #_lock}.
 	 *
 	 * <p>
-	 * Carries the owner the session was activated for, so the write that happens later - outside
-	 * the lock, possibly on a background thread - resolves the session the same guarded way the
-	 * activation did.
+	 * Carries the account the session was activated for, so the write that happens later - outside
+	 * the lock, possibly on a background thread - is made only if that account may write the
+	 * session.
 	 * </p>
 	 */
 	private record PersistJob(String sessionId, String metadataJson, Person owner) {}
@@ -927,7 +954,9 @@ public class ChatSessionManager {
 			return;
 		}
 		try {
-			TLObject session = ChatHistoryService.findOwnedSessionById(job.sessionId(), job.owner());
+			// A window of an account that may only read the chat stores nothing on it.
+			TLObject session =
+				ChatHistoryService.findAccessibleSession(job.sessionId(), job.owner(), SimpleBoundCommandGroup.WRITE);
 			if (session != null && job.metadataJson() != null) {
 				// The approval mode is the one value the switch alone writes (#658).
 				ChatHistoryService.updateMetadata(session,

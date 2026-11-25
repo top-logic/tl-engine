@@ -17,10 +17,11 @@ import java.util.Set;
 
 import com.top_logic.base.cluster.ClusterManager;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
-import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -32,13 +33,22 @@ import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
+import com.top_logic.element.boundsec.manager.rule.RoleRule;
+import com.top_logic.element.boundsec.manager.rule.RuleHistory;
+import com.top_logic.element.boundsec.manager.rule.config.HistoryMode;
+import com.top_logic.knowledge.security.SecurityStorage.StorageEntry;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.InteractionRevisionMemo;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.StorageException;
+import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.export.PreloadContext;
 import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -155,6 +165,15 @@ public class StorageAccessManager extends ElementAccessManager {
 	 */
 	private static final InteractionRevisionMemo<Map<RolesOfPerson, Boolean>> ROLE_ON_ANY_OBJECT_MEMO =
 		new InteractionRevisionMemo<>("roleOnAnyObject", kb -> new HashMap<>());
+
+	/**
+	 * For the identifier of an object, the groups by the identifier of the role they hold on each
+	 * version of the object according to the storage.
+	 *
+	 * @see #storedRolesOfIdentity(TLID)
+	 */
+	private static final InteractionRevisionMemo<Map<TLID, Map<TLID, Set<Group>>>> VERSION_ROLES_MEMO =
+		new InteractionRevisionMemo<>("storedRolesOfVersions", kb -> new HashMap<>());
 
     /** Saves the security storage instance. */
     private final SecurityStorage securityStorage;
@@ -367,6 +386,9 @@ public class StorageAccessManager extends ElementAccessManager {
 					break;
 			}
         }
+		if (aBO != null && aPerson != null && needsEvaluation(aBO, null)) {
+			return evaluateRoles(aPerson, aBO);
+		}
 		return getRoleComputation(aPerson).getRoles(aBO);
     }
 
@@ -385,8 +407,78 @@ public class StorageAccessManager extends ElementAccessManager {
 					break;
 			}
         }
+		if (aBO != null && needsEvaluation(aBO, accessRoles)) {
+			return evaluateHasRole(aPerson, aBO, accessRoles);
+		}
 		return getRoleComputation(aPerson).hasRole(aBO, accessRoles);
     }
+
+	/**
+	 * Whether the roles on the given object cannot be answered by a lookup of the identities of the
+	 * object and its role parents in the storage.
+	 *
+	 * <p>
+	 * This is the case, if the object or one of its role parents is a historic version, or if a rule
+	 * that is not stored may grant a role there.
+	 * </p>
+	 *
+	 * @param roles
+	 *        The roles asked for, <code>null</code> for all roles.
+	 */
+	final boolean needsEvaluation(BoundObject object, Collection<? extends BoundRole> roles) {
+		RuleAnalysis analysis = getRuleAnalysis();
+		if (needsEvaluation(analysis, object, roles)) {
+			return true;
+		}
+		if (analysis.isStorageSufficientForCurrentObjects()) {
+			return false;
+		}
+		boolean[] result = { false };
+		BoundHelper.visitAllSecurityParents(object, parent -> {
+			if (needsEvaluation(analysis, parent, roles)) {
+				result[0] = true;
+				return Boolean.FALSE;
+			}
+			return Boolean.TRUE;
+		});
+		return result[0];
+	}
+
+	private static boolean needsEvaluation(RuleAnalysis analysis, BoundObject object,
+			Collection<? extends BoundRole> roles) {
+		if (!(object instanceof TLObject item) || !item.tValid()) {
+			// Nothing can be evaluated on a deleted object.
+			return false;
+		}
+		if (RuleHistory.isHistoric(item)) {
+			return true;
+		}
+		if (item.tType() instanceof TLClass type) {
+			return roles == null ? analysis.hasNotStoredRule(type) : analysis.hasNotStoredRule(type, roles);
+		}
+		return false;
+	}
+
+	private boolean evaluateHasRole(Person person, BoundObject object, Collection<? extends BoundRole> roles) {
+		Collection<Group> groups = getGroups(person);
+		for (BoundRole role : roles) {
+			if (CollectionUtil.containsAny(groups, getEffectiveGroups(object, role))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private Set<BoundRole> evaluateRoles(Person person, BoundObject object) {
+		Collection<Group> groups = getGroups(person);
+		Set<BoundRole> result = new HashSet<>();
+		for (BoundedRole role : BoundedRole.getAll()) {
+			if (CollectionUtil.containsAny(groups, getEffectiveGroups(object, role))) {
+				result.add(role);
+			}
+		}
+		return result;
+	}
 
 	/**
 	 * Answers from the {@link SecurityStorage}, which holds an entry for each object a group has a
@@ -400,6 +492,14 @@ public class StorageAccessManager extends ElementAccessManager {
 	protected boolean internalHasRoleOnAnyObject(Person person, Collection<? extends BoundRole> roles) {
 		if (securityStorage.isRebuilding()) {
 			return true;
+		}
+		RuleAnalysis analysis = getRuleAnalysis();
+		for (BoundRole role : roles) {
+			if (analysis.isBeyondStorage(role)) {
+				// The role may be held on a historic version of an object or through a rule that is
+				// not stored, which the storage does not know.
+				return true;
+			}
 		}
 		Set<TLID> roleIDs = roleIDs(roles);
 		if (roleIDs.isEmpty()) {
@@ -456,7 +556,51 @@ public class StorageAccessManager extends ElementAccessManager {
 					break;
 			}
         }
-		return getRoleComputation(user).getAllowedBusinessObjects(someRoles, objects);
+		PreloadContext preload = new PreloadContext();
+		try {
+			return filterAllowed(preload, user, someRoles, objects);
+		} finally {
+			preload.close();
+		}
+	}
+
+	private <T extends BoundObject> Collection<T> filterAllowed(PreloadContext preload, Person user,
+			Collection<? extends BoundRole> someRoles, Collection<T> objects) {
+		if (objects.size() > 1 && !getRuleAnalysis().isStorageSufficientForCurrentObjects()) {
+			// The role parents of each object are visited to find out, whether the storage answers.
+			preloadRuleNavigation(preload, objects, true);
+		}
+		List<T> simple = new ArrayList<>(objects.size());
+		List<T> toEvaluate = new ArrayList<>();
+		for (T object : objects) {
+			if (needsEvaluation(object, someRoles)) {
+				toEvaluate.add(object);
+			} else {
+				simple.add(object);
+			}
+		}
+		prefetchVersions(preload, toEvaluate);
+		List<T> evaluated = new ArrayList<>();
+		for (T object : toEvaluate) {
+			if (evaluateHasRole(user, object, someRoles)) {
+				evaluated.add(object);
+			}
+		}
+		if (evaluated.isEmpty() && simple.size() == objects.size()) {
+			return getRoleComputation(user).getAllowedBusinessObjects(someRoles, objects);
+		}
+		if (simple.isEmpty()) {
+			return evaluated;
+		}
+		Set<T> allowed = new HashSet<>(getRoleComputation(user).getAllowedBusinessObjects(someRoles, simple));
+		allowed.addAll(evaluated);
+		List<T> result = new ArrayList<>(allowed.size());
+		for (T object : objects) {
+			if (allowed.contains(object)) {
+				result.add(object);
+			}
+		}
+		return result;
     }
 
 	/**
@@ -564,21 +708,178 @@ public class StorageAccessManager extends ElementAccessManager {
     }
 
 
-    @Override
-    public Collection<Group> getGroups(BoundObject aBO, BoundRole aRole) {
-		if (securityStorage.isRebuilding() || !securityStorage.isAutoUpdate() || isInvalid(aBO, aRole)) {
-            // Do not use rebuild strategy here!
-            return super.getGroups(aBO, aRole);
-        }
-        try {
-            return securityStorage.getGroups(aBO, aRole);
-        }
-        catch (StorageException ex) {
-            Logger.error("Unable to get groups from security storage. Executing manually...", ex, this);
-            return super.getGroups(aBO, aRole);
-        }
-    }
-    
+	@Override
+	protected boolean useRoleMemo() {
+		return super.useRoleMemo() && !securityStorage.isRebuilding();
+	}
+
+	@Override
+	protected Set<Group> computeGroups(Wrapper wrapper, BoundRole role) {
+		BoundObject object = (BoundObject) wrapper;
+		if (!wrapper.tValid()) {
+			// A deleted object: no rule applies, the storage is asked as for every current object.
+			try {
+				return new HashSet<>(securityStorage.getGroups(object, role));
+			} catch (StorageException ex) {
+				Logger.error("Unable to get groups from security storage.", ex, this);
+				return new HashSet<>();
+			}
+		}
+		boolean historic = RuleHistory.isHistoric(wrapper);
+		Wrapper current = historic ? WrapperHistoryUtils.getCurrent(wrapper) : wrapper;
+		if (securityStorage.isRebuilding() || !securityStorage.isAutoUpdate()
+			|| (current != null && isInvalid((BoundObject) current, role))) {
+			// Do not use rebuild strategy here!
+			return super.computeGroups(wrapper, role);
+		}
+		RuleAnalysis analysis = getRuleAnalysis();
+		try {
+			if (!historic) {
+				Set<Group> result = new HashSet<>(securityStorage.getGroups(object, role));
+				if (wrapper.tType() instanceof TLClass type && analysis.hasNotStoredRule(type)) {
+					addRuleGroups(result, wrapper, role, rule -> !analysis.isStored(rule));
+				}
+				return result;
+			}
+			// A historic version: The storage holds the roles of the current object. Of these, only
+			// the entries of direct assignments and of rules evaluated on the current data hold for
+			// the version, too.
+			Set<Group> result = new HashSet<>();
+			if (current != null) {
+				addStoredGroupsOfIdentity(result, (BoundObject) current, role);
+			}
+			addRuleGroups(result, wrapper, role, rule -> !isStoredForEachVersion(rule));
+			return result;
+		} catch (StorageException ex) {
+			Logger.error("Unable to get groups from security storage. Executing manually...", ex, this);
+			return super.computeGroups(wrapper, role);
+		}
+	}
+
+	/**
+	 * Whether the entries the given rule produces in the storage for a current object hold for each
+	 * version of the object.
+	 */
+	private boolean isStoredForEachVersion(RoleRule rule) {
+		return rule.getHistory().getMode() == HistoryMode.CURRENT && getRuleAnalysis().isStored(rule);
+	}
+
+	private void addStoredGroupsOfIdentity(Set<Group> result, BoundObject current, BoundRole role)
+			throws StorageException {
+		if (!(role instanceof BoundedRole storedRole)) {
+			return;
+		}
+		Set<Group> groups = storedRolesOfIdentity(current.getID()).get(storedRole.tIdLocal());
+		if (groups != null) {
+			result.addAll(groups);
+		}
+	}
+
+	/**
+	 * The groups by the identifier of the role they hold on each version of the object with the
+	 * given identifier according to the storage: through a direct assignment, or through a rule
+	 * that is evaluated on the current data.
+	 *
+	 * <p>
+	 * All roles of an object are requested at once and kept for the current interaction.
+	 * </p>
+	 */
+	private Map<TLID, Set<Group>> storedRolesOfIdentity(TLID id) throws StorageException {
+		Map<TLID, Map<TLID, Set<Group>>> memo = versionRolesMemo();
+		if (memo == null) {
+			return loadStoredRoles(Collections.singletonList(id)).get(id);
+		}
+		Map<TLID, Set<Group>> roles = memo.get(id);
+		if (roles == null) {
+			roles = loadStoredRoles(Collections.singletonList(id)).get(id);
+			memo.put(id, roles);
+		}
+		return roles;
+	}
+
+	private Map<TLID, Map<TLID, Set<Group>>> versionRolesMemo() {
+		return useRoleMemo() ? VERSION_ROLES_MEMO.current(PersistencyLayer.getKnowledgeBase()) : null;
+	}
+
+	/**
+	 * Requests {@link #storedRolesOfIdentity(TLID)} for all given identifiers at once.
+	 *
+	 * @return An entry for each of the given identifiers.
+	 */
+	private Map<TLID, Map<TLID, Set<Group>>> loadStoredRoles(Collection<TLID> ids) throws StorageException {
+		Map<TLID, Map<TLID, Set<Group>>> result = new HashMap<>();
+		for (TLID id : ids) {
+			result.put(id, new HashMap<>());
+		}
+		for (StorageEntry entry : securityStorage.getEntries(null, ids, null)) {
+			if (!entry.isDirectAssignment()) {
+				RoleProvider reason = getRulefromPersitancyId(Integer.valueOf(entry.reason()));
+				if (!(reason instanceof RoleRule rule) || !isStoredForEachVersion(rule)) {
+					continue;
+				}
+			}
+			Group group = Group.getInstance(entry.group());
+			Map<TLID, Set<Group>> roles = result.get(entry.businessObject());
+			if (group != null && roles != null) {
+				roles.computeIfAbsent(entry.role(), role -> new HashSet<>()).add(group);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Loads what is needed to check the historic versions among the given objects, before the
+	 * objects are checked one by one: the values the rules navigate first, and the stored roles.
+	 * The same is done for the historic versions among their role parents.
+	 *
+	 * <p>
+	 * The number of requests to the database then depends on the depth of the chains of role
+	 * parents, not on the number of objects.
+	 * </p>
+	 */
+	private void prefetchVersions(PreloadContext preload, Collection<? extends BoundObject> objects) {
+		if (objects.size() < 2) {
+			return;
+		}
+		Map<TLID, Map<TLID, Set<Group>>> memo = securityStorage.isAutoUpdate() ? versionRolesMemo() : null;
+		Set<BoundObject> seen = new HashSet<>();
+		Collection<? extends BoundObject> level = objects;
+		while (!level.isEmpty()) {
+			List<BoundObject> versions = new ArrayList<>();
+			for (BoundObject object : level) {
+				if (seen.add(object) && object.tValid() && RuleHistory.isHistoric(object)) {
+					versions.add(object);
+				}
+			}
+			if (versions.isEmpty()) {
+				break;
+			}
+			preloadRuleNavigation(preload, versions, false);
+			if (memo != null) {
+				Set<TLID> ids = new HashSet<>();
+				for (BoundObject version : versions) {
+					if (!memo.containsKey(version.getID())) {
+						ids.add(version.getID());
+					}
+				}
+				try {
+					if (!ids.isEmpty()) {
+						memo.putAll(loadStoredRoles(ids));
+					}
+				} catch (StorageException ex) {
+					// The roles are requested again when the objects are checked.
+					Logger.warn("Unable to get roles of historic versions from security storage.", ex, this);
+					memo = null;
+				}
+			}
+			List<BoundObject> parents = new ArrayList<>();
+			for (BoundObject version : versions) {
+				parents.addAll(version.getSecurityParents());
+			}
+			level = parents;
+		}
+	}
+
     private boolean isInvalid(BoundObject aBO, BoundRole aRole) {
 		if (_invalidObjects == null) {
 			// Check whether the update process has started.

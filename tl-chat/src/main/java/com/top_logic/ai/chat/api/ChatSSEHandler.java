@@ -68,6 +68,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.ai.core.agent.approval.UserInteractionStore;
@@ -459,7 +460,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 			return null;
 		}
 		try {
-			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, owner);
+			TLObject session = ChatHistoryService.findAccessibleSession(sessionId, owner, SimpleBoundCommandGroup.READ);
 			ConversationBackend backend =
 				session instanceof AgentSession agentSession ? ConversationBackendService.backendFor(agentSession) : null;
 			return backend == null ? null : Integer.valueOf(backend.contextWindow());

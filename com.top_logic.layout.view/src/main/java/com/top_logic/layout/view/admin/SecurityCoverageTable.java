@@ -1258,6 +1258,10 @@ public class SecurityCoverageTable implements UIElement {
 			case UNCHECKED_GRANT -> I18NConstants.COVERAGE_PROBLEM_UNCHECKED_GRANT__OPERATION_ROLES.fill(
 				finding.getOperationLabel(),
 				finding.getRoles().stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(VALUE_SEPARATOR)));
+			// A finding about the rules for historic versions names the rules and what to change.
+			case ANCHOR_NEVER_COVERS, ANCHOR_WITHOUT_INDEX, ROLE_CYCLE, ANCHOR_STEP_FROM_CURRENT, NO_CURRENT_ROLE_SOURCE,
+					RULE_NOT_STORED, MIXED_BACKWARDS_STEP ->
+				finding.getMessage();
 		};
 	}
 
@@ -1306,6 +1310,10 @@ public class SecurityCoverageTable implements UIElement {
 			case UNCHECKED_GRANT -> {
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_UNCHECKED_GRANT);
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_ADD_CHECK);
+			}
+			case ANCHOR_NEVER_COVERS, ANCHOR_WITHOUT_INDEX, ROLE_CYCLE, ANCHOR_STEP_FROM_CURRENT, NO_CURRENT_ROLE_SOURCE,
+					RULE_NOT_STORED, MIXED_BACKWARDS_STEP -> {
+				// The solution is part of the problem description.
 			}
 		}
 		return solutions;

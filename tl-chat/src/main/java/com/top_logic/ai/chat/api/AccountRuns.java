@@ -14,6 +14,7 @@ import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.ai.core.agent.subagent.SubagentInbox;
 import com.top_logic.ai.core.agent.subagent.SubagentJob;
@@ -295,11 +296,11 @@ public final class AccountRuns {
 	}
 
 	/**
-	 * The subagent named, found in the named chat of this account, whichever of the account's
-	 * windows started it; without a chat named, in the chat the window shows.
+	 * The subagent named, found in the named chat, whichever window started it; without a chat
+	 * named, in the chat the window shows. The account must be allowed to write that chat.
 	 *
-	 * @return The subagent, or <code>null</code> when there is no account, no such chat of this
-	 *         account, or no such subagent in it.
+	 * @return The subagent, or <code>null</code> when there is no account, no such chat this account
+	 *         may write, or no such subagent in it.
 	 */
 	private static SubagentJob findOwnedSubagent(TaskProgressTracker window, Person person, String sessionId,
 			String subagentId, String parentToolCallId) {
@@ -307,7 +308,8 @@ public final class AccountRuns {
 			return null;
 		}
 		String chat = sessionId == null || sessionId.isBlank() ? window.getActiveSessionId() : sessionId.trim();
-		if (chat == null || ChatHistoryService.findOwnedSessionById(chat, person) == null) {
+		if (chat == null
+			|| ChatHistoryService.findAccessibleSession(chat, person, SimpleBoundCommandGroup.WRITE) == null) {
 			return null;
 		}
 		return ChatSessionManager.findSubagent(chat, subagentId, parentToolCallId);

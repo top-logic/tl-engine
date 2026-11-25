@@ -19,6 +19,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import com.top_logic.ai.chat.api.messages.AttachmentUploadReply;
 import com.top_logic.ai.chat.api.messages.ChatSendReply;
 import com.top_logic.ai.chat.api.messages.DraftAttachmentDto;
+import com.top_logic.ai.chat.backend.AttachmentPolicy;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.form.FieldControlService;
@@ -84,8 +85,28 @@ public class TestChatDraftCommands extends BasicTestCase {
 			Map<String, Object> reply = _driver.upload(conversation, "notiz.txt", "text/plain", PNG);
 
 			assertEquals(List.of(Resources.getInstance().getString(
-				I18NConstants.ERROR_ATTACHMENT_TYPE__FILE.fill("notiz.txt"))), reply.get(AttachmentUploadReply.REASON__PROP));
+				I18NConstants.ERROR_ATTACHMENT_TYPE__FILE_TYPES.fill("notiz.txt", AttachmentPolicy.MODEL_READABLE.typesLabel()))),
+				reply.get(AttachmentUploadReply.REASON__PROP));
 			assertEquals(List.of(), ChatCommandDriver.attachments(conversation).entries());
+		} finally {
+			conversation.cleanupTree();
+		}
+	}
+
+	/**
+	 * Without a backend the framework's own agent answers, which takes the files the language model
+	 * reads: a PDF, but no CSV.
+	 */
+	public void testTheOwnAgentTakesWhatTheModelReads() throws Exception {
+		ChatCommandDriver.Conversation conversation = _driver.conversation(anna);
+		try {
+			assertEquals(List.of(), _driver.upload(conversation, "bericht.pdf", "application/pdf", PNG)
+				.get(AttachmentUploadReply.REASON__PROP));
+			assertEquals(List.of(Resources.getInstance().getString(
+				I18NConstants.ERROR_ATTACHMENT_TYPE__FILE_TYPES.fill("daten.csv",
+					AttachmentPolicy.MODEL_READABLE.typesLabel()))),
+				_driver.upload(conversation, "daten.csv", "text/csv", PNG).get(AttachmentUploadReply.REASON__PROP));
+			assertEquals(1, ChatCommandDriver.attachments(conversation).entries().size());
 		} finally {
 			conversation.cleanupTree();
 		}
@@ -95,7 +116,7 @@ public class TestChatDraftCommands extends BasicTestCase {
 	public void testTheSixthFileIsRefused() throws Exception {
 		ChatCommandDriver.Conversation conversation = _driver.conversation(anna);
 		try {
-			for (int n = 1; n <= ChatAttachments.MAX_ATTACHMENTS; n++) {
+			for (int n = 1; n <= AttachmentPolicy.MODEL_READABLE_MAX_FILES; n++) {
 				assertEquals(List.of(),
 					_driver.upload(conversation, "bild" + n + ".png", "image/png", PNG).get(AttachmentUploadReply.REASON__PROP));
 			}
@@ -103,9 +124,9 @@ public class TestChatDraftCommands extends BasicTestCase {
 
 			assertEquals(List.of(Resources.getInstance().getString(
 				I18NConstants.ERROR_TOO_MANY_ATTACHMENTS__FILE_MAX.fill("zuviel.png",
-					Integer.valueOf(ChatAttachments.MAX_ATTACHMENTS)))),
+					Integer.valueOf(AttachmentPolicy.MODEL_READABLE_MAX_FILES)))),
 				reply.get(AttachmentUploadReply.REASON__PROP));
-			assertEquals(ChatAttachments.MAX_ATTACHMENTS, ChatCommandDriver.attachments(conversation).entries().size());
+			assertEquals(AttachmentPolicy.MODEL_READABLE_MAX_FILES, ChatCommandDriver.attachments(conversation).entries().size());
 		} finally {
 			conversation.cleanupTree();
 		}
@@ -116,7 +137,7 @@ public class TestChatDraftCommands extends BasicTestCase {
 		ChatCommandDriver.Conversation conversation = _driver.conversation(anna);
 		try {
 			assertTrue(conversation.maxUploadSize() > 0);
-			assertTrue(conversation.maxUploadSize() <= ChatAttachments.MAX_ATTACHMENT_SIZE);
+			assertTrue(conversation.maxUploadSize() <= AttachmentPolicy.MODEL_READABLE_MAX_FILE_SIZE);
 		} finally {
 			conversation.cleanupTree();
 		}

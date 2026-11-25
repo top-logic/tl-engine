@@ -452,7 +452,7 @@ public final class ChatTranscripts {
 			.setModelPicker(features.modelPicker())
 			.setEffortPicker(features.effortPicker())
 			.setMcpPicker(features.mcpPicker())
-			.setAttachments(features.attachments())
+			.setAttachments(ConversationBackendService.attachmentPolicy(backend).allowsAny())
 			.setApprovals(features.approvals());
 	}
 

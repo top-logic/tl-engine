@@ -17,8 +17,8 @@ package com.top_logic.ai.chat.backend;
  * <p>
  * The browser learns them with the conversation's transcript
  * ({@link com.top_logic.ai.chat.api.ChatTranscripts}) and with every send, and hides what is not
- * supported. The server refuses a regenerate, an edit and a message
- * with files that the backend does not support. A choice of agent, model, effort or MCP servers
+ * supported. The server refuses a regenerate and an edit that the backend does not support, and a
+ * message with files its {@link #attachments() policy} does not allow. A choice of agent, model, effort or MCP servers
  * sent anyway is not refused: a backend runs no agent of this application and does not read them.
  * </p>
  *
@@ -36,19 +36,38 @@ package com.top_logic.ai.chat.backend;
  * @param mcpPicker
  *        Whether the user can choose the MCP servers attached to the run.
  * @param attachments
- *        Whether a message may carry files.
+ *        Which files a message may carry; {@link AttachmentPolicy#NONE} for none.
  * @param approvals
  *        Whether the run asks the user for approvals and answers to questions in the chat.
  */
 public record BackendFeatures(boolean regenerate, boolean editMessages, boolean agentPicker,
-		boolean modelPicker, boolean effortPicker, boolean mcpPicker, boolean attachments,
+		boolean modelPicker, boolean effortPicker, boolean mcpPicker, AttachmentPolicy attachments,
 		boolean approvals) {
 
-	/** Every function: what the framework's own agent supports. */
-	public static final BackendFeatures INTERNAL = new BackendFeatures(true, true, true, true, true, true, true, true);
+	/**
+	 * Creates {@link BackendFeatures}.
+	 */
+	public BackendFeatures {
+		if (attachments == null) {
+			attachments = AttachmentPolicy.NONE;
+		}
+	}
+
+	/**
+	 * Every function: what the framework's own agent supports, with the files the language model
+	 * reads.
+	 *
+	 * <p>
+	 * The files the framework's own agent takes are those of
+	 * {@link ConversationBackendService#attachmentPolicy(ConversationBackend)}, which the application
+	 * configures.
+	 * </p>
+	 */
+	public static final BackendFeatures INTERNAL =
+		new BackendFeatures(true, true, true, true, true, true, AttachmentPolicy.MODEL_READABLE, true);
 
 	/** Sending a message and nothing beyond. */
 	public static final BackendFeatures NONE =
-		new BackendFeatures(false, false, false, false, false, false, false, false);
+		new BackendFeatures(false, false, false, false, false, false, AttachmentPolicy.NONE, false);
 
 }

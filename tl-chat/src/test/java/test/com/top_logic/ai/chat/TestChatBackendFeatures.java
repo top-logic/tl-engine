@@ -8,6 +8,7 @@ package test.com.top_logic.ai.chat;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 import junit.framework.Test;
@@ -21,10 +22,12 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.api.ChatTranscripts;
 import com.top_logic.ai.chat.api.DtoMapper;
+import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.AttachmentUploadReply;
 import com.top_logic.ai.chat.api.messages.ChatSendReply;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
 import com.top_logic.ai.chat.api.messages.ConversationFeaturesDto;
+import com.top_logic.ai.chat.backend.AttachmentPolicy;
 import com.top_logic.ai.chat.backend.BackendFeatures;
 import com.top_logic.ai.chat.backend.BackendTurn;
 import com.top_logic.ai.chat.backend.ConversationBackend;
@@ -83,6 +86,8 @@ public class TestChatBackendFeatures extends BasicTestCase {
 
 	private static final long TIMEOUT_MILLIS = 60_000;
 
+	private static final AttachmentPolicy CSV_AND_ZIP = new AttachmentPolicy("text/csv, *.zip", 2, 1024, 2048);
+
 	private static Person anna;
 
 	private ChatCommandDriver _driver;
@@ -92,6 +97,8 @@ public class TestChatBackendFeatures extends BasicTestCase {
 	private TaskProgressTracker _window;
 
 	private AgentSession _chat;
+
+	private final List<BackendTurn> _turns = new CopyOnWriteArrayList<>();
 
 	@Override
 	protected void setUp() throws Exception {
@@ -163,7 +170,7 @@ public class TestChatBackendFeatures extends BasicTestCase {
 	 * A backend that can answer again is not refused a regenerate for an agent the policy refuses.
 	 */
 	public void testSupportedRegenerateIsNotAskedAboutTheAccountsAgents() throws Exception {
-		claim(new BackendFeatures(true, false, false, false, false, false, false, false));
+		claim(new BackendFeatures(true, false, false, false, false, false, AttachmentPolicy.NONE, false));
 
 		Map<String, Object> reply = command(ChatControl.CMD_REGENERATE,
 			Map.of(ChatControl.ARG_SESSION_ID, id(), ChatControl.ARG_AGENT, INFRASTRUCTURE_AGENT));
@@ -196,6 +203,53 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		assertRefused(reply, I18NConstants.ATTACHMENTS_NOT_SUPPORTED);
 		assertEquals("A refused send leaves the file with the message.", 1,
 			ChatCommandDriver.attachments(_conversation).entries().size());
+	}
+
+	/**
+	 * A backend taking CSV and ZIP files is sent both; a file of another type is refused on upload,
+	 * naming the types it takes.
+	 */
+	public void testBackendTakesTheFilesOfItsPolicy() throws Exception {
+		claim(new BackendFeatures(false, false, false, false, false, false, CSV_AND_ZIP, false));
+		assertTrue(_window.adoptActiveSessionId(id(), anna));
+
+		assertEquals(Map.of(AttachmentUploadReply.REASON__PROP, List.of()),
+			_driver.upload(_conversation, "daten.csv", "text/csv", new byte[] { 1, 2 }));
+		assertEquals(Map.of(AttachmentUploadReply.REASON__PROP, List.of()),
+			_driver.upload(_conversation, "archiv.zip", "application/zip", new byte[] { 3, 4 }));
+		assertEquals(Map.of(AttachmentUploadReply.REASON__PROP, List.of(Resources.getInstance().getString(
+			com.top_logic.ai.chat.view.I18NConstants.ERROR_ATTACHMENT_TYPE__FILE_TYPES.fill("bild.png",
+				CSV_AND_ZIP.typesLabel())))),
+			_driver.upload(_conversation, "bild.png", "image/png", new byte[] { 5, 6 }));
+
+		Map<String, Object> reply = command(ChatControl.CMD_SEND,
+			Map.of(ChatControl.ARG_TEXT, "Hier die Daten", ChatControl.ARG_SESSION_ID, id()));
+
+		assertEquals(reply.toString(), ChatControl.STATUS_PROCESSING, reply.get(ChatSendReply.STATUS__PROP));
+		awaitIdle();
+		assertEquals(1, _turns.size());
+		assertEquals(List.of("daten.csv", "archiv.zip"),
+			_turns.get(0).attachments().stream().map(AttachmentDto::getFileName).toList());
+		assertEquals(List.of(), ChatCommandDriver.attachments(_conversation).entries());
+	}
+
+	/**
+	 * A file attached while the framework's own agent was to answer is checked again when the message
+	 * goes to a chat a backend answers, and the send is refused, naming the file.
+	 */
+	public void testSendChecksThePolicyOfTheAnsweringChat() throws Exception {
+		assertEquals(Map.of(AttachmentUploadReply.REASON__PROP, List.of()),
+			_driver.upload(_conversation, "bild.png", "image/png", new byte[] { 1, 2, 3, 4 }));
+		claim(new BackendFeatures(false, false, false, false, false, false, CSV_AND_ZIP, false));
+
+		Map<String, Object> reply = command(ChatControl.CMD_SEND,
+			Map.of(ChatControl.ARG_TEXT, "Sieh dir das an", ChatControl.ARG_SESSION_ID, id()));
+
+		assertRefused(reply, com.top_logic.ai.chat.view.I18NConstants.ERROR_ATTACHMENT_TYPE__FILE_TYPES
+			.fill("bild.png", CSV_AND_ZIP.typesLabel()));
+		assertEquals("A refused send leaves the file with the message.", 1,
+			ChatCommandDriver.attachments(_conversation).entries().size());
+		assertEquals(List.of(), _turns);
 	}
 
 	/** Loading a backend's conversation tells the client what it supports. */
@@ -237,6 +291,7 @@ public class TestChatBackendFeatures extends BasicTestCase {
 
 			@Override
 			public String send(BackendTurn turn, AgentEventListener sink, CancellationToken cancel) {
+				_turns.add(turn);
 				String runId = "backend-" + System.nanoTime();
 				TokenUsage usage = new TokenUsage(10, 5, 0, 0, 0);
 				sink.onEvent(new AgentEvent.RunStarted(runId, 0, Instant.now(), null));

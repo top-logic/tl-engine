@@ -64,20 +64,29 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey PANE_COLUMN_VALUE;
 
 	/**
-	 * A file was not attached to a message because a message carries only images and PDF.
+	 * A file was not attached to a message because the conversation does not accept its type.
 	 *
-	 * @en {0}: only images and PDF can be attached.
-	 * @de {0}: Nur Bilder und PDF können angehängt werden.
+	 * @en {0}: this file type cannot be attached. Allowed types: {1}.
+	 * @de {0}: Dieser Dateityp kann nicht angehängt werden. Erlaubte Typen: {1}.
 	 */
-	public static ResKey1 ERROR_ATTACHMENT_TYPE__FILE;
+	public static ResKey2 ERROR_ATTACHMENT_TYPE__FILE_TYPES;
 
 	/**
 	 * A file was not attached to a message because it is larger than a message may carry.
 	 *
-	 * @en {0}: larger than 10 MB.
-	 * @de {0}: Größer als 10 MB.
+	 * @en {0}: larger than {1}.
+	 * @de {0}: Größer als {1}.
 	 */
-	public static ResKey1 ERROR_ATTACHMENT_TOO_LARGE__FILE;
+	public static ResKey2 ERROR_ATTACHMENT_TOO_LARGE__FILE_MAX;
+
+	/**
+	 * A file was not attached to a message because the files of the message together would be larger
+	 * than a message may carry.
+	 *
+	 * @en {0}: the files of one message may be at most {1} in all.
+	 * @de {0}: Die Dateien einer Nachricht dürfen zusammen höchstens {1} groß sein.
+	 */
+	public static ResKey2 ERROR_MESSAGE_TOO_LARGE__FILE_MAX;
 
 	/**
 	 * A file was not attached to a message because the message already carries as many files as it

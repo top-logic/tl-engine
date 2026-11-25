@@ -13,6 +13,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.ai.core.execution.model.AgentSession;
@@ -73,11 +74,34 @@ public class ConversationBackendService extends ConfiguredManagedClass<Conversat
 		@EntryTag(RESOLVER)
 		@Label("Conversation backend resolvers")
 		List<PolymorphicConfiguration<? extends ConversationBackendResolver>> getResolvers();
+
+		/**
+		 * Configuration property name for {@link #getInternalAttachments()}.
+		 */
+		String INTERNAL_ATTACHMENTS = "internal-attachments";
+
+		/**
+		 * Which files a message may carry in a conversation the framework's own agent answers.
+		 *
+		 * <p>
+		 * By default {@link AttachmentPolicy#MODEL_READABLE}: the images the language model reads and
+		 * PDF. A conversation a {@link ConversationBackend} answers takes the files of the backend's
+		 * {@link BackendFeatures#attachments()} instead.
+		 * </p>
+		 *
+		 * @see #INTERNAL_ATTACHMENTS
+		 */
+		@Name(INTERNAL_ATTACHMENTS)
+		@ItemDefault
+		@Label("Attachments of the application's agent")
+		AttachmentPolicy.Config getInternalAttachments();
 	}
 
 	private static volatile ConversationBackendService _instance;
 
 	private final List<ConversationBackendResolver> _resolvers;
+
+	private final AttachmentPolicy _internalAttachments;
 
 	/**
 	 * Creates a {@link ConversationBackendService} from configuration.
@@ -85,6 +109,7 @@ public class ConversationBackendService extends ConfiguredManagedClass<Conversat
 	public ConversationBackendService(InstantiationContext context, Config<?> config) {
 		super(context, config);
 		_resolvers = List.copyOf(TypedConfiguration.getInstanceList(context, config.getResolvers()));
+		_internalAttachments = AttachmentPolicy.of(config.getInternalAttachments());
 	}
 
 	@Override
@@ -113,6 +138,35 @@ public class ConversationBackendService extends ConfiguredManagedClass<Conversat
 			return null;
 		}
 		return service.resolve(session);
+	}
+
+	/**
+	 * Which files a message may carry in the given conversation.
+	 *
+	 * @param session
+	 *        The conversation; <code>null</code> for one that does not exist yet, which the
+	 *        framework's own agent answers until a resolver claims it.
+	 * @see #attachmentPolicy(ConversationBackend)
+	 */
+	public static AttachmentPolicy attachmentPolicy(AgentSession session) {
+		return attachmentPolicy(backendFor(session));
+	}
+
+	/**
+	 * Which files a message may carry in a conversation the given backend answers.
+	 *
+	 * @param backend
+	 *        The backend answering the conversation, <code>null</code> for the framework's own agent.
+	 * @return The backend's {@link BackendFeatures#attachments()}, for the framework's own agent the
+	 *         configured {@link Config#getInternalAttachments()}, and
+	 *         {@link AttachmentPolicy#MODEL_READABLE} while this service is not started.
+	 */
+	public static AttachmentPolicy attachmentPolicy(ConversationBackend backend) {
+		if (backend != null) {
+			return backend.features().attachments();
+		}
+		ConversationBackendService service = _instance;
+		return service == null ? AttachmentPolicy.MODEL_READABLE : service._internalAttachments;
 	}
 
 	private ConversationBackend resolve(AgentSession session) {

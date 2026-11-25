@@ -966,10 +966,10 @@ public class ChatProcessor {
 		String base64 = att.getBase64Data();
 		if (mimeType.startsWith("image/")) {
 			if (!ImageContent.isAccepted(mimeType)) {
-				// The upload of an attachment (ChatAttachments) refuses this type already, so reaching here means a
-				// caller that bypassed it. It is still answered the way every other unsendable
-				// attachment is - a marker the model can explain to the user - rather than by building
-				// a payload only the provider can reject.
+				// The default AttachmentPolicy of the framework's own agent (MODEL_READABLE) refuses
+				// this type already; an application that allows it, or a caller that bypassed the
+				// policy, gets the answer every other unsendable attachment gets - a marker the model
+				// can explain to the user - rather than a payload only the provider can reject.
 				return new TextContent("[Unsupported attachment: " + att.getFileName() + " - "
 					+ mimeType + " images are not accepted. Accepted image types are "
 					+ ImageContent.acceptedMediaTypes() + ".]");

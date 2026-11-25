@@ -35,7 +35,9 @@ import com.top_logic.ai.chat.api.messages.SessionDeleteReply;
 import com.top_logic.ai.chat.api.messages.SessionOpenReply;
 import com.top_logic.ai.chat.api.messages.StreamAttachReply;
 import com.top_logic.ai.chat.api.messages.SubagentMessageReply;
+import com.top_logic.ai.chat.backend.AttachmentPolicy;
 import com.top_logic.ai.chat.backend.ConversationBackend;
+import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatState;
@@ -801,10 +803,16 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			ChatTranscripts.backendOf(ChatSessionIds.accessibleSession(sessionId, person, SimpleBoundCommandGroup.WRITE));
 		// A conversation a backend answers runs no agent of this application, so what the agent policy
 		// says about the account's agents does not apply to it; what the backend supports does.
-		SendRefusal refusal = backend == null
-			? SendRefusal.forRun(person, options)
-			: (attached.isEmpty() ? null : SendRefusal.unsupported(backend.features().attachments(),
-				com.top_logic.ai.chat.backend.I18NConstants.ATTACHMENTS_NOT_SUPPORTED));
+		SendRefusal refusal = backend == null ? SendRefusal.forRun(person, options) : null;
+		if (refusal == null) {
+			// The files were attached under the policy of the chat shown then; this message goes to
+			// the chat it names, whose answerer may take less.
+			ResKey notCarried =
+				ChatAttachments.refusal(attached, ConversationBackendService.attachmentPolicy(backend));
+			if (notCarried != null) {
+				refusal = SendRefusal.forbidden(Resources.getInstance().getString(notCarried));
+			}
+		}
 		if (refusal != null) {
 			return refused(refusal);
 		}
@@ -1162,11 +1170,11 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * Attaches the uploaded files to the message being written in this conversation.
 	 *
 	 * <p>
-	 * A file the message cannot carry - of another type than an image or PDF, one file more than
-	 * {@link ChatAttachments#MAX_ATTACHMENTS} - is not attached; the {@link AttachmentUploadReply}
-	 * says why, one sentence per file. The files attached are in this control's state ({@link
-	 * #STATE_DRAFT_ATTACHMENTS}), and in that of every other displayed chat control of the
-	 * conversation.
+	 * A file the message cannot carry - of a type, a size or one file more than the
+	 * {@link AttachmentPolicy} of the chat shown allows - is not attached; the
+	 * {@link AttachmentUploadReply} says why, one sentence per file. The files attached are in this
+	 * control's state ({@link #STATE_DRAFT_ATTACHMENTS}), and in that of every other displayed chat
+	 * control of the conversation.
 	 * </p>
 	 */
 	@Override
@@ -1176,6 +1184,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			return null;
 		}
 		ChatAttachments attachments = _binding.attachments();
+		AttachmentPolicy policy = attachmentPolicy();
 		List<String> refused = new ArrayList<>();
 		for (jakarta.servlet.http.Part part : parts) {
 			if (!UploadSupport.FILE_PART.equals(part.getName())) {
@@ -1188,7 +1197,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			} catch (IOException ex) {
 				throw new UncheckedIOException("Failed to read the attachment '" + fileName + "'.", ex);
 			}
-			ResKey refusal = attachments.add(fileName, part.getContentType(), content);
+			ResKey refusal = attachments.add(fileName, part.getContentType(), content, policy);
 			if (refusal != null) {
 				refused.add(Resources.getInstance().getString(refusal));
 			}
@@ -1197,12 +1206,24 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	}
 
 	/**
-	 * The size limit of one attached file: {@link ChatAttachments#MAX_ATTACHMENT_SIZE}, or the
-	 * application's own limit where that is smaller.
+	 * The size limit of one attached file: the {@link AttachmentPolicy#maxFileSize()} of the chat
+	 * shown, or the application's own limit where that is smaller.
 	 */
 	@Override
 	public long maxUploadSize() {
-		return UploadSupport.effectiveMaxUploadSize(ChatAttachments.MAX_ATTACHMENT_SIZE);
+		return UploadSupport.effectiveMaxUploadSize(attachmentPolicy().maxFileSize());
+	}
+
+	/**
+	 * Which files a message may carry in the chat this conversation shows: the policy of its
+	 * answerer, that of the framework's own agent for a chat not created yet.
+	 */
+	private AttachmentPolicy attachmentPolicy() {
+		String sessionId = _binding.tracker().getActiveSessionId();
+		Person person = actingPerson();
+		TLObject session = sessionId == null || person == null ? null
+			: ChatSessionIds.accessibleSession(sessionId, person, SimpleBoundCommandGroup.READ);
+		return ConversationBackendService.attachmentPolicy(ChatTranscripts.backendOf(session));
 	}
 
 	/** The answer to a send that went to {@link ChatProcessor#sendMessage}. */

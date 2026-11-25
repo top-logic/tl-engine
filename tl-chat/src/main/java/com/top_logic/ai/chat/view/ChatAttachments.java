@@ -8,14 +8,12 @@ package com.top_logic.ai.chat.view;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
+import com.top_logic.ai.chat.backend.AttachmentPolicy;
 import com.top_logic.ai.chat.api.messages.DraftAttachmentDto;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.ai.core.message.ImageContent;
@@ -37,25 +35,14 @@ import com.top_logic.ai.core.message.ImageContent;
  * One per conversation of a window, like the text the composer holds: switching to another chat of
  * the same conversation keeps the files, as it keeps the text.
  * </p>
+ *
+ * <p>
+ * Which files a message may carry is the {@link AttachmentPolicy} of the conversation's answerer
+ * ({@link com.top_logic.ai.chat.backend.ConversationBackendService#attachmentPolicy(com.top_logic.ai.core.execution.model.AgentSession)}),
+ * checked when a file is attached and again when the message is sent.
+ * </p>
  */
 public final class ChatAttachments {
-
-	/** How many files one message may carry. */
-	public static final int MAX_ATTACHMENTS = 5;
-
-	/** The largest file a message may carry, in bytes. */
-	public static final long MAX_ATTACHMENT_SIZE = 10L * 1024 * 1024;
-
-	/**
-	 * The media types a message may carry.
-	 *
-	 * <p>
-	 * Derived from {@link ImageContent#ACCEPTED_MEDIA_TYPES} rather than restated, so this check and
-	 * the places that build the payload cannot drift apart - a type refused here must be exactly a
-	 * type nothing downstream could have sent.
-	 * </p>
-	 */
-	public static final Set<String> ALLOWED_MIME_TYPES = allowedMimeTypes();
 
 	/**
 	 * One attached file: what the browser knows of it, and its content.
@@ -90,30 +77,62 @@ public final class ChatAttachments {
 	 *        The media type the browser stated.
 	 * @param content
 	 *        The file's bytes.
+	 * @param policy
+	 *        Which files the answerer of the conversation takes.
 	 * @return Why the file was not attached, <code>null</code> when it was.
 	 */
-	public ResKey add(String fileName, String mimeType, byte[] content) {
-		String type = ImageContent.normalizeMediaType(mimeType);
-		if (!ALLOWED_MIME_TYPES.contains(type)) {
-			return I18NConstants.ERROR_ATTACHMENT_TYPE__FILE.fill(fileName);
-		}
-		if (content.length > MAX_ATTACHMENT_SIZE) {
-			return I18NConstants.ERROR_ATTACHMENT_TOO_LARGE__FILE.fill(fileName);
-		}
+	public ResKey add(String fileName, String mimeType, byte[] content, AttachmentPolicy policy) {
 		AttachmentDto attachment = AttachmentDto.create()
 			.setFileName(fileName)
-			.setMimeType(type)
+			.setMimeType(ImageContent.normalizeMediaType(mimeType))
 			.setSize(content.length)
 			.setBase64Data(Base64.getEncoder().encodeToString(content));
 		synchronized (_entries) {
-			if (_entries.size() >= MAX_ATTACHMENTS) {
-				return I18NConstants.ERROR_TOO_MANY_ATTACHMENTS__FILE_MAX.fill(fileName,
-					Integer.valueOf(MAX_ATTACHMENTS));
+			ResKey refusal = policy.check(fileName, content.length, _entries.size(), sizeOf(_entries));
+			if (refusal != null) {
+				return refusal;
 			}
 			_entries.add(new Entry(UUID.randomUUID().toString(), attachment));
 		}
 		changed();
 		return null;
+	}
+
+	/**
+	 * Why a message may not carry the given files, or <code>null</code> if it may.
+	 *
+	 * <p>
+	 * Asked when the message is sent: the files were attached under the policy of the chat shown
+	 * then, and the chat the message goes to may take less.
+	 * </p>
+	 *
+	 * @param entries
+	 *        The files of the message, in the order they were attached.
+	 * @param policy
+	 *        Which files the answerer of the message's conversation takes.
+	 * @return The reason of the refusal of the first file the message may not carry.
+	 */
+	public static ResKey refusal(List<Entry> entries, AttachmentPolicy policy) {
+		int count = 0;
+		long size = 0;
+		for (Entry entry : entries) {
+			AttachmentDto attachment = entry.attachment();
+			ResKey refusal = policy.check(attachment.getFileName(), attachment.getSize(), count, size);
+			if (refusal != null) {
+				return refusal;
+			}
+			count++;
+			size += attachment.getSize();
+		}
+		return null;
+	}
+
+	private static long sizeOf(List<Entry> entries) {
+		long result = 0;
+		for (Entry entry : entries) {
+			result += entry.attachment().getSize();
+		}
+		return result;
 	}
 
 	/**
@@ -186,11 +205,5 @@ public final class ChatAttachments {
 		for (Runnable listener : _listeners) {
 			listener.run();
 		}
-	}
-
-	private static Set<String> allowedMimeTypes() {
-		Set<String> allowed = new LinkedHashSet<>(ImageContent.ACCEPTED_MEDIA_TYPES);
-		allowed.add("application/pdf");
-		return Collections.unmodifiableSet(allowed);
 	}
 }

@@ -3,7 +3,7 @@ import { Editor } from '@tiptap/core';
 import { NodeSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import { HtmlPassthrough } from './HtmlPassthrough';
-import { FollowObjectLinks, ObjectLink } from './ObjectLink';
+import { FollowObjectLinks, MASKED_OBJECT_LINK, MaskedObjectLink, ObjectLink, objectLinkAt } from './ObjectLink';
 import { ObjectMention } from './mentions';
 
 /** A paragraph with a chip, an object link and an ordinary link (to a place in the page, which jsdom can follow). */
@@ -103,5 +103,65 @@ describe('FollowObjectLinks', () => {
     expect(click(ed, anchor(ed, 'a.tlObject:not([data-mention])'), {}).defaultPrevented).toBe(false);
     expect(click(ed, anchor(ed, 'a[href="#web"]'), { ctrlKey: true }).defaultPrevented).toBe(false);
     expect(follow).not.toHaveBeenCalled();
+  });
+});
+
+/** The placeholder of an object link whose object the reader may not discover, as the server sends it. */
+const MASKED = '<span data-masked="3">*****</span>';
+
+describe('MaskedObjectLink', () => {
+  let editor: Editor | null = null;
+
+  afterEach(() => {
+    editor?.destroy();
+    editor = null;
+  });
+
+  function open(html: string): Editor {
+    editor = new Editor({
+      extensions: [
+        HtmlPassthrough,
+        StarterKit.configure({ link: false, trailingNode: false }),
+        ObjectLink.configure({ openOnClick: false }),
+        ObjectMention,
+        MaskedObjectLink,
+      ],
+      content: html,
+    });
+    return editor;
+  }
+
+  it('opens a placeholder as one unit and writes it back unchanged', () => {
+    const ed = open('<p>See ' + MASKED + ' here</p>');
+    const nodes = ed.getJSON().content?.[0].content ?? [];
+    expect(nodes.map((node) => node.type)).toEqual(['text', MASKED_OBJECT_LINK, 'text']);
+    expect(ed.getHTML()).toBe('<p>See ' + MASKED + ' here</p>');
+  });
+
+  it('keeps the placeholder and its token when text is typed beside it', () => {
+    const ed = open('<p>See ' + MASKED + '</p>');
+    ed.commands.focus('end');
+    ed.commands.insertContent('typed');
+    expect(ed.getHTML()).toBe('<p>See ' + MASKED + 'typed</p>');
+  });
+
+  it('removes a placeholder with Backspace as a whole', () => {
+    const ed = open('<p>See ' + MASKED + '</p>');
+    ed.commands.focus('end');
+    ed.view.dom.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true }));
+    expect(ed.getHTML()).toBe('<p>See </p>');
+  });
+
+  it('is no link to follow', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<p>See ' + MASKED + '</p>';
+    document.body.appendChild(root);
+    const found: (HTMLAnchorElement | null)[] = [];
+    root.addEventListener('click', (event) => found.push(objectLinkAt(root, event)));
+
+    root.querySelector('span')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    root.remove();
+    expect(found).toEqual([null]);
   });
 });

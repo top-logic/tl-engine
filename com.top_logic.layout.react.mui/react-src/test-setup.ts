@@ -7,12 +7,13 @@
 import { afterAll } from 'vitest';
 // @ts-expect-error The CSS object model of jsdom has no type declarations.
 import { CSSLayerBlockRule } from 'rrweb-cssom';
-import { setI18NApiBase } from '../../com.top_logic.layout.react/react-src/bridge/i18n';
+import { setMountContext } from '../../com.top_logic.layout.react/react-src/bridge/page-context';
 
 // A test renders the adapters as the first mount() of a page does after it has made the context path
-// known: only then does the bridge request the translations the adapters use (see i18n.ts). The
-// context path is the one getApiBase() answers before a mount() has set one.
-setI18NApiBase('/');
+// known: only then does the bridge request the translations the adapters use (see i18n.ts). The test
+// page has no context attributes in its body; the context path is the one of an application at the
+// root.
+setMountContext('', '');
 
 const observers: MutationObserver[] = [];
 const NativeMutationObserver = globalThis.MutationObserver;

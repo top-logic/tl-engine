@@ -242,7 +242,8 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 
 	}
 	/**
-	 * What stands after the lines of a {@link Row}: metadata text, or a badge.
+	 * What stands after the lines of a {@link Row}: metadata text, a badge, or the content of a
+	 * template.
 	 */
 	public interface Trailing extends de.haumacher.msgbuf.data.DataObject {
 
@@ -262,8 +263,11 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 		/** @see #isBadge() */
 		String BADGE__PROP = "badge";
 
+		/** @see #getControl() */
+		String CONTROL__PROP = "control";
+
 		/**
-		 * The text, plain text.
+		 * The text, plain text. Ignored with a {@link #getControl()}.
 		 */
 		String getText();
 
@@ -282,6 +286,22 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 		 * @see #isBadge()
 		 */
 		com.top_logic.layout.react.state.DataListState.Trailing setBadge(boolean value);
+
+		/**
+		 * The content of the template the application configured for the row, drawn instead of the
+		 * {@link #getText()}. Absent: the {@link #getText()} is drawn.
+		 */
+		com.top_logic.layout.react.state.ChildControl getControl();
+
+		/**
+		 * @see #getControl()
+		 */
+		com.top_logic.layout.react.state.DataListState.Trailing setControl(com.top_logic.layout.react.state.ChildControl value);
+
+		/**
+		 * Checks, whether {@link #getControl()} has a value.
+		 */
+		boolean hasControl();
 
 		/** Reads a new instance from the given reader. */
 		static com.top_logic.layout.react.state.DataListState.Trailing readTrailing(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

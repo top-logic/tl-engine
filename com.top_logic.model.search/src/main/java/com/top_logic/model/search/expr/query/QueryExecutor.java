@@ -22,6 +22,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.interpreter.DefResolver;
 import com.top_logic.model.search.expr.interpreter.TypeResolver;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -350,6 +351,11 @@ public abstract class QueryExecutor {
 	 * permanently switches security off for this {@link QueryExecutor}. It must therefore only be
 	 * used for internal queries that must not be subject to the user's access rights.
 	 * </p>
+	 *
+	 * <p>
+	 * An expression with security is evaluated on behalf of the current user, an expression without
+	 * security on behalf of the system, see {@link DiscoverRight#isComputedForUser()}.
+	 * </p>
 	 */
 	public final void disableSecurity() {
 		_securityEnabled = false;
@@ -456,7 +462,7 @@ public abstract class QueryExecutor {
 	 *      Execution from within an ongoing evaluation, whose result is an intermediate one.
 	 */
 	public final Object executeWith(EvalContext definitions, Args args) {
-		Object result = internalExecuteWith(definitions, args);
+		Object result = evaluate(definitions, args);
 		if (_securityEnabled) {
 			return SearchExpression.filterSecurity(result, definitions.getSecurityReport());
 		}
@@ -490,7 +496,7 @@ public abstract class QueryExecutor {
 	 */
 	@FrameworkInternal
 	public final Object executeIntermediate(EvalContext definitions, Args args) {
-		return internalExecuteWith(definitions, args);
+		return evaluate(definitions, args);
 	}
 
 	/**
@@ -509,6 +515,21 @@ public abstract class QueryExecutor {
 	@FrameworkInternal
 	public final Object executeIntermediate(Object... args) {
 		return executeIntermediate(context(), Args.some(args));
+	}
+
+	/**
+	 * Evaluates the {@link #getSearch() expression} on behalf of the current user if it applies
+	 * security, and on behalf of the system if its security is {@link #disableSecurity() switched
+	 * off}, see {@link DiscoverRight#computeForUser(boolean, java.util.function.Supplier)}.
+	 *
+	 * <p>
+	 * So the string conversion of a value in the script follows the security of the script: a
+	 * secured script gets the text that its user may see, an unsecured script gets the text as it is
+	 * stored.
+	 * </p>
+	 */
+	private Object evaluate(EvalContext definitions, Args args) {
+		return DiscoverRight.computeForUser(_securityEnabled, () -> internalExecuteWith(definitions, args));
 	}
 
 	/**

@@ -100,6 +100,6 @@ test('tl-list: als Schublade — der Ort ist Anker, der Streifen blendet nur eig
 test('tl-list: Vertrag nennt die Teile vorn und hinten im Eintrag und den Rechtsklick', () => {
   const md = readComponent('list', 'list.contract.md');
   assert.deepEqual(missingInContract(md, ['rows[].leading.name', 'rows[].leading.icon', 'rows[].leading.image',
-    'rows[].trailing.text', 'rows[].trailing.badge', 'tl-menu-region']), []);
+    'rows[].trailing.text', 'rows[].trailing.badge', 'rows[].trailing.control', 'tl-menu-region']), []);
   assert.deepEqual(missingInContract(readComponent('avatar', 'avatar.contract.md'), ['Avatar', 'replacePart']), []);
 });

@@ -2401,11 +2401,12 @@ message DataListState extends ControlState {
 	}
 
 	/**
-	 * What stands after the lines of a {@link Row}: metadata text, or a badge.
+	 * What stands after the lines of a {@link Row}: metadata text, a badge, or the content of a
+	 * template.
 	 */
 	message Trailing {
 		/**
-		 * The text, plain text.
+		 * The text, plain text. Ignored with a {@link #control}.
 		 */
 		string text;
 
@@ -2414,6 +2415,12 @@ message DataListState extends ControlState {
 		 * metadata text.
 		 */
 		bool badge;
+
+		/**
+		 * The content of the template the application configured for the row, drawn instead of the
+		 * {@link #text}. Absent: the {@link #text} is drawn.
+		 */
+		ChildControl control;
 	}
 
 	/**

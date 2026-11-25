@@ -33,6 +33,7 @@ async function renderText() {
   const React = await import('react');
   const { createRoot } = await import('react-dom/client');
   const i18n = await import('./i18n');
+  const { setMountContext } = await import('./page-context');
 
   function Text() {
     const t = i18n.useI18N({ [KEY]: FALLBACK });
@@ -45,6 +46,7 @@ async function renderText() {
   const act = React.act;
   return {
     ...i18n,
+    setMountContext,
     act,
     /** Renders the component. Called after the setup of the case. */
     render: () => act(() => root.render(React.createElement(Text))),
@@ -67,7 +69,7 @@ afterEach(() => {
 });
 
 describe('the i18n service', () => {
-  it('sends no request before the context path is known and shows the fallback', async () => {
+  it('sends no request before the context path is known on a page without context attributes and shows the fallback', async () => {
     const { render, text, act } = await renderText();
     render();
     await act(settle);
@@ -77,13 +79,12 @@ describe('the i18n service', () => {
   });
 
   it('sends the waiting keys once the context path is known, with the window name of the same mount', async () => {
-    const { render, text, act, setI18NApiBase, setI18NWindowName } = await renderText();
+    const { render, text, act, setMountContext } = await renderText();
     render();
     await act(settle);
 
     await act(async () => {
-      setI18NApiBase('/ctx/');
-      setI18NWindowName('v1');
+      setMountContext('/ctx', 'v1');
       await settle();
     });
 
@@ -94,9 +95,8 @@ describe('the i18n service', () => {
   });
 
   it('sends a request in the next microtask once the context path is known', async () => {
-    const { render, text, act, setI18NApiBase, setI18NWindowName } = await renderText();
-    setI18NApiBase('/ctx/');
-    setI18NWindowName('v1');
+    const { render, text, act, setMountContext } = await renderText();
+    setMountContext('/ctx', 'v1');
     await settle();
     expect(fetchMock).not.toHaveBeenCalled();
 

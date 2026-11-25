@@ -8,9 +8,17 @@ import { act } from 'react';
 /** The control the elements under test belong to, which answers the `key:` tooltips. */
 const CONTROL_ID = 'c1';
 
+/** The state of the control {@link CONTROL_ID}; replaced to say "the control was updated". */
+const controlState = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
+
 vi.mock('./tl-react-bridge', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tl-react-bridge')>()),
   isMountedControl: (id: string) => id === CONTROL_ID,
+  controlStateSnapshot: (id: string) => (id === CONTROL_ID ? controlState.current : undefined),
+}));
+
+vi.mock('./page-context', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./page-context')>()),
   getApiBase: () => '/app/',
 }));
 
@@ -145,6 +153,43 @@ function fullTextLine(): string | null {
 function body(): string | null {
   return tooltip().querySelector(':scope > .tl-tooltip__body')?.textContent ?? null;
 }
+
+describe('a tooltip fetched for a key', () => {
+  it('is fetched once while the control stays unchanged', async () => {
+    answers.set('kept.tooltip', { text: 'First' });
+    const element = label('Status', 'key:kept.tooltip', false);
+    hover(element);
+    await rest();
+    expect(body()).toBe('First');
+
+    await act(async () => {
+      document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    });
+    answers.set('kept.tooltip', { text: 'Second' });
+    element.dispatchEvent(new MouseEvent('pointerout', { bubbles: true }));
+    hover(element);
+    await rest();
+    expect(body()).toBe('First');
+  });
+
+  it('is fetched anew after the control was updated, so it shows the changed content', async () => {
+    answers.set('changed.tooltip', { text: 'Nobody works on it.' });
+    const element = label('Status', 'key:changed.tooltip', false);
+    hover(element);
+    await rest();
+    expect(body()).toBe('Nobody works on it.');
+
+    await act(async () => {
+      document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    });
+    answers.set('changed.tooltip', { text: 'Somebody works on it.' });
+    controlState.current = { hasTooltip: true };
+    element.dispatchEvent(new MouseEvent('pointerout', { bubbles: true }));
+    hover(element);
+    await rest();
+    expect(body()).toBe('Somebody works on it.');
+  });
+});
 
 describe('tooltip of a cut-off element', () => {
   it('a cut-off element with a tooltip of its own shows its full text above the tooltip', async () => {

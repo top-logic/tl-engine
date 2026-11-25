@@ -14,6 +14,11 @@ import com.top_logic.tool.export.pdf.PDFRenderer;
 /**
  * PDF renderer for {@link StructuredText}.
  *
+ * <p>
+ * A link to an object that the current user may not discover is written as the placeholder of a
+ * masked element, see {@link TLObjectLinkUtil#maskLinks(String, java.util.function.Function)}.
+ * </p>
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class StructuredTextPDFRenderer implements PDFRenderer {
@@ -33,7 +38,10 @@ public class StructuredTextPDFRenderer implements PDFRenderer {
 			return;
 		}
 
-		out.writeContent(StructuredTextUtil.getCodeWithInlinedImages((StructuredText) value));
+		StructuredText text = (StructuredText) value;
+		StructuredText masked =
+			new StructuredText(TLObjectLinkUtil.maskLinks(text.getSourceCode(), null), text.getImages());
+		out.writeContent(StructuredTextUtil.getCodeWithInlinedImages(masked));
 	}
 
 }

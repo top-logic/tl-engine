@@ -2465,11 +2465,12 @@ export namespace DataListStateJson {
 	}
 
 	/**
-	 * What stands after the lines of a {@link DataListStateJson.Row}: metadata text, or a badge.
+	 * What stands after the lines of a {@link DataListStateJson.Row}: metadata text, a badge, or the content of a
+	 * template.
 	 */
 	export interface Trailing {
 		/**
-		 * The text, plain text.
+		 * The text, plain text. Ignored with a {@link DataListStateJson.Trailing.control}.
 		 */
 		text: string;
 
@@ -2478,6 +2479,12 @@ export namespace DataListStateJson {
 		 * metadata text.
 		 */
 		badge: boolean;
+
+		/**
+		 * The content of the template the application configured for the row, drawn instead of the
+		 * {@link DataListStateJson.Trailing.text}. Absent: the {@link DataListStateJson.Trailing.text} is drawn.
+		 */
+		control?: ChildControlJson;
 	}
 
 	/**

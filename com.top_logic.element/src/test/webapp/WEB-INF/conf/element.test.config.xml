@@ -402,6 +402,14 @@
 								<step attribute="TestAccessParentAnyOf:Document#editor"/>
 							</path>
 						</rule>
+						<rule id="TestAccessParentAnyOf_sessionOwner"
+							meta-element="TestAccessParentAnyOf:Session"
+							role="TestAccessParentAnyOf.SessionOwner"
+						>
+							<path>
+								<step attribute="TestAccessParentAnyOf:Session#owner"/>
+							</path>
+						</rule>
 						<rule id="TestAccessParentAnyOf_taskOwner"
 							meta-element="TestAccessParentAnyOf:Task"
 							role="TestAccessParentAnyOf.TaskOwner"
@@ -907,6 +915,26 @@
 							roles="TestAccessParentAnyOf.TaskOwner"
 						/>
 					</class>
+					<!-- The own grants decide together with the subject, which decides Read only. -->
+					<class name="TestAccessParentAnyOf:Session">
+						<access-parent>
+							<any-of>
+								<self/>
+								<target
+									operations="Read"
+									reference="TestAccessParentAnyOf:Session#subject"
+								/>
+							</any-of>
+						</access-parent>
+						<grant
+							operation="Read"
+							roles="TestAccessParentAnyOf.SessionOwner"
+						/>
+						<grant
+							operation="Write"
+							roles="TestAccessParentAnyOf.SessionOwner"
+						/>
+					</class>
 					<class name="TestAccessParentAnyOf:Contact">
 						<access-parent>
 							<any-of>
@@ -1145,6 +1173,7 @@
 					<role name="TestAccessParentAnyOf.DocReader"/>
 					<role name="TestAccessParentAnyOf.DocEditor"/>
 					<role name="TestAccessParentAnyOf.TaskOwner"/>
+					<role name="TestAccessParentAnyOf.SessionOwner"/>
 				</roles>
 			</instance>
 		</config>

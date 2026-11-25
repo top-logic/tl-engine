@@ -213,6 +213,18 @@
 						/>
 					</attributes>
 				</class>
+
+				<!-- Role rule and grants: the owner may read and write it; delegates Read to its subject in addition. -->
+				<class name="Session">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<reference name="subject"
+							type="Document"
+						/>
+					</attributes>
+				</class>
 			</types>
 		</module>
 	</modules>

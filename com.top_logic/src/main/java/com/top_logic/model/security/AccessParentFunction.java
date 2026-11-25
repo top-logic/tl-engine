@@ -23,9 +23,10 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * decides access to it.
  * <p>
  * An object with an access parent has no grants and no roles of its own for the operations the
- * relation {@link #delegates(BoundCommandGroup) delegates}. Whether a user may perform such an
- * operation on it is whether the user may perform the corresponding operation on its access parent,
- * and that parent may delegate further.
+ * relation {@link #delegates(BoundCommandGroup) delegates}, unless the relation
+ * {@link #includesSelf() includes the object itself}. Whether a user may perform such an operation
+ * on it is whether the user may perform the corresponding operation on its access parent, and that
+ * parent may delegate further.
  * </p>
  *
  * <p>
@@ -187,6 +188,40 @@ public interface AccessParentFunction {
 	}
 
 	/**
+	 * Whether the delegating object decides the operations this relation
+	 * {@link #delegates(BoundCommandGroup) delegates} itself as well, by the grants of its type and
+	 * the roles held on it, in addition to its access parents.
+	 *
+	 * <p>
+	 * This is the candidate <code>&lt;self/&gt;</code> of an {@link AnyOfRelation}: an operation is
+	 * allowed when the object itself or one of its access parents allows it.
+	 * </p>
+	 *
+	 * @return <code>false</code> by default.
+	 *
+	 * @see SelfRelation
+	 */
+	default boolean includesSelf() {
+		return false;
+	}
+
+	/**
+	 * Whether the grants of a type and the roles held on its objects decide the given operation,
+	 * alone or together with the access parent.
+	 *
+	 * @param accessParent
+	 *        The access parent of the type, <code>null</code> when the type decides for itself.
+	 * @param operation
+	 *        The operation on an object of the type.
+	 * @return Whether there is no access parent, the access parent does not
+	 *         {@link #delegates(BoundCommandGroup) delegate} the operation, or it
+	 *         {@link #includesSelf() includes} the object itself.
+	 */
+	static boolean decidesItself(AccessParentFunction accessParent, BoundCommandGroup operation) {
+		return accessParent == null || !accessParent.delegates(operation) || accessParent.includesSelf();
+	}
+
+	/**
 	 * Whether the given access parent decides the given operation.
 	 *
 	 * @param accessParent
@@ -222,7 +257,8 @@ public interface AccessParentFunction {
 	 * <p>
 	 * A type whose access parent decides every operation has neither grants nor roles of its own.
 	 * Otherwise, the grants of the type decide the operations not
-	 * {@link #delegates(BoundCommandGroup) delegated}.
+	 * {@link #delegates(BoundCommandGroup) delegated}, and those delegated as well, when the
+	 * relation {@link #includesSelf() includes} the object itself.
 	 * </p>
 	 *
 	 * @return By default, whether the relation is not restricted to a list of

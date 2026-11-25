@@ -18,10 +18,11 @@ import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
  *
  * <p>
  * A type either delegates its access decision to an {@link AccessParentConfig access parent}, or
- * defines its access itself by grants and marks - never both, see {@link AccessParentStandsAlone}.
- * A form editing the access rights of a type offers only the way not excluded by the other: the
- * grants and marks are hidden while the type delegates, the access parent while the type has grants
- * or a mark.
+ * defines its access itself by grants and marks. A type delegating every operation has no use for
+ * grants, see {@link IgnoredGrants}, and no marks, see {@link AccessParentStandsAlone}. A form
+ * editing the access rights of a type offers only the way not excluded by the other: the grants and
+ * marks are hidden while the type delegates, the access parent while the type has grants or a
+ * mark.
  * </p>
  *
  * <p>
@@ -90,7 +91,8 @@ public class HideBesideOtherDefinition extends GenericFunction<FieldMode> {
 	 * <p>
 	 * A definition {@link AccessParentConfig#isRestricted(PolymorphicConfiguration) restricted} to
 	 * some operations leaves the other operations to the grants of the type, so the grants are not
-	 * hidden beside it - for an {@link AnyOfAccessParent}, when all its candidates are restricted.
+	 * hidden beside it - for an {@link AnyOfAccessParent}, when all its candidates are restricted,
+	 * or when it names the object itself as candidate.
 	 * </p>
 	 */
 	public static class ForGrants extends HideBesideOtherDefinition {

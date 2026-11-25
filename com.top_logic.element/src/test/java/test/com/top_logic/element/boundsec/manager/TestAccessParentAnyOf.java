@@ -43,6 +43,7 @@ import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
@@ -105,6 +106,14 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 
 	private static final String COMMENT = MODULE + ":Comment";
 
+	private static final String SESSION = MODULE + ":Session";
+
+	private static final String ROLE_SESSION_OWNER = MODULE + ".SessionOwner";
+
+	private static final String ROLE_DOC_READER = MODULE + ".DocReader";
+
+	private static final String ROLE_DOC_EDITOR = MODULE + ".DocEditor";
+
 	private Person _folderOwner;
 
 	private Person _folderReader;
@@ -118,6 +127,8 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 	private Person _taskOwner;
 
 	private Person _other;
+
+	private Person _sessionOwner;
 
 	/** Member of {@link #_rootOwners}. */
 	private Person _rootOwner;
@@ -179,6 +190,7 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 			_docEditor = createPerson("anyOfDocEditor");
 			_taskOwner = createPerson("anyOfTaskOwner");
 			_other = createPerson("anyOfOther");
+			_sessionOwner = createPerson("anyOfSessionOwner");
 			_rootOwner = createPerson("anyOfRootOwner");
 
 			_rootOwners = Group.createGroup("TestAccessParentAnyOfRootOwners");
@@ -765,8 +777,89 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 			rights().getAccessibleTypes(_rootOwner, SimpleBoundCommandGroup.WRITE).contains(type(PART)));
 	}
 
+	/**
+	 * A session decides by its own grants and delegates Read to its subject in addition, through
+	 * the candidate <code>&lt;self/&gt;</code>.
+	 */
+	public void testSelfCandidateCombinesOwnGrantsWithParent() {
+		TLObject session = createSession(_document);
+
+		assertTrue(allowed(_sessionOwner, session, SimpleBoundCommandGroup.READ));
+		assertTrue(allowed(_sessionOwner, session, SimpleBoundCommandGroup.WRITE));
+		assertTrue("Discover is implied by the own grants.",
+			allowed(_sessionOwner, session, SimpleBoundCommandGroup.DISCOVER));
+		assertTrue("The reader of the subject reads the session.",
+			allowed(_docReader, session, SimpleBoundCommandGroup.READ));
+		assertTrue("Discover is delegated together with Read.",
+			allowed(_docReader, session, SimpleBoundCommandGroup.DISCOVER));
+		assertFalse("Write is not delegated to the subject.",
+			allowed(_docEditor, session, SimpleBoundCommandGroup.WRITE));
+		assertFalse(allowed(_other, session, SimpleBoundCommandGroup.READ));
+		assertFalse(allowed(_folderOwner, session, SimpleBoundCommandGroup.READ));
+	}
+
+	/**
+	 * A session without subject is decided by its own grants alone: it does not become
+	 * inaccessible for lack of an access parent.
+	 */
+	public void testSelfCandidateWithoutParentObject() {
+		TLObject session = createSession(null);
+
+		assertTrue(allowed(_sessionOwner, session, SimpleBoundCommandGroup.READ));
+		assertTrue(allowed(_sessionOwner, session, SimpleBoundCommandGroup.WRITE));
+		assertFalse(allowed(_docReader, session, SimpleBoundCommandGroup.READ));
+	}
+
+	/**
+	 * The session itself holds roles deciding a delegated operation beside its access parent.
+	 */
+	public void testRoleHoldersOfSelfCandidate() {
+		TLObject session = createSession(_document);
+
+		assertEquals(Set.of(session, _document), Set.copyOf(holders(session, SimpleBoundCommandGroup.READ)));
+		assertEquals(List.of(session), holders(session, SimpleBoundCommandGroup.WRITE));
+
+		BoundedRole sessionOwner = BoundedRole.getRoleByName(ROLE_SESSION_OWNER);
+		BoundedRole docReader = BoundedRole.getRoleByName(ROLE_DOC_READER);
+		BoundedRole docEditor = BoundedRole.getRoleByName(ROLE_DOC_EDITOR);
+		assertEquals(Map.of(session, Set.of(sessionOwner), _document, Set.of(docReader, docEditor)),
+			rights().getAdmittingRolesByHolder(session, SimpleBoundCommandGroup.READ));
+		assertEquals(Map.of(session, Set.of(sessionOwner)),
+			rights().getAdmittingRolesByHolder(session, SimpleBoundCommandGroup.WRITE));
+	}
+
+	/**
+	 * A grant on an attribute of a session is checked on the session as well as on its subject.
+	 */
+	public void testAttributeOfSelfCandidate() {
+		TLObject session = createSession(_document);
+		TLStructuredTypePart subject = type(SESSION).getPart("subject");
+
+		assertTrue(rights().isAllowed(_sessionOwner, session, subject, SimpleBoundCommandGroup.READ));
+		assertTrue(rights().isAllowed(_docReader, session, subject, SimpleBoundCommandGroup.READ));
+		assertFalse(rights().isAllowed(_other, session, subject, SimpleBoundCommandGroup.READ));
+	}
+
+	/**
+	 * On the type level, a session is read through the type of its subject.
+	 */
+	public void testTypeLevelOfSelfCandidate() {
+		assertTrue(rights().getAccessibleTypes(_rootDocReader, SimpleBoundCommandGroup.READ).contains(type(SESSION)));
+		assertFalse("Write is not delegated, and the own grants are not held on the security root.",
+			rights().getAccessibleTypes(_rootDocReader, SimpleBoundCommandGroup.WRITE).contains(type(SESSION)));
+	}
+
+	private TLObject createSession(TLObject subject) {
+		return inTransaction(() -> {
+			TLObject result = create(SESSION);
+			result.tUpdateByName("owner", _sessionOwner);
+			result.tUpdateByName("subject", subject);
+			return result;
+		});
+	}
+
 	private List<Person> persons() {
-		return List.of(_folderOwner, _folderReader, _docReader, _docEditor, _taskOwner, _other);
+		return List.of(_folderOwner, _folderReader, _docReader, _docEditor, _taskOwner, _other, _sessionOwner);
 	}
 
 	private static List<TLObject> holders(TLObject object, BoundCommandGroup operation) {

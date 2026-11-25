@@ -23,16 +23,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_NO_OPERATION_NAMES__PROPERTY_VALUE;
 
 	/**
-	 * @en A type with an access parent takes over the access definition of that parent and has none
-	 *     of its own: either remove the access parent, or clear "{0}".
+	 * @en A type with an access parent leaves the access of its objects to that parent, which
+	 *     contradicts "{0}": either remove the access parent, or remove the mark.
 	 */
 	public static ResKey1 ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY;
 
-	/**
-	 * @en "Own decision" is no candidate of "Any of": a type deciding for itself has no access
-	 *     parent. Remove it, or choose it instead of "Any of".
-	 */
-	public static ResKey ERROR_SELF_IN_ANY_OF;
 
 	/**
 	 * @en Referring objects never decide "Create": nothing refers to an object being created.
@@ -41,11 +36,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_CREATE_FOR_REFERER;
 
 	/**
-	 * @en The access parent decides the operations {1} itself, since it is restricted to them and
-	 *     decides Discover together with them: either remove the grants of these operations from
-	 *     "{0}", or remove the operations from the access parent.
+	 * @en The access parent decides the operations {1} alone, so the grants of these operations in
+	 *     "{0}" are ignored: either add "Own decision" as a candidate of "Any of", so that they
+	 *     decide as well, or remove them.
 	 */
-	public static ResKey2 ACCESS_PARENT_DECIDES_GRANTED__PROPERTY_OPERATIONS;
+	public static ResKey2 ACCESS_PARENT_IGNORES_GRANTED__PROPERTY_OPERATIONS;
 
 	/**
 	 * @en container (default)
@@ -56,6 +51,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en container
 	 */
 	public static ResKey ACCESS_PARENT_CONTAINER;
+
+	/**
+	 * @en the object itself
+	 */
+	public static ResKey ACCESS_PARENT_SELF;
 
 	/**
 	 * @en container (through {0}#{1})

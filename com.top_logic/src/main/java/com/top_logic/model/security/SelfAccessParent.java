@@ -15,6 +15,11 @@ import com.top_logic.model.TLClass;
  * {@link AccessParentDefinition} of a type deciding for itself through its grants and the roles
  * users hold on its objects. It switches off the default of a composition part and an access
  * parent inherited from a generalization.
+ *
+ * <p>
+ * As a candidate of an {@link AnyOfAccessParent}, it lets the type decide by its grants beside the
+ * other candidates, see {@link SelfRelation}.
+ * </p>
  */
 @Label("Own decision")
 public class SelfAccessParent extends AbstractConfiguredInstance<SelfAccessParent.Config>

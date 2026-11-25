@@ -23,7 +23,9 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  *
  * <p>
  * An operation is allowed as soon as one candidate allows it. A candidate not
- * {@link #delegates(BoundCommandGroup) delegating} the operation abstains.
+ * {@link #delegates(BoundCommandGroup) delegating} the operation abstains. The candidate
+ * {@link SelfRelation} lets the object itself decide beside the other candidates, see
+ * {@link #includesSelf()}.
  * </p>
  *
  * @param candidates
@@ -149,12 +151,21 @@ public record AnyOfRelation(List<AccessParentFunction> candidates) implements Ac
 	}
 
 	/**
-	 * @return Whether a candidate is not restricted to a list of operations and a candidate leading
-	 *         to the container delegates Create, see {@link #delegatesCreation()}.
+	 * @return Whether a candidate is not restricted to a list of operations, a candidate leading to
+	 *         the container delegates Create, see {@link #delegatesCreation()}, and the object
+	 *         itself is no candidate, see {@link #includesSelf()}.
 	 */
 	@Override
 	public boolean delegatesAll() {
-		return getOperations() == null && delegatesCreation();
+		return getOperations() == null && delegatesCreation() && !includesSelf();
+	}
+
+	/**
+	 * @return Whether one of the candidates is the object itself, see {@link SelfRelation}.
+	 */
+	@Override
+	public boolean includesSelf() {
+		return candidates.stream().anyMatch(AccessParentFunction::includesSelf);
 	}
 
 	/**

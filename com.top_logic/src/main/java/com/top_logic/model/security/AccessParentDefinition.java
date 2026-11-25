@@ -71,7 +71,8 @@ public interface AccessParentDefinition {
 		 *        The configuration of the definition to resolve.
 		 * @return The relation of the definition, a {@link RestrictedRelation} when it is
 		 *         restricted to some operations; <code>null</code> for an unusable setting, which is
-		 *         reported to the context, {@link SelfAccessParent} included, which is no candidate.
+		 *         reported to the context, {@link SelfAccessParent} included, which only
+		 *         {@link AnyOfAccessParent} resolves as a candidate.
 		 *         A combining definition receiving <code>null</code> is unusable itself and returns
 		 *         <code>null</code> as well, without reporting again.
 		 */

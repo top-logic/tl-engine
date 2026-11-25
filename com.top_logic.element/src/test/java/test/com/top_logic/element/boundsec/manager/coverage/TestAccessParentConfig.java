@@ -46,6 +46,7 @@ import com.top_logic.model.security.RefererAccessParent;
 import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.security.RestrictedRelation;
 import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.model.security.SelfRelation;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.security.TargetAccessParent;
 import com.top_logic.model.security.TargetRelation;
@@ -181,8 +182,8 @@ public class TestAccessParentConfig extends BasicTestCase {
 
 		BufferingProtocol writeLog = new BufferingProtocol();
 		newService(writeLog, "<class name='" + covered + "'><access-parent><referer reference='" + LINKED
-			+ "#target'/></access-parent><grant operation='Write'/></class>");
-		assertError(writeLog, "delegates the operation Write");
+			+ "#target'/></access-parent><grant operation='Write' roles='TestSecurityCoverage.Reader'/></class>");
+		assertIgnored(writeLog, "Write");
 
 		BufferingProtocol listedLog = new BufferingProtocol();
 		newService(listedLog, "<class name='" + covered + "'><access-parent><referer reference='" + LINKED
@@ -312,33 +313,53 @@ public class TestAccessParentConfig extends BasicTestCase {
 		assertTrue(candidates.get(1) instanceof TargetRelation);
 	}
 
-	public void testSelfInAnyOfIsError() throws Exception {
+	/**
+	 * <code>&lt;self/&gt;</code> is a candidate of <code>&lt;any-of&gt;</code>, also of a nested one:
+	 * the type decides by its grants beside the other candidates.
+	 */
+	public void testSelfInAnyOf() throws Exception {
+		String classXml = "<class name='" + LINKED + "'><access-parent><any-of><self/>" + TARGET_PARENT
+			+ " operations='Read'/></any-of></access-parent><grant operation='Read'/><grant operation='Write'/></class>";
 		BufferingProtocol log = new BufferingProtocol();
-		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"
-			+ "<self/>" + TARGET_PARENT + "/></any-of></access-parent></class>");
-		assertNull("An unusable candidate leaves the type without access parent.", parent);
-		assertError(log, "<self/>");
+		AccessParentFunction parent = linkedParent(log, classXml);
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertTrue("The own Read grant is not ignored: " + log.getInfos(), ignoredWarnings(log).isEmpty());
+		AnyOfRelation anyOf = (AnyOfRelation) parent;
+		assertEquals(List.of(SelfRelation.INSTANCE), anyOf.candidates().subList(0, 1));
+		assertTrue(parent.includesSelf());
+		assertTrue(parent.delegates(SimpleBoundCommandGroup.READ));
+		assertFalse(parent.delegates(SimpleBoundCommandGroup.WRITE));
+		assertFalse(parent.delegatesAll());
+		assertTrue(AccessParentFunction.decidesItself(parent, SimpleBoundCommandGroup.READ));
+
+		TLClassAccessRights entry = read(classXml);
+		assertTrue(AccessParentConfig.includesSelf(entry.getAccessParent()));
+		assertTrue("The grants of the type decide as well.", AccessParentConfig.isRestricted(entry.getAccessParent()));
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(entry);
+		assertTrue("The editor accepts the own grants: " + checker.getFailures(), checker.getFailures().isEmpty());
+
+		BufferingProtocol nestedLog = new BufferingProtocol();
+		AccessParentFunction nested = linkedParent(nestedLog, "<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container/><any-of>" + TARGET_PARENT + "/><self/></any-of><self/></any-of></access-parent>"
+			+ "<grant operation='Write'/></class>");
+		assertTrue(nestedLog.getErrors().toString(), nestedLog.getErrors().isEmpty());
+		assertTrue(nested.includesSelf());
+		assertFalse("The object itself decides beside the container.", nested.delegatesAll());
+		assertEquals("The object itself is a candidate only once.", 3, ((AnyOfRelation) nested).candidates().size());
 	}
 
 	/**
-	 * The editor reports <code>&lt;self/&gt;</code> among the candidates before the setting is
-	 * stored, not only when the access rights are loaded with it.
+	 * <code>&lt;self/&gt;</code> as the only candidate of <code>&lt;any-of&gt;</code> is the type
+	 * deciding for itself.
 	 */
-	public void testSelfInAnyOfIsConstraintFailure() throws Exception {
-		TLClassAccessRights entry = read("<class name='" + LINKED + "'><access-parent><any-of>"
-			+ "<container/><self/></any-of></access-parent></class>");
-		ConstraintChecker checker = new ConstraintChecker();
-		checker.check(entry);
-		assertEquals(checker.getFailures().toString(), 1, checker.getFailures().size());
-		assertEquals(AnyOfAccessParent.Config.CANDIDATES,
-			checker.getFailures().get(0).getContextProperty().getPropertyName());
-
-		TLClassAccessRights nestedSelf = read("<class name='" + LINKED + "'><access-parent><any-of>"
-			+ "<container/><any-of>" + TARGET_PARENT + "/><self/></any-of></any-of></access-parent></class>");
-		checker = new ConstraintChecker();
-		checker.check(nestedSelf);
-		assertEquals("A nested any-of is checked as well: " + checker.getFailures(), 1,
-			checker.getFailures().size());
+	public void testOnlySelfInAnyOfIsNoAccessParent() throws Exception {
+		String classXml = "<class name='" + LINKED + "'><access-parent><any-of><self/></any-of></access-parent>"
+			+ "<grant operation='Read'/></class>";
+		BufferingProtocol log = new BufferingProtocol();
+		assertNull(linkedParent(log, classXml));
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertFalse(AccessParentConfig.delegates(read(classXml).getAccessParent()));
 	}
 
 	public void testAnyOfWithoutSelfIsNoConstraintFailure() throws Exception {
@@ -467,8 +488,8 @@ public class TestAccessParentConfig extends BasicTestCase {
 
 		BufferingProtocol writeLog = new BufferingProtocol();
 		linkedParent(writeLog, "<class name='" + LINKED + "'><access-parent><any-of>" + TARGET_PARENT + "/>"
-			+ TARGET_PARENT + " operations='Read'/></any-of></access-parent><grant operation='Write'/></class>");
-		assertError(writeLog, "delegates the operation Write");
+			+ TARGET_PARENT + " operations='Read'/></any-of></access-parent><grant operation='Write' roles='TestSecurityCoverage.Reader'/></class>");
+		assertIgnored(writeLog, "Write");
 	}
 
 	/**
@@ -562,12 +583,12 @@ public class TestAccessParentConfig extends BasicTestCase {
 		assertTrue(AccessParentConfig.delegatesOperation(entry.getAccessParent(), "Create"));
 	}
 
-	public void testGrantBesideUnrestrictedAnyOfIsError() throws Exception {
+	public void testGrantBesideUnrestrictedAnyOfIsIgnored() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
 		linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"
 			+ "<container/>" + TARGET_PARENT + " operations='Read'/></any-of></access-parent>"
-			+ "<grant operation='Write'/></class>");
-		assertError(log, "neither grants nor marks");
+			+ "<grant operation='Write' roles='TestSecurityCoverage.Reader'/></class>");
+		assertIgnored(log, "Write");
 	}
 
 	public void testCustomCombinator() throws Exception {
@@ -768,24 +789,43 @@ public class TestAccessParentConfig extends BasicTestCase {
 		assertError(log, "does not apply");
 	}
 
-	public void testGrantForDelegatedOperationIsError() throws Exception {
+	public void testGrantForDelegatedOperationIsIgnored() throws Exception {
+		String classXml = "<class name='" + LINKED + "'><access-parent>"
+			+ TARGET_PARENT + " operations='Read'/></access-parent><grant operation='Read' roles='TestSecurityCoverage.Reader'/></class>";
 		BufferingProtocol log = new BufferingProtocol();
-		linkedParent(log, "<class name='" + LINKED + "'><access-parent>"
-			+ TARGET_PARENT + " operations='Read'/></access-parent><grant operation='Read'/></class>");
-		assertError(log, "delegates the operation Read");
+		linkedParent(log, classXml);
+		assertIgnored(log, "Read");
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(read(classXml));
+		assertEquals(checker.getFailures().toString(), 1, checker.getFailures().size());
+		assertTrue("The editor reports the ignored grant as warning.", checker.getFailures().get(0).isWarning());
 
 		BufferingProtocol logOwn = new BufferingProtocol();
 		linkedParent(logOwn, "<class name='" + LINKED + "'><access-parent>"
 			+ TARGET_PARENT + " operations='Read'/></access-parent><grant operation='Write'/></class>");
 		assertTrue("A grant of an operation not delegated is the own definition of the type: " + logOwn.getErrors(),
 			logOwn.getErrors().isEmpty());
+		assertTrue(logOwn.getInfos().toString(), ignoredWarnings(logOwn).isEmpty());
+	}
+
+	/**
+	 * Revoking the grants a type receives for a delegated operation leaves the operation to the
+	 * access parent without a warning.
+	 */
+	public void testRevokedGrantForDelegatedOperationIsNotIgnored() throws Exception {
+		String classXml = "<class name='" + LINKED + "'><access-parent>"
+			+ TARGET_PARENT + " operations='Read'/></access-parent><grant operation='Read' roles='TestSecurityCoverage.Reader'/><revoke operation='Read'/></class>";
+		BufferingProtocol log = new BufferingProtocol();
+		linkedParent(log, classXml);
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertTrue(log.getInfos().toString(), ignoredWarnings(log).isEmpty());
 	}
 
 	public void testDiscoverGrantIsDelegated() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
 		linkedParent(log, "<class name='" + LINKED + "'><access-parent>"
-			+ TARGET_PARENT + " operations='Read'/></access-parent><grant operation='Discover'/></class>");
-		assertError(log, "delegates the operation Discover");
+			+ TARGET_PARENT + " operations='Read'/></access-parent><grant operation='Discover' roles='TestSecurityCoverage.Reader'/></class>");
+		assertIgnored(log, "Discover");
 	}
 
 	public void testMarkWithRestrictedParentIsError() throws Exception {
@@ -809,21 +849,29 @@ public class TestAccessParentConfig extends BasicTestCase {
 		}
 	}
 
-	public void testNoOperationsWithGrantIsError() throws Exception {
+	public void testNoOperationsWithGrantIsIgnored() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
 		linkedParent(log, "<class name='" + LINKED + "'><access-parent>"
-			+ TARGET_PARENT + "/></access-parent><grant operation='Write'/></class>");
-		assertError(log, "neither grants nor marks");
+			+ TARGET_PARENT + "/></access-parent><grant operation='Write' roles='TestSecurityCoverage.Reader'/></class>");
+		assertIgnored(log, "Write");
 	}
 
-	public void testOwnGrantOfSpecializationForDelegatedOperationIsError() throws Exception {
+	public void testMarkWithUnrestrictedParentIsError() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		linkedParent(log, "<class name='" + LINKED + "' without-security='true'><access-parent>"
+			+ TARGET_PARENT + "/></access-parent></class>");
+		assertError(log, "must not be marked");
+	}
+
+	public void testOwnGrantOfSpecializationForDelegatedOperationIsIgnored() throws Exception {
 		String entry = "<class name='TestAccessParentOperations:Entry'><access-parent>"
 			+ "<target reference='TestAccessParentOperations:Entry#catalog' operations='Read'/>"
 			+ "</access-parent></class>";
 
 		BufferingProtocol log = new BufferingProtocol();
-		newService(log, entry, "<class name='TestAccessParentOperations:EntrySub'><grant operation='Read'/></class>");
-		assertError(log, "TestAccessParentOperations:EntrySub delegates the operation Read");
+		newService(log, entry, "<class name='TestAccessParentOperations:EntrySub'><grant operation='Read' roles='TestAccessParentOperations.EntryEditor'/></class>");
+		assertIgnored(log, "Read");
+		assertTrue(log.getInfos().toString(), ignoredWarnings(log).get(0).contains("TestAccessParentOperations:EntrySub"));
 
 		BufferingProtocol logOwn = new BufferingProtocol();
 		newService(logOwn, entry, "<class name='TestAccessParentOperations:EntrySub'><grant operation='Write'/></class>");
@@ -831,15 +879,16 @@ public class TestAccessParentConfig extends BasicTestCase {
 			+ logOwn.getErrors(), logOwn.getErrors().isEmpty());
 	}
 
-	public void testInheritedGrantForDelegatedOperationIsNoError() throws Exception {
+	public void testInheritedGrantForDelegatedOperationIsIgnored() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
 		newService(log,
-			"<class name='TestAccessParentOperations:EntryBase'><grant inherit='true' operation='Read'/></class>",
+			"<class name='TestAccessParentOperations:EntryBase'><grant inherit='true' operation='Read' roles='TestAccessParentOperations.EntryEditor'/></class>",
 			"<class name='TestAccessParentOperations:Entry'><access-parent>"
 				+ "<target reference='TestAccessParentOperations:Entry#catalog' operations='Read'/>"
 				+ "</access-parent></class>");
-		assertTrue("A grant inherited from a generalization is dropped silently: " + log.getErrors(),
-			log.getErrors().isEmpty());
+		assertIgnored(log, "Read");
+		assertTrue(log.getInfos().toString(),
+			ignoredWarnings(log).stream().anyMatch(warning -> warning.contains("TestAccessParentOperations:Entry ")));
 	}
 
 	public void testSelfHasNoOperations() {
@@ -873,6 +922,22 @@ public class TestAccessParentConfig extends BasicTestCase {
 		for (String operation : List.of("Read", "Write", "Discover", "Create", "Delete", "Export")) {
 			assertEquals(operation, expected.contains(operation), AccessParentConfig.delegatesOperation(config, operation));
 		}
+	}
+
+	/**
+	 * Asserts that the service started without error and reported the grants of the given
+	 * operations as ignored.
+	 */
+	private static void assertIgnored(BufferingProtocol log, String operations) {
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		List<String> warnings = ignoredWarnings(log);
+		assertTrue("Expected the grants of " + operations + " to be ignored: " + log.getInfos(),
+			warnings.stream().anyMatch(warning -> warning.contains("decides the operations " + operations + " alone")));
+	}
+
+	private static List<String> ignoredWarnings(BufferingProtocol log) {
+		return log.getInfos().stream().filter(info -> info.contains("the grants of the type for them are ignored"))
+			.toList();
 	}
 
 	private static void assertError(BufferingProtocol log, String expectedMessagePart) {

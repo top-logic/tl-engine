@@ -55,14 +55,47 @@ public interface AccessParentConfig extends ConfigPart {
 
 	/**
 	 * Whether the given setting delegates the access decision: anything but
-	 * {@link SelfAccessParent}.
+	 * {@link SelfAccessParent}, also as the only candidate of an {@link AnyOfAccessParent}.
 	 *
 	 * @param config
 	 *        The setting, <code>null</code> for none.
 	 */
 	static boolean delegates(AccessParentConfig config) {
-		return config != null && config.getDefinition() != null
-			&& !(config.getDefinition() instanceof SelfAccessParent.Config);
+		return config != null && config.getDefinition() != null && !isSelf(config.getDefinition());
+	}
+
+	/**
+	 * Whether the given definition lets the type decide for itself: {@link SelfAccessParent}, or an
+	 * {@link AnyOfAccessParent} naming nothing else.
+	 */
+	private static boolean isSelf(PolymorphicConfiguration<?> definition) {
+		if (definition instanceof AnyOfAccessParent.Config anyOf) {
+			List<PolymorphicConfiguration<? extends AccessParentDefinition>> candidates = anyOf.getCandidates();
+			return !candidates.isEmpty() && candidates.stream().allMatch(AccessParentConfig::isSelf);
+		}
+		return definition instanceof SelfAccessParent.Config;
+	}
+
+	/**
+	 * Whether the given setting delegates the access decision and names the object itself as a
+	 * candidate of an {@link AnyOfAccessParent}, also of a nested one.
+	 *
+	 * <p>
+	 * The grants of the type then decide the delegated operations as well, together with the
+	 * access parents, see {@link SelfRelation}.
+	 * </p>
+	 *
+	 * @param config
+	 *        The setting, <code>null</code> for none.
+	 */
+	static boolean includesSelf(AccessParentConfig config) {
+		return delegates(config) && includesSelf(config.getDefinition());
+	}
+
+	private static boolean includesSelf(PolymorphicConfiguration<?> definition) {
+		return definition instanceof AnyOfAccessParent.Config anyOf
+			&& anyOf.getCandidates().stream().anyMatch(
+				candidate -> candidate instanceof SelfAccessParent.Config || includesSelf(candidate));
 	}
 
 	/**
@@ -72,10 +105,11 @@ public interface AccessParentConfig extends ConfigPart {
 	 * The type of a restricted setting decides the other operations by grants of its own. A
 	 * building block is restricted when it lists its {@link OperationRestriction#getOperations()
 	 * operations}; a {@link RefererAccessParent} always is, since it never decides Create. An
-	 * {@link AnyOfAccessParent} is restricted when all its candidates are, or when
-	 * it does not delegate Create, because no candidate leading to the container does, see
-	 * {@link #delegatesOperation(AccessParentConfig, String)}. An {@link AnyOfAccessParent} with a
-	 * single candidate is that candidate.
+	 * {@link AnyOfAccessParent} is restricted when all its candidates are, when it does not delegate
+	 * Create, because no candidate leading to the container does, see
+	 * {@link #delegatesOperation(AccessParentConfig, String)}, or when it names the object itself,
+	 * see {@link #includesSelf(AccessParentConfig)}. An {@link AnyOfAccessParent} with a single
+	 * candidate is that candidate.
 	 * </p>
 	 *
 	 * @param config
@@ -107,7 +141,7 @@ public interface AccessParentConfig extends ConfigPart {
 				return isRestricted(candidates.get(0));
 			}
 			return !candidates.isEmpty() && (allCandidatesRestricted(anyOf)
-				|| !delegatesOperation(anyOf, SimpleBoundCommandGroup.CREATE_NAME));
+				|| !delegatesOperation(anyOf, SimpleBoundCommandGroup.CREATE_NAME) || includesSelf(anyOf));
 		}
 		return false;
 	}

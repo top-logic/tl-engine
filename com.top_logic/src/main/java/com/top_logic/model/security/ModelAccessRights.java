@@ -7,6 +7,7 @@
 package com.top_logic.model.security;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -249,33 +250,37 @@ public interface ModelAccessRights {
 	}
 
 	/**
-	 * The object whose roles decide whether the given operation may be performed on the given
+	 * The objects whose roles decide whether the given operation may be performed on the given
 	 * object.
 	 *
 	 * <p>
-	 * The chain of {@link #getAccessParent(TLClass) access parents} of the object is followed as
+	 * The chains of {@link #getAccessParent(TLClass) access parents} of the object are followed as
 	 * long as the access parent delegates the operation, which is mapped to the
 	 * {@link #getOperationOnRoleHolder(TLObject, BoundCommandGroup) operation checked on the
-	 * parent} at every step. The role holder is the first object of the chain that decides the
-	 * operation for itself: the object itself when its type has no access parent, or when its
-	 * access parent is restricted to operations not including the given one.
+	 * parent} at every step. An access parent may lead to several objects, see
+	 * {@link AccessParentFunction#resolveAll(TLObject, BoundCommandGroup)}; each of them starts a
+	 * chain of its own. The role holders are the ends of these chains, the objects deciding the
+	 * operation for themselves: the object itself when its type has no access parent, or when its
+	 * access parent does not delegate the given operation.
 	 * </p>
 	 *
 	 * <p>
-	 * For an access parent delegating every operation, the role holder is the same for all
-	 * operations.
+	 * For an access parent {@link AccessParentFunction#isDisjunctive() combining its parents by
+	 * OR}, a role held on one of the role holders may admit the operation. Otherwise, the role
+	 * holders are a superset of the objects whose roles admit it.
 	 * </p>
 	 *
 	 * @param object
 	 *        The object to access.
 	 * @param operation
 	 *        The operation to perform on the object.
-	 * @return The object the roles of a user are looked up on, <code>null</code> when the chain of
-	 *         access parents leads nowhere or runs in a cycle, so that nobody decides for the object.
+	 * @return The objects the roles of a user are looked up on, in a stable order. Empty when every
+	 *         chain of access parents leads nowhere or runs in a cycle, so that nobody decides for
+	 *         the object.
 	 * @implSpec An implementation without a notion of access parents answers the object itself.
 	 */
-	default TLObject getRoleHolder(TLObject object, BoundCommandGroup operation) {
-		return object;
+	default Set<TLObject> getRoleHolders(TLObject object, BoundCommandGroup operation) {
+		return Collections.singleton(object);
 	}
 
 	/**
@@ -283,20 +288,21 @@ public interface ModelAccessRights {
 	 *
 	 * @param object
 	 *        The object to access.
-	 * @return The {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder} of
-	 *         {@link SimpleBoundCommandGroup#READ}.
-	 * @deprecated The role holder depends on the operation, since an access parent may be
-	 *             restricted to some operations: use
-	 *             {@link #getRoleHolder(TLObject, BoundCommandGroup)}.
+	 * @return The first of the {@link #getRoleHolders(TLObject, BoundCommandGroup) role holders} of
+	 *         {@link SimpleBoundCommandGroup#READ}, <code>null</code> when there is none.
+	 * @deprecated The role holders depend on the operation, since an access parent may be
+	 *             restricted to some operations, and an access parent may lead to several
+	 *             objects: use {@link #getRoleHolders(TLObject, BoundCommandGroup)}.
 	 */
 	@Deprecated
 	default TLObject getRoleHolder(TLObject object) {
-		return getRoleHolder(object, SimpleBoundCommandGroup.READ);
+		Set<TLObject> holders = getRoleHolders(object, SimpleBoundCommandGroup.READ);
+		return holders.isEmpty() ? null : holders.iterator().next();
 	}
 
 	/**
-	 * The operation checked on the {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder}
-	 * of the given object in place of the given operation on the object.
+	 * The operation checked on the {@link #getRoleHolders(TLObject, BoundCommandGroup) role
+	 * holders} of the given object in place of the given operation on the object.
 	 *
 	 * <p>
 	 * An object delegating to an access parent is not checked for the operation itself: the
@@ -321,8 +327,8 @@ public interface ModelAccessRights {
 	}
 
 	/**
-	 * The roles admitting the given operation on the given object, when held on the
-	 * {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder} of the operation.
+	 * The roles admitting the given operation on the given object, when held on one of the
+	 * {@link #getRoleHolders(TLObject, BoundCommandGroup) role holders} of the operation.
 	 *
 	 * <p>
 	 * For an object deciding for itself, these are the roles granted the operation, or an operation
@@ -357,8 +363,8 @@ public interface ModelAccessRights {
 	 * operation on the given object, grouped by the object they must be held on.
 	 *
 	 * <p>
-	 * Usually, all admitting roles must be held on the
-	 * {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder} of the operation. An object
+	 * Usually, the admitting roles must be held on one of the
+	 * {@link #getRoleHolders(TLObject, BoundCommandGroup) role holders} of the operation. An object
 	 * whose access parent is restricted to some operations decides a delegated operation by the
 	 * roles held on its access parent and by the roles granted the operation (or an operation
 	 * implying it) on the object itself, which must be held on the object.
@@ -371,16 +377,19 @@ public interface ModelAccessRights {
 	 * @return The admitting roles by the object they must be held on. Objects without admitting
 	 *         roles are left out.
 	 * @implSpec The default answers the {@link #getAdmittingRoles(TLObject, BoundCommandGroup)
-	 *           admitting roles}, to be held on the {@link #getRoleHolder(TLObject, BoundCommandGroup)
-	 *           role holder}.
+	 *           admitting roles}, to be held on each of the
+	 *           {@link #getRoleHolders(TLObject, BoundCommandGroup) role holders}.
 	 */
 	default Map<TLObject, Set<BoundedRole>> getAdmittingRolesByHolder(TLObject object, BoundCommandGroup operation) {
-		TLObject roleHolder = getRoleHolder(object, operation);
 		Set<BoundedRole> roles = getAdmittingRoles(object, operation);
-		if (roleHolder == null || roles.isEmpty()) {
+		if (roles.isEmpty()) {
 			return Collections.emptyMap();
 		}
-		return Collections.singletonMap(roleHolder, roles);
+		Map<TLObject, Set<BoundedRole>> result = new LinkedHashMap<>();
+		for (TLObject roleHolder : getRoleHolders(object, operation)) {
+			result.put(roleHolder, roles);
+		}
+		return result;
 	}
 
 	/**

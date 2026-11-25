@@ -965,10 +965,10 @@ public class SecurityDefinitionEditor {
 			setting.setDefinition(definition);
 			entry.setAccessParent(setting);
 			if (AccessParentConfig.delegates(setting)) {
-				Set<String> delegated = AccessParentConfig.delegatedOperationNames(setting);
+				boolean restricted = AccessParentConfig.isRestricted(setting);
 				entry.getGrants().removeIf(
-					grant -> delegated == null || grant.getOperation() == null
-						|| delegated.contains(grant.getOperation().id()));
+					grant -> !restricted || grant.getOperation() == null
+						|| AccessParentConfig.delegatesOperation(setting, grant.getOperation().id()));
 				entry.setInternal(false);
 				entry.setWithoutSecurity(false);
 			}

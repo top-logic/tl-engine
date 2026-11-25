@@ -205,7 +205,8 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * Takes {@link #ARG_TEXT} and the turn settings {@link #ARG_AGENT}, {@link #ARG_MODEL},
 	 * {@link #ARG_MCP_OVERRIDE}, {@link #ARG_MCP_SERVERS}, {@link #ARG_EFFORT} and
 	 * {@link #ARG_APPROVAL_MODE}; a send that creates its chat titles it {@link #ARG_TITLE}. The
-	 * message carries the files attached to it ({@link #handleUpload(DisplayContext, Collection)})
+	 * message carries the files attached in the chat it names, or in the chat not yet created when it
+	 * names none ({@link #handleUpload(DisplayContext, Collection)})
 	 * and is told what the page states about the situation ({@link ChatViewBinding#facts()}).
 	 * </p>
 	 *
@@ -242,7 +243,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	public static final String CMD_REGENERATE = "regenerate";
 
 	/**
-	 * Command that takes one file off the message being written; takes {@link #ARG_ATTACHMENT_ID}.
+	 * Command that takes one file off the message being written in a chat session; takes
+	 * {@link #ARG_ATTACHMENT_ID} and {@link #ARG_SESSION_ID} (empty for the conversation the next
+	 * send creates).
 	 */
 	public static final String CMD_REMOVE_ATTACHMENT = "removeAttachment";
 
@@ -281,6 +284,12 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 
 	/** Argument of {@link #CMD_REMOVE_ATTACHMENT}: the id of the file. */
 	public static final String ARG_ATTACHMENT_ID = "attachmentId";
+
+	/**
+	 * Form part of an upload ({@link #handleUpload(DisplayContext, Collection)}): the id of the chat
+	 * session the files are attached in, empty or absent for the conversation the next send creates.
+	 */
+	public static final String UPLOAD_SESSION_PART = "sessionId";
 
 
 
@@ -322,8 +331,10 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	public static final String STATUS_ERROR = "error";
 
 	/**
-	 * State key of the files attached to the message being written, a list of
-	 * {@link DraftAttachmentDto}.
+	 * State key of the files attached to the messages being written in this conversation: a map from
+	 * the id of a chat session - {@link ChatViewBinding#NEW_CONVERSATION} for the conversation the
+	 * next send creates - to the list of {@link DraftAttachmentDto} attached in it. A session with no
+	 * files has no entry. The browser shows the entry of the session it displays.
 	 */
 	public static final String STATE_DRAFT_ATTACHMENTS = "draftAttachments";
 
@@ -539,10 +550,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		// The browser refuses a larger file before it is transmitted.
 		putState(UploadSupport.MAX_UPLOAD_SIZE, Long.valueOf(maxUploadSize()));
 		publishAttachments();
-		ChatAttachments attachments = _binding.attachments();
-		Runnable unlisten = () -> attachments.removeListener(_publishAttachments);
+		Runnable unlisten = () -> _binding.removeAttachmentListener(_publishAttachments);
 		addAttachListener(() -> {
-			attachments.addListener(_publishAttachments);
+			_binding.addAttachmentListener(_publishAttachments);
 			publishAttachments();
 		});
 		addDetachListener(unlisten);
@@ -571,7 +581,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	}
 
 	private void publishAttachments() {
-		putState(STATE_DRAFT_ATTACHMENTS, _binding.attachments().list());
+		putState(STATE_DRAFT_ATTACHMENTS, _binding.attachmentLists());
 	}
 
 	/**
@@ -724,7 +734,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			return status(STATUS_FORBIDDEN);
 		}
 		boolean edit = fromTurn != null;
-		ChatAttachments draft = _binding.attachments();
+		// The files of the chat the send goes to; those of the conversation it creates when it names
+		// none. Read before the chat is created, under the key the browser attached them with.
+		ChatAttachments draft = _binding.attachments(blankToNull(stringArg(args, ARG_SESSION_ID)));
 		List<ChatAttachments.Entry> attached = edit ? List.of() : draft.entries();
 		String text = stringArg(args, ARG_TEXT);
 		String message = text == null ? "" : text.trim();
@@ -915,13 +927,18 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * Takes a file off the message being written, see {@link #CMD_REMOVE_ATTACHMENT}.
 	 */
 	@ReactCommandHandler(value = CMD_REMOVE_ATTACHMENT, params = {
-		@ReactParam(name = ARG_ATTACHMENT_ID, type = "string", description = "The id of the file.")
+		@ReactParam(name = ARG_ATTACHMENT_ID, type = "string", description = "The id of the file."),
+		@ReactParam(name = ARG_SESSION_ID, type = "string",
+			description = "The chat the file is attached in; empty for a chat not yet created.")
 	})
 	public void removeAttachment(Map<String, Object> args) {
 		String id = stringArg(args, ARG_ATTACHMENT_ID);
-		if (id != null) {
-			_binding.attachments().remove(id);
+		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
+		Person person = actingPerson();
+		if (id == null || person == null || writeRefusal(sessionId, person) != null) {
+			return;
 		}
+		_binding.attachments(sessionId).remove(id);
 	}
 
 	/**
@@ -1164,18 +1181,21 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * <p>
 	 * A file the message cannot carry - of another type than an image or PDF, one file more than
 	 * {@link ChatAttachments#MAX_ATTACHMENTS} - is not attached; the {@link AttachmentUploadReply}
-	 * says why, one sentence per file. The files attached are in this control's state ({@link
-	 * #STATE_DRAFT_ATTACHMENTS}), and in that of every other displayed chat control of the
-	 * conversation.
+	 * says why, one sentence per file. The files are attached in the chat session the form part
+	 * {@link #UPLOAD_SESSION_PART} names - in the conversation the next send creates when it names
+	 * none - and only when the account may write that session. The files attached are in this
+	 * control's state ({@link #STATE_DRAFT_ATTACHMENTS}), and in that of every other displayed chat
+	 * control of the conversation.
 	 * </p>
 	 */
 	@Override
 	public AttachmentUploadReply handleUpload(DisplayContext context, Collection<jakarta.servlet.http.Part> parts) {
 		Person person = actingPerson();
-		if (person == null || writeRefusal(_binding.tracker().getActiveSessionId(), person) != null) {
+		String sessionId = blankToNull(uploadSession(parts));
+		if (person == null || writeRefusal(sessionId, person) != null) {
 			return null;
 		}
-		ChatAttachments attachments = _binding.attachments();
+		ChatAttachments attachments = _binding.attachments(sessionId);
 		List<String> refused = new ArrayList<>();
 		for (jakarta.servlet.http.Part part : parts) {
 			if (!UploadSupport.FILE_PART.equals(part.getName())) {
@@ -1194,6 +1214,20 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			}
 		}
 		return AttachmentUploadReply.create().setReason(refused);
+	}
+
+	/** The text of the upload's {@link #UPLOAD_SESSION_PART}, <code>null</code> when it has none. */
+	private static String uploadSession(Collection<jakarta.servlet.http.Part> parts) {
+		for (jakarta.servlet.http.Part part : parts) {
+			if (UPLOAD_SESSION_PART.equals(part.getName())) {
+				try (InputStream in = part.getInputStream()) {
+					return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+				} catch (IOException ex) {
+					throw new UncheckedIOException("Failed to read the chat of an upload.", ex);
+				}
+			}
+		}
+		return null;
 	}
 
 	/**

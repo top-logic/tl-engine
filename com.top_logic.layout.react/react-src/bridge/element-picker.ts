@@ -1,4 +1,5 @@
-import { getApiBase, isMountedControl } from './tl-react-bridge';
+import { getApiBase, getWindowName } from './page-context';
+import { isMountedControl } from './tl-react-bridge';
 import { addBinding, createScope, registerScope } from './keyboard-dispatcher';
 import { addStateWord, removeStateWord } from './css';
 
@@ -183,7 +184,7 @@ function stop(): void {
 
 /** Handles a PickEvent from SSE: enters pick mode in this window. */
 export function handlePick(event: PickEventData): void {
-  const myWindow = document.body.dataset.windowName ?? '';
+  const myWindow = getWindowName();
   if (event.targetWindowId && event.targetWindowId !== myWindow) {
     return;
   }

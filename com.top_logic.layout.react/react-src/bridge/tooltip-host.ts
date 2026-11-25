@@ -50,7 +50,8 @@
  */
 import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
-import { isMountedControl, getApiBase, controlStateSnapshot } from './tl-react-bridge';
+import { isMountedControl, controlStateSnapshot } from './tl-react-bridge';
+import { getApiBase, getWindowName } from './page-context';
 import { TooltipPopover, TooltipData } from './TooltipPopover';
 import { wrapRoot } from './root-wrapper';
 import { ANCHORED_OVERLAY_ATTR } from './focus-trap';
@@ -623,7 +624,7 @@ function renderActive(): void {
 }
 
 async function fetchTooltip(controlId: string, key: string): Promise<TooltipData | null> {
-  const windowName = (document.body.dataset.windowName as string) ?? '';
+  const windowName = getWindowName();
   const url = getApiBase() + `react-api/tooltip?controlId=${encodeURIComponent(controlId)}`
     + `&key=${encodeURIComponent(key)}`
     + `&windowName=${encodeURIComponent(windowName)}`;

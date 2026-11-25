@@ -186,7 +186,7 @@ public class TypeGrants {
 		_editor = Objects.requireNonNull(editor);
 		_type = Objects.requireNonNull(type);
 		AccessParentFunction accessParent = getAccessParent();
-		boolean ownGrants = (accessParent == null || accessParent.getOperations() != null) && !isExempt();
+		boolean ownGrants = !AccessParentFunction.delegatesAll(accessParent) && !isExempt();
 		_operations = ownGrants ? operations(rights.getOperations(type), accessParent) : Collections.emptyList();
 		if (ownGrants) {
 			Map<BoundedRole, Boolean> granted = grantedRoles();

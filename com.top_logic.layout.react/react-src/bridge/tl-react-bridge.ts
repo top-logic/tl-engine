@@ -6,7 +6,7 @@ import { getComponent } from './registry';
 import { wrapRoot } from './root-wrapper';
 import { installTouchDrag } from './touch-drag';
 import { connect, subscribe, unsubscribe } from './sse-client';
-import { setI18NApiBase, setI18NWindowName } from './i18n';
+import { getApiBase, setMountContext } from './page-context';
 import { createScope, registerScope, addBinding, pageScope, isCompositionKey, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
 import { CMD_COMMIT, CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, parseResponse, registerPendingFlush, unregisterPendingFlush } from './command-channel';
@@ -272,18 +272,8 @@ function tearDown(controlId: string, entry: MountEntry): void {
   }
 }
 
-/** The application context path (e.g. "/demo"), set on first mount(). */
-let _contextPath = '';
-
 /** Whether SSE has been connected. */
 let _sseConnected = false;
-
-/**
- * Returns the API base URL (context path with trailing slash).
- */
-export function getApiBase(): string {
-  return _contextPath + '/';
-}
 
 /**
  * The attribute naming the control whose React root the element takes, see
@@ -334,12 +324,8 @@ export function mount(
   windowName?: string,
   contextPath?: string
 ): void {
-  // Store context path from the first mount call.
-  if (contextPath !== undefined) {
-    _contextPath = contextPath;
-  }
-
   const resolvedWindowName = windowName ?? '';
+  setMountContext(contextPath, resolvedWindowName);
 
   // Connect SSE on first mount, or reconnect on page reload.
   // When contextPath is provided (from internalWrite()), a fresh page render is happening.
@@ -348,14 +334,10 @@ export function mount(
   // reconnect to establish a fresh SSE connection.
   if (!_sseConnected) {
     _sseConnected = true;
-    setI18NApiBase(getApiBase());
     connect(getApiBase() + 'react-api/events?windowName=' + encodeURIComponent(resolvedWindowName));
   } else if (contextPath !== undefined) {
     connect(getApiBase() + 'react-api/events?windowName=' + encodeURIComponent(resolvedWindowName));
   }
-
-  // Always update windowName (it may change between mount calls).
-  setI18NWindowName(resolvedWindowName);
 
   const element = findMountPoint(controlId);
   if (!element) {

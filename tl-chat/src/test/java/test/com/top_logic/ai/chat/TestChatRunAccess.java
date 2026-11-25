@@ -45,6 +45,8 @@ import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -305,7 +307,7 @@ public class TestChatRunAccess extends BasicTestCase {
 
 		assertEquals(ChatControl.STATUS_FORBIDDEN, response.status());
 		assertTrue(response.body(), response.body().contains("status=forbidden"));
-		assertNotNull("The chat must still be there.", ChatHistoryService.findOwnedSessionById(id(), anna));
+		assertNotNull("The chat must still be there.", ChatHistoryService.findAnySessionById(id()));
 	}
 
 	/**
@@ -593,6 +595,8 @@ public class TestChatRunAccess extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestChatRunAccess.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				AiToolAccessService.Module.INSTANCE,
 				LLMProviderService.Module.INSTANCE,

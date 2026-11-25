@@ -14,7 +14,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
-import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
@@ -50,6 +49,8 @@ import com.top_logic.ai.core.message.TokenUsage;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -57,7 +58,7 @@ import com.top_logic.util.model.ModelService;
  * {@code chatStart} - by writing it onto its {@code input} channel, while the browser's own picks
  * and sends are reported by the browser and not written by the server (#30445).
  */
-public class TestChatFollowsActiveSession extends BasicTestCase {
+public class TestChatFollowsActiveSession extends SecurityCheckedTestCase {
 
 	private static final String SELECTION = "chatSession";
 
@@ -354,6 +355,8 @@ public class TestChatFollowsActiveSession extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestChatFollowsActiveSession.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				AiToolAccessService.Module.INSTANCE,
 				LLMProviderService.Module.INSTANCE,

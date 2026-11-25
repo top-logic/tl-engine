@@ -165,6 +165,23 @@ public final class CoverageFinding {
 	}
 
 	/**
+	 * Creates a finding about rules treating historic versions of objects.
+	 *
+	 * @param kind
+	 *        The kind of the finding.
+	 * @param type
+	 *        The type the rules apply to.
+	 * @param message
+	 *        The message of the finding.
+	 * @param ruleIds
+	 *        The ids of the rules the finding is about.
+	 * @return The new finding.
+	 */
+	public static CoverageFinding historyRules(FindingKind kind, TLClass type, ResKey message, List<String> ruleIds) {
+		return new CoverageFinding(kind, type, message, null, Collections.emptySet(), List.copyOf(ruleIds));
+	}
+
+	/**
 	 * Creates a {@link FindingKind#UNGRANTED_OPERATION} finding.
 	 *
 	 * @param type

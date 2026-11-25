@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), attributes readable with Discover (discover-attributes), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents (also restricted to operations, `operations` of an access parent), the Delete right a remove from a composition needs, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
+description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), attributes readable with Discover (discover-attributes), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents (also restricted to operations, `operations` of an access parent), the Delete right a remove from a composition needs, role rules of the AccessManager, the access to historic versions of objects (history, anchors), the autoconf files and the SecurityCoverageCheck.
 order: 20
 ---
 
@@ -598,6 +598,68 @@ The engine ships such rules for the account types `tl.accounts:Group` and `tl.ac
 (`tl.accounts.config.xml`) and for the units and currencies, `tl.units:AbstractUnit` with
 `inherit="true"` (`tl.units.config.xml`). The grants are the application's: for its users to read
 the currencies, it grants `Read` on the module `tl.units` to a role they hold on the security root.
+
+### Historic versions of objects
+
+A historic version of an object (e.g. `inRevision`, the value of a historic reference) is checked
+like a current object, but each rule decides in which data its path is navigated. The attribute
+`history` of a role rule or role parent rule selects it; the complete definition is the
+[specification](doc:access-historic-spec).
+
+| `history` | Current object | Historic version `Y@r` |
+|---|---|---|
+| `current` (default of a role rule) | path in the current data | path in the **current** data: the roles of the object hold for each of its versions |
+| `historic` (default of a role parent rule) | path in the current data | path as of revision **r** |
+| `anchored` | **no role** | path as of r, but only if a current object refers to the version through one of the references in `anchors` |
+
+Without the attribute, the engine behaves as before: whoever holds a role on an object through a
+role rule holds it on each version of the object, and the role parents of a version are those it
+had in its revision.
+
+```xml
+<!-- A release refers to the released version of a document through the historic reference
+     Release#snapshot. The users of the partner of a section read the section in exactly the
+     released versions, and never the current working version. -->
+<rule id="PartnerReadsReleasedSections" meta-element="myapp:Section" role="myapp.PartnerReader"
+	history="anchored" anchors="myapp:Release#snapshot">
+	<step attribute="myapp:Section#partner"/>
+	<step attribute="myapp:Partner#group"/>
+</rule>
+
+<!-- The recipients of a release read exactly the released version of the document. -->
+<inheritance-rule id="RecipientsReadReleasedDocument" meta-element="myapp:Document"
+	role="myapp.ReleaseRecipient" source-role="myapp.ReleaseRecipient">
+	<step attribute="myapp:Release#snapshot" inverse="true"/>
+</inheritance-rule>
+```
+
+- **Anchor step.** A step with `inverse="true"` over a reference with `history-type="historic"`
+  leads from a historic version to the current objects (the *anchors*) referring to exactly this
+  version: same object, same revision. From a current object the step leads nowhere. A rule with
+  such a step always starts at the checked version and must not set `history`. This is how the
+  roles held on an anchor are passed to the version it refers to (second rule above).
+- **`anchored` and `anchors`.** The rule takes the role from the data of the version itself, but
+  only for a version that an anchor *covers*: the anchor refers to the version or, in the same
+  revision, to one of its containers. `anchors` names the historic references that count. The role
+  is given to a group only if the path leads to it and the group may read the anchor reference on
+  the anchor, or if one of two such groups contains the other (then the smaller one receives the
+  role). The rule grants nothing on current objects, so a type needs another rule for them.
+- **Who may create an anchor grants read access.** Whoever may create an anchor, or set the
+  references the groups on the anchor are taken from, decides which groups read the covered
+  versions. Grant `Create` on the anchor type and `Write` on these references like the right to
+  release a version.
+- **Operations.** Only operations of type `read` are decided on the version. An operation of type
+  `write` or `delete` checked on a version is decided on the current object, so a role granted
+  through an anchor never admits a modification.
+- **Direct role assignments** hold for each version of the object. A historic version is no
+  context of a role assignment.
+- **Storage of the anchor reference.** Store a reference used as anchor in a link table (the
+  default of a reference without a column of its own). A historic reference in a column of its own
+  has no index, and one stored in generic attribute tables cannot be navigated backwards at all;
+  the coverage check reports both.
+- **Cost.** Roles on historic versions and roles of rules navigating a historic reference in
+  forward direction are not kept in the security storage. They are computed when access is checked
+  and kept for the current interaction only.
 
 ## Where the files are
 

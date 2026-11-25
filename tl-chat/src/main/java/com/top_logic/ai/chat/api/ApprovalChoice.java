@@ -12,6 +12,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.approval.ApprovalMode;
 
 /**
@@ -88,7 +89,8 @@ public final class ApprovalChoice {
 		}
 		// Written on its own rather than with the tracker's whole bag: a persisted bag keeps the
 		// stored mode, so that no window writes back the one it opened the chat with.
-		ChatHistoryService.updateMetadata(ChatHistoryService.findOwnedSessionById(sessionId, person),
+		ChatHistoryService.updateMetadata(
+			ChatHistoryService.findAccessibleSession(sessionId, person, SimpleBoundCommandGroup.WRITE),
 			stored -> DtoMapper.withApprovalMode(stored, approvalMode));
 		for (ChatEventHandler other : ChatEventHandlerRegistry.findForSession(person, sessionId)) {
 			TaskProgressTracker window = other.getTracker();

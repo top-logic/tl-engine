@@ -21,7 +21,10 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.I18NConstants;
+import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.boundsec.manager.rule.config.PathElementConfig;
+import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.meta.ReferenceStorage;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -140,6 +143,42 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 		return getConfig().isInverse();
     }
     
+	/**
+	 * Whether this step is an anchor step: a backwards navigation of a reference holding historic
+	 * versions only.
+	 *
+	 * <p>
+	 * From a historic version, an anchor step leads to the current objects that refer to exactly
+	 * this version. From a current object, an anchor step leads nowhere.
+	 * </p>
+	 */
+	public boolean isAnchorStep() {
+		return isInverse() && _reference.getHistoryType() == HistoryType.HISTORIC;
+	}
+
+	/**
+	 * Whether the objects referring to an object through {@link #getReference()} can be found.
+	 *
+	 * <p>
+	 * This is not the case for a reference stored in generic attribute tables.
+	 * </p>
+	 */
+	public boolean isBackwardsNavigable() {
+		return isBackwardsNavigable(_reference);
+	}
+
+	/**
+	 * Whether the objects referring to an object through the given reference can be found.
+	 */
+	public static boolean isBackwardsNavigable(TLReference reference) {
+		for (TLStructuredTypePart part : concreteParts(reference).toList()) {
+			if (!(AttributeOperations.getStorageImplementation(part) instanceof ReferenceStorage)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	@Override
 	public Collection<? extends TLObject> getValues(TLObject base) {
 		return getValues(base, true);
@@ -149,6 +188,14 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 		Collection<? extends TLObject> result;
         
 		if (isInverse() == isForward) {
+			if (isForward && isAnchorStep()) {
+				if (!RuleHistory.isHistoric(base) || !isBackwardsNavigable()) {
+					// An anchor step is only defined from a historic version: from a current object,
+					// the search would find the anchors referring to any version since the last
+					// change of the object.
+					return Collections.emptySet();
+				}
+			}
 			result = base.tReferers(_reference);
 		} else {
 			Object value = base.tValue(_reference);

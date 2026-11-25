@@ -27,6 +27,7 @@ import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
+import com.top_logic.element.boundsec.manager.rule.RuleHistory;
 import com.top_logic.element.boundsec.manager.rule.SingletonRule;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
@@ -67,6 +68,8 @@ public class RoleRulesImporter {
 
 	private boolean _inherit;
 
+	private RuleHistory _history = RuleHistory.CURRENT;
+
     /**
      * Creates a {@link RoleRulesImporter}.
      *
@@ -80,6 +83,7 @@ public class RoleRulesImporter {
     }
 
     void addRule(RoleRule aRule) {
+		aRule.initHistory(_history);
         TLClass theME     = aRule.getMetaElement();
 		MultiMaps.add(_rules, theME, aRule, ArrayList::new);
 	}
@@ -156,6 +160,10 @@ public class RoleRulesImporter {
 				Logger.error("Problem creating path element.", ex, RoleRulesImporter.class);
 				addProblem(ex.getErrorKey());
 			}
+		}
+		_history = RuleHistory.resolve(roleRule, path, true, this::addProblem);
+		if (numberProblems < _problems.size()) {
+			return;
 		}
 		if (path.isEmpty()) {
 			path.add(new IdentityPathElement());

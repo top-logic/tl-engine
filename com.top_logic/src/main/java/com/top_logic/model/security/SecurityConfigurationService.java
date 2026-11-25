@@ -1961,13 +1961,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 *        reached again while it is decided closes a cycle, see {@link CyclicDecisions}.
 	 * @param holds
 	 *        The decisions on committed objects made so far in this check, see
-	 *        {@link #holdsRole(Person, TLObject, BoundCommandGroup, Set, CyclicDecisions)}.
+	 *        {@link #holdsRole(Person, TLObject, BoundCommandGroup, Set, boolean, CyclicDecisions)}.
 	 */
 	private boolean isAllowedInitial(Person person, TLObject current, BoundCommandGroup operation,
 			Set<BoundedRole> requiredPartRoles, CyclicDecisions<ObjectOperation> initial,
 			CyclicDecisions<ObjectOperation> holds) {
 		if (isCommitted(current)) {
-			return holdsRole(person, current, operation, requiredPartRoles, holds);
+			return holdsRole(person, current, operation, requiredPartRoles, false, holds);
 		}
 		AccessParentFunction parent = accessParentOf(current);
 		if (parent == null || !parent.delegates(operation)) {
@@ -2354,21 +2354,32 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * the {@link #getRoleHolders(TLObject, BoundCommandGroup) role holders} suffices.
 	 * </p>
 	 *
+	 * @param ofIdentity
+	 *        Whether only the roles held on the identity of the objects count, see
+	 *        {@link AccessManager#hasRoleOfIdentity(Person, BoundObject, Collection)}: for a
+	 *        modification checked on a historic version of a deleted object, no role that is only
+	 *        granted on historic versions admits it.
 	 * @param decisions
 	 *        The decisions made so far in this check, for the given person and roles. An object
 	 *        reached again while it is decided closes a cycle, which admits nobody along that path,
 	 *        see {@link CyclicDecisions}.
 	 */
 	private boolean holdsRole(Person person, TLObject instance, BoundCommandGroup operation,
-			Set<BoundedRole> roles, CyclicDecisions<ObjectOperation> decisions) {
+			Set<BoundedRole> roles, boolean ofIdentity, CyclicDecisions<ObjectOperation> decisions) {
 		AccessParentFunction parent = accessParentOf(instance);
 		if (parent == null || !parent.delegates(operation)) {
-			return instance instanceof BoundObject holder && accessManager().hasRole(person, holder, roles);
+			if (!(instance instanceof BoundObject holder)) {
+				return false;
+			}
+			if (ofIdentity) {
+				return accessManager().hasRoleOfIdentity(person, holder, roles);
+			}
+			return accessManager().hasRole(person, holder, roles);
 		}
 		return decisions.decide(new ObjectOperation(instance, operation),
 			key -> parent.allows(instance, operation,
 				(parentObject, delegated) -> holdsRole(person, parentObject, operationOnParent(delegated), roles,
-					decisions)),
+					ofIdentity, decisions)),
 			() -> {
 				// The cycle is logged by the decision of the object itself.
 			});
@@ -2429,7 +2440,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 		// An object delegating the operation to an access parent holds no roles for it: the roles
 		// the person holds on the objects deciding the operation for it are checked instead.
-		return holdsRole(person, instance, commandGroup, requiredPartRoles, new CyclicDecisions<>());
+		return holdsRole(person, instance, commandGroup, requiredPartRoles, modificationOfVersion,
+			new CyclicDecisions<>());
 	}
 
 	@Override

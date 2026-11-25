@@ -206,7 +206,7 @@ public class SecDemoA2ARunTest extends SecDemoPersonaTest {
 	 */
 	private static ToolContext a2aRun(Person account, boolean allowWrites) {
 		actAs(account);
-		return AgentRunBackend.toolContext(account, allowWrites, null, new CancellationToken());
+		return AgentRunBackend.toolContext(account, allowWrites, null, null, new CancellationToken());
 	}
 
 	private static void awaitState(A2ATask task, TaskState expected) throws InterruptedException {

@@ -190,6 +190,30 @@
 		</class>
 
 		<!--
+			Transient-only type standing for a generalization link between two classes, which is no model
+			part of its own: the user object of a generalization edge in the class diagram of the model
+			editor, so the edge can be selected, shown and deleted (the DELETE mode of the
+			ModelEditAction removes the generalization from the specialization). Instances are created
+			with new(`tl.devtools:Generalization`, transient: true) by the diagram script, so no table is
+			declared.
+		-->
+		<class name="Generalization">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="specialization"
+					kind="forwards"
+					type="tl.model:TLClass"
+				/>
+				<reference name="generalization"
+					kind="forwards"
+					type="tl.model:TLClass"
+				/>
+			</attributes>
+		</class>
+
+		<!--
 			Transient-only type holding the input of the "add generalization" dialog: the class to add as
 			generalization of the selected class. Instances are created with
 			new(`tl.devtools:NewGeneralization`, transient: true) and are never persisted (the action

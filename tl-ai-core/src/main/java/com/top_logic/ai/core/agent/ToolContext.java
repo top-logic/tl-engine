@@ -483,9 +483,14 @@ public class ToolContext implements ToolExecutionContext {
 	 * What the scheduler's {@code AgentTask} and the MCP endpoint build their context with. It says
 	 * only that no answer can arrive; it authorizes nothing and takes nothing away. Whether such a
 	 * run is additionally bounded by the policy's {@code <background-allowlist>} is the decision of
-	 * its {@link #security() security context}, made where that context is built - the two are
-	 * normally set together, and deliberately remain two statements rather than one, because a run
-	 * can lose its human without any change to what it is allowed to do.
+	 * its {@link #security() security context}, made where that context is built.
+	 * </p>
+	 *
+	 * <p>
+	 * The two are deliberately two statements: a background run is one whose tool calls nobody
+	 * approves, and an attended run is one whose questions somebody answers. They are normally set
+	 * together, but an A2A run is both background and attended, because the calling agent answers
+	 * its questions but approves no tool call.
 	 * </p>
 	 */
 	public ToolContext unattended() {

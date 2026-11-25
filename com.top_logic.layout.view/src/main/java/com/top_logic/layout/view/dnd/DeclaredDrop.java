@@ -19,6 +19,8 @@ import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.DeletedObjects;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewScripts;
 import com.top_logic.layout.view.command.LiveExecutability;
@@ -174,6 +176,15 @@ public record DeclaredDrop(DropConfig config, DropSignature signature, List<View
 			executability = live::getState;
 		}
 
+		InputRef inputRef = config.getInput();
+		Supplier<?> input;
+		if (inputRef == null) {
+			input = null;
+		} else {
+			ViewChannel inputChannel = context.resolveChannel(inputRef.getChannel());
+			input = () -> DeletedObjects.withoutDeleted(inputChannel.get());
+		}
+
 		QueryExecutor compiledRefuseIf = refuseIf;
 		return new DropBinding.Drop(acceptedKinds(), signature, channels,
 			actions,
@@ -181,12 +192,14 @@ public record DeclaredDrop(DropConfig config, DropSignature signature, List<View
 			ViewExecutabilityRules.build(config, DropConfig.TARGET_EXECUTABILITY, context),
 			compiledRefuseIf == null ? null
 				: (objects, references) -> compiledRefuseIf.execute(arguments(objects, references)),
-			names());
+			names(),
+			input);
 	}
 
 	/**
 	 * The values of the variables of the refusal function: the dropped objects, followed by the
-	 * referenced ones, see {@link DropArguments#names(DropConfig, DropSignature)}.
+	 * referenced ones and the value of the input, see
+	 * {@link DropArguments#names(DropConfig, DropSignature)}.
 	 */
 	private static Object[] arguments(List<?> objects, List<?> references) {
 		Object[] result = new Object[references.size() + 1];

@@ -86,7 +86,7 @@ public class PollServlet extends HttpServlet {
 		}
 		String windowName = request.getParameter("windowName");
 		if (windowName == null || windowName.isEmpty()) {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing windowName parameter.");
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST, ReactServlet.MISSING_WINDOW_NAME_MESSAGE);
 			return;
 		}
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);

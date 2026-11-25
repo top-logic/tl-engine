@@ -939,7 +939,9 @@ public class SecurityDefinitionEditor {
 	 * Sets the access parent of the given type, or drops that setting.
 	 * <p>
 	 * A type with a delegating access parent has no grants and no marks of its own, so setting one
-	 * drops the grants and marks the stored configuration holds for the type.
+	 * drops the grants and marks the stored configuration holds for the type. An access parent
+	 * {@link AccessParentConfig#isRestricted(AccessParentConfig) restricted} to some operations
+	 * keeps the grants of the operations it does not delegate.
 	 * </p>
 	 * 
 	 * @param type
@@ -963,7 +965,10 @@ public class SecurityDefinitionEditor {
 			setting.setDefinition(definition);
 			entry.setAccessParent(setting);
 			if (AccessParentConfig.delegates(setting)) {
-				entry.getGrants().clear();
+				Set<String> delegated = AccessParentConfig.delegatedOperationNames(setting);
+				entry.getGrants().removeIf(
+					grant -> delegated == null || grant.getOperation() == null
+						|| delegated.contains(grant.getOperation().id()));
 				entry.setInternal(false);
 				entry.setWithoutSecurity(false);
 			}

@@ -17,8 +17,8 @@ import com.top_logic.model.TLObject;
  * Everything the entry point knows at the moment the run's
  * {@link com.top_logic.ai.core.agent.SecurityContext} is built, which is before the run has an id
  * or an agent: those are settled afterwards, so a factory that needed them would be asked too early.
- * What a factory does get is the account, how the run was started, whether anybody can answer an
- * approval prompt, and - for the entry points that have one - which conversation the run belongs to
+ * What a factory does get is the account, how the run was started, whether anybody approves a tool
+ * call of the run, and - for the entry points that have one - which conversation the run belongs to
  * and which object it is about.
  * </p>
  *
@@ -28,8 +28,10 @@ import com.top_logic.model.TLObject;
  * @param entryPoint
  *        How the run was started. Never <code>null</code>.
  * @param background
- *        Whether the run has no human who could answer an approval prompt. Such a run is
- *        additionally bounded by the tool access policy's {@code <background-allowlist>}.
+ *        Whether nobody approves a tool call of the run. Such a run is additionally bounded by the
+ *        tool access policy's {@code <background-allowlist>}. It says nothing about questions:
+ *        whether somebody answers them is {@link com.top_logic.ai.core.agent.ToolContext#attended()}.
+ *        An A2A run is both: the calling agent answers its questions but approves no tool call.
  * @param conversationId
  *        The chat session the run belongs to, or <code>null</code> for a run that is a conversation
  *        of its own. Lets an application remember a decision for the conversation the user made it
@@ -57,7 +59,7 @@ public record RunPrincipal(Person account, RunEntryPoint entryPoint, boolean bac
 	 * @param entryPoint
 	 *        How the run was started.
 	 * @param background
-	 *        Whether anybody can answer an approval prompt.
+	 *        Whether nobody approves a tool call of the run.
 	 */
 	public RunPrincipal(Person account, RunEntryPoint entryPoint, boolean background) {
 		this(account, entryPoint, background, null, null);

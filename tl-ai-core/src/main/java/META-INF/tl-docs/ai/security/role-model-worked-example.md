@@ -67,6 +67,7 @@ Domain: projects with tickets. Two capabilities to express, which between them c
 - `pm:Ticket`
   - `title`: String
   - `body`: String
+  - `related`: reference to `pm:Ticket`, multiple. It can hold a ticket of another project, which the [object tools](doc:ai/security/object-tools) keep when an account that may not read it changes the value.
 
 What carries the security is an ordinary business attribute, `partners`. Security is derived from the data, not maintained beside it.
 

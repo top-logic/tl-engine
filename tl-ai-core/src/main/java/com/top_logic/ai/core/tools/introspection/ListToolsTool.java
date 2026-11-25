@@ -303,7 +303,7 @@ public class ListToolsTool implements Tool {
 	 * Why a declared skill is not offered, naming the capabilities it needs.
 	 *
 	 * <p>
-	 * The same three remedies {@code AgentCapabilities} tells apart everywhere else: an unattended run
+	 * The same three remedies {@code AgentCapabilities} tells apart everywhere else: a background run
 	 * lost the skill to the {@code <background-allowlist>}, which no role grant changes; an attended
 	 * one lost it to the acting user's roles; or every tool in it works on model types the user may
 	 * not read, which is a Read grant on a type and not a capability at all (#258). The third names no
@@ -320,8 +320,9 @@ public class ListToolsTool implements Tool {
 			? "every tool in it belongs to no capability, so no grant reaches it"
 			: "every tool in it needs a capability this user does not hold: " + join(lacking);
 		if (capabilities.withheldByBackgroundCeiling(skill)) {
-			return "this run is unattended, so only the capabilities on the background allowlist are"
-				+ " reachable, and " + needs + ". The same request in the chat would have this skill.";
+			return "this is a background run: nobody approves its tool calls, so only the"
+				+ " capabilities on the background allowlist are reachable, and " + needs
+				+ ". The same request in the chat would have this skill.";
 		}
 		return needs + ". Loading it would hand over nothing, so it is not offered.";
 	}

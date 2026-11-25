@@ -49,7 +49,7 @@ Both are closed until an application configures them. `tl-ai-demo` carries a rea
 | `public-url` | Base URL in the agent cards. Default: taken from the request. Set it behind a proxy that ends TLS, unless the servlet container applies the forwarding headers (`X-Forwarded-*`, `Forwarded`): otherwise the cards name http addresses, and a caller that reads a card over https refuses them. |
 | `max-blocking-seconds` | Longest wait of a blocking `SendMessage` and of `askAgent` (default 1500). |
 | `<authentications>`, `<secrets>` | As on `MCPServerService` (the developer article `ai/security/mcp-endpoint`). A calling application uses a personal access token of the account its requests should act as, created with the permission *Agent interfaces (MCP/A2A)* in *Settings → Access tokens*. Nothing configured: every call is answered 503. |
-| `<agent>` | `path` is the URL name, `agent` the tl-ai agent, `model` an optional override. `allow-writes="true"` lets A2A runs use the tools that change the application, without approval; otherwise those tools are not offered. The first agent also answers `/.well-known/agent-card.json`. |
+| `<agent>` | `path` is the URL name, `agent` the tl-ai agent, `model` an optional override. `allow-writes="true"` lets A2A runs use the tools that change the application and that the `<background-allowlist>` also names, without approval; otherwise those tools are not offered. The first agent also answers `/.well-known/agent-card.json`. |
 | `<remote-agent>` | `card-url` of the remote agent; `<credentials>` authenticate the calls, typically a personal access token of the remote application sent as `Authorization: Bearer` from an environment variable or a file (any `CredentialProvider`, see "Configuring the LLM providers" in the developer article `ai/index`). Without credentials the calls carry none. A call whose credentials are rejected (401) is repeated once with fresh ones. `endpoint-origins`: more origins that the card may name, see "Where the credentials go". |
 
 Give an agent the client tools by adding `a2a.listAgents`, `a2a.askAgent`, `a2a.replyAgent`,
@@ -89,6 +89,13 @@ go out without encryption. When the remote application runs behind a proxy that 
   also after a restart. A task that was running when the application stopped reads `FAILED`.
 - A **task** is one recorded agent run; its metadata carries the `runId`. The run acts as the calling
   account (`RunEntryPoint.A2A`).
+- The run is a **background run**: the calling agent answers its questions, but it approves no tool call.
+  The `<background-allowlist>` of `AiToolAccessService` bounds its tools in addition to the roles of the
+  account, also for an administrator account. Without a list, a served agent has only the groups
+  `interaction` and `introspection`. Declare the reads it needs (for example `model.read` and `data.read`),
+  `egress` for an agent that calls other agents (`a2a.askAgent`), and a single write tool for an agent with
+  `allow-writes="true"`. The list holds for every run without a person (the developer article
+  `ai/security/tool-access-recipes`).
 - The calling agent is the run's user: `askUser` moves the task to `INPUT_REQUIRED`, and the next message
   to the task (or its context) answers the question - the same run resumes.
 - The final answer is the `COMPLETED` status message and the artifact `answer`.

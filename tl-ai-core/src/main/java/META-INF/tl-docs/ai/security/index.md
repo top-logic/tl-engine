@@ -171,6 +171,7 @@ The layers are **independent**: L1 does not assume L2 ran, and L3 filters what a
 | `<security-config>` present, no `<tool-access>` | The smallest working setup: read tools from the default baseline, data rights per object from the engine |
 | Both present | The intended state. A `<tool-access>` that names a role also needs a `<background-allowlist>`, or the application does not boot |
 | Uses `/mcp/*` from an external client | Two explicit switches: the module `MCPServerService$Module` (shipped `false`) and an authentication on `MCPServerService` - see [the MCP endpoint](doc:ai/security/mcp-endpoint) |
+| Serves agents over A2A (`<agents>` of `A2AService`) | The run acts as the account of the caller's credential and is a background run: the `<background-allowlist>` bounds its tools, also for an administrator; see [capping unattended runs](doc:ai/security/tool-access-recipes#cap-what-an-unattended-run-can-do) |
 | Uses `aiAgentChat` from TL-Script | The run acts as the calling account; a thread with no bound account is refused |
 | Runs agents unattended (`AgentTask`, `aiAgentChatAsync`) | The run acts as a configured account and is bounded by the `<background-allowlist>` |
 

@@ -144,6 +144,26 @@ describe('the dock in a live page', () => {
     expect(host.querySelector('.tl-chat-dock')!.className).not.toContain('is-open')
   })
 
+  it('leaves open for the Escape that cancels an input method composition', async () => {
+    const state = dockState({ dockOpen: true })
+    setTLState(state)
+    act(() => root.render(React.createElement(TLChatDock, { controlId: 'dock', state })))
+    await records()
+    const inner = host.querySelector('.tl-chat-dock__panel tl-child')!
+    // The key code an input method reports for the keys of its composition (#30487).
+    act(() => {
+      inner.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', keyCode: 229, isComposing: true, bubbles: true, cancelable: true }),
+      )
+    })
+    expect(host.querySelector('.tl-chat-dock')!.className).toContain('is-open')
+
+    act(() => {
+      inner.dispatchEvent(escape())
+    })
+    expect(host.querySelector('.tl-chat-dock')!.className).not.toContain('is-open')
+  })
+
   it('tells the server when the user opens and closes the panel', async () => {
     setTLState(dockState())
     act(() => root.render(React.createElement(TLChatDock, { controlId: 'dock', state: dockState() })))

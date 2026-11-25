@@ -138,6 +138,27 @@ export function normalizeGesture(spec: string): string {
   return withModifiers(canonicalKeyName(key), ctrl, alt, shift, meta);
 }
 
+// -- Input methods ---------------------------------------------------------------
+
+/** The key code a browser reports for a key that an input method processes. */
+const KEY_CODE_INPUT_METHOD = 229;
+
+/**
+ * Whether the key belongs to the composition of an input method (for example for Japanese): a key
+ * that composes the text, or the Enter that ends the composition. Such a key is the input method's
+ * and triggers nothing.
+ *
+ * <p>A control that handles a key itself in an input - Enter to submit or to pick, Escape, the arrow
+ * keys - asks this first and leaves such a key alone. A React handler passes `event.nativeEvent`.</p>
+ *
+ * <p>`isComposing` alone is not sufficient: Safari ends the composition before it reports the Enter
+ * that ends it, with `isComposing` false. Every browser reports such a key with the key code of a key
+ * that an input method processes, which is why the deprecated `keyCode` is read.</p>
+ */
+export function isCompositionKey(event: KeyboardEvent): boolean {
+  return event.isComposing || event.keyCode === KEY_CODE_INPUT_METHOD;
+}
+
 // -- Focus / text-entry rules ---------------------------------------------------
 
 const TEXT_INPUT_TYPES = new Set([
@@ -174,6 +195,9 @@ function isMultilineEntry(el: Element | null): boolean {
 
 const NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown']);
 
+/** Keys that delete text in a caret editor; there they never reach a gesture binding. */
+const TEXT_DELETE_KEYS = new Set(['Delete', 'Backspace']);
+
 // -- Dispatch -------------------------------------------------------------------
 
 function isButtonLike(el: Element | null): boolean {
@@ -191,6 +215,11 @@ function handleKeydown(e: KeyboardEvent): void {
   if (e.defaultPrevented) {
     return;
   }
+  // A key of a composition is the input method's: Enter ends the composition, Escape cancels it,
+  // the arrow keys choose in its list. None of them is a gesture (a default button, closing a dialog).
+  if (isCompositionKey(e)) {
+    return;
+  }
   const active = document.activeElement;
 
   // Enter inside a multi-line editor inserts a newline; never treat it as a submit gesture.
@@ -202,8 +231,9 @@ function handleKeydown(e: KeyboardEvent): void {
   if (e.key === 'Enter' && isButtonLike(active)) {
     return;
   }
-  // Navigation keys / Space inside a caret editor move the caret or type; leave them alone.
-  if ((NAV_KEYS.has(e.key) || e.key === ' ') && isTextEntry(active)) {
+  // Navigation keys / Space inside a caret editor move the caret or type, Delete / Backspace
+  // delete text there; leave them alone.
+  if ((NAV_KEYS.has(e.key) || TEXT_DELETE_KEYS.has(e.key) || e.key === ' ') && isTextEntry(active)) {
     return;
   }
   // Ctrl/Meta+A inside a caret editor selects that editor's text, whatever a scope binds it to

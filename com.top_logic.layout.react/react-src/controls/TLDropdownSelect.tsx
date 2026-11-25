@@ -1,4 +1,5 @@
-import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, useI18N, anchoredOverlayOf, optionTooltipProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, labelMatches, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, useI18N, anchoredOverlayOf, optionTooltipProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, labelMatches, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM,
+  isCompositionKey } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson, ReorderItemProps, ReorderHandleProps, ColorRole } from 'tl-react-bridge';
 import {
   ARG_OPTION,
@@ -526,6 +527,9 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      // The keys of a composition in the filter choose in the list of the input method, not in this one.
+      if (isCompositionKey(e.nativeEvent)) return;
+
       if (noFilter && isTypeAheadKey(e, typeAhead.typing()) && !isButton(e.target as HTMLElement)) {
         e.preventDefault();
         e.stopPropagation();

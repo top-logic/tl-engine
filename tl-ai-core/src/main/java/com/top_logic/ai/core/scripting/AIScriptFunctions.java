@@ -816,7 +816,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		// Runs as the account that started it - agentChatAsync derived a sub-session of that account's
 		// on this thread - and is marked as a background run, so the policy's background allowlist applies as
 		// an additional ceiling. Auto-approval is exactly the compensating control that allowlist
-		// replaces: a run with nobody to ask must not reach write tools by default.
+		// replaces: a run whose tool calls nobody approves must not reach write tools by default.
 		ToolContext context = new ToolContext(
 			RunSecurity.contextFor(
 				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, true,

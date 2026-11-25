@@ -45,6 +45,15 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	String DATE_ATTR = "date";
 
 	/**
+	 * Part <code>incomplete</code> of <code>ChangeSet</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String INCOMPLETE_ATTR = "incomplete";
+
+	/**
 	 * Part <code>isRedo</code> of <code>ChangeSet</code>
 	 * 
 	 * <p>
@@ -172,6 +181,20 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	 */
 	default void setDate(java.util.Date newValue) {
 		tUpdateByName(DATE_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #INCOMPLETE_ATTR}.
+	 */
+	default boolean getIncomplete() {
+		return (Boolean) tValueByName(INCOMPLETE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #INCOMPLETE_ATTR}.
+	 */
+	default void setIncomplete(boolean newValue) {
+		tUpdateByName(INCOMPLETE_ATTR, newValue);
 	}
 
 	/**

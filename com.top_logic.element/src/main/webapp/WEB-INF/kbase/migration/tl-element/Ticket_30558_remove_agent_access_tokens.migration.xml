@@ -20,7 +20,7 @@
 		<dependency name="Ticket_29492_enlarge_layout_key"
 			module="tl"
 		/>
-		<dependency name="Ticket_30183_account_lock"
+		<dependency name="Ticket_30548_revision_author_reference"
 			module="tl-element"
 		/>
 	</dependencies>

@@ -61,6 +61,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 TILE_ACTIVATE__TITLE;
 
 	/**
+	 * @en Stored the arrangement of a dashboard.
+	 */
+	public static ResKey STORED_DASHBOARD_ARRANGEMENT;
+
+	/**
 	 * @en Moved calendar entry: {0}
 	 */
 	public static ResKey1 MOVED_CALENDAR_ENTRY__ENTRY;

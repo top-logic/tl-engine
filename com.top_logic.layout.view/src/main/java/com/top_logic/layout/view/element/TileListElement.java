@@ -325,13 +325,14 @@ public class TileListElement implements TileDeclaration {
 	 * The id of the tile of the given object.
 	 */
 	String tileId(Object item) {
-		return _config.getId() + TILE_ID_SEPARATOR + key(item);
+		return _config.getId() + TILE_ID_SEPARATOR + objectKey(item);
 	}
 
 	/**
-	 * The key identifying the given object among the objects of the declaration.
+	 * The key identifying the given object: the id of a persistent object, the text of any other
+	 * value.
 	 */
-	private static String key(Object item) {
+	static String objectKey(Object item) {
 		if (item instanceof TLObject object && object.tHandle() != null) {
 			return IdentifierUtil.toExternalForm(object.tIdLocal());
 		}

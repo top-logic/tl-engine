@@ -15,6 +15,7 @@ import junit.framework.TestCase;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.layout.HideTileArguments;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl.Tile;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl.TileContent;
@@ -40,6 +41,9 @@ public class TestReactDashboardTiles extends TestCase {
 	/** Argument of the {@link ReactDashboardControl#REORDER_COMMAND} holding the new order. */
 	private static final String ORDER_ARG = "order";
 
+	/** Argument of the {@link ReactDashboardControl#HIDE_COMMAND} naming the tile. */
+	private static final String HIDE_TILE_ARG = HideTileArguments.TILE_ID;
+
 	/** Descriptor key holding a tile's width. */
 	private static final String TILE_WIDTH = "width";
 
@@ -51,10 +55,20 @@ public class TestReactDashboardTiles extends TestCase {
 	 */
 	private static final class DashboardProbe extends ReactDashboardControl {
 
-		DashboardProbe(ReactContext context, List<Tile> tiles, List<List<String>> reorders) {
-			super(context, "16rem", "16rem", tiles, reorders::add, (id, visible) -> {
-				// Visibility is not stored in this test.
-			});
+		/** How often the tiles were published. */
+		int _published;
+
+		DashboardProbe(ReactContext context, List<Tile> tiles, List<List<String>> reorders,
+				List<String> visibilityChanges) {
+			super(context, "16rem", "16rem", tiles, reorders::add, (id, visible) -> visibilityChanges.add(id));
+		}
+
+		@Override
+		protected void putState(String key, Object value) {
+			if (CHILDREN.equals(key)) {
+				_published++;
+			}
+			super.putState(key, value);
 		}
 
 		@SuppressWarnings("unchecked")
@@ -70,12 +84,15 @@ public class TestReactDashboardTiles extends TestCase {
 
 	private List<List<String>> _reorders;
 
+	private List<String> _visibilityChanges;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		_created = new HashMap<>();
 		_reorders = new ArrayList<>();
+		_visibilityChanges = new ArrayList<>();
 	}
 
 	private Tile tile(String id) {
@@ -91,7 +108,7 @@ public class TestReactDashboardTiles extends TestCase {
 	}
 
 	private DashboardProbe dashboard(Tile... tiles) {
-		DashboardProbe result = new DashboardProbe(_context, List.of(tiles), _reorders);
+		DashboardProbe result = new DashboardProbe(_context, List.of(tiles), _reorders, _visibilityChanges);
 		result.attach();
 		return result;
 	}
@@ -183,6 +200,33 @@ public class TestReactDashboardTiles extends TestCase {
 
 		assertTrue(controlA.isDisposed());
 		assertTrue(controlB.isDisposed());
+	}
+
+	/**
+	 * A dashboard that may not be rearranged refuses a reorder and a hide: the tiles keep their
+	 * order and visibility, no callback is told, and the unchanged tiles are published again.
+	 */
+	public void testRefusedRearrangement() {
+		DashboardProbe dashboard = dashboard(tile("a"), tile("b"), tile("c"));
+		dashboard.setRearrangeable(false);
+		int published = dashboard._published;
+
+		dashboard.executeClientCommand(ReactDashboardControl.REORDER_COMMAND, Map.of(ORDER_ARG, List.of("c", "b", "a")));
+		assertEquals(List.of("a", "b", "c"), ids(dashboard));
+		assertEquals(List.of(), _reorders);
+		assertEquals("The unchanged tiles are published again.", published + 1, dashboard._published);
+
+		dashboard.executeClientCommand(ReactDashboardControl.HIDE_COMMAND, Map.of(HIDE_TILE_ARG, "b"));
+		assertTrue(dashboard.isTileVisible("b"));
+		assertEquals(List.of("a", "b", "c"), ids(dashboard));
+		assertEquals(List.of(), _visibilityChanges);
+		assertEquals("The unchanged tiles are published again.", published + 2, dashboard._published);
+
+		dashboard.setRearrangeable(true);
+		dashboard.executeClientCommand(ReactDashboardControl.REORDER_COMMAND, Map.of(ORDER_ARG, List.of("c", "b", "a")));
+		assertEquals(List.of("c", "b", "a"), ids(dashboard));
+		dashboard.executeClientCommand(ReactDashboardControl.HIDE_COMMAND, Map.of(HIDE_TILE_ARG, "b"));
+		assertEquals(List.of("b"), _visibilityChanges);
 	}
 
 	private ReactControl onlyControl(String id) {

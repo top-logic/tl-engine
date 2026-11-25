@@ -248,6 +248,9 @@ public class ReactDashboardControl extends ReactControl {
 
 	private boolean _editMode;
 
+	/** @see #setRearrangeable(boolean) */
+	private boolean _rearrangeable = true;
+
 	private final List<Runnable> _stateChangeListeners = new CopyOnWriteArrayList<>();
 
 	private final Runnable _actionChangeHandler = this::handleActionChange;
@@ -484,6 +487,34 @@ public class ReactDashboardControl extends ReactControl {
 	}
 
 	/**
+	 * Whether the user may currently rearrange the tiles, see {@link #setRearrangeable(boolean)}.
+	 */
+	public boolean isRearrangeable() {
+		return _rearrangeable;
+	}
+
+	/**
+	 * Sets whether the user may currently rearrange the tiles.
+	 *
+	 * <p>
+	 * While the user may not, a {@link #REORDER_COMMAND} or {@link #HIDE_COMMAND} the client sends
+	 * changes nothing: the tiles keep their order and visibility, no callback is notified, and the
+	 * tiles are published again, so that a client that moved or removed a tile in anticipation shows
+	 * the unchanged arrangement again.
+	 * </p>
+	 */
+	public void setRearrangeable(boolean rearrangeable) {
+		_rearrangeable = rearrangeable;
+	}
+
+	/**
+	 * Publishes the unchanged tiles again, answering a refused rearrangement.
+	 */
+	private void refuseRearrangement() {
+		putState(CHILDREN, buildDescriptors());
+	}
+
+	/**
 	 * Whether the dashboard is currently in edit mode (drag-to-reorder active).
 	 */
 	public boolean isEditMode() {
@@ -623,7 +654,8 @@ public class ReactDashboardControl extends ReactControl {
 	 *
 	 * <p>
 	 * The client sends the order of the shown tiles. The hidden tiles keep their positions in the
-	 * order of all tiles.
+	 * order of all tiles. A dashboard that is not {@link #setRearrangeable(boolean) rearrangeable}
+	 * refuses the order and publishes its unchanged tiles again.
 	 * </p>
 	 */
 	// Argument is a string array (ordered tile ids). The config-JSON binding does not support a List
@@ -632,6 +664,10 @@ public class ReactDashboardControl extends ReactControl {
 		required = true, description = "The ids of the shown tiles in their new order."))
 	@FrameworkInternal
 	void handleReorder(Map<String, Object> arguments) {
+		if (!_rearrangeable) {
+			refuseRearrangement();
+			return;
+		}
 		@SuppressWarnings("unchecked")
 		List<String> newOrder = (List<String>) arguments.get(ORDER_ARG);
 		reorderTiles(newOrder);
@@ -686,8 +722,10 @@ public class ReactDashboardControl extends ReactControl {
 	 * dashboard.
 	 *
 	 * <p>
-	 * The tile is no longer published and its content is no longer displayed. A dashboard created
-	 * without a visibility callback, a hidden tile and an unknown tile ignore the command.
+	 * The tile is no longer published and its content is no longer displayed. A hidden tile and an
+	 * unknown tile ignore the command. A dashboard created without a visibility callback, or one
+	 * that is not {@link #setRearrangeable(boolean) rearrangeable}, refuses it and publishes its
+	 * unchanged tiles again.
 	 * </p>
 	 *
 	 * @param args
@@ -696,7 +734,8 @@ public class ReactDashboardControl extends ReactControl {
 	@ReactCommandHandler(HIDE_COMMAND)
 	@FrameworkInternal
 	void handleHide(HideTileArguments args) {
-		if (_onVisibilityChange == null) {
+		if (_onVisibilityChange == null || !_rearrangeable) {
+			refuseRearrangement();
 			return;
 		}
 		setTileVisible(args.getTileId(), false);

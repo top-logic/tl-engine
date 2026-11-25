@@ -21,6 +21,10 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
@@ -30,11 +34,13 @@ import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.sql.DBAttribute;
+import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.PersistentObject;
+import com.top_logic.knowledge.service.migration.MigrationConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
@@ -311,6 +317,60 @@ public abstract class AbstractLinkTableMigrationTest extends BasicTestCase {
 		}
 		assertFalse("Migration reported errors: " + log.getErrors(), log.hasErrors());
 		return log;
+	}
+
+	/**
+	 * A processor executing the processors of the given migration one after another.
+	 */
+	protected static MigrationProcessor processors(MigrationConfig migration) {
+		InstantiationContext context = new DefaultInstantiationContext(AbstractLinkTableMigrationTest.class);
+		List<MigrationProcessor> processors = new ArrayList<>();
+		for (PolymorphicConfiguration<? extends MigrationProcessor> config : migration.getProcessors()) {
+			processors.add(context.getInstance(config));
+		}
+		assertFalse("Migration has no processors.", processors.isEmpty());
+		return (migrationContext, migrationLog, connection) -> {
+			for (MigrationProcessor processor : processors) {
+				processor.doMigration(migrationContext, migrationLog, connection);
+			}
+		};
+	}
+
+	/**
+	 * A processor doing nothing, for {@link #migrate(MigrationProcessor, ContextAction)} executing
+	 * only its context action.
+	 */
+	protected static MigrationProcessor noProcessor() {
+		return (context, log, connection) -> {
+			// Only the context action is executed.
+		};
+	}
+
+	/**
+	 * Reads the model baseline stored in the database.
+	 */
+	protected static String readBaseline() throws SQLException {
+		PooledConnection connection = pool().borrowReadConnection();
+		try {
+			return DBProperties.getProperty(connection, DBProperties.GLOBAL_PROPERTY,
+				DynamicModelService.APPLICATION_MODEL_PROPERTY);
+		} finally {
+			pool().releaseReadConnection(connection);
+		}
+	}
+
+	/**
+	 * Stores the given model baseline in the database.
+	 */
+	protected static void storeBaseline(String baseline) throws SQLException {
+		PooledConnection connection = pool().borrowWriteConnection();
+		try {
+			DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY,
+				DynamicModelService.APPLICATION_MODEL_PROPERTY, baseline);
+			connection.commit();
+		} finally {
+			pool().releaseWriteConnection(connection);
+		}
 	}
 
 	protected static void assertInfo(BufferingProtocol log, String expected) {

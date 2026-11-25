@@ -64,10 +64,10 @@ the `chat-id`, facts about the situation (`<context>`, `<selection>`), the rail 
 `chat-id="classic"`, so the classic tab is a conversation of its own, not the React pages' `chat`.
 
 **A copy keeps the pane's three parts together** (#649): the `paneObject` channel,
-`present="paneObject"` on `<chat-conversation>` and `input="paneObject"` on `<chat-rail>`. Without
-`present` the agent is not offered the `present` tool and answers "show me all X as a table" in text;
-without the rail's `input` it puts the table on a channel nothing displays and tells the user they see
-it. `<selection channel="paneObject">` belongs with them: it tells the agent which object the pane
+`present="paneObject"` on `<chat-conversation>` and `<presentation-pane input="paneObject">` in a
+section of the `<side-rail>`. Without `present` the agent is not offered the `present` tool and answers
+"show me all X as a table" in text; without the pane it puts the table on a channel nothing displays
+and tells the user they see it. `<selection channel="paneObject">` belongs with them: it tells the agent which object the pane
 shows. A copy is a copy - a view overlay cannot change the `<chat-conversation>` element, because the
 children of a view are an unkeyed list - so an application updates it when this file changes.
 

@@ -5,7 +5,7 @@ import { excerptFields, kindIcon, sourceDetail, sourceHref, sourceOrigin } from 
 import { highlight, languageLabel } from './highlight'
 import { ImagePreview, previewHook, previewOf, previewTarget, type PreviewImage } from './image-preview'
 import type { bundle } from './i18n'
-import type { CitationRender, PaneOpenOptions } from './extensions'
+import type { CitationRender } from './extensions'
 import type { ChatMessage, Citation } from './types'
 
 const { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React
@@ -425,7 +425,6 @@ export function Markdown({
   citations,
   message,
   renderAnnotation,
-  openInPane,
   onOpenSource,
 }: {
   text: string
@@ -434,7 +433,6 @@ export function Markdown({
   citations?: Citation[]
   message?: ChatMessage
   renderAnnotation?: CitationRender
-  openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
   /** Overrides what a click on a marker does; the default asks the host, then the web. */
   onOpenSource?: (citation: Citation) => void
 }) {
@@ -524,8 +522,6 @@ export function Markdown({
     else applyStreamed(el, rendered.current, prefixSource, tailSource, labels, citations, citeKey)
   }, [citations, citeKey, labels, plain, prefixSource, tailSource, wholeHtml])
 
-  const noop = useCallback((_content: React.ReactNode, _options: PaneOpenOptions) => undefined, [])
-
   const find = useCallback(
     (marker: number | null) =>
       marker == null ? undefined : (citations ?? []).find((item) => item.index === marker),
@@ -570,14 +566,14 @@ export function Markdown({
       }
       // The host decides what "open" means for its own kinds. When it has nothing for this one it
       // returns nothing, and a web source falls back to its page.
-      if (renderAnnotation && message && renderAnnotation(marker, source, message, openInPane ?? noop)) {
+      if (renderAnnotation && message && renderAnnotation(marker, source, message)) {
         setActivated(marker)
         return
       }
       const href = sourceHref(source)
       if (href) window.open(href, '_blank', 'noopener,noreferrer')
     },
-    [find, message, onOpenSource, openInPane, renderAnnotation],
+    [find, message, onOpenSource, renderAnnotation],
   )
 
   // One delegated set of listeners rather than one per marker: the blocks are replaced on every
@@ -655,10 +651,10 @@ export function Markdown({
   const canOpen = useCallback(
     (source: Citation) => {
       if (onOpenSource) return true
-      if (renderAnnotation && message && renderAnnotation(source.index, source, message, noop)) return true
+      if (renderAnnotation && message && renderAnnotation(source.index, source, message)) return true
       return Boolean(sourceHref(source))
     },
-    [message, noop, onOpenSource, renderAnnotation],
+    [message, onOpenSource, renderAnnotation],
   )
 
   const closePreview = useCallback(() => setPreview(null), [])
@@ -699,7 +695,7 @@ export function Markdown({
   const opened = find(activated)
   const hostNode =
     opened && message && renderAnnotation
-      ? renderAnnotation(opened.index, opened, message, openInPane ?? noop)
+      ? renderAnnotation(opened.index, opened, message)
       : null
 
   if (plain) {

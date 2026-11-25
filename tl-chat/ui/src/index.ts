@@ -1,6 +1,5 @@
-export { App } from './App'
 export { TLChatConversation } from './chat-conversation'
-export { TLChatRail } from './chat-rail'
+export { TLPresentationPane } from './presentation-pane'
 export { TLChatSources } from './chat-sources'
 export {
   registerReferenceSource,
@@ -8,46 +7,26 @@ export {
   registerAnnotationRenderer,
   registerMessageAction,
 } from './registry'
-export { SessionRail, SessionRail as Chrome } from './chrome'
 export { Composer } from './composer'
 export { ComposerNotice } from './notice'
 export { PromptStack } from './prompts'
 export { Markdown, SourcePopover, sourceOrigin } from './markdown'
 export { Thread } from './thread'
-export { ContextIcon, ContextSection, ProgressIcon, ProgressSection } from './progress'
-export { progressSteps, progressBadge, unseenBadge, parseTasksJson } from './progress-model'
-export { SideRail, SideStrip, RailToggle } from './rail'
+export { parseTasksJson } from './progress-model'
 export { ThemeIcon } from './theme-icon'
-export { SidePane, PANE_CONTENT_FLOOR } from './side-pane'
 export { chatReducer } from './reducer'
 export { runStore, EMPTY_RUN } from './store'
 export * as api from './api'
 export { bundle, toLanguage, formatTimestamp, providerErrorText } from './i18n'
-export { defaultExtensions, hostRailSections } from './extensions'
 export type {
-  ChatExtensions,
-  RailSection,
-  RailRenderContext,
-  ComposerAddons,
   ComposerApi,
   ReferenceCandidate,
-  PaneMode,
-  PaneAction,
-  SourceTab,
   ComposerMenuItem,
-  MessageAnnotations,
   CitationRender,
   MessageAction,
-  ContextHook,
-  PaneOpenOptions,
-  PaneTab,
-  PendingApproval,
-  ContextFact,
-  ContextHookArg,
-  SidePaneState,
 } from './extensions'
-export type { ChatMessage, Citation, DraftAttachment } from './types'
-export type { AgentTask, ProgressStep, ProgressStatus } from './progress-model'
+export type { ChatMessage, Citation, ContextFact, DraftAttachment } from './types'
+export type { AgentTask } from './progress-model'
 export { composeOutboundText } from './send-prefix'
 export { TokenInput } from './token-input'
 export type { TokenInputHandle } from './token-input'

@@ -13,7 +13,6 @@ import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
 import com.top_logic.ai.chat.view.ChatDockElement;
-import com.top_logic.ai.chat.view.ChatRailElement;
 import com.top_logic.ai.chat.view.ChatScopeElement;
 import com.top_logic.ai.chat.view.ChatSectionElement;
 import com.top_logic.ai.chat.view.ChatSourcesElement;
@@ -78,17 +77,7 @@ public class TestHiddenElementOptions extends TestCase {
 		assertVisible(ChatDockElement.Config.class, ChatDockElement.Config.ICON);
 		assertVisible(ChatDockElement.Config.class, ChatDockElement.Config.LABEL);
 		assertVisible(ChatDockElement.Config.class, ChatDockElement.Config.OPEN);
-	}
-
-	/** {@code <chat-rail>} hides its React binding and the pane width the user drags. */
-	public void testChatRailHiddenOptions() {
-		assertHidden(ChatRailElement.Config.class, ChatRailElement.Config.REACT_ELEMENT);
-		assertHidden(ChatRailElement.Config.class, ChatRailElement.Config.PANE_WIDTH);
-		assertEngineOptionsHidden(ChatRailElement.Config.class);
-
-		assertVisible(ChatRailElement.Config.class, ChatRailElement.Config.STRIP);
-		assertVisible(ChatRailElement.Config.class, ChatRailElement.Config.PANE_MODE);
-		assertVisible(ChatRailElement.Config.class, ChatRailElement.Config.SECTIONS);
+		assertVisible(ChatDockElement.Config.class, ChatDockElement.Config.OPEN_CHANNEL);
 	}
 
 	/** The rail-section element hides its React binding, like every other element. */

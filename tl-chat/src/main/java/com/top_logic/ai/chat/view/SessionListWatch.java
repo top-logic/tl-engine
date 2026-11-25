@@ -30,8 +30,8 @@ import com.top_logic.ai.core.execution.model.AgentSession;
  * Keeps the acting account's chat list in the browser's state, and follows its changes.
  *
  * <p>
- * The browser's store shows the account's chats in the rail and reads the title of the open chat,
- * which the conversation's header shows, from that list. The list is written with every render of
+ * The browser's store reads the title of the open chat, which the conversation's header shows,
+ * from that list. The list is written with every render of
  * the element ({@link #write()}), and again whenever the account's chats change on the server - a
  * chat renamed in the row menu of a {@code <data-list>}, by {@code aiSessionRename} from a script or
  * in another tab, a chat created by a first send, a chat deleted anywhere (#596).

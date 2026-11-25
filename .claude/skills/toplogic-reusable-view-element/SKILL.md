@@ -68,7 +68,7 @@ builds each child's control (`ContentControls.toControl(elements, context.childC
 .withChildSlotPath(id))`) and puts it into its own state; `ReactControl` serializes an embedded
 control as a `{controlId, module, state}` descriptor, propagates attach/detach and disposal to it,
 and the browser renders it with `TLChild` — **which `tl-react-bridge` does export** (`import { TLChild
-} from 'tl-react-bridge'`, `<TLChild control={state.someChild} />`). `<chat-rail>`'s sections are
+} from 'tl-react-bridge'`, `<TLChild control={state.someChild} />`). The sections of `<side-rail>` are
 built this way; `TabBarElement` and `SwitchElement` are the engine's own examples. Two things to get
 right: give each child its own child context, and keep a child **mounted but hidden** rather than
 unmounting it when it goes out of sight — `TLChild` drops the child's SSE subscription on unmount and
@@ -87,7 +87,7 @@ agree on one value, and a channel would be wrong because the value is wiring, no
 (`getScope(Class)` reads it, `childContext` inherits it, a nested `withScope` of the same type
 overrides), and a container element declares it once for everything inside. `<chat chat-id="...">`
 is the chat's use of it: `ChatScopeElement` extends the engine's `StackElement`, wraps the child
-context in a `ChatScope`, and every `<chat-conversation>`, `<chat-rail>` and rail section inside
+context in a `ChatScope`, and every `<chat-conversation>`, `<chat-dock>` and `<chat-sources>` inside
 resolves *its own `chat-id`, else the scope, else a default*. `ReactTileStackControl` does the same
 with `TileStackScope`.
 

@@ -13,7 +13,7 @@
 <style>
   /* Der Ort der Liste: Breite und Höhe gibt ihr Behälter, nicht das Paket. */
   .specimen-host { display: flex; gap: 24px; align-items: stretch; height: 420px; }
-  .specimen-host > .tl-list:not([data-tl-state~="collapsed"]) { width: 320px; }
+  .specimen-host > .tl-list { width: 320px; }
 </style>
 </head>
 <body>
@@ -25,16 +25,15 @@
     <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
   </div>
 
-  <!-- Kontakte, gruppiert nach Anfangsbuchstaben: Kopf mit Titel und Ein-/Ausklapper, ein Befehl, die Suche. Einträge mit
+  <!-- Kontakte, gruppiert nach Anfangsbuchstaben: Kopf mit Titel, ein Befehl, die Suche. Einträge mit
        Avatar, Name (primär), E-Mail (sekundär) und hinten Metadaten oder einem Badge; einer ist gewählt, einer hat ein
        Icon statt eines Avatars, einer nur eine Zeile, einer einen Namen, der mit Ellipse endet. Der Auslöser der Befehle
-       erscheint beim Zeigen; in der zweiten Liste steht er immer. Daneben dieselbe Liste eingeklappt und eine leere. -->
+       erscheint beim Zeigen; in der zweiten Liste steht er immer. Daneben eine leere. -->
   <template id="rows">
     <div class="specimen-host">
       <div class="tl-list" aria-label="Kontakte">
         <div class="tl-list__header">
           <span class="tl-list__title tl-type-heading-sm">Kontakte</span>
-          <button type="button" class="tl-toggle tl-toggle--end" aria-expanded="true" aria-label="Liste einklappen" data-tooltip="text:Liste einklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
         </div>
         <div class="tl-list__commands">
           <button type="button" class="tl-button tl-button--secondary tl-type-body-strong"><i class="tl-icon-sm bi bi-plus-lg tl-button__icon" aria-hidden="true"></i><span class="tl-button__label">Neuer Kontakt</span></button>
@@ -99,17 +98,6 @@
             </ul>
           </section>
         </div>
-      </div>
-
-      <div class="tl-list" data-tl-state="collapsed" aria-label="Kontakte">
-        <div class="tl-list__header">
-          <span class="tl-list__title tl-type-heading-sm">Kontakte</span>
-          <button type="button" class="tl-toggle tl-toggle--end" aria-expanded="false" aria-label="Liste ausklappen" data-tooltip="text:Liste ausklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
-        </div>
-        <div class="tl-list__commands">
-          <button type="button" class="tl-button tl-button--secondary tl-type-body-strong"><i class="tl-icon-sm bi bi-plus-lg tl-button__icon" aria-hidden="true"></i><span class="tl-button__label">Neuer Kontakt</span></button>
-        </div>
-        <div class="tl-list__body" aria-live="polite" tabindex="-1"></div>
       </div>
 
       <div class="tl-list" aria-label="Schritte">

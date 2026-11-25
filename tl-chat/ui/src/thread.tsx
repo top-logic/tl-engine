@@ -8,7 +8,7 @@ import {
   type SendToSubagent,
   type SubagentCardModel,
 } from './subagent-card'
-import type { CitationRender, MessageAction, PaneOpenOptions } from './extensions'
+import type { CitationRender, MessageAction } from './extensions'
 import { Markdown } from './markdown'
 import { formatMoney } from './money'
 import { sameFields, sameItems, sameMembers, useStable } from './use-stable'
@@ -575,7 +575,6 @@ function AssistantAnswer({
   citations,
   message,
   renderAnnotation,
-  openInPane,
   extraActions,
   onOpenSource,
   canCopy = true,
@@ -596,7 +595,6 @@ function AssistantAnswer({
   citations?: Citation[]
   message?: ChatMessage
   renderAnnotation?: CitationRender
-  openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
   extraActions?: MessageAction[]
   onOpenSource?: (citation: Citation) => void
   canCopy?: boolean
@@ -618,7 +616,6 @@ function AssistantAnswer({
           citations={citations}
           message={message}
           renderAnnotation={renderAnnotation}
-          openInPane={openInPane}
           onOpenSource={onOpenSource}
         />
       </div>
@@ -1217,7 +1214,6 @@ interface AgentRunProps {
   onRate?: (rating: Rating, note?: string) => void
   onRegenerate?: () => void
   renderAnnotation?: CitationRender
-  openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
   extraActions?: MessageAction[]
   onOpenSource?: (citation: Citation) => void
   canCopy?: boolean
@@ -1250,7 +1246,6 @@ const AgentRun = React.memo(function AgentRun({
   onRate,
   onRegenerate,
   renderAnnotation,
-  openInPane,
   extraActions,
   onOpenSource,
   canCopy = true,
@@ -1334,7 +1329,6 @@ const AgentRun = React.memo(function AgentRun({
           citations={citationMarkers ? answer.citations : []}
           message={answer}
           renderAnnotation={renderAnnotation}
-          openInPane={openInPane}
           extraActions={extraActions}
           onOpenSource={onOpenSource}
           canCopy={canCopy}
@@ -1433,17 +1427,12 @@ export const Thread = React.memo(function Thread({
   onEditSend,
   onRegenerate,
   onRate,
-  onOpenRail,
-  railCollapsed,
-  onToggleRail,
   title,
   headerEnd,
   headerCaption,
   renderAnnotation,
-  openInPane,
   extraActions,
   onOpenSource,
-  sessionListToggle = true,
   canCopy = true,
   canRate = true,
   canRegenerate = true,
@@ -1471,17 +1460,12 @@ export const Thread = React.memo(function Thread({
   onEditSend: (messageId: string, turnIndex: number, text: string) => Promise<boolean>
   onRegenerate: (messageId: string, turnIndex: number) => void
   onRate: (turnIndex: number, rating: Rating, note?: string) => void
-  onOpenRail: () => void
-  railCollapsed: boolean
-  onToggleRail: () => void
   title: string
   headerEnd?: React.ReactNode
   headerCaption?: React.ReactNode
   renderAnnotation?: CitationRender
-  openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
   extraActions?: MessageAction[]
   onOpenSource?: (citation: Citation) => void
-  sessionListToggle?: boolean
   canCopy?: boolean
   canRate?: boolean
   canRegenerate?: boolean
@@ -1549,23 +1533,6 @@ export const Thread = React.memo(function Thread({
   return (
     <div className="thread-shell">
       <div className="thread-bar">
-        {sessionListToggle ? (
-          <button
-            type="button"
-            className="icon-button rail-toggle"
-            aria-label={railCollapsed ? labels.showChats : labels.hideChats}
-            aria-expanded={!railCollapsed}
-            onClick={() => {
-              onToggleRail()
-              onOpenRail()
-            }}
-          >
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <rect x="2" y="3" width="12" height="10" rx="1.6" />
-              <path d="M6.2 3v10" />
-            </svg>
-          </button>
-        ) : null}
         <h1 title={title || labels.newChat}>{title || labels.newChat}</h1>
         {headerCaption ? <div className="thread-bar-caption">{headerCaption}</div> : null}
         {headerEnd ? <div className="thread-bar-end">{headerEnd}</div> : null}
@@ -1635,7 +1602,6 @@ export const Thread = React.memo(function Thread({
                       canRegenerate && user && position === lastIndex && !busy ? onRegenerate : undefined
                     }
                     renderAnnotation={renderAnnotation}
-                    openInPane={openInPane}
                     extraActions={extraActions}
                     onOpenSource={onOpenSource}
                     canCopy={canCopy}

@@ -41,7 +41,7 @@ import com.top_logic.layout.react.control.ToolbarControl;
  * <li>{@code child} - the content child control descriptor</li>
  * </ul>
  */
-public class ReactPanelControl extends ToolbarControl {
+public class ReactPanelControl extends ToolbarControl implements CollapsibleChild {
 
 	private static final String REACT_MODULE = "TLPanel";
 
@@ -138,9 +138,7 @@ public class ReactPanelControl extends ToolbarControl {
 
 	private ExpansionState _expansionState = ExpansionState.NORMALIZED;
 
-	private ReactSplitPanelControl _parentSplitPanel;
-
-	private int _indexInParent = -1;
+	private CollapseContainer _container;
 
 	private ReactMaximizeRootControl _maximizeRoot;
 
@@ -278,11 +276,16 @@ public class ReactPanelControl extends ToolbarControl {
 	}
 
 	/**
-	 * Sets the parent split panel reference for collapse notification.
+	 * Sets the container of this panel; a panel the container lays out as collapsed is
+	 * {@link ExpansionState#MINIMIZED minimized} to its header.
 	 */
-	void setParentSplitPanel(ReactSplitPanelControl parent, int indexInParent) {
-		_parentSplitPanel = parent;
-		_indexInParent = indexInParent;
+	@Override
+	public void setCollapseContainer(CollapseContainer container) {
+		_container = container;
+		if (container != null && container.isCollapsed()) {
+			setExpansionState(ExpansionState.MINIMIZED);
+			container.collapsed(COLLAPSED_SIZE);
+		}
 	}
 
 	/**
@@ -319,15 +322,18 @@ public class ReactPanelControl extends ToolbarControl {
 		boolean wasMinimized = _expansionState == ExpansionState.MINIMIZED;
 		boolean collapsed = !wasMinimized;
 
-		if (collapsed && _parentSplitPanel != null
-				&& !_parentSplitPanel.canChildCollapse(_indexInParent)) {
+		if (collapsed && _container != null && !_container.canCollapse()) {
 			return;
 		}
 
 		setExpansionState(collapsed ? ExpansionState.MINIMIZED : ExpansionState.NORMALIZED);
 
-		if (_parentSplitPanel != null) {
-			_parentSplitPanel.childCollapsed(_indexInParent, collapsed, COLLAPSED_SIZE);
+		if (_container != null) {
+			if (collapsed) {
+				_container.collapsed(COLLAPSED_SIZE);
+			} else {
+				_container.expanded();
+			}
 		}
 	}
 

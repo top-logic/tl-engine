@@ -43,9 +43,6 @@ function render(
       onEditSend: async () => true,
       onRegenerate: () => undefined,
       onRate: () => undefined,
-      onOpenRail: () => undefined,
-      railCollapsed: true,
-      onToggleRail: () => undefined,
       title: 'Titel',
     }),
   )

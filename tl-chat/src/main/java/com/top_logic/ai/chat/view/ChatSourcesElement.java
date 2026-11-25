@@ -18,13 +18,14 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 
 /**
- * Declarative {@code <chat-sources/>} element: what this conversation has cited, as a rail section.
+ * Declarative {@code <chat-sources/>} element: what this conversation has cited, e.g. as a section of
+ * a {@code <side-rail>}.
  *
  * <p>
  * One row per source, in the order the answers first cited them, with the marker numbers that point
  * at it - a number scrolls to its answer, the row opens the source. A long list gets a filter. The
- * optional {@code badge} channel receives how many sources there are, so the rail's badge counts
- * the ones cited since the user last looked.
+ * optional {@code badge} channel receives how many sources there are, so the badge of the rail
+ * counts the ones cited since the user last looked.
  * </p>
  */
 public class ChatSourcesElement extends ChatSectionElement {

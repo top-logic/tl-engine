@@ -174,9 +174,17 @@ The client classes an application styles against are `.tl-columns`, `.tl-columns
 
 `<split-panel orientation="horizontal" resizable="true">` (`SplitPanelElement`) places its `<pane>`s side by side (`horizontal`) or below each other (`vertical`), with a handle between two open panes the user drags. A pane gives its `size` in `unit` `%` (the panes in percent share the room left, their sizes acting as weights) or `px`, and its `min-size` in pixels. The split panel fills its box, each pane scrolls what does not fit into it, and the sizes the user drags are remembered per user.
 
+**A pane shrinks with a content that collapses.** When the content of a pane collapses — a `<panel>` the user minimizes to its header, a [`<side-rail>`](doc:view-layer/side-rail) that closes to its strip, a nested `<split-panel>` all of whose panes are collapsed — the pane takes the size of the collapsed content, and the open panes share the room it gives up; expanding the content gives the pane its former size back. A nested split panel with all panes collapsed collapses itself in this way in the split panel around it. The last open pane of the outermost split panel cannot collapse. Which panes are collapsed is remembered per user, like the sizes. In Java, a control takes part through the interface `CollapsibleChild`, through which it reports collapsing and expanding to the split panel.
+
 **Too narrow for the panes side by side, a horizontal split panel stacks them.** When its own width is less than the `min-size`s of its open panes plus the handles between them, the panes stand below each other: each spans the full width and is as high as its content, the split panel scrolls vertically, and there are no handles. A collapsed pane stays collapsed. Once the width suffices again, the panes are side by side with the sizes they had. As with `<columns>`, it is the width of the element itself that counts, not that of the browser window, so a split panel in a narrow dialog or a sidebar stacks just as it does on a phone. Nothing is configured for it; a vertical split panel keeps its arrangement.
 
 The client classes are `.tl-split`, `.tl-split--horizontal` / `.tl-split--vertical`, `.tl-split__pane` and `.tl-split__handle` (design system, `split.css`); the stacked arrangement is `data-tl-state~="stacked"` on `.tl-split`.
+
+## A collapsible column: `<side-rail>`
+
+`<side-rail>` is a column of sections beside another element that collapses to a strip and, where
+the area is narrow, opens as a modal drawer; in a split panel its pane shrinks to the strip. See
+[the side rail](doc:view-layer/side-rail).
 
 ## Repeating a template over a computed list: `<object-list>`
 

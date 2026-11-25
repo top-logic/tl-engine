@@ -5,38 +5,19 @@
  */
 package com.top_logic.ai.chat.view;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 import junit.framework.TestCase;
 
-import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 
 /**
- * {@link ChatViewBinding#bind} is once per (sub-session, chat-id), while the layout preference is
- * read again every time the state is written.
+ * {@link ChatViewBinding#bind} is once per (sub-session, chat-id).
  */
 public class TestChatViewBinding extends TestCase {
-
-	private Function<String, ChatPreferencesDto> _previous;
-
-	@Override
-	protected void setUp() {
-		_previous = ChatViewBinding.preferenceSource;
-	}
-
-	@Override
-	protected void tearDown() {
-		ChatViewBinding.preferenceSource = _previous;
-	}
 
 	/** Two binds with the same scope and chat-id return one object. */
 	public void testBindIsIdempotentPerScopeAndChatId() {
@@ -52,74 +33,6 @@ public class TestChatViewBinding extends TestCase {
 		ChatViewBinding main = ChatViewBinding.bind(scope, "main");
 		ChatViewBinding other = ChatViewBinding.bind(scope, "other");
 		assertNotSame(main, other);
-	}
-
-	/** Binding costs no preference load: the layout is read when it is written, not when bound. */
-	public void testBindDoesNotLoadPreferences() {
-		AtomicInteger loads = new AtomicInteger();
-		ChatViewBinding.preferenceSource = chatId -> {
-			loads.incrementAndGet();
-			return ChatPreferencesDto.create();
-		};
-		TypedAnnotatable scope = new LazyTypedAnnotatable();
-		ChatViewBinding.bind(scope, "main");
-		ChatViewBinding.bind(scope, "other");
-		assertEquals("Binding reads no preference.", 0, loads.get());
-	}
-
-	/**
-	 * Every write of the layout state reads the stored layout again.
-	 *
-	 * <p>
-	 * This is what makes a page reload replay the current rail state: the engine re-renders the
-	 * control tree the window already holds, so a layout captured at construction time would be the
-	 * first render's layout forever (Gitea #423).
-	 * </p>
-	 */
-	public void testLayoutStateIsReadPerWrite() {
-		AtomicBoolean railOpen = new AtomicBoolean(false);
-		ChatViewBinding.preferenceSource =
-			chatId -> ChatPreferencesDto.create().setRailOpen(Boolean.valueOf(railOpen.get()));
-		ChatViewBinding binding = ChatViewBinding.bind(new LazyTypedAnnotatable(), "main");
-
-		Map<String, Object> first = new HashMap<>();
-		binding.writeRenderState(first::put);
-		assertEquals(Boolean.FALSE, first.get("railOpen"));
-
-		railOpen.set(true);
-		Map<String, Object> second = new HashMap<>();
-		binding.writeRenderState(second::put);
-		assertEquals("The second render replays the layout stored now.", Boolean.TRUE,
-			second.get("railOpen"));
-	}
-
-	/**
-	 * The layout is looked up under the {@code chat-id}, so two chats on one page keep two layouts.
-	 */
-	public void testLayoutIsReadPerChatId() {
-		ChatViewBinding.preferenceSource =
-			chatId -> ChatPreferencesDto.create().setRailOpen(Boolean.valueOf("main".equals(chatId)));
-		TypedAnnotatable scope = new LazyTypedAnnotatable();
-
-		Map<String, Object> main = new HashMap<>();
-		ChatViewBinding.bind(scope, "main").writeRenderState(main::put);
-		Map<String, Object> other = new HashMap<>();
-		ChatViewBinding.bind(scope, "other").writeRenderState(other::put);
-
-		assertEquals("main", main.get("layoutKey"));
-		assertEquals(Boolean.TRUE, main.get("railOpen"));
-		assertEquals("other", other.get("layoutKey"));
-		assertEquals(Boolean.FALSE, other.get("railOpen"));
-	}
-
-	/** A user who decided nothing leaves the element's configured default in force. */
-	public void testUndecidedRailIsWrittenAsNull() {
-		ChatViewBinding.preferenceSource = chatId -> ChatPreferencesDto.create();
-		Map<String, Object> state = new HashMap<>();
-		ChatViewBinding.bind(new LazyTypedAnnotatable(), "main").writeRenderState(state::put);
-
-		assertTrue("The key is written, so a patch can clear a stale value.", state.containsKey("railOpen"));
-		assertNull("Null, not false: nothing decided is not 'closed'.", state.get("railOpen"));
 	}
 
 	/** Two windows do not share a binding even when they use the same chat-id. */

@@ -301,3 +301,8 @@ initFocusTrap();
 // with which the open surfaces close themselves on an outside press.
 import { initOutsidePress } from './bridge/outside-press';
 initOutsidePress();
+export {
+  useTableViewPreferences,
+  resetTableViewPreferencesForTest,
+} from './bridge/table-view-preferences';
+export type { TableViewPreferences } from './bridge/table-view-preferences';

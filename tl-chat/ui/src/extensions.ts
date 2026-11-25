@@ -166,6 +166,11 @@ export interface ComposerApi {
    * changed and sent. The send itself stays the user's.
    */
   setDraft: (text: string) => void
+  /**
+   * Replaces the whole draft with `text` without taking the focus: the text of the chat the
+   * composer shows now, which the user left there and comes back to.
+   */
+  restoreDraft: (text: string) => void
   focus: () => void
 }
 

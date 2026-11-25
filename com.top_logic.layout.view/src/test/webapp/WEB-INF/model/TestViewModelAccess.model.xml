@@ -410,6 +410,11 @@
 							ordered="true"
 							type="Note"
 						/>
+						<reference name="attachments"
+							composite="true"
+							multiple="true"
+							type="Attachment"
+						/>
 					</attributes>
 				</class>
 
@@ -509,7 +514,20 @@
 						<reference name="project"
 							type="Project"
 						/>
+						<reference name="attachments"
+							multiple="true"
+							type="Attachment"
+						/>
 					</attributes>
+				</class>
+
+				<class name="Attachment">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
 				</class>
 
 				<class name="Remark">

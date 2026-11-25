@@ -6,16 +6,15 @@ package com.top_logic.model.security;
 
 import java.util.List;
 
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
-import com.top_logic.basic.config.annotation.Step;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.annotate.security.CommaSeparatedCommandGroups;
-import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler.Config.ToCommandGroupReference;
 
@@ -47,10 +46,8 @@ public interface OperationRestriction extends ConfigPart {
 	 */
 	@Name(OPERATIONS)
 	@Format(CommaSeparatedCommandGroups.class)
-	@Options(fun = AccessParentReferenceOptions.Operations.class, args = @Ref(steps = {
-		@Step(OWNER),
-		@Step(AccessParentConfig.RIGHTS),
-		@Step(TLClassAccessRights.NAME_ATTRIBUTE) }), mapping = ToCommandGroupReference.class)
+	@Options(fun = AccessParentReferenceOptions.Operations.class, args = @Ref(OWNER),
+		mapping = ToCommandGroupReference.class)
 	List<CommandGroupReference> getOperations();
 
 	/**
@@ -59,11 +56,17 @@ public interface OperationRestriction extends ConfigPart {
 	void setOperations(List<CommandGroupReference> value);
 
 	/**
-	 * The setting this definition belongs to.
+	 * The configuration this definition belongs to: the {@link AccessParentConfig setting} of a
+	 * type, or a definition combining several ones like {@link AnyOfAccessParent}.
+	 *
+	 * @implNote The options of the definition are those of the type of the setting, found by
+	 *           following the containers of the owner, see {@link AccessParentReferenceOptions}.
+	 *           The configuration of a custom combining definition must therefore extend
+	 *           {@link ConfigPart}.
 	 */
 	@Name(OWNER)
 	@Hidden
 	@Container
-	AccessParentConfig getOwner();
+	ConfigurationItem getOwner();
 
 }

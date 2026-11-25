@@ -19,7 +19,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
 
 /**
@@ -113,8 +112,8 @@ public class ReferenceElement implements UIElement {
 
 		ViewContext childContext = ViewBindings.embeddedContext(parentContext, _bindings);
 
-		ReloadableControl viewControl = new ReloadableControl(fullPath, childContext,
-			(ReactControl) referencedView.createControl(childContext));
+		// A view that fails while it is built replaces only itself as well.
+		ViewUnitControl viewControl = ViewUnitControl.forView(childContext, fullPath, referencedView);
 		viewControl.setViewSource(fullPath);
 		viewControl.setCssClass(_cssClass);
 		return viewControl;

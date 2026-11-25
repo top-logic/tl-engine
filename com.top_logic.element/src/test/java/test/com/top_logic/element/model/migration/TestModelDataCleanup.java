@@ -121,7 +121,7 @@ public class TestModelDataCleanup extends AbstractLinkTableMigrationTest {
 		long other = FIRST_ID + 2;
 		long attribute = FIRST_ID + 600;
 
-		insertObject(other, FIRST_ID + 501);
+		insertObject(OBJECT_TABLE, other, FIRST_ID + 501);
 		insertFlexData(MISSING_TABLE, orphan);
 		insertFlexData(OBJECT_TABLE, other);
 

@@ -82,6 +82,15 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-security-selfservice</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-starter-ai</artifactId>
+			<type>pom</type>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chat-classic</artifactId>
+		</dependency>
 		<!-- Allow to integrate REST services through OpenAPI interface definitions. -->
         <dependency>
                 <groupId>com.top-logic</groupId>

@@ -16,13 +16,16 @@
 			of these modules run on it instead of being skipped as migrations of a module new to the
 			application.
 
-			"tl-security-selfservice" did not exist in TL 7.9.3. Its migrations build its model from
-			scratch, so listing it makes them run on this database as well: the migration test then
-			fails, if a model change of the module lacks its migration.
+			"tl-security-selfservice", the AI modules ("tl-ai-core", "tl-ai-mcp-server", "tl-ai-views",
+			"tl-layout-view-agent") and the React view layer ("tl-layout-view") did not exist in TL
+			7.9.3. The application contains them as an application of the archetype with these options
+			does. Their migrations build their models from scratch, so listing them makes them run on
+			this database as well: the migration test then fails, if a model change of one of these
+			modules lacks its migration.
 		-->
 		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
 			<instance
-				minimum-modules="tl, tl-element, tl-contact, tl-model-search, tl-model-wysiwyg, tl-layout-formeditor, tl-search-lucene, tl-doc, tl-monitoring, tl-bpe, tl-bpe-app, tl-security-auth-pac4j, tl-security-selfservice, test-app-793"
+				minimum-modules="tl, tl-element, tl-contact, tl-model-search, tl-model-wysiwyg, tl-layout-formeditor, tl-search-lucene, tl-doc, tl-monitoring, tl-bpe, tl-bpe-app, tl-security-auth-pac4j, tl-security-selfservice, tl-layout-view, tl-ai-core, tl-ai-mcp-server, tl-ai-views, tl-layout-view-agent, test-app-793"
 			>
 				<modules>
 					<module name="test-app-793" />

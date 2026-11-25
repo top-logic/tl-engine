@@ -183,6 +183,14 @@ public final class ChatViewBinding {
 	private volatile ViewChannel _subject;
 
 	/**
+	 * Creates the subject of a conversation created in this chat while {@link #_subject} holds no
+	 * object, {@code null} while no displayed element of the chat has one.
+	 *
+	 * @see #offerSubjectFactory(ChatSubjectFactory)
+	 */
+	private volatile ChatSubjectFactory _subjectFactory;
+
+	/**
 	 * What the displayed {@code <chat-conversation>} of this chat states about the situation,
 	 * {@code null} while no displayed element states anything.
 	 *
@@ -439,6 +447,39 @@ public final class ChatViewBinding {
 	public TLObject subject() {
 		ViewChannel channel = _subject;
 		return channel == null ? null : singleObject(channel.get());
+	}
+
+	/**
+	 * Lets the first message of a conversation created in this chat create the conversation's
+	 * subject, while no object stands in the {@link #offerSubject(ViewChannel) subject channel} - the
+	 * {@code subject-factory} of a {@code <chat-conversation>} - for as long as its element is
+	 * displayed.
+	 *
+	 * <p>
+	 * Read by {@link #subjectFactory()}, in the first send of a conversation
+	 * ({@link ChatControl#CMD_SEND}).
+	 * </p>
+	 */
+	public void offerSubjectFactory(ChatSubjectFactory factory) {
+		_subjectFactory = factory;
+	}
+
+	/**
+	 * Undoes one {@link #offerSubjectFactory(ChatSubjectFactory)}, for an element that is no longer
+	 * displayed; a later offer of another factory is left alone.
+	 */
+	public void withdrawSubjectFactory(ChatSubjectFactory factory) {
+		if (_subjectFactory == factory) {
+			_subjectFactory = null;
+		}
+	}
+
+	/**
+	 * What creates the subject of a conversation created now in this chat, when no
+	 * {@link #subject()} stands there; <code>null</code> for nothing.
+	 */
+	public ChatSubjectFactory subjectFactory() {
+		return _subjectFactory;
 	}
 
 	/**

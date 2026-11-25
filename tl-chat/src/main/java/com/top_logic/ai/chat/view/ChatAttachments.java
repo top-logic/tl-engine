@@ -147,6 +147,34 @@ public final class ChatAttachments {
 		changed();
 	}
 
+	/**
+	 * Moves the given files to the message being written in another chat session, e.g. those of an
+	 * unsent first message to the chat that message created; a file attached since is left.
+	 *
+	 * @param target
+	 *        The files of the other chat session.
+	 * @param entries
+	 *        The files to move, as {@link #entries()} answered them.
+	 */
+	public void moveTo(ChatAttachments target, Collection<Entry> entries) {
+		List<Entry> moved = new ArrayList<>(entries.size());
+		synchronized (_entries) {
+			for (Entry entry : entries) {
+				if (_entries.remove(entry)) {
+					moved.add(entry);
+				}
+			}
+		}
+		if (moved.isEmpty()) {
+			return;
+		}
+		synchronized (target._entries) {
+			target._entries.addAll(moved);
+		}
+		changed();
+		target.changed();
+	}
+
 	/** The files attached now, in the order they were attached. */
 	public List<Entry> entries() {
 		synchronized (_entries) {

@@ -35,7 +35,9 @@ import com.top_logic.ai.chat.api.messages.SessionDeleteReply;
 import com.top_logic.ai.chat.api.messages.SessionOpenReply;
 import com.top_logic.ai.chat.api.messages.StreamAttachReply;
 import com.top_logic.ai.chat.api.messages.SubagentMessageReply;
+import com.top_logic.ai.chat.backend.BackendFeatures;
 import com.top_logic.ai.chat.backend.ConversationBackend;
+import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatState;
@@ -69,6 +71,7 @@ import com.top_logic.ai.core.session.ConversationLogReplay;
 import com.top_logic.ai.core.session.Part;
 import com.top_logic.ai.core.session.Turn;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
@@ -756,26 +759,47 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		// One reading of the account's spend for the pre-checks, the send and the run (#835).
 		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
 		TLObject created = null;
+		// Whether the send created the subject of the chat it created: such a chat is kept also when
+		// the send fails, so that no subject is left without its conversation.
+		boolean keep = false;
 		if (sessionId == null) {
 			TLObject subject = _binding.subject();
+			ChatSubjectFactory factory = subject == null ? _binding.subjectFactory() : null;
 			// What refuses the first message without the chat is asked before the chat exists, so that
 			// a refused first message leaves nothing behind.
-			ChatSendReply refusal = firstSendRefusal(tracker, person, ChatTranscripts.backendAbout(subject),
+			BackendFeatures features = factory == null
+				? featuresOf(ChatTranscripts.backendAbout(subject))
+				: ConversationBackendService.backendFeaturesFor(factory.type());
+			ChatSendReply refusal = firstSendRefusal(tracker, person, features,
 				runOptions(args, blankToNull(stringArg(args, ARG_EFFORT))), attached, spendReading);
 			if (refusal != null) {
 				return refusal;
+			}
+			if (factory != null) {
+				try {
+					subject = factory.create(message, ChatAttachments.contentOf(attached));
+				} catch (TopLogicException ex) {
+					return status(STATUS_FORBIDDEN).setReason(Resources.getInstance().getString(ex.getErrorKey()));
+				}
 			}
 			// The first send is what brings a chat into being, titled after what was said, with the
 			// mode the user set on it before it existed, about what the page shows now.
 			created = ChatHistoryService.createSession(blankToDefault(stringArg(args, ARG_TITLE), DEFAULT_TITLE),
 				person, shown == null ? ApprovalMode.MANUAL : shown, subject);
 			if (created == null) {
+				if (factory != null) {
+					factory.discard(subject);
+				}
 				return status(STATUS_ERROR);
 			}
 			// The chat was written on the store's writer thread, at a revision newer than this
 			// thread's view of the knowledge base.
 			HistoryUtils.updateSessionRevision();
 			sessionId = ChatSessionIds.idOf(created);
+			if (factory != null) {
+				keep = true;
+				factory.show(subject);
+			}
 		} else {
 			// The id arrives from the browser, so without this it names whichever chat the caller
 			// cares to type.
@@ -786,18 +810,21 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		}
 		boolean sent = false;
 		try {
-			if (!tracker.adoptActiveSessionId(sessionId, person)) {
-				return status(STATUS_NOT_FOUND);
-			}
-			ChatSendReply reply =
-				sendInto(tracker, person, sessionId, message, attached, shown, args, fromTurn, spendReading);
+			ChatSendReply reply = tracker.adoptActiveSessionId(sessionId, person)
+				? sendInto(tracker, person, sessionId, message, attached, shown, args, fromTurn, spendReading)
+				: status(STATUS_NOT_FOUND);
 			sent = STATUS_PROCESSING.equals(reply.getStatus());
 			if (sent) {
 				draft.removeAll(attached);
+			} else if (keep) {
+				// The chat stays open with the message unsent: a send again goes into it, with the same
+				// files.
+				draft.moveTo(_binding.attachments(sessionId), attached);
+				reply.setSessionId(sessionId);
 			}
 			return reply;
 		} finally {
-			if (created != null && !sent) {
+			if (created != null && !sent && !keep) {
 				// A send that went nowhere has produced nothing to keep, and an empty chat in the
 				// list is a row the user would have to tidy away.
 				ChatHistoryService.deleteSession(created);
@@ -805,18 +832,23 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		}
 	}
 
+	/** What a conversation the given backend answers offers, <code>null</code> for the framework's own agent. */
+	private static BackendFeatures featuresOf(ConversationBackend backend) {
+		return backend == null ? null : backend.features();
+	}
+
 	/**
 	 * Why the first message of a conversation that does not exist yet is not sent, or
 	 * <code>null</code> when nothing that is decidable without the conversation refuses it.
 	 *
-	 * @param backend
-	 *        The backend that will answer the conversation, <code>null</code> for the framework's own
-	 *        agent.
+	 * @param features
+	 *        What the backend that will answer the conversation offers, <code>null</code> for the
+	 *        framework's own agent.
 	 */
 	private static ChatSendReply firstSendRefusal(TaskProgressTracker tracker, Person person,
-			ConversationBackend backend, ChatProcessor.ChatRunOptions options, List<ChatAttachments.Entry> attached,
+			BackendFeatures features, ChatProcessor.ChatRunOptions options, List<ChatAttachments.Entry> attached,
 			RunLimits.SpendReading spendReading) {
-		SendRefusal refusal = sendRefusal(backend, person, options, attached);
+		SendRefusal refusal = sendRefusal(features, person, options, attached);
 		if (refusal != null) {
 			return refused(refusal);
 		}
@@ -828,20 +860,20 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	}
 
 	/**
-	 * Why a message with the given files and turn settings is not sent into a conversation the
-	 * given backend answers, or <code>null</code> when it may be sent.
+	 * Why a message with the given files and turn settings is not sent into a conversation with the
+	 * given features, or <code>null</code> when it may be sent.
 	 *
-	 * @param backend
-	 *        The backend that answers the conversation, <code>null</code> for the framework's own
-	 *        agent.
+	 * @param features
+	 *        What the backend that answers the conversation offers, <code>null</code> for the
+	 *        framework's own agent.
 	 */
-	private static SendRefusal sendRefusal(ConversationBackend backend, Person person,
+	private static SendRefusal sendRefusal(BackendFeatures features, Person person,
 			ChatProcessor.ChatRunOptions options, List<ChatAttachments.Entry> attached) {
 		// A conversation a backend answers runs no agent of this application, so what the agent policy
 		// says about the account's agents does not apply to it; what the backend supports does.
-		return backend == null
+		return features == null
 			? SendRefusal.forRun(person, options)
-			: (attached.isEmpty() ? null : SendRefusal.unsupported(backend.features().attachments(),
+			: (attached.isEmpty() ? null : SendRefusal.unsupported(features.attachments(),
 				com.top_logic.ai.chat.backend.I18NConstants.ATTACHMENTS_NOT_SUPPORTED));
 	}
 
@@ -868,7 +900,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		ChatProcessor.ChatRunOptions options = runOptions(args, effort);
 		ConversationBackend backend =
 			ChatTranscripts.backendOf(ChatSessionIds.accessibleSession(sessionId, person, SimpleBoundCommandGroup.WRITE));
-		SendRefusal refusal = sendRefusal(backend, person, options, attached);
+		SendRefusal refusal = sendRefusal(featuresOf(backend), person, options, attached);
 		if (refusal != null) {
 			return refused(refusal);
 		}

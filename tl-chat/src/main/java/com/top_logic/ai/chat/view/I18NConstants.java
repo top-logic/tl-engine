@@ -88,6 +88,33 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_TOO_MANY_ATTACHMENTS__FILE_MAX;
 
+	/**
+	 * Commit message of the transaction in which the first message of a conversation creates the
+	 * conversation's subject.
+	 *
+	 * @en Created the subject of a chat.
+	 * @de Gegenstand eines Chats angelegt.
+	 */
+	public static ResKey CREATED_CHAT_SUBJECT;
+
+	/**
+	 * Commit message of the transaction deleting the subject a first message created for a
+	 * conversation that could not be created.
+	 *
+	 * @en Deleted the subject of a chat that could not be created.
+	 * @de Gegenstand eines Chats gelöscht, der nicht angelegt werden konnte.
+	 */
+	public static ResKey DISCARDED_CHAT_SUBJECT;
+
+	/**
+	 * The subject factory of a chat created no object of the configured subject type, so the first
+	 * message was not sent.
+	 *
+	 * @en The chat could not be started: its subject factory created no object of type {0}.
+	 * @de Der Chat konnte nicht begonnen werden: Seine Fabrik für den Gegenstand hat kein Objekt vom Typ {0} angelegt.
+	 */
+	public static ResKey1 ERROR_SUBJECT_NOT_OF_TYPE__TYPE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

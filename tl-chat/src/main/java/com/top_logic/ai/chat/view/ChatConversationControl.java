@@ -32,6 +32,7 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Mention;
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompt;
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompts;
 import com.top_logic.ai.chat.view.ChatConversationElement.Selection;
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
@@ -158,6 +159,12 @@ public class ChatConversationControl extends ChatControl {
 
 	/** The compiled {@link ChatConversationElement.Config#getWritable()}, <code>null</code> for none. */
 	private final QueryExecutor _writable;
+
+	/**
+	 * Creates the subject of a conversation with its first message, see
+	 * {@link Config#getSubjectFactory()}; <code>null</code> for none.
+	 */
+	private final ChatSubjectFactory _subjectFactory;
 
 	/** The account's chat list, as the browser is told it. */
 	private final SessionListWatch _sessions;
@@ -369,9 +376,17 @@ public class ChatConversationControl extends ChatControl {
 		// the agent anything (offersToAgent), and read by the request that creates the conversation,
 		// before its first message is sent.
 		// What a conversation about it offers is what an empty chat offers, and follows the channel.
+		// Without an object there, the first message creates one, if the element says how.
 		ChannelRef subjectRef = config.getSubject();
-		if (subjectRef != null) {
-			ViewChannel subject = context.resolveChannel(subjectRef);
+		ViewChannel subjectChannel = subjectRef == null ? null : context.resolveChannel(subjectRef);
+		_subjectFactory = subjectFactory(config, subjectChannel);
+		if (_subjectFactory != null) {
+			ChatSubjectFactory factory = _subjectFactory;
+			offerToAgent(() -> binding().offerSubjectFactory(factory),
+				() -> binding().withdrawSubjectFactory(factory));
+		}
+		if (subjectChannel != null) {
+			ViewChannel subject = subjectChannel;
 			offerToAgent(() -> binding().offerSubject(subject), () -> binding().withdrawSubject(subject));
 			ViewChannel.ChannelListener featuresListener =
 				(sender, oldValue, newValue) -> writeSubjectFeatures(newValue);
@@ -506,19 +521,48 @@ public class ChatConversationControl extends ChatControl {
 		putState(STATE_SUBJECT_FEATURES, ChatTranscripts.featuresDto(subjectFeatures(subject)));
 	}
 
-	private static BackendFeatures subjectFeatures(TLObject subject) {
-		if (subject == null) {
+	private BackendFeatures subjectFeatures(TLObject subject) {
+		TLStructuredType subjectType;
+		if (subject != null) {
+			subjectType = subject.tType();
+		} else if (_subjectFactory != null) {
+			// The first message creates a subject of this type.
+			subjectType = _subjectFactory.type();
+		} else {
 			return BackendFeatures.INTERNAL;
 		}
 		try {
-			return ConversationBackendService.featuresFor(subject.tType());
+			return ConversationBackendService.featuresFor(subjectType);
 		} catch (RuntimeException ex) {
 			// The send asks the resolvers again and fails there, where the user is told; showing the
 			// chat must not break on it.
-			Logger.warn("Could not ask what a conversation about " + subject.tHandle().getObjectName().toExternalForm()
+			Logger.warn("Could not ask what a conversation about a " + TLModelUtil.qualifiedName(subjectType)
 				+ " offers.", ex, ChatConversationControl.class);
 			return BackendFeatures.INTERNAL;
 		}
+	}
+
+	/**
+	 * The {@link ChatSubjectFactory} of the given configuration, <code>null</code> for none.
+	 *
+	 * @param subject
+	 *        The channel that shows the subject; <code>null</code> for none.
+	 */
+	private static ChatSubjectFactory subjectFactory(ChatConversationElement.Config config, ViewChannel subject) {
+		Expr function = config.getSubjectFactory();
+		if (function == null) {
+			return null;
+		}
+		String missingType = ChatConversationElement.missingSubjectType(config);
+		if (missingType != null) {
+			throw new ConfigurationError(missingType);
+		}
+		TLModelPartRef typeRef = config.getSubjectType();
+		if (!(typeRef.resolveType() instanceof TLStructuredType type)) {
+			throw new ConfigurationError("The '" + ChatConversationElement.Config.SUBJECT_TYPE + "' '"
+				+ typeRef.qualifiedName() + "' of a <chat-conversation> is no class.");
+		}
+		return new ChatSubjectFactory(QueryExecutor.compile(function), type, subject);
 	}
 
 	/**

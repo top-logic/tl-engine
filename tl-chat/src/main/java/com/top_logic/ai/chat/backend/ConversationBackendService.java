@@ -132,12 +132,26 @@ public class ConversationBackendService extends ConfiguredManagedClass<Conversat
 	 * @return The features the first resolver answering subjects of this type names, or
 	 *         {@link BackendFeatures#INTERNAL} of the framework's own agent when no resolver answers
 	 *         them.
-	 * @see ConversationBackendResolver#featuresFor(TLStructuredType)
+	 * @see #backendFeaturesFor(TLStructuredType)
 	 */
 	public static BackendFeatures featuresFor(TLStructuredType subjectType) {
+		BackendFeatures features = backendFeaturesFor(subjectType);
+		return features == null ? BackendFeatures.INTERNAL : features;
+	}
+
+	/**
+	 * What a conversation about a subject of the given type offers, when a backend answers it.
+	 *
+	 * @param subjectType
+	 *        The type of the subject; <code>null</code> for a conversation about nothing.
+	 * @return The features the first resolver answering subjects of this type names, or
+	 *         <code>null</code> when no resolver answers them and the framework's own agent does.
+	 * @see ConversationBackendResolver#featuresFor(TLStructuredType)
+	 */
+	public static BackendFeatures backendFeaturesFor(TLStructuredType subjectType) {
 		ConversationBackendService service = _instance;
 		if (service == null || subjectType == null) {
-			return BackendFeatures.INTERNAL;
+			return null;
 		}
 		for (ConversationBackendResolver resolver : service._resolvers) {
 			BackendFeatures features = resolver.featuresFor(subjectType);
@@ -145,7 +159,7 @@ public class ConversationBackendService extends ConfiguredManagedClass<Conversat
 				return features;
 			}
 		}
-		return BackendFeatures.INTERNAL;
+		return null;
 	}
 
 	/**

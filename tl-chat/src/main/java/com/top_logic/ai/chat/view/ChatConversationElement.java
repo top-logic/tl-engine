@@ -30,6 +30,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.MandatoryIfSet;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -158,6 +160,20 @@ public class ChatConversationElement implements UIElement {
 		 * @see #getSubject()
 		 */
 		String SUBJECT = "subject";
+
+		/**
+		 * Configuration property name for {@link #getSubjectFactory()}.
+		 *
+		 * @see #getSubjectFactory()
+		 */
+		String SUBJECT_FACTORY = "subject-factory";
+
+		/**
+		 * Configuration property name for {@link #getSubjectType()}.
+		 *
+		 * @see #getSubjectType()
+		 */
+		String SUBJECT_TYPE = "subject-type";
 
 		/**
 		 * Configuration property name for {@link #getWritable()}.
@@ -447,6 +463,56 @@ public class ChatConversationElement implements UIElement {
 		@Format(ChannelRefFormat.class)
 		@Nullable
 		ChannelRef getSubject();
+
+		/**
+		 * Optional TL-Script function creating the subject of a conversation with its first message.
+		 *
+		 * <p>
+		 * For an application in which every conversation has an object of its own that comes into
+		 * being with the conversation. The function takes the text of the first message and the list
+		 * of its attached files (as binary data) and returns the subject:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;chat-conversation input="chatSession" subject="task"
+		 *     subject-type="my.module:Task"
+		 *     subject-factory="text -&gt; attachments -&gt; {
+		 *         task = new(`my.module:Task`);
+		 *         $task.set(`my.module:Task#name`, $text);
+		 *         $task;
+		 *     }"/&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * It is called only by the first message of a conversation, which creates the conversation,
+		 * and only while the {@link #getSubject() subject} channel holds no object; an object there is
+		 * the subject as without a function. It runs after everything that may refuse the message
+		 * without the conversation, in a transaction of its own and as the signed-in account. A
+		 * {@link com.top_logic.util.error.TopLogicException} it throws refuses the message with its
+		 * text and creates nothing; so does a result that is no object of the
+		 * {@link #getSubjectType() subject type}. Afterwards, the conversation is created about the
+		 * new object, and the subject channel shows it.
+		 * </p>
+		 */
+		@Name(SUBJECT_FACTORY)
+		@Label("Subject factory")
+		@Nullable
+		Expr getSubjectFactory();
+
+		/**
+		 * The type of the objects the {@link #getSubjectFactory() subject factory} creates.
+		 *
+		 * <p>
+		 * Required with a subject factory. An empty chat offers the controls of a conversation about
+		 * an object of this type, as long as the {@link #getSubject() subject} channel holds no
+		 * object.
+		 * </p>
+		 */
+		@Name(SUBJECT_TYPE)
+		@Label("Subject type")
+		@Nullable
+		@Constraint(value = MandatoryIfSet.class, args = @Ref(SUBJECT_FACTORY))
+		TLModelPartRef getSubjectType();
 
 		/**
 		 * Optional TL-Script function of the open {@code tl.ai.execution:AgentSession} deciding
@@ -1769,6 +1835,22 @@ public class ChatConversationElement implements UIElement {
 	public ChatConversationElement(InstantiationContext context, Config config) {
 		_config = config;
 		_agentCommands = instantiateAgentCommands(context, config);
+		String missingType = missingSubjectType(config);
+		if (missingType != null) {
+			context.error(missingType);
+		}
+	}
+
+	/**
+	 * Why the given configuration lacks the {@link Config#getSubjectType() subject type} its
+	 * {@link Config#getSubjectFactory() subject factory} requires, <code>null</code> when it does
+	 * not.
+	 */
+	static String missingSubjectType(Config config) {
+		if (config.getSubjectFactory() == null || config.getSubjectType() != null) {
+			return null;
+		}
+		return "A <chat-conversation> with '" + Config.SUBJECT_FACTORY + "' needs a '" + Config.SUBJECT_TYPE + "'.";
 	}
 
 	@Override

@@ -88,6 +88,9 @@ public class TestDashboardElement extends BasicTestCase {
 	/** Descriptor key holding a tile's action, absent for a tile that only displays content. */
 	private static final String TILE_ACTION = "action";
 
+	/** Tile descriptor key holding the name of the tile. */
+	private static final String TILE_LABEL = "label";
+
 	/** Action descriptor key holding the name the action is offered under. */
 	private static final String ACTION_LABEL = "label";
 
@@ -266,6 +269,20 @@ public class TestDashboardElement extends BasicTestCase {
 		assertEquals("Content without a title leaves the plain name of opening something.",
 			resources.getString(I18NConstants.TABLE_ACTIVATE_ROW),
 			action(dashboard, UNTITLED_TILE).get(ACTION_LABEL));
+	}
+
+	/**
+	 * Tests the name a tile is announced under while it is moved: the title it displays, not the
+	 * name of its action, and nothing for a tile without a title.
+	 */
+	public void testTileName() {
+		ReactDashboardControl dashboard = createDashboard();
+		dashboard.attach();
+
+		Resources resources = Resources.getInstance();
+		assertEquals("A tile is named by the title of its content.", resources.getString(ResKey.text("Tickets")),
+			tile(dashboard, OPENING_TILE).get(TILE_LABEL));
+		assertNull("A tile without a title has no name.", tile(dashboard, UNTITLED_TILE).get(TILE_LABEL));
 	}
 
 	/**
@@ -514,12 +531,19 @@ public class TestDashboardElement extends BasicTestCase {
 	 * tile that is not an entry point.
 	 */
 	private static Map<String, Object> action(ReactDashboardControl dashboard, String tileId) {
+		@SuppressWarnings("unchecked")
+		Map<String, Object> action = (Map<String, Object>) tile(dashboard, tileId).get(TILE_ACTION);
+		return action;
+	}
+
+	/**
+	 * What the client is told about the tile with the given id.
+	 */
+	private static Map<?, ?> tile(ReactDashboardControl dashboard, String tileId) {
 		for (Object child : children(dashboard)) {
 			Map<?, ?> tile = (Map<?, ?>) child;
 			if (tileId.equals(tile.get(TILE_ID))) {
-				@SuppressWarnings("unchecked")
-				Map<String, Object> action = (Map<String, Object>) tile.get(TILE_ACTION);
-				return action;
+				return tile;
 			}
 		}
 		throw new AssertionError("No tile '" + tileId + "' in the dashboard.");

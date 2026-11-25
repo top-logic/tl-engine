@@ -163,6 +163,12 @@
   color: var(--tl-text-secondary);
 }
 
+/* Der Inhalt einer Vorlage der Anwendung steht neben dem Knopf des Eintrags, mit dem Abstand zum Rand, den der Knopf
+   seinem Inhalt gibt. */
+.tl-list__item > .tl-list__trailing {
+  margin-inline-end: var(--tl-space-control-x);
+}
+
 /* Die Zeilen nehmen den Rest; jede steht auf einer Zeile und endet mit Ellipse. */
 .tl-list__text {
   display: flex;

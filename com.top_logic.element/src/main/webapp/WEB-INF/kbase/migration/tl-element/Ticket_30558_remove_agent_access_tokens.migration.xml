@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Deletes the model module tl.agent with the access tokens stored in it. Access tokens are of the
+	type tl.accounts:AccessToken; each stored token of tl.agent was bound to a session that has
+	ended.
+
+	The deletion is a migration of tl-element, since every database storing these tokens stores a
+	version of tl-element. A database created before tl-layout-view-agent became a migration module
+	stores no version of that module and skips its migrations. In a database without the module
+	tl.agent, the migration deletes nothing.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30558_remove_agent_access_tokens"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30548_revision_author_reference"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- The tokens are stored in the generic table, with their attributes and links. -->
+		<delete-module name="tl.agent"
+			type-tables="GenericObject"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

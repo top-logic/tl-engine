@@ -17,7 +17,7 @@ import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Tests that the {@link ModelAccessPolicy} offers the discover attributes of a type to a user who
- * may only discover its objects.
+ * may only discover its objects, and that discovering offers the columns of all attributes.
  *
  * <p>
  * {@code DiscoverNamed} specializes {@code Named}. The role {@code NameReader} may read every
@@ -56,42 +56,25 @@ public class TestDiscoverAttributesPolicy extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * Without an object, a column of a discover attribute is offered to a user who may only
-	 * discover the objects, a column of another attribute is not.
+	 * The column of every attribute is offered to a user who may only discover the objects: none of
+	 * the attributes has a read grant of its own, the rows and their cells decide what the user
+	 * sees.
 	 */
-	public void testOnType() {
+	public void testColumns() {
 		TLStructuredTypePart name = part(NAMED, NAME);
 		TLStructuredTypePart accountA = part(NAMED, ACCOUNT_A);
 
 		becomeUser(_outsider);
-		assertExecutable(
-			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, type(DISCOVER_NAMED), name));
-		assertHidden(
-			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, type(DISCOVER_NAMED), accountA));
-		assertHidden(
-			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(DISCOVER_NAMED), name));
-
-		becomeUser(_responsible);
-		assertExecutable(
-			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, type(DISCOVER_NAMED), accountA));
+		assertExecutable(ModelAccessPolicy.onAttributeColumn(type(DISCOVER_NAMED), name));
+		assertExecutable(ModelAccessPolicy.onAttributeColumn(type(DISCOVER_NAMED), accountA));
+		assertExecutable(ModelAccessPolicy.onAttributeColumn(type(NAMED), name));
+		assertExecutable(ModelAccessPolicy.onAttributeColumn(type(NAMED), accountA));
+		assertExecutable(ModelAccessPolicy.onAttributeColumn(null, name));
 	}
 
 	/**
-	 * A column of a general type is offered when a specialization of the type has the attribute as
-	 * discover attribute: its objects show the attribute to a user who may only discover them.
-	 */
-	public void testOnGeneralType() {
-		TLStructuredTypePart name = part(NAMED, NAME);
-		TLStructuredTypePart accountA = part(NAMED, ACCOUNT_A);
-
-		becomeUser(_outsider);
-		assertExecutable(ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, type(NAMED), name));
-		assertHidden(ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, type(NAMED), accountA));
-		assertExecutable(ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, null, name));
-	}
-
-	/**
-	 * On an object, the discover attribute is readable for a user who may only discover it.
+	 * On an object, the discover attribute is readable for a user who may only discover it, but not
+	 * writable.
 	 */
 	public void testOnObject() {
 		TLStructuredTypePart name = part(NAMED, NAME);
@@ -100,6 +83,7 @@ public class TestDiscoverAttributesPolicy extends AbstractModelAccessTest {
 		assertExecutable(ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, _discoverNamed, name));
 		assertHidden(
 			ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, _discoverNamed, part(NAMED, ACCOUNT_A)));
+		assertHidden(ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.WRITE, _discoverNamed, name));
 	}
 
 	private static void assertHidden(ExecutableState state) {

@@ -6,7 +6,9 @@
 package com.top_logic.layout.view.list;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -17,6 +19,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -30,7 +33,10 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -57,7 +63,8 @@ import com.top_logic.model.util.TLModelPartRef;
  *
  * <p>
  * In front of the lines a row shows an avatar or an icon ({@link Config#getLeading() leading}),
- * after them metadata text or a badge ({@link Config#getTrailing() trailing}).
+ * after them metadata text, a badge, or view content instantiated for the row from a template
+ * ({@link Config#getTrailing() trailing}).
  * </p>
  *
  * <p>
@@ -375,10 +382,12 @@ public class DataListElement implements UIElement {
 		LeadingConfig getLeading();
 
 		/**
-		 * What stands after the lines of a row: metadata text or a badge.
+		 * What stands after the lines of a row: metadata text, a badge, or view content instantiated
+		 * for the row from a template.
 		 */
 		@Name(TRAILING)
 		@Label("Trailing")
+		@TreeProperty
 		TrailingConfig getTrailing();
 	}
 
@@ -458,11 +467,33 @@ public class DataListElement implements UIElement {
 	}
 
 	/**
-	 * Configuration of what stands after the lines of a row: metadata text, or a badge.
+	 * Configuration of what stands after the lines of a row: metadata text, a badge, or view
+	 * content instantiated for the row from a template.
 	 *
 	 * <p>
-	 * The value is an {@link #getAttribute() attribute} of the row object or a
-	 * {@link #getValue() computed value}, like the one of a {@link LineConfig line}.
+	 * The short form shows a value: an {@link #getAttribute() attribute} of the row object or a
+	 * {@link #getValue() computed value}, like the one of a {@link LineConfig line}, as text or as a
+	 * badge ({@link #getDisplay() display}).
+	 * </p>
+	 *
+	 * <p>
+	 * Where the application needs more - a status in its color, with a tooltip explaining it - the
+	 * {@link #getContent() template} gives view content of its own, instantiated for each row with
+	 * the row object on the {@link #getElementChannel() element channel}:
+	 * </p>
+	 *
+	 * <pre>
+	 * &lt;trailing element-channel="item"&gt;
+	 *   &lt;view-ref view="item-state.view.xml"&gt;
+	 *     &lt;bind channel="item" to="item"/&gt;
+	 *   &lt;/view-ref&gt;
+	 * &lt;/trailing&gt;
+	 * </pre>
+	 *
+	 * <p>
+	 * With a template, the short form is ignored. A click on interactive content of the template (a
+	 * button, say) does not select the row; the search of the list matches the lines of a row, not
+	 * the content of its template.
 	 * </p>
 	 */
 	public interface TrailingConfig extends ConfigurationItem {
@@ -476,8 +507,18 @@ public class DataListElement implements UIElement {
 		/** Configuration property name for {@link #getDisplay()}. */
 		String DISPLAY = "display";
 
+		/** Configuration property name for {@link #getElementChannel()}. */
+		String ELEMENT_CHANNEL = "element-channel";
+
+		/** Configuration property name for {@link #getContent()}. */
+		String CONTENT = "content";
+
 		/**
 		 * The model attribute shown. Use {@link #getValue()} instead for a computed value.
+		 *
+		 * <p>
+		 * Ignored with a {@link #getContent() template}.
+		 * </p>
 		 */
 		@Name(ATTRIBUTE)
 		@Nullable
@@ -485,16 +526,52 @@ public class DataListElement implements UIElement {
 
 		/**
 		 * A TL-Script function of one row computing the value shown - a formatted date, a count.
+		 *
+		 * <p>
+		 * Ignored with a {@link #getContent() template}, which shows more than a value: a status in
+		 * its color with a tooltip, say.
+		 * </p>
 		 */
 		@Name(VALUE)
 		@Nullable
 		Expr getValue();
 
 		/**
-		 * How the value is shown.
+		 * How the {@link #getAttribute() attribute} or {@link #getValue() value} is shown.
+		 *
+		 * <p>
+		 * Ignored with a {@link #getContent() template}.
+		 * </p>
 		 */
 		@Name(DISPLAY)
 		TrailingDisplay getDisplay();
+
+		/**
+		 * Name of the channel publishing the row object to the {@link #getContent() template}.
+		 */
+		@Name(ELEMENT_CHANNEL)
+		@StringDefault("element")
+		String getElementChannel();
+
+		/**
+		 * The view content instantiated once per row, with the row object published on the
+		 * {@link #getElementChannel() element channel}, and shown after the lines of the row.
+		 *
+		 * <p>
+		 * Ordinary view content: typically a {@code <view-ref>} binding the element channel, or
+		 * elements written inline. Multiple entries are stacked vertically. Given, it takes the
+		 * place of the short form {@link #getAttribute() attribute} / {@link #getValue() value}.
+		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
+		 */
+		@Key(UIElement.Config.ID)
+		@Name(CONTENT)
+		@DefaultContainer
+		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
+		List<UIElement.Config> getContent();
 	}
 
 	/** Configuration for a single line of a row - like a table {@code <column>}, but stacked. */
@@ -546,6 +623,9 @@ public class DataListElement implements UIElement {
 
 	private final List<ViewCommand.Config> _rowCommandConfigs = new ArrayList<>();
 
+	/** The {@link TrailingConfig#getContent() template} after the lines of a row, empty for none. */
+	private final List<UIElement> _trailingContent;
+
 	/** Creates a {@link DataListElement}. */
 	@CalledByReflection
 	public DataListElement(InstantiationContext context, Config config) {
@@ -561,6 +641,9 @@ public class DataListElement implements UIElement {
 		// Instantiate the commands here, where an InstantiationContext is available.
 		instantiate(context, config.getCommands(), _commands, _commandConfigs);
 		instantiate(context, config.getRowCommands(), _rowCommands, _rowCommandConfigs);
+		TrailingConfig trailing = config.getTrailing();
+		_trailingContent = trailing == null ? Collections.emptyList()
+			: trailing.getContent().stream().map(context::getInstance).collect(Collectors.toList());
 	}
 
 	private static void instantiate(InstantiationContext context,
@@ -576,8 +659,13 @@ public class DataListElement implements UIElement {
 	}
 
 	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_trailingContent));
+	}
+
+	@Override
 	public IReactControl createControl(ViewContext context) {
 		return new DataListControl(context, _config, _commands, _commandConfigs, _rowCommands,
-			_rowCommandConfigs);
+			_rowCommandConfigs, _trailingContent);
 	}
 }

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Card of a project in the selectable card grid of the openable-cards demo
+	(demo/openable-cards-demo.view.xml): its name, description and budget.
+-->
+<view>
+	<channels>
+		<channel name="element"/>
+		<derived-channel name="description"
+			expr="$element.get(`tl.demo.projectManagement:ProjectScope#description`)"
+			inputs="element"
+			observed-types="tl.demo.projectManagement:ProjectScope"
+		/>
+		<derived-channel name="budget"
+			expr="$element.get(`tl.demo.projectManagement:ProjectScope#budget`)"
+			inputs="element"
+			observed-types="tl.demo.projectManagement:ProjectScope"
+		/>
+	</channels>
+	<card>
+		<text
+			input="element"
+			variant="body-strong"
+		/>
+		<text input="description"/>
+		<text input="budget"/>
+	</card>
+</view>

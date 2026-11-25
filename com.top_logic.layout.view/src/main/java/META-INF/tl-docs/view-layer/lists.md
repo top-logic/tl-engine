@@ -1,5 +1,5 @@
 ---
-description: Read before showing a selectable list of objects in a .view.xml in the style of a contact or message list - <data-list> (DataListElement, client TLDataList, design system tl-list) with rows, inputs, observed-types, lines (attribute / value / emphasis), <leading> avatar or icon, <trailing> metadata text or badge, group-by, selection and count channels, search, a list in a collapsible <side-rail>, header commands, row-commands / row-channel / row-actions, row-css-class, and a <context-menu> around the list.
+description: Read before showing a selectable list of objects in a .view.xml in the style of a contact or message list - <data-list> (DataListElement, client TLDataList, design system tl-list) with rows, inputs, observed-types, lines (attribute / value / emphasis), <leading> avatar or icon, <trailing> metadata text or badge or a template with element-channel (e.g. a status pill with a tooltip), group-by, selection and count channels, search, a list in a collapsible <side-rail>, header commands, row-commands / row-channel / row-actions, row-css-class, and a <context-menu> around the list.
 order: 62
 ---
 
@@ -76,7 +76,54 @@ The demo application shows it under *List* (`demo/data-list-demo.view.xml` of
 - `<trailing attribute="…" | value="row -> …" display="text|badge"/>` stands after the lines:
   metadata text (`text`, the default, e.g. a date) or a badge (part `Badge`) for a count or a short
   status. An empty value - and `0` as badge - shows nothing. A number is written in the number
-  format of the user.
+  format of the user. This short form shows a value; for more, the slot takes a template, see
+  below.
+
+### A template after the lines
+
+Where an entry needs more than a value after its lines - a status in its colour with a tooltip
+explaining it, a button of its own - `<trailing>` holds view content instead of `attribute` /
+`value`. The content is instantiated once per entry, with the row object on the local channel
+`element-channel` (default `element`), exactly as the item template of an `<object-list>` or the
+card of a `<kanban-board>`; an entry that stays in the list keeps its instance, a new entry gets
+one, and the instance of an entry that left the list is disposed.
+
+```xml
+<trailing element-channel="ticket">
+	<view-ref view="ticket-status.view.xml">
+		<bind
+			channel="ticket"
+			to="ticket"
+		/>
+	</view-ref>
+</trailing>
+```
+
+The referenced view derives the status from the row object and shows it as a pill with a tooltip
+(see [Colored values](doc:view-layer/display#colored-values)):
+
+```xml
+<view>
+	<channels>
+		<channel name="ticket"/>
+		<derived-channel name="status"
+			expr="$ticket.get(`my.module:Ticket#status`)"
+			inputs="ticket"
+		/>
+	</channels>
+	<text
+		appearance="pill"
+		input="status as s"
+		tooltip="#('Status {0}'@en, 'Status {0}'@de).fill($s)"
+	/>
+</view>
+```
+
+- With a template, `attribute`, `value` and `display` are ignored: the template takes their place.
+- The template stands beside the button of the entry, not in it. A click on interactive content of
+  the template (a button, a link) is left to it and does not select the entry; a click on the rest
+  of the template - the text of a pill - selects the entry like a click on its lines.
+- The search of the list filters by the lines of the entries, not by the content of the template.
 
 ## Groups, search, a collapsible list
 

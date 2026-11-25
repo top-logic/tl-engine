@@ -306,7 +306,7 @@
 								</format>
 							</annotations>
 						</property>
-						<property name="author"
+						<reference name="author"
 							type="tl.core:Author"
 						>
 							<annotations>
@@ -319,7 +319,7 @@
 								</storage-algorithm>
 								<delete-protected/>
 							</annotations>
-						</property>
+						</reference>
 						<property name="log"
 							type="tl.core:String"
 						>

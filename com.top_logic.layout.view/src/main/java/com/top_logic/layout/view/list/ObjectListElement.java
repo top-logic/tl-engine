@@ -26,9 +26,11 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TypeIcon;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -55,6 +57,8 @@ import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.ActionScopeDefinition;
 import com.top_logic.layout.view.command.ActionScopes;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.element.GridOptions;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
@@ -139,6 +143,30 @@ import com.top_logic.table.SelectionMode;
  *   &lt;item&gt;
  *     &lt;text input="element"/&gt;
  *   &lt;/item&gt;
+ * &lt;/object-list&gt;
+ * </pre>
+ *
+ * <p>
+ * With an {@link Config#getOnActivate() activation command}, an element is opened by the user and the
+ * command runs with it - an entry page listing the projects to choose from, say. Without a selection
+ * channel, a click on the element opens it; with one, a click selects it, and a double-click,
+ * {@code Enter} or the element's open button opens it.
+ * </p>
+ *
+ * <pre>
+ * &lt;object-list
+ *   inputs="catalogue"
+ *   items="$catalogue.get(`demo:Catalogue#products`)"
+ *   layout="grid"
+ * &gt;
+ *   &lt;item&gt;
+ *     &lt;view-ref view="catalogue/product-card.view.xml"&gt;
+ *       &lt;bind channel="product" to="element"/&gt;
+ *     &lt;/view-ref&gt;
+ *   &lt;/item&gt;
+ *   &lt;on-activate class="com.top_logic.layout.view.command.GenericViewCommand"&gt;
+ *     &lt;show-object/&gt;
+ *   &lt;/on-activate&gt;
  * &lt;/object-list&gt;
  * </pre>
  *
@@ -268,6 +296,12 @@ public class ObjectListElement implements UIElement {
 		/** Configuration name for {@link #getSelectionMode()}. */
 		String SELECTION_MODE = "selection-mode";
 
+		/** Configuration name for {@link #getOnActivate()}. */
+		String ON_ACTIVATE = "on-activate";
+
+		/** Configuration name for {@link #getActivationButton()}. */
+		String ACTIVATION_BUTTON = "activation-button";
+
 		@Override
 		@ClassDefault(ObjectListElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -376,11 +410,16 @@ public class ObjectListElement implements UIElement {
 		/**
 		 * The checks of the {@link #getLinkAccess() link access} and the
 		 * {@link #getRemoveAccess() remove access} see the values of the inputs and the element.
+		 * The {@link #getOnActivate() activation command} runs with the activated element as its
+		 * main argument, named like the element.
 		 */
 		@Override
 		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
 			if (ActionScopes.contains(getLinkAccess(), part) || ActionScopes.contains(getRemoveAccess(), part)) {
 				return accessScope(this);
+			}
+			if (part != null && part == getOnActivate()) {
+				return ActionScope.single(elementName(this));
 			}
 			return outer;
 		}
@@ -497,6 +536,58 @@ public class ObjectListElement implements UIElement {
 		@Name(SELECTION_MODE)
 		@ComplexDefault(SelectionMode.SingleDefault.class)
 		SelectionMode getSelectionMode();
+
+		/**
+		 * The command opening an element: it runs with the activated element as its main argument,
+		 * named by {@link #getElementAs() element-as}.
+		 *
+		 * <p>
+		 * How the user activates an element depends on whether the list is selectable. Without a
+		 * {@link #getSelection() selection channel}, a click on the element activates it, and so do
+		 * {@code Enter} and {@code Space} on the focused element - like a tile of a dashboard with
+		 * an action. A click on interactive content of the element - a button, a link, a field -
+		 * is that content's, and a click that ends a text selection activates nothing. With a
+		 * selection channel, a click selects the element, and a double-click, {@code Enter} or the
+		 * element's {@link #getActivationButton() open button} activate it - like a row of a table:
+		 * the element becomes the selection first, then the command runs.
+		 * </p>
+		 *
+		 * <p>
+		 * The command's own executability rules decide over each element: an element the rules
+		 * hide the command for cannot be activated, one they disable it for shows that, and
+		 * activating it has no effect. Without a command, the elements are not activated.
+		 * </p>
+		 *
+		 * <p>
+		 * Configured as {@code <on-activate class="..." .../>} inside the list element.
+		 * </p>
+		 */
+		@Name(ON_ACTIVATE)
+		@Nullable
+		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
+		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
+
+		/**
+		 * Whether every element of a selectable list shows a button running the
+		 * {@link #getOnActivate() activation command} for it.
+		 *
+		 * <p>
+		 * The button sits in the top right corner of the element. It offers the activation where
+		 * the gestures running it - a double-click, {@code Enter} on the focused element - are
+		 * neither visible nor available: a touch device has neither. Pressing it activates its
+		 * element as the gestures do. An element the command's rules hide the command for shows
+		 * no button, one they disable it for a disabled one.
+		 * </p>
+		 *
+		 * <p>
+		 * A list without a {@link #getSelection() selection channel} activates an element by a
+		 * click on it and shows no button; nor does a list without an activation command.
+		 * </p>
+		 */
+		@Name(ACTIVATION_BUTTON)
+		@BooleanDefault(true)
+		boolean getActivationButton();
 	}
 
 	private final Config _config;
@@ -511,6 +602,12 @@ public class ObjectListElement implements UIElement {
 
 	private final List<UIElement> _newElementContent;
 
+	/** The instantiated {@link Config#getOnActivate() activation command}, {@code null} without one. */
+	private final ViewCommand _onActivate;
+
+	/** The configuration {@link #_onActivate} was instantiated from, {@code null} without one. */
+	private final ViewCommand.Config _onActivateConfig;
+
 	/**
 	 * Creates an {@link ObjectListElement} from configuration.
 	 */
@@ -522,6 +619,9 @@ public class ObjectListElement implements UIElement {
 		_removeExecutor = InputScript.compile(config, Config.REMOVE);
 		_itemContent = instantiate(context, config.getItem());
 		_newElementContent = instantiate(context, config.getNewElement());
+		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
+		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
+		_onActivate = ViewCommands.instantiate(context, onActivate, elementName(config));
 	}
 
 	/**
@@ -531,11 +631,18 @@ public class ObjectListElement implements UIElement {
 	 */
 	static ActionScope accessScope(Config config) {
 		List<String> names = InputRef.names(config.getInputs());
-		String element = config.getElementAs() == null || config.getElementAs().isBlank()
-			? ElementAsConfig.DEFAULT_ELEMENT_AS
-			: config.getElementAs().trim();
+		String element = elementName(config);
 		names.add(element);
 		return ActionScope.of(names, element);
+	}
+
+	/**
+	 * The name the scripts and the activation command of the given list see the element under.
+	 */
+	static String elementName(Config config) {
+		return config.getElementAs() == null || config.getElementAs().isBlank()
+			? ElementAsConfig.DEFAULT_ELEMENT_AS
+			: config.getElementAs().trim();
 	}
 
 	private static List<UIElement> instantiate(InstantiationContext context,
@@ -576,6 +683,11 @@ public class ObjectListElement implements UIElement {
 		ChannelRef selection = _config.getSelection();
 		if (selection != null) {
 			items.bindSelection(_config.getSelectionMode(), context.resolveChannel(selection));
+		}
+		if (_onActivate != null && _onActivateConfig != null) {
+			items.bindActivation(
+				ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig, elementName(_config)),
+				_config.getActivationButton());
 		}
 
 		QueryExecutor itemsExecutor = _itemsExecutor;

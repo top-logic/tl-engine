@@ -50,7 +50,7 @@ export function tokenMs(name: string, fallback: number): number {
 /** The attributes of the document root that switch the tokens. */
 const TOKEN_SWITCHES = ['data-tl-density', 'data-tl-theme', 'data-tl-mode'];
 
-/** The attribute below the document root that switches the tokens: a view or a table names its own density. */
+/** The attribute below the document root that switches the tokens: a view names its own density. */
 const DENSITY_SWITCH = ['data-tl-density'];
 
 /**
@@ -58,7 +58,7 @@ const DENSITY_SWITCH = ['data-tl-density'];
  * switches density, theme or mode. The state keeps its previous value when the new one is equal, so a switch that does
  * not touch what the control reads renders nothing; after unmount the observer is gone.
  *
- * A density is also named below the document root - a table carries its own - so the element the value is read at
+ * A density is also named below the document root - a view carries its own - so the element the value is read at
  * and every element above it, up to the document root, are watched for `data-tl-density` as well.
  *
  * @param read Reads the value from the page now. The latest one given is the one called, so an inline closure may

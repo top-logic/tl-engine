@@ -178,7 +178,8 @@ public class ChatWindowService extends ConfiguredManagedClass<ChatWindowService.
 	}
 
 	/**
-	 * Drops the deleted chat out of the in-memory state of every live window of its owner.
+	 * Drops the deleted chat out of the in-memory state of every live window of its owner, and the
+	 * files attached in it out of every live window.
 	 *
 	 * <p>
 	 * Done inline: a window whose active session was just deleted must not accept another message
@@ -189,6 +190,9 @@ public class ChatWindowService extends ConfiguredManagedClass<ChatWindowService.
 	@Override
 	public void onSessionDeleted(Person owner, String sessionId) {
 		for (TLSubSessionContext subSession : ReactWindowRegistry.windowSubSessions()) {
+			// The files attached in the deleted chat go in every window, also in one of another
+			// account that was writing in it.
+			ChatViewBinding.dropAttachments(subSession, sessionId);
 			if (owner != null && !owner.equals(subSession.getPerson())) {
 				continue;
 			}

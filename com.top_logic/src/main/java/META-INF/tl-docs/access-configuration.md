@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), attributes readable with Discover (discover-attributes), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents (also restricted to operations, `operations` of an access parent), role rules of the AccessManager, the access to historic versions of objects (history, anchors), the autoconf files and the SecurityCoverageCheck.
+description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), attributes readable with Discover (discover-attributes), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents (also restricted to operations, `operations` of an access parent; several access parents with <any-of>, <referer>, a multi-valued <target> or a <script> yielding several objects; a custom AccessParentDefinition combining access parents), role rules of the AccessManager, the access to historic versions of objects (history, anchors), the autoconf files and the SecurityCoverageCheck.
 order: 20
 ---
 
@@ -23,11 +23,12 @@ rule but no grant is unreadable for every user except a technical admin, however
 user inherits from the container.
 
 A type that needs neither has an **access parent** instead: its objects delegate the decision,
-grants and roles, to another object - the *whole* decision, unless the access parent is restricted
-to some operations, see [Access parent](#access-parent-delegating-the-decision). A composition part
-gets its container as access parent by default, so the rows of a composition table, the comments of
-a ticket or the attachments of a comment need no definition of their own. See [Access
-parent](#access-parent-delegating-the-decision).
+grants and roles, to another object, or to several, any of which may allow the operation - the
+*whole* decision, unless the access parent is restricted to some operations, see
+[Access parent](#access-parent-delegating-the-decision). A composition part gets its container as
+access parent by default, so the rows of a composition table, the comments of a ticket or the
+attachments of a comment need no definition of their own. See
+[Access parent](#access-parent-delegating-the-decision).
 
 The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, BoundCommandGroup)`.
 It applies to every persistent object, whatever its implementation class; a transient object (a
@@ -52,14 +53,17 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
 4. A type with an access parent asks the object the relation leads to, with the same operation, or
    with `Write` in place of `Create` and `Delete`; an operation
    [implying](#operations-which-operations-apply-to-a-type) the requested one on the type is asked
-   as well. With `operations` on the access parent, only the delegated operations (and delegated
-   implying ones) are asked; if the parent does not allow them, the decision continues at step 5
-   with the roles on the object itself, as for the operations not delegated. The parent may
-   delegate further. An object whose relation leads nowhere (no container, an empty reference) is
-   denied the delegated operations (without `operations`: every operation), unless the own grants
-   of the type imply them. The same holds where the chain of access parents runs in a cycle (and
-   is logged as an error): the check that reaches itself again is denied, so an unrestricted type
-   is denied altogether, while a restricted one is still decided by its own roles.
+   as well. A relation leading to several objects (see
+   [Several access parents](#several-access-parents-any-of-referer)) asks each of them until one
+   allows the operation. With `operations` on the access parent, only the delegated operations
+   (and delegated implying ones) are asked; if the parent does not allow them, the decision
+   continues at step 5 with the roles on the object itself, as for the operations not delegated.
+   The parent may delegate further. An object whose relation leads nowhere (no container, an empty
+   reference) is denied the delegated operations (without `operations`: every operation), unless
+   the own grants of the type imply them. The same holds where the chain of access parents runs in
+   a cycle: the check that reaches itself again is denied, so an unrestricted type is denied
+   altogether, while a restricted one is still decided by its own roles; another access parent of
+   the object may still allow the operation.
 5. The roles granted the operation, or an operation implying it, on the object's type are looked
    up (for a module singleton, the
    singleton's own grants take precedence; `Discover` on such a singleton is implied by its own
@@ -69,9 +73,9 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
 7. For an attribute value: the attribute rights in effect for the object's type and the attribute's
    name are looked up (see [Attribute rights](#attribute-rights-which-types-a-part-applies-to)). If
    they grant the operation, they **replace** the class grant for this attribute - the user must
-   hold one of those roles, on the object or, for a delegating object, on the end of its chain of
-   access parents (for an access parent restricted to operations: the chain is followed only while
-   the requested operation is delegated); a grant without roles denies everyone. Without
+   hold one of those roles, on the object or, for a delegating object, on the end of one of its
+   chains of access parents (for an access parent restricted to operations: the chain is followed
+   only while the requested operation is delegated); a grant without roles denies everyone. Without
    attribute-level grants the class-level decision stands.
 
 Model elements (types, attributes, modules, the classifiers of an enumeration, all objects of
@@ -129,8 +133,8 @@ instead of replacing them.
 			<class name="my.module:Cache" internal="true"/>
 			<class name="my.module:PublicNotice" without-security="true"/>
 			<!-- Access parents, see below: the container through any composition, the container
-			     through one composition, the target of a to-one reference, a computed parent, and no
-			     delegation. -->
+			     through one composition, the target of a reference, a computed parent, and no
+			     delegation. Several access parents (<any-of>, <referer>) are shown further below. -->
 			<class name="demo.tickets:Attachment">
 				<access-parent><container/></access-parent>
 			</class>
@@ -351,15 +355,21 @@ marks `internal` and `without-security` remain rejected:
   by editing the whole. Creating an object of such a type in a context requires Write on that
   context; creating one without a context (the transient-then-copy pattern of the view layer) is
   not restricted, since the object is inaccessible until it is put into a container, which is a
-  write of the container.
+  write of the container. A `<referer>` never decides the creation, and with several access
+  parents only a container candidate does, see
+  [Several access parents](#several-access-parents-any-of-referer).
 - The parent may delegate further; the chain is followed at runtime. An object whose relation
   leads nowhere is denied the delegated operations (without `operations`: every operation), unless
-  the own grants of the type imply them. A chain running in a cycle is logged as an error: the
-  check reaching itself again is denied, so an unrestricted type is denied altogether, while a
-  restricted one is still decided by its own roles.
+  the own grants of the type imply them. A chain running in a cycle is logged as an error (as info
+  where the access parent has several candidates): the check reaching itself again is denied, so an
+  unrestricted type is denied altogether, while a restricted one is still decided by its own roles.
 - Attribute-level `<part>` grants on the type are checked against the roles the user holds at the
   end of the chain (for an access parent restricted to operations: at the object deciding the
-  requested operation, the object itself where the operation is not delegated).
+  requested operation, the object itself where the operation is not delegated; for several access
+  parents: at the end of any of the chains).
+- A historic object (one of an earlier revision) is checked with its access parents in that
+  revision: its container, the targets of its references and the objects referring to it are those
+  of the revision, not the current ones.
 - Specializations inherit the setting unless they have one of their own.
 
 The `<access-parent>` element holds exactly one definition of the relation. The kind of relation is
@@ -372,17 +382,21 @@ unambiguous:
 | (no `<access-parent>` element) | inherited from the generalizations, else the default below |
 | `<container/>` | the container, whichever composition holds the object (`TLObject.tContainer()`) |
 | `<container reference="..."/>` with a composition holding the type | the container, only when it holds the object through that composition (navigated backwards) |
-| `<target reference="..."/>` with a to-one reference of the type (mandatory) | the object the reference points to (navigated forwards) |
-| `<script expr="..."/>` | the object a TL-Script function computes, see below |
+| `<target reference="..."/>` with a reference of the type (mandatory) | the objects the reference points to (navigated forwards), each of a multi-valued reference |
+| `<referer reference="..."/>` with a reference pointing to the type | the objects pointing to the object through the reference (navigated backwards), any cardinality |
+| `<script expr="..."/>` | the objects a TL-Script function computes, see below |
+| `<any-of>` with several of the above | the access parents of all candidates, see [Several access parents](#several-access-parents-any-of-referer) |
 | `<self/>` | none: the type decides through its own grants and roles |
 
 A reference not fitting the definition (a composition not holding the type for `container`, a
-multiple or foreign reference for `target`) and an empty `<access-parent/>` are configuration errors.
+foreign reference for `target`, a reference whose target type does not fit the type for `referer`)
+and an empty `<access-parent/>` are configuration errors.
 
-**Delegating only some operations (`operations`).** The building blocks `<container>`, `<target>` and
-`<script>` take an optional attribute `operations="Read,Write,..."` (comma-separated, the operation
-names of the grants). Without it everything is delegated as described above. With it the access
-parent decides only the listed operations; the type decides all others itself:
+**Delegating only some operations (`operations`).** The building blocks `<container>`, `<target>`,
+`<referer>` and `<script>` take an optional attribute `operations="Read,Write,..."`
+(comma-separated, the operation names of the grants). Without it everything is delegated as
+described above. With it the access parent decides only the listed operations; the type decides
+all others itself:
 
 - The list is literal: **Create** and **Delete** are delegated only if listed, `Write` does not bring
   them along. **Discover** is delegated whenever any operation is delegated.
@@ -400,7 +414,7 @@ parent decides only the listed operations; the type decides all others itself:
   specialization inheriting the restricted access parent). Grants inherited with `inherit="true"` from
   a generalization for delegated operations are dropped silently.
 - Unknown or inapplicable operation names are configuration errors. `operations` is not allowed on
-  `<self/>` nor on `<access-parent>` itself.
+  `<self/>`, on `<any-of>` nor on `<access-parent>` itself.
 - At runtime, the role holder (the object whose roles decide, see step 7 above), the explanation of
   the effective access and the type-level checks (commands, view elements) work per operation.
 - In the tooling, the grants editor shows grant columns only for the operations the type decides
@@ -435,15 +449,21 @@ of the application, too: the access rights dialog of the coverage view writes th
 backward navigation over a reference that is no composition, a multi-valued or derived attribute -
 a TL-Script function computes the access parent (`ScriptAccessParent`, module `tl-model-search`):
 
-- The function receives the object and yields its access parent: one object, or a collection
-  holding exactly one object.
+- The function receives the object and yields its access parents: one object, or a collection of
+  objects, each of them an access parent of its own (allowed as soon as one of them allows the
+  operation, see [Several access parents](#several-access-parents-any-of-referer)).
 - `null` or an empty collection: no access parent, so nobody but the technical admin may access
-  the object. Not logged.
-- Several objects, a value that is no object, an object without access control of its own (a
-  transient object, for instance), or a failure of the function: access is denied and an error is
-  logged. Following an object nobody decides access for would open the object to every user. The
-  author of the function must make sure it yields at most one access controlled object, also when
-  it navigates a multi-valued reference.
+  the object (with `operations`: the grants of the type decide). Not logged. A `null` inside a
+  collection is ignored.
+- A value that is no object or an object without access control of its own (one that cannot hold
+  roles, a transient object for instance) is skipped and logged as an error; the other objects
+  remain access parents. Following an object nobody decides access for would open the object to
+  every user.
+- Only committed objects count: an object created in the running transaction is skipped without a
+  verdict, since whoever creates it sets it up without any check on the object it would open. An
+  object whose type is `without-security` is not access controlled and opens the object to
+  everybody.
+- A failure of the function denies access and is logged as an error.
 - The function is evaluated without access checks: it can navigate through objects the user may
   not read, and it does not recurse into the check it is part of.
 - A check that depends on no concrete object (the commands of a type) counts a type with a
@@ -468,10 +488,151 @@ included), one of the marks, or any `<access-parent>` setting switches the defau
 
 In Java, `ModelAccessRights.getAccessParent(TLClass)` returns the relation in effect as an
 `AccessParentFunction` (`ContainerRelation` - configured or default, any or one composition -,
-`TargetRelation`, `ScriptAccessParent`; `null` for a type deciding for itself). The configured side
-is an `AccessParentDefinition`, resolved once per type at startup; an application can add its own
-implementation with a tag name of its own. `AccessManager.hasRoleSource(TLClass)` is the hook the
-default consults.
+`TargetRelation`, `RefererRelation`, `ScriptAccessParent`, `AnyOfRelation`, wrapped in a
+`RestrictedRelation` where `operations` restricts it; `null` for a type deciding for itself).
+`AccessParentFunction.resolveAll(object, operation)` yields the access parents deciding an
+operation, `ModelAccessRights.getRoleHolders(object, operation)` the objects at the ends of their
+chains, whose roles decide. The configured side is an `AccessParentDefinition`, resolved once per
+type at startup; an application can add its own implementation with a tag name of its own, see
+[Combining access parents in an application](#combining-access-parents-in-an-application).
+`AccessManager.hasRoleSource(TLClass)` is the hook the default consults.
+
+### Several access parents (`<any-of>`, `<referer>`)
+
+An object may have several access parents: the objects referring to it, the targets of a
+multi-valued reference, the objects a script yields, or the access parents of several building
+blocks combined with `<any-of>`. Each access parent gives a verdict of its own, and the operation
+is allowed **as soon as one of them allows it**.
+
+Example: a contact is readable by everybody who may read a document naming it as author or
+reviewer, or who may read a task it is assigned to. Write and everything else stay with the grants
+of the contact itself:
+
+```xml
+<class name="my.module:Contact">
+	<access-parent>
+		<any-of>
+			<referer reference="my.module:Document#author" operations="Read"/>
+			<referer reference="my.module:Document#reviewers" operations="Read"/>
+			<referer reference="my.module:Task#assignee" operations="Read"/>
+		</any-of>
+	</access-parent>
+	<grant operation="Write" roles="ContactEditor"/>
+</class>
+```
+
+Example: a part keeps every right of the folder holding it, and is additionally readable by
+everybody who may read a document relating it:
+
+```xml
+<class name="my.module:Part">
+	<access-parent>
+		<any-of>
+			<container/>
+			<referer reference="my.module:Document#relatedParts" operations="Read"/>
+		</any-of>
+	</access-parent>
+</class>
+```
+
+A reader of such a document reads the part, but may neither write nor delete it; the owner of the
+folder may do everything with it.
+
+- **`<referer reference="T#r"/>`**: the access parents are the objects holding the object in the
+  reference `r`, navigated backwards (`TLObject.tReferers`); `r` may have any cardinality. Its
+  owner `T` is the type of the access parents; the target type of `r` must fit the configured type,
+  which is checked when the configuration is loaded.
+- **`<target reference="..."/>`** of a multi-valued reference: every object the reference points to
+  is an access parent of its own.
+- **`<any-of>`** holds the building blocks (`<container>`, `<target>`, `<referer>`, `<script>`) as
+  its candidates; the access parents of the object are those of all candidates. A building block
+  directly in `<access-parent>` behaves like a single candidate (also for Create, see below). A
+  nested `<any-of>` adds its candidates, an `<any-of>` with a single candidate is that candidate.
+  `<self/>` as candidate, an empty `<any-of>` and `operations` on `<any-of>` are configuration
+  errors; each candidate restricts its own operations.
+- **A candidate not delegating an operation abstains** for it. An operation delegated by no
+  candidate is decided by the grants of the type itself, as for a single restricted access parent.
+  Discover is delegated by a candidate delegating any operation.
+- **No access parent, no verdict.** An object for which no candidate yields an access parent (no
+  referring object, an empty reference) has no verdict from the parents: as with a single access
+  parent, the grants of the type decide where a restricted candidate leaves them room (the contact
+  above, read by nobody but through a document or task), otherwise the operation is denied.
+- **Only committed, access controlled objects count.** An object referring to the object, or
+  yielded by a script, that was created in the running transaction gives no verdict: whoever
+  creates it sets it up without a check on the object it refers to, so it could otherwise open any
+  object. A referring object that cannot hold roles gives no verdict either; it is skipped and
+  logged as an error, like such an object yielded by a script. Only a referring object whose type
+  is `without-security` opens the object to everybody, since every user may access it.
+- **Create and initial values.** Nothing refers to an object being created, so only the candidates
+  leading to the container (`<container>`) decide whether it may be created and which initial
+  attribute values may be set (Write on the container, as described above). An `<any-of>` without
+  a container candidate delegating Create does not delegate Create at all, and neither does a
+  `<referer>` directly in `<access-parent>`: the grants of the type itself decide it, checked with
+  the roles on the context the object is created in, and such a `Create` grant is allowed even
+  though every other operation is delegated. `Create` in the `operations` of a `<referer>` is a
+  configuration error. Where no container candidate delegates the operation of an attribute grant
+  (an `<any-of>` of only `<referer>`, `<target>` or `<script>` candidates, a `<referer>` alone, or
+  a `<container>` candidate restricted to other operations), a draft being created (a transient
+  object, whose access parents are found by `resolveDraft`) has no access parent for it yet: it is
+  free-standing, and the attribute grant does not restrict its initial values
+  (`isAllowedInitial`). A persistent object created in the running transaction, not committed yet,
+  is checked on the access parents all its candidates already yield (`resolveAll`), e.g. a target
+  it already points to; it is free-standing only where they yield none. The grant applies as soon
+  as the object exists and its access parents are found.
+- **Cycles.** Access parents referring to each other (two nodes pointing to each other with `next`)
+  form a cycle. The path that reaches a check under way again is denied, while another candidate
+  may still allow the operation. A denial computed while such a cycle was hit is stored in the
+  [memo of the interaction](#caching-of-decisions) only provisionally, until the check under way is
+  decided: if it is allowed, the provisional denials are discarded, so the object closing the cycle
+  is decided anew when it is checked on its own. The cycle is logged once per object and check,
+  as info where the access parent has several candidates (a matter of the data), as an error
+  otherwise.
+- **Role holders and explanation.** `getRoleHolders` yields the ends of all chains, each deciding
+  the operation for itself. The explanation of the effective access (React admin hub) lists every
+  object deciding an operation; a user may perform it when holding an admitting role on one of
+  them.
+- **Type level.** A check that depends on no concrete object (the commands of a type, the
+  accessible types) counts a type with several candidates as accessible as soon as one of the
+  parent types of one candidate is; a container candidate leads to the types owning a composition
+  of the type, a script candidate to unknown types, which count as accessible. This is a pre-filter:
+  the check of each object decides.
+- **Tooling.** In the access rights dialog, the reference options of the building blocks work
+  inside `<any-of>` as well. The grants editor shows grant columns for the operations no candidate
+  delegates (and `Create` where no container candidate delegates it); the coverage view names every
+  candidate in the access parent column, separated by semicolons.
+
+### Combining access parents in an application
+
+`<any-of>` combines its candidates by OR. An application needing another combination (all of
+several access parents, for instance) adds an `AccessParentDefinition` of its own with a tag name
+of its own, like any custom access parent definition:
+
+- Its configuration holds the building blocks as a list of
+  `PolymorphicConfiguration<? extends AccessParentDefinition>`, and extends `ConfigPart` (as
+  `AnyOfAccessParent.Config` does), so that the building blocks inside it offer their reference
+  options in the access rights dialog.
+- It overrides `resolveWith(context, type, candidates)` and resolves each building block through
+  the given `CandidateResolver`, which applies the `operations` of the building block as well.
+- The resulting `AccessParentFunction` overrides `allows(object, operation, check)`, which combines
+  the verdicts: `check.test(parent, operation)` checks the operation on one access parent.
+
+The contract of `allows`, on which caching, cycle handling and the type level rely:
+
+1. `resolveAll(object, operation)` yields at least every object `allows` may pass to the check.
+2. `allows` returns `true` only when the check returned `true` for at least one of these objects.
+3. The decision is monotonic: a check returning `true` for more objects never turns an allowed
+   operation into a denied one. (A check closing a cycle answers `false` provisionally; allowed
+   decisions computed meanwhile are stored.)
+
+A combinator that is not an OR returns `false` from `isDisjunctive()`. The users holding an
+admitting role on one of the role holders are then a superset of the users the combinator admits,
+and the explanation of the effective access says so. `delegates(operation)` tells which
+operations the combinator decides; `delegatesAll()` tells whether it decides every operation, so
+that the type has no grants of its own. By default this is the case unless `getOperations()`
+lists the delegated operations: a combinator of restricted building blocks that does not override
+`delegatesAll()` decides every operation, denying those no building block delegates, and the grants
+the type inherits do not apply. `getParentTypes(type)` returns the union of the parent types of
+the building blocks, `null` where they are not known statically.
 
 ### Caching of decisions
 
@@ -482,7 +643,13 @@ memo is replaced when the knowledge base has a newer revision than the one it wa
 a command that commits and then renders does not reuse decisions from before its change; outside
 an interaction a memo serves a single check and its delegations. The memo also detects cycles: a
 decision is marked while it is being computed, and a chain of access parents that reaches the mark
-again is denied.
+again is denied. A denial computed while a mark was reached relies on the decision marked being a
+denial: it is kept provisionally, answers further checks reaching it, and becomes final when the
+decision marked is denied, or is discarded when that decision is allowed. Allowed decisions are
+always stored. So even a dense graph of access parents referring to each other (every node
+pointing to every other one) is decided with each object checked a few times, not once per path
+through the graph. The attribute checks, the initial values, the role holders and the admitting
+roles follow the chains of access parents the same way.
 
 ## Role sources: which roles a user holds on an object
 
@@ -654,7 +821,7 @@ module not listed in its `excluded-modules` and reports, per type:
 
 | Finding | Meaning | Fix |
 |---|---|---|
-| no role source | neither a role rule nor a role parent rule applies and no composition holds the objects, so no user can hold a role and every access is denied (direct assignments do not count as a definition) | access parent through a to-one reference, role parent rule, role rule, or mark internal |
+| no role source | neither a role rule nor a role parent rule applies and no composition holds the objects, so no user can hold a role and every access is denied (direct assignments do not count as a definition) | access parent through a reference, role parent rule, role rule, or mark internal |
 | no read grant | no role is granted `Read` on the type (after module and inherited grants), so its objects are inaccessible to every user | grant on the type or its module, or mark internal |
 | dead grant | an operation is granted to roles that no rule can deliver where the operation is checked; the grant never takes effect. `Create` is checked on the context the caller passes (`isAllowedCreate(person, type, context)`, the security root without context). As the context is not known statically, a role counts when it can be delivered on one of the plausible contexts or their role parents: the security root; a container, i.e. a concrete class whose composition - as in effect on that class, a narrowing override included - holds the type or one of its generalizations; a type the created type references (the targets of its references in effect, inverse references included, and their specializations; computed references and its own compositions left out). Every other operation is checked on the type or its role parents | add a rule delivering the role there, or grant a role delivered there |
 | shadowed rules | the type has a configured access parent, but role rules or role parent rules apply to it; they have no effect | delete the rules, or drop the access parent |

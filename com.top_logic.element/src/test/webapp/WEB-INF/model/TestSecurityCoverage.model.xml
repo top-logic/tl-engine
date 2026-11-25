@@ -246,11 +246,25 @@
 							multiple="true"
 							type="PartOfGranted"
 						/>
+						<reference name="anyOfParts"
+							composite="true"
+							multiple="true"
+							type="AnyOfPartOfGranted"
+						/>
 					</attributes>
 				</class>
 
 				<!-- Contained in a GrantedOperation: delegates to its container by default. -->
 				<class name="PartOfGranted"/>
+
+				<!-- Contained in a GrantedOperation: delegates to its container or to the related Covered. -->
+				<class name="AnyOfPartOfGranted">
+					<attributes>
+						<reference name="related"
+							type="Covered"
+						/>
+					</attributes>
+				</class>
 
 				<!-- Role rule and read grant, declares an operation implied by Read. -->
 				<class name="ImpliedOperation">

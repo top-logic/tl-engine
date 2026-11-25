@@ -45,7 +45,9 @@ import com.top_logic.model.annotate.security.OperationDeclaration;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.security.AccessParentConfig;
 import com.top_logic.model.security.AccessParentDefinition;
+import com.top_logic.model.security.AnyOfAccessParent;
 import com.top_logic.model.security.ContainerAccessParent;
+import com.top_logic.model.security.RefererAccessParent;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
@@ -571,6 +573,78 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 			stored.getGrants().stream().map(grant -> grant.getOperation().id()).toList());
 		assertFalse("A type with an access parent has no marks of its own.", stored.isInternal());
 		assertEquals(List.of(), constraintFailures(stored));
+	}
+
+	/**
+	 * An access parent with several candidates is stored with all of them; the grants of the
+	 * operations no candidate delegates are kept, a grant of an operation a candidate delegates is a
+	 * problem.
+	 */
+	public void testAnyOfStored() throws Exception {
+		TLClass contained = type(SINGLE_CONTAINED);
+		TLClassAccessRights entry = _editor.editableAccessRights(contained);
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.READ_NAME, READER_ROLE));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.WRITE_NAME, READER_ROLE));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.DELETE_NAME, READER_ROLE));
+		_editor.putAccessRights(entry);
+
+		ContainerAccessParent.Config writeByContainer = (ContainerAccessParent.Config) container(CONTAINER_REFERENCE);
+		writeByContainer.setOperations(List.of(new CommandGroupReference(SimpleBoundCommandGroup.WRITE_NAME)));
+		RefererAccessParent.Config readByReferer = TypedConfiguration.newConfigItem(RefererAccessParent.Config.class);
+		readByReferer.setReference(TLModelPartRef.ref(CONTAINER_REFERENCE));
+		readByReferer.setOperations(List.of(new CommandGroupReference(SimpleBoundCommandGroup.READ_NAME)));
+		AnyOfAccessParent.Config anyOf = TypedConfiguration.newConfigItem(AnyOfAccessParent.Config.class);
+		anyOf.getCandidates().add(writeByContainer);
+		anyOf.getCandidates().add(readByReferer);
+		_editor.setAccessParent(contained, anyOf);
+
+		TLClassAccessRights stored = _editor.editableAccessRights(contained);
+		AnyOfAccessParent.Config storedAnyOf = (AnyOfAccessParent.Config) stored.getAccessParent().getDefinition();
+		assertEquals(2, storedAnyOf.getCandidates().size());
+		assertTrue(storedAnyOf.getCandidates().get(0) instanceof ContainerAccessParent.Config);
+		RefererAccessParent.Config storedReferer = (RefererAccessParent.Config) storedAnyOf.getCandidates().get(1);
+		assertEquals(CONTAINER_REFERENCE, storedReferer.getReference().qualifiedName());
+		assertEquals("The grants of the operations a candidate delegates are dropped.",
+			List.of(SimpleBoundCommandGroup.DELETE_NAME),
+			stored.getGrants().stream().map(grant -> grant.getOperation().id()).toList());
+		assertEquals(List.of(), constraintFailures(stored));
+
+		stored.getGrants().add(newGrant(SimpleBoundCommandGroup.READ_NAME, READER_ROLE));
+		_editor.putAccessRights(stored);
+		assertEquals("Read is delegated by a candidate.", 1,
+			constraintFailures(_editor.editableAccessRights(contained)).size());
+	}
+
+	/**
+	 * An access parent without a candidate leading to the container leaves Create to the grants of
+	 * the type.
+	 */
+	public void testAnyOfWithoutContainerKeepsCreateGrant() throws Exception {
+		TLClass contained = type(SINGLE_CONTAINED);
+		TLClassAccessRights entry = _editor.editableAccessRights(contained);
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.CREATE_NAME, READER_ROLE));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.WRITE_NAME, READER_ROLE));
+		_editor.putAccessRights(entry);
+
+		AnyOfAccessParent.Config anyOf = TypedConfiguration.newConfigItem(AnyOfAccessParent.Config.class);
+		anyOf.getCandidates().add(referer(CONTAINER_REFERENCE));
+		anyOf.getCandidates().add(referer(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, anyOf);
+
+		TLClassAccessRights stored = _editor.editableAccessRights(contained);
+		assertEquals("Create is not delegated.", List.of(SimpleBoundCommandGroup.CREATE_NAME),
+			stored.getGrants().stream().map(grant -> grant.getOperation().id()).toList());
+		assertEquals(List.of(), constraintFailures(stored));
+
+		stored.getGrants().add(newGrant(SimpleBoundCommandGroup.WRITE_NAME, READER_ROLE));
+		_editor.putAccessRights(stored);
+		assertEquals("Write is delegated.", 1, constraintFailures(_editor.editableAccessRights(contained)).size());
+	}
+
+	private static RefererAccessParent.Config referer(String reference) {
+		RefererAccessParent.Config result = TypedConfiguration.newConfigItem(RefererAccessParent.Config.class);
+		result.setReference(TLModelPartRef.ref(reference));
+		return result;
 	}
 
 	private static List<ConstraintFailure> constraintFailures(TLClassAccessRights entry) throws Exception {

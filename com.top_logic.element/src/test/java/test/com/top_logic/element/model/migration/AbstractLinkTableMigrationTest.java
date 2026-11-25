@@ -221,7 +221,8 @@ public abstract class AbstractLinkTableMigrationTest extends BasicTestCase {
 	}
 
 	/**
-	 * Writes a flex attribute value of the object with the given identifier in the given table.
+	 * Writes a {@link AbstractFlexDataManager#FLEX_DATA flex attribute} value of the object with
+	 * the given identifier in the given table.
 	 */
 	protected void insertFlexData(String typeName, long id) throws SQLException {
 		Map<String, Object> values = new LinkedHashMap<>();

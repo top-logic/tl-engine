@@ -37,6 +37,8 @@ public class TestModelDataCleanup extends AbstractLinkTableMigrationTest {
 
 	private static final String OBJECT_TABLE = "GenericObject";
 
+	private static final String MISSING_TABLE = "TableNotInStoredSchema";
+
 	private static final long TRUNK = 1L;
 
 	public void testDeleteReferenceValues() throws Exception {
@@ -117,6 +119,48 @@ public class TestModelDataCleanup extends AbstractLinkTableMigrationTest {
 		assertInfo(log, "Deleted 1 flex attribute values of objects in table '" + OBJECT_TABLE + "'.");
 	}
 
+	public void testDeleteInstancesOfMissingTable() throws Exception {
+		assertNull(types().getTypeOrNull(MISSING_TABLE));
+
+		long orphan = FIRST_ID + 1;
+		long other = FIRST_ID + 2;
+		long attribute = FIRST_ID + 600;
+
+		insertObject(other, FIRST_ID + 501);
+		insertFlexData(MISSING_TABLE, orphan);
+		insertFlexData(OBJECT_TABLE, other);
+
+		String metaElement = META_ELEMENT_OBJECT_TYPE;
+		insertLink(WRAPPER_ATTRIBUTE_ASSOCIATION, FIRST_ID + 10, 1, MAX, MISSING_TABLE, orphan, attribute,
+			metaElement, 7, 0);
+		insertLink(WRAPPER_ATTRIBUTE_ASSOCIATION, FIRST_ID + 11, 1, MAX, OBJECT_TABLE, other, attribute,
+			MISSING_TABLE, orphan, 0);
+		// Same identifier as the orphan, but an object of an existing table.
+		insertLink(WRAPPER_ATTRIBUTE_ASSOCIATION, FIRST_ID + 12, 1, MAX, OBJECT_TABLE, other, attribute + 1,
+			OBJECT_TABLE, orphan, 0);
+		insertLink(WRAPPER_ATTRIBUTE_ASSOCIATION, FIRST_ID + 13, 1, MAX, OBJECT_TABLE, other, attribute,
+			OBJECT_TABLE, other, 0);
+
+		int[] deletedObjects = { -1 };
+		BufferingProtocol log = migrate((context, contextLog, connection) -> {
+			try {
+				Set<TLID> types = Set.of(LongID.valueOf(FIRST_ID + 500));
+				deletedObjects[0] = new ModelDataCleanup(context, contextLog, connection)
+					.deleteInstances(TRUNK, MISSING_TABLE, types);
+			} catch (SQLException ex) {
+				throw new RuntimeException(ex);
+			}
+		}, TestModelDataCleanup::revalidate);
+
+		assertEquals(0, deletedObjects[0]);
+		assertEquals(List.of(row(other, 1, MAX)), rows(OBJECT_TABLE));
+		assertEquals(List.of(row(other, 1, MAX)), rows(AbstractFlexDataManager.FLEX_DATA));
+		assertEquals(List.of(row(FIRST_ID + 12, 1, MAX), row(FIRST_ID + 13, 1, MAX)),
+			rows(WRAPPER_ATTRIBUTE_ASSOCIATION));
+		assertInfo(log, "No table '" + MISSING_TABLE + "' in the stored schema, deleted 1 flex attribute values"
+			+ " and 2 links of its objects.");
+	}
+
 	private static void revalidate(MigrationContext context, BufferingProtocol log, PooledConnection connection)
 			throws SQLException {
 		// Rebuilds the revision index of the tables the cleanup invalidated.
@@ -142,9 +186,13 @@ public class TestModelDataCleanup extends AbstractLinkTableMigrationTest {
 	}
 
 	private void insertFlexData(long id) throws SQLException {
+		insertFlexData(OBJECT_TABLE, id);
+	}
+
+	private void insertFlexData(String table, long id) throws SQLException {
 		Map<String, Object> values = new LinkedHashMap<>();
 		values.put(AbstractFlexDataManager.BRANCH_DBNAME, TRUNK);
-		values.put(AbstractFlexDataManager.TYPE_DBNAME, OBJECT_TABLE);
+		values.put(AbstractFlexDataManager.TYPE_DBNAME, table);
 		values.put(AbstractFlexDataManager.IDENTIFIER_DBNAME, id);
 		values.put(BasicTypes.REV_MIN_DB_NAME, 1L);
 		values.put(BasicTypes.REV_MAX_DB_NAME, MAX);

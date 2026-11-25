@@ -45,6 +45,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.CommaSeparatedChannelRefs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.UnitHiding;
@@ -299,6 +300,9 @@ public class SideRailElement implements UIElement {
 		/** Configuration name for {@link #getHeader()}. */
 		String HEADER = "header";
 
+		/** Configuration name for {@link #getDismissOn()}. */
+		String DISMISS_ON = "dismiss-on";
+
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
 
@@ -380,6 +384,21 @@ public class SideRailElement implements UIElement {
 		@Name(HEADER)
 		@BooleanDefault(true)
 		boolean getHeader();
+
+		/**
+		 * Channels whose new values close the rail while it is a drawer.
+		 *
+		 * <p>
+		 * Where the rail opens as a drawer over its neighbour, a pick in the section is often the
+		 * end of the visit: a list writing its selection, say. Name the channel the content writes
+		 * then; whenever one of these channels takes a new value while the rail is a drawer, the
+		 * drawer closes. The column of a rail that is no drawer stays as it is, and nothing is
+		 * remembered.
+		 * </p>
+		 */
+		@Name(DISMISS_ON)
+		@Format(CommaSeparatedChannelRefs.class)
+		List<ChannelRef> getDismissOn();
 
 		/**
 		 * The content of the section.
@@ -475,6 +494,11 @@ public class SideRailElement implements UIElement {
 			if (hiding != null) {
 				rail.setHidden(name, hiding.isHidden());
 				hiding.bind(rail, hidden -> rail.setHidden(name, hidden.booleanValue()));
+			}
+			for (ChannelRef dismissRef : entry._config().getDismissOn()) {
+				ViewChannel dismiss = context.resolveChannel(dismissRef);
+				ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> rail.dismissDrawer();
+				rail.addCleanupAction(dismiss.addListener(listener)::dispose);
 			}
 			if (visible != null && entry._config().getReveal()) {
 				// Every new value of an input that leaves the section visible shows it: something new

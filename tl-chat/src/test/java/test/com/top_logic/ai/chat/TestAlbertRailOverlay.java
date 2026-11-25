@@ -44,6 +44,9 @@ import com.top_logic.layout.view.element.SideRailElement.SectionConfig;
  */
 public class TestAlbertRailOverlay extends TestCase {
 
+	/** The id of the rail beside the conversation; the chat list stands in a rail of its own. */
+	private static final String RAIL_ID = "rail";
+
 	/** The shipped page, read from the sources of this module. */
 	private static final File ALBERT_VIEW = new File("src/main/webapp/WEB-INF/views/tl-chat/albert.view.xml");
 
@@ -140,11 +143,11 @@ public class TestAlbertRailOverlay extends TestCase {
 	private static SideRailElement.Config rail(ViewElement.Config view) {
 		assertTrue("The page is one <chat>.", view.getContent() instanceof ChatScopeElement.Config);
 		for (UIElement.Config child : ((ChatScopeElement.Config) view.getContent()).getChildren()) {
-			if (child instanceof SideRailElement.Config) {
-				return (SideRailElement.Config) child;
+			if (child instanceof SideRailElement.Config rail && RAIL_ID.equals(rail.getId())) {
+				return rail;
 			}
 		}
-		fail("The page has no <side-rail>.");
+		fail("The page has no <side-rail id='" + RAIL_ID + "'>.");
 		return null;
 	}
 

@@ -203,9 +203,6 @@ public class DataListControl extends ReactControl {
 
 		setCssClass(config.getCssClass());
 		putState(DataListState.SEARCH__PROP, Boolean.valueOf(config.getSearch()));
-		putState(DataListState.COLLAPSIBLE__PROP, Boolean.valueOf(config.getCollapsible()));
-		putState(DataListState.COLLAPSED__PROP, Boolean.valueOf(config.getCollapsed()));
-		putState(DataListState.DRAWER_BELOW__PROP, Integer.valueOf(config.getDrawerBelow()));
 		putState(DataListState.TITLE__PROP, labelOf(config.getTitle()));
 		putState(DataListState.EMPTY_TEXT__PROP, labelOf(config.getEmptyText()));
 

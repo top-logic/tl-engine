@@ -542,18 +542,6 @@ public class I18NConstants extends I18NConstantsBase {
 	// -- Data list client-side i18n keys --
 
 	/**
-	 * @en Collapse list
-	 */
-	@CustomKey("js.dataList.collapse")
-	public static ResKey JS_DATA_LIST_COLLAPSE;
-
-	/**
-	 * @en Expand list
-	 */
-	@CustomKey("js.dataList.expand")
-	public static ResKey JS_DATA_LIST_EXPAND;
-
-	/**
 	 * @en Search
 	 */
 	@CustomKey("js.dataList.search")

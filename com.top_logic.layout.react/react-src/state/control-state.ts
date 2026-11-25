@@ -2370,23 +2370,6 @@ export interface DataListStateJson extends ControlStateJson {
 	search: boolean;
 
 	/**
-	 * Whether the header carries the toggle collapsing the list to a narrow strip.
-	 */
-	collapsible: boolean;
-
-	/**
-	 * Whether the list starts collapsed; needs {@link DataListStateJson.collapsible}.
-	 */
-	collapsed: boolean;
-
-	/**
-	 * The width of the element containing the list, in rem, below which a {@link DataListStateJson.collapsible} list
-	 * keeps only its strip and its toggle opens the list as a drawer over its neighbours. Zero: the
-	 * list never becomes a drawer.
-	 */
-	drawerBelow: number;
-
-	/**
 	 * The command buttons of the list, in display order. Absent: none.
 	 */
 	buttons: ChildControlJson[];

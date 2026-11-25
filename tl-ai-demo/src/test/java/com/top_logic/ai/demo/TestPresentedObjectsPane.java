@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import junit.framework.Test;
@@ -67,7 +68,7 @@ public class TestPresentedObjectsPane extends TestCase {
 
 	/** The overlay adds the demo's section after the shipped section "sources". */
 	public void testTheOverlayAddsTheEventsSection() throws Exception {
-		SideRailElement.Config rail = search(view(), SideRailElement.Config.class);
+		SideRailElement.Config rail = search(view(), SideRailElement.Config.class, r -> "rail".equals(r.getId()));
 		assertEquals(Arrays.asList("presented", "progress", "sources", "events", "memories"),
 			rail.getSections().stream().map(SectionConfig::getName).collect(Collectors.toList()));
 	}
@@ -126,7 +127,16 @@ public class TestPresentedObjectsPane extends TestCase {
 	 * </p>
 	 */
 	private static <T extends ConfigurationItem> T search(ConfigurationItem root, Class<T> type) {
-		if (type.isInstance(root)) {
+		return search(root, type, item -> true);
+	}
+
+	/**
+	 * The first configuration of the given type in the tree below the given one that the given test
+	 * accepts, see {@link #search(ConfigurationItem, Class)}.
+	 */
+	private static <T extends ConfigurationItem> T search(ConfigurationItem root, Class<T> type,
+			Predicate<? super T> test) {
+		if (type.isInstance(root) && test.test(type.cast(root))) {
 			return type.cast(root);
 		}
 		for (PropertyDescriptor property : root.descriptor().getProperties()) {
@@ -135,7 +145,7 @@ public class TestPresentedObjectsPane extends TestCase {
 				case LIST:
 				case ARRAY:
 				case MAP: {
-					T found = searchIn(root.value(property), type);
+					T found = searchIn(root.value(property), type, test);
 					if (found != null) {
 						return found;
 					}
@@ -148,13 +158,14 @@ public class TestPresentedObjectsPane extends TestCase {
 		return null;
 	}
 
-	private static <T extends ConfigurationItem> T searchIn(Object value, Class<T> type) {
+	private static <T extends ConfigurationItem> T searchIn(Object value, Class<T> type,
+			Predicate<? super T> test) {
 		if (value instanceof ConfigurationItem item) {
-			return search(item, type);
+			return search(item, type, test);
 		}
 		if (value instanceof Collection<?> collection) {
 			for (Object entry : collection) {
-				T found = searchIn(entry, type);
+				T found = searchIn(entry, type, test);
 				if (found != null) {
 					return found;
 				}
@@ -162,7 +173,7 @@ public class TestPresentedObjectsPane extends TestCase {
 		}
 		if (value instanceof Map<?, ?> map) {
 			for (Object entry : map.values()) {
-				T found = searchIn(entry, type);
+				T found = searchIn(entry, type, test);
 				if (found != null) {
 					return found;
 				}
@@ -170,7 +181,7 @@ public class TestPresentedObjectsPane extends TestCase {
 		}
 		if (value instanceof Object[] array) {
 			for (Object entry : array) {
-				T found = searchIn(entry, type);
+				T found = searchIn(entry, type, test);
 				if (found != null) {
 					return found;
 				}

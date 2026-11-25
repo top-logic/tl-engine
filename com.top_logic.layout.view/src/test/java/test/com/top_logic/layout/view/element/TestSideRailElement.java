@@ -60,6 +60,8 @@ public class TestSideRailElement extends BasicTestCase {
 
 	private static final String OTHER_CHANNEL = "other";
 
+	private static final String PICKED_CHANNEL = "picked";
+
 	private static final String EXTRA = "extra";
 
 	private static final String TASKS = "tasks";
@@ -88,6 +90,8 @@ public class TestSideRailElement extends BasicTestCase {
 
 	private ViewChannel _other;
 
+	private ViewChannel _picked;
+
 	private Locale _previousLocale;
 
 	@Override
@@ -104,6 +108,7 @@ public class TestSideRailElement extends BasicTestCase {
 		_badge = register(BADGE_CHANNEL);
 		_shown = register(SHOWN_CHANNEL);
 		_other = register(OTHER_CHANNEL);
+		_picked = register(PICKED_CHANNEL);
 		assertEquals(CONTEXT_KEY, _context.getPersonalizationKey());
 		PersonalConfiguration.getPersonalConfiguration().setJSONValue(KEY, null);
 	}
@@ -259,6 +264,30 @@ public class TestSideRailElement extends BasicTestCase {
 
 		_present.set(null);
 		assertFalse("A section disappearing opens nothing.", rail.isOpen());
+	}
+
+	/**
+	 * A new value of a channel a section names in {@code dismiss-on} closes the drawer of a rail that
+	 * is a drawer; the column of a rail that is none stays open, and other channels close nothing.
+	 */
+	public void testDismissOn() {
+		ReactSideRailControl rail = rail();
+		_open.set(Boolean.TRUE);
+
+		_picked.set("first");
+		assertTrue("The column stays open.", rail.isOpen());
+
+		rail.executeCommand(ReactSideRailControl.SET_DRAWER_COMMAND,
+			Map.of(ReactSideRailControl.DRAWER_ARG, Boolean.TRUE));
+		_open.set(Boolean.TRUE);
+		assertTrue(rail.isOpen());
+
+		_other.set("unrelated");
+		assertTrue("A channel no section names closes nothing.", rail.isOpen());
+
+		_picked.set("second");
+		assertFalse("A pick closes the drawer.", rail.isOpen());
+		assertEquals(Boolean.FALSE, _open.get());
 	}
 
 	/**

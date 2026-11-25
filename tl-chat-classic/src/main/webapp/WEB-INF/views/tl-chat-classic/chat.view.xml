@@ -48,126 +48,141 @@
 		<!--
 			The session list and the conversation share the "chatSession" channel: the list writes the
 			chat the user picks, the conversation writes back the chat it creates. "New chat" clears it.
+			The list stands in a side rail of one section: it collapses to its strip, and below 44 rem of
+			width it opens as a drawer over the conversation, which a picked chat closes (dismiss-on).
 		-->
-		<data-list
-			collapsible="true"
-			css-class="tl-chat-sessions"
+		<side-rail
 			drawer-below="44"
-			observed-types="tl.ai.execution:AgentSession, tl.ai.execution:AgentExecution, tl.ai.execution:InteractionRequest"
-			row-actions="hover"
-			row-channel="session"
-			search="true"
-			selection="chatSession"
+			width="264"
 		>
-			<commands>
-				<generic-command image="css:bi bi-plus-lg">
-					<label>
-						<en>New chat</en>
-						<de>Neuer Chat</de>
-					</label>
-					<write-channel name="chatSession"/>
-				</generic-command>
-			</commands>
-			<empty-text>
-				<en>No chats yet</en>
-				<de>Noch keine Chats</de>
-			</empty-text>
-			<lines>
-				<line attribute="title"/>
-				<!--
-					What goes on in the chat while the user looks elsewhere (#744): something waits for
-					them, a subagent finished since they last had the chat open, or an agent works there.
-					The list observes executions and interaction requests so that the line follows.
-				-->
-				<line emphasis="secondary">
-					<value><![CDATA[s -> {
+			<section name="chats"
+				dismiss-on="chatSession"
+				header="false"
+				icon="css:bi bi-chat-left-text"
+			>
+				<label>
+					<en>Chats</en>
+					<de>Chats</de>
+				</label>
+				<data-list
+					css-class="tl-chat-sessions"
+					observed-types="tl.ai.execution:AgentSession, tl.ai.execution:AgentExecution, tl.ai.execution:InteractionRequest"
+					row-actions="hover"
+					row-channel="session"
+					search="true"
+					selection="chatSession"
+				>
+					<commands>
+						<generic-command image="css:bi bi-plus-lg">
+							<label>
+								<en>New chat</en>
+								<de>Neuer Chat</de>
+							</label>
+							<write-channel name="chatSession"/>
+						</generic-command>
+					</commands>
+					<empty-text>
+						<en>No chats yet</en>
+						<de>Noch keine Chats</de>
+					</empty-text>
+					<lines>
+						<line attribute="title"/>
+						<!--
+							What goes on in the chat while the user looks elsewhere (#744): something waits for
+							them, a subagent finished since they last had the chat open, or an agent works there.
+							The list observes executions and interaction requests so that the line follows.
+						-->
+						<line emphasis="secondary">
+							<value><![CDATA[s -> {
+								activity = chatActivity($s);
+								switch {
+									$activity == "waiting": #("Waiting for you"@en, "Wartet auf dich"@de);
+									$activity == "news": #("New result"@en, "Neues Ergebnis"@de);
+									$activity == "running": #("Working …"@en, "Arbeitet …"@de);
+									default: null;
+								}
+							}]]></value>
+						</line>
+					</lines>
+					<row-css-class><![CDATA[s -> {
 						activity = chatActivity($s);
 						switch {
-							$activity == "waiting": #("Waiting for you"@en, "Wartet auf dich"@de);
-							$activity == "news": #("New result"@en, "Neues Ergebnis"@de);
-							$activity == "running": #("Working …"@en, "Arbeitet …"@de);
+							$activity == "waiting": "is-waiting";
+							$activity == "news": "has-news";
+							$activity == "running": "is-working";
 							default: null;
 						}
-					}]]></value>
-				</line>
-			</lines>
-			<row-css-class><![CDATA[s -> {
-				activity = chatActivity($s);
-				switch {
-					$activity == "waiting": "is-waiting";
-					$activity == "news": "has-news";
-					$activity == "running": "is-working";
-					default: null;
-				}
-			}]]></row-css-class>
-			<row-commands>
-				<generic-command
-					clique="delete"
-					image="css:bi bi-trash"
-					inputs="session"
-				>
-					<label>
-						<en>Delete</en>
-						<de>Löschen</de>
-					</label>
-					<!-- A chat that is still being answered is not one anyone means to throw away. -->
-					<executability>
-						<visible-if>
-							<expr><![CDATA[isEmpty($session)
-								|| $session.referers(`tl.ai.execution:AgentExecution#session`)
-									.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`)
-										== `tl.ai.execution:ExecutionStatus#RUNNING`)
-									.isEmpty()]]></expr>
-						</visible-if>
-					</executability>
-					<confirm>
-						<cancel-label>
-							<en>Keep</en>
-							<de>Behalten</de>
-						</cancel-label>
-						<confirm-label>
-							<en>Delete</en>
-							<de>Löschen</de>
-						</confirm-label>
-						<title>
-							<en>Delete chat</en>
-							<de>Chat löschen</de>
-						</title>
-						<expr><![CDATA[{
-							title = $session.get(`tl.ai.execution:AgentSession#title`);
-							{
-								"en": "Delete “" + $title + "”? This cannot be undone.",
-								"de": "„" + $title + "“ löschen? Das kann nicht rückgängig gemacht werden."
-							}.internationalize();
-						}]]></expr>
-					</confirm>
-					<!-- Clears the open conversation only when it is the deleted chat. -->
-					<execute-script>
-						<inputs>
-							<input
-								as="open"
-								channel="chatSession"
-							/>
-						</inputs>
-						<function><![CDATA[{
-							aiSessionDelete($session);
-							ifElse($session == $open, null, $open);
-						}]]></function>
-						<with-result>
-							<write-channel name="chatSession"/>
-						</with-result>
-					</execute-script>
-				</generic-command>
-			</row-commands>
-			<rows><![CDATA[all(`tl.ai.execution:AgentSession`)
-				.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
-				.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)
-				.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())]]></rows>
-			<title>
-				<en>Chats</en>
-				<de>Chats</de>
-			</title>
-		</data-list>
+					}]]></row-css-class>
+					<row-commands>
+						<generic-command
+							clique="delete"
+							image="css:bi bi-trash"
+							inputs="session"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<!-- A chat that is still being answered is not one anyone means to throw away. -->
+							<executability>
+								<visible-if>
+									<expr><![CDATA[isEmpty($session)
+										|| $session.referers(`tl.ai.execution:AgentExecution#session`)
+											.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`)
+												== `tl.ai.execution:ExecutionStatus#RUNNING`)
+											.isEmpty()]]></expr>
+								</visible-if>
+							</executability>
+							<confirm>
+								<cancel-label>
+									<en>Keep</en>
+									<de>Behalten</de>
+								</cancel-label>
+								<confirm-label>
+									<en>Delete</en>
+									<de>Löschen</de>
+								</confirm-label>
+								<title>
+									<en>Delete chat</en>
+									<de>Chat löschen</de>
+								</title>
+								<expr><![CDATA[{
+									title = $session.get(`tl.ai.execution:AgentSession#title`);
+									{
+										"en": "Delete “" + $title + "”? This cannot be undone.",
+										"de": "„" + $title + "“ löschen? Das kann nicht rückgängig gemacht werden."
+									}.internationalize();
+								}]]></expr>
+							</confirm>
+							<!-- Clears the open conversation only when it is the deleted chat. -->
+							<execute-script>
+								<inputs>
+									<input
+										as="open"
+										channel="chatSession"
+									/>
+								</inputs>
+								<function><![CDATA[{
+									aiSessionDelete($session);
+									ifElse($session == $open, null, $open);
+								}]]></function>
+								<with-result>
+									<write-channel name="chatSession"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+					</row-commands>
+					<rows><![CDATA[all(`tl.ai.execution:AgentSession`)
+						.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+						.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)
+						.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())]]></rows>
+					<title>
+						<en>Chats</en>
+						<de>Chats</de>
+					</title>
+				</data-list>
+			</section>
+		</side-rail>
 		<!-- The panel bounds the conversation's height, so the transcript scrolls inside it. -->
 		<panel fill="true">
 			<!--
@@ -254,7 +269,6 @@
 				/>
 				<!-- The agent's plan: the AgentTask objects the run of the open chat writes. -->
 				<data-list
-					collapsible="false"
 					count="progressBadge"
 					observed-types="tl.ai.execution:AgentTask"
 					search="false"

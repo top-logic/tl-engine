@@ -462,12 +462,6 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 
 	private boolean _search = false;
 
-	private boolean _collapsible = false;
-
-	private boolean _collapsed = false;
-
-	private int _drawerBelow = 0;
-
 	private final java.util.List<com.top_logic.layout.react.state.ChildControl> _buttons = new java.util.ArrayList<>();
 
 	private boolean _hasRowMenu = false;
@@ -582,54 +576,6 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 	}
 
 	@Override
-	public final boolean isCollapsible() {
-		return _collapsible;
-	}
-
-	@Override
-	public com.top_logic.layout.react.state.DataListState setCollapsible(boolean value) {
-		internalSetCollapsible(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #isCollapsible()} without chain call utility. */
-	protected final void internalSetCollapsible(boolean value) {
-		_collapsible = value;
-	}
-
-	@Override
-	public final boolean isCollapsed() {
-		return _collapsed;
-	}
-
-	@Override
-	public com.top_logic.layout.react.state.DataListState setCollapsed(boolean value) {
-		internalSetCollapsed(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #isCollapsed()} without chain call utility. */
-	protected final void internalSetCollapsed(boolean value) {
-		_collapsed = value;
-	}
-
-	@Override
-	public final int getDrawerBelow() {
-		return _drawerBelow;
-	}
-
-	@Override
-	public com.top_logic.layout.react.state.DataListState setDrawerBelow(int value) {
-		internalSetDrawerBelow(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getDrawerBelow()} without chain call utility. */
-	protected final void internalSetDrawerBelow(int value) {
-		_drawerBelow = value;
-	}
-
-	@Override
 	public final java.util.List<com.top_logic.layout.react.state.ChildControl> getButtons() {
 		return _buttons;
 	}
@@ -730,12 +676,6 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 		out.value(getEmptyText());
 		out.name(SEARCH__PROP);
 		out.value(isSearch());
-		out.name(COLLAPSIBLE__PROP);
-		out.value(isCollapsible());
-		out.name(COLLAPSED__PROP);
-		out.value(isCollapsed());
-		out.name(DRAWER_BELOW__PROP);
-		out.value(getDrawerBelow());
 		out.name(BUTTONS__PROP);
 		out.beginArray();
 		for (com.top_logic.layout.react.state.ChildControl x : getButtons()) {
@@ -765,9 +705,6 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 			case TITLE__PROP: setTitle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case EMPTY_TEXT__PROP: setEmptyText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case SEARCH__PROP: setSearch(in.nextBoolean()); break;
-			case COLLAPSIBLE__PROP: setCollapsible(in.nextBoolean()); break;
-			case COLLAPSED__PROP: setCollapsed(in.nextBoolean()); break;
-			case DRAWER_BELOW__PROP: setDrawerBelow(in.nextInt()); break;
 			case BUTTONS__PROP: {
 				java.util.List<com.top_logic.layout.react.state.ChildControl> newValue = new java.util.ArrayList<>();
 				in.beginArray();

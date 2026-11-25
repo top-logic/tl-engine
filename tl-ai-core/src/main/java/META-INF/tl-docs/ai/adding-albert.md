@@ -213,7 +213,7 @@ The sections of the rail have the names `presented`, `progress`, `sources` and `
 				<de>Aufträge</de>
 			</label>
 			<visibility inputs="paneObject" expr="isEmpty($paneObject)"/>
-			<data-list selection="paneObject" search="false" collapsible="false">
+			<data-list selection="paneObject" search="false">
 				<lines>
 					<line attribute="name"/>
 				</lines>

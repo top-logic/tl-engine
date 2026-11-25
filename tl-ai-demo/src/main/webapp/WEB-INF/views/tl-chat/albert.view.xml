@@ -315,7 +315,6 @@
 					inputs="paneObject"
 				/>
 				<data-list
-					collapsible="false"
 					observed-types="demo.events:Event"
 					row-actions="hover"
 					row-channel="event"

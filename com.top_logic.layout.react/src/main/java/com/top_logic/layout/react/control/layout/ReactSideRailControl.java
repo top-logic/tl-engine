@@ -370,6 +370,19 @@ public class ReactSideRailControl extends ReactControl implements CollapsibleChi
 		changeOpen(true, false);
 	}
 
+	/**
+	 * Closes the drawer of a rail that is a drawer, e.g. because the user picked something in it.
+	 *
+	 * <p>
+	 * The column of a rail that is no drawer is left as it is, and nothing is remembered.
+	 * </p>
+	 */
+	public void dismissDrawer() {
+		if (_drawerMode) {
+			changeOpen(false, false);
+		}
+	}
+
 	private void changeOpen(boolean open, boolean choice) {
 		if (isOpen() == open) {
 			return;

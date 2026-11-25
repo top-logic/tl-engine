@@ -32,7 +32,7 @@ Das Control ist `TLDrawer` (`ReactDrawerControl`).
 - **Mit Scrim (modal, `modal`):** vor der offenen Schublade steht ein `tl-drawer__scrim`, sie trägt `role="dialog"`
   und `aria-modal="true"`, der Fokus ist gefangen, ein Klick auf den Scrim schließt, beim Schließen kehrt der Fokus
   zurück. Am Viewport deckt der Scrim (`tl-drawer__scrim--viewport`) die Seite, im Behälter nur den Behälter. Leser
-  sind `TLDataList` unter seiner Schwelle (`list.contract.md`) und `TLSideRail` (`side-rail.contract.md`).
+  ist `TLSideRail` (`side-rail.contract.md`).
 - Escape schließt.
 
 ## Tokens

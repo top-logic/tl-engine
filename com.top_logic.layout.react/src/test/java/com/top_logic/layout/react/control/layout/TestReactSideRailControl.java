@@ -102,6 +102,24 @@ public class TestReactSideRailControl extends TestCase {
 	}
 
 	/**
+	 * Dismissing closes the drawer of a rail that is a drawer, and leaves the column of one that is
+	 * none as it is; neither is a choice of the user.
+	 */
+	public void testDismissDrawer() {
+		ReactSideRailControl rail = rail(true, Set.of(TASKS));
+		rail.dismissDrawer();
+		assertTrue("The column is left as it is.", rail.isOpen());
+
+		setDrawer(rail, true);
+		rail.setOpen(true);
+		assertTrue(drawer(rail).isOpen());
+		rail.dismissDrawer();
+		assertFalse(drawer(rail).isOpen());
+		assertFalse(rail.isOpen());
+		assertFalse("Nothing about the column is reported.", _events.contains("column false"));
+	}
+
+	/**
 	 * A section header expands and collapses its section; the change is reported.
 	 */
 	public void testToggleSection() {

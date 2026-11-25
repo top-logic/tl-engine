@@ -143,7 +143,6 @@
 					<de>Veranstaltungen</de>
 				</label>
 				<data-list
-					collapsible="false"
 					count="eventCount"
 					observed-types="demo.events:Event"
 					row-actions="hover"
@@ -201,7 +200,6 @@
 					<de>Veranstaltungsorte</de>
 				</label>
 				<data-list
-					collapsible="false"
 					count="venueCount"
 					observed-types="demo.events:Venue"
 					search="false"

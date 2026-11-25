@@ -423,9 +423,7 @@ the row-state classes below.
 | `css-class` | A class on the list's root element, as on every view element of the engine. |
 | `selection` | Two-way channel holding the picked row object. |
 | `count` | Channel receiving the number of rows, written with every serialisation - what a rail section's badge reads without asking the browser. |
-| `search` / `collapsible` / `title` / `empty-text` | The list's own chrome. |
-| `collapsed` | First-load state of a collapsible list; not remembered across page loads. |
-| `drawer-below` | Host width in rem below which a collapsible list becomes a drawer - see below. Default 0: a column at every width; the chat's session lists set 44. |
+| `search` / `title` / `empty-text` | The list's own chrome. |
 | `<leading name image>` / `<trailing attribute\|value display>` | An avatar or icon in front of the lines, metadata text or a badge after them. |
 | `<commands><command>` | Header buttons above the list. Ordinary `<generic-command>`s, each rendered as the engine's command button (`ReactButtonControl`, a child control in the `buttons` state): hidden while its rules hide it (`<access>`, `<visible-if>`), disabled with the reason as tooltip while they disable it (`<disabled-if>`), and following every change of its state. |
 | `<row-commands><command>` | Commands offered on a single row - see below. |
@@ -486,22 +484,16 @@ the conversation with its 20 rem floor (#511) and the rail's strip, plus the sta
 width they need together (688 px in the demo) the row overflowed into the engine's scrolling
 `.tlSidebar__content`: the composer started off-screen and the chat scrolled in two dimensions.
 
-So below `drawer-below` rem of **host** width - the list's parent element, measured by a
-`ResizeObserver`, never the window - a collapsible list is a **drawer**: its strip
-(`data-tl-state~="collapsed"`) stays in the flow, and its expand arrow opens the list over its
-neighbour as the design system's `tl-drawer tl-drawer--container` with `tl-drawer__scrim`.
+The list has no collapse of its own: the chat's session lists stand in a `<side-rail>` of one
+section (`header="false"`, the list's own title is the head; `width="264"`, `drawer-below="44"`;
+`dismiss-on="chatSession"`, so that a picked chat closes the drawer).
+The rail collapses the list to its strip, and below 44 rem of the area it stands in it keeps only the
+strip and opens the list as the rail's modal drawer over the conversation - see the side-rail section
+of `view-layer/layout`. Whether the rail is open is remembered per user.
 
-- A row pick, a header command ("Neuer Chat"), a click on the scrim or Escape closes it. Focus moves
-  to the open row (else the first) on open, back to the arrow on close, and Tab wraps inside.
-- The scrim covers the host, not the page: the host becomes the containing block (`list.css` of the
-  design system), so the app bar and the page around a dock stay undimmed, and `isolation` keeps the
-  application's menus above an open drawer.
-- The user's column choice (`collapsed`) is not touched while the list is a drawer; a host that
-  grows wide again gets the column back as the user left it.
 - The conversation's floor gives way by `--chat-conversation-floor-reserve` (two strips and two
-  gaps, 10 rem) while the session list (`tl-chat-sessions`) beside it is a strip, so a 320 px window
-  reflows instead of scrolling. Beside a list that is a column the #511 floor holds unchanged.
-- `collapsible="false"` (every list inside a rail section) and `drawer-below="0"` are never drawers.
+  gaps, 10 rem) while a side rail beside it is a strip - closed, or in drawer mode - so a 320 px
+  window reflows instead of scrolling. Beside a rail that is a column the #511 floor holds unchanged.
 
 The chat's 44 rem is the demo row: list 16.5 + floor 20 + rail strip 3.5 + two gaps 3 = 43 rem.
 It is an attribute rather than a constant because only the view knows what else stands in the row;
@@ -1608,11 +1600,10 @@ Three things are load-bearing:
   `shown`: while the dock is open, the open rail marks its shown sections seen, and the dock does not
   open the rail itself.
 - **The breakpoints are the dock's, not the window's** (Gitea #427, #548). The conversation inside
-  measures its own `.stage`, and the `<data-list>` session list measures its host row, so a dock
-  sized for the desktop layout (`min(68.75rem, …)`) keeps a column list in a narrow window as long
-  as the panel has room for it, and a panel below the list's `drawer-below` opens the list as a
-  drawer over the conversation instead of squeezing it. The side rail does the same below its own
-  `drawer-below`. Inside a dock the conversation's floor is measured on `--chat-dock-width`
+  measures its own `.stage`, and a side rail - the session list's and the other one - measures the
+  area it stands in, so a dock sized for the desktop layout (`min(68.75rem, …)`) keeps a column in
+  a narrow window as long as the panel has room for it, and a panel below a rail's `drawer-below`
+  opens that rail as a drawer over the conversation instead of squeezing it. Inside a dock the conversation's floor is measured on `--chat-dock-width`
   rather than on the window, because the panel stands its offset in from both edges.
 - **The content mounts from the second commit on.** On the first one the dock cannot know yet
   whether the page shows its conversation - a `<chat-conversation/>` says so from an effect - and

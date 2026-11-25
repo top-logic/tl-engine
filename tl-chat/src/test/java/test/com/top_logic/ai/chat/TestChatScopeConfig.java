@@ -14,7 +14,6 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
-import com.top_logic.ai.chat.view.ChatRailElement;
 import com.top_logic.ai.chat.view.ChatScope;
 import com.top_logic.ai.chat.view.ChatScopeElement;
 import com.top_logic.ai.chat.view.ChatScopeElement.Config;
@@ -23,6 +22,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.element.SideRailElement;
 
 /**
  * The configuration surface of {@code <chat>}: the id it hands down and the children it lays out.
@@ -43,7 +43,7 @@ public class TestChatScopeConfig extends TestCase {
 	public void testChildrenParseInOrder() throws Exception {
 		Config config = parse("<chat %s chat-id='support' direction='row'>"
 			+ "<chat-conversation/>"
-			+ "<chat-rail><section name='sources'><chat-sources/></section></chat-rail>"
+			+ "<side-rail><section name='sources'><chat-sources/></section></side-rail>"
 			+ "</chat>");
 
 		assertEquals("support", config.getChatId());
@@ -52,7 +52,7 @@ public class TestChatScopeConfig extends TestCase {
 		List<UIElement.Config> children = config.getChildren();
 		assertEquals(2, children.size());
 		assertEquals(ChatConversationElement.class, children.get(0).getImplementationClass());
-		assertEquals(ChatRailElement.class, children.get(1).getImplementationClass());
+		assertEquals(SideRailElement.class, children.get(1).getImplementationClass());
 	}
 
 	/** The point of the element: the nested elements say nothing about which chat they show. */

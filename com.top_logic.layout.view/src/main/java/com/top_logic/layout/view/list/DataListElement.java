@@ -30,7 +30,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
@@ -76,10 +75,8 @@ import com.top_logic.model.util.TLModelPartRef;
  * </p>
  *
  * <p>
- * Where the list shares its place with other columns, {@link Config#getDrawerBelow() drawer-below}
- * keeps it usable in a narrow window: below that width of its place, a
- * {@link Config#getCollapsible() collapsible} list shows only its narrow strip, and its toggle
- * opens the list as a modal drawer over its neighbours.
+ * A list that collapses to a strip - and opens as a drawer in a narrow window - stands in a
+ * {@code <side-rail>} with one section.
  * </p>
  */
 public class DataListElement implements UIElement {
@@ -180,15 +177,6 @@ public class DataListElement implements UIElement {
 
 		/** Configuration property name for {@link #getSearch()}. */
 		String SEARCH = "search";
-
-		/** Configuration property name for {@link #getCollapsible()}. */
-		String COLLAPSIBLE = "collapsible";
-
-		/** Configuration property name for {@link #getCollapsed()}. */
-		String COLLAPSED = "collapsed";
-
-		/** Configuration property name for {@link #getDrawerBelow()}. */
-		String DRAWER_BELOW = "drawer-below";
 
 		/** Configuration property name for {@link #getTitle()}. */
 		String TITLE = "title";
@@ -369,43 +357,6 @@ public class DataListElement implements UIElement {
 		@Label("Search")
 		@BooleanDefault(true)
 		boolean getSearch();
-
-		/**
-		 * Whether the list can collapse to a narrow strip.
-		 */
-		@Name(COLLAPSIBLE)
-		@Label("Collapsible")
-		@BooleanDefault(true)
-		boolean getCollapsible();
-
-		/**
-		 * Whether the list starts collapsed.
-		 *
-		 * <p>
-		 * The first-load state, and nothing more: it applies to every page load, and a user who
-		 * expands the list has it back to this on the next one. Needs {@link #getCollapsible()}, as
-		 * a list that cannot collapse cannot start collapsed either.
-		 * </p>
-		 */
-		@Name(COLLAPSED)
-		@Label("Collapsed")
-		@BooleanDefault(false)
-		boolean getCollapsed();
-
-		/**
-		 * Width of the element containing the list, in rem, below which the list becomes a drawer.
-		 *
-		 * <p>
-		 * Below it the list keeps only its narrow strip, and its toggle opens the list as a modal
-		 * drawer over its neighbours instead of taking a column of its own. Set it to the width the
-		 * list and its neighbours need side by side. {@code 0} keeps a column at every width. Needs
-		 * {@link #getCollapsible()}.
-		 * </p>
-		 */
-		@Name(DRAWER_BELOW)
-		@Label("Drawer below")
-		@IntDefault(0)
-		int getDrawerBelow();
 
 		/**
 		 * The header title shown above the list.

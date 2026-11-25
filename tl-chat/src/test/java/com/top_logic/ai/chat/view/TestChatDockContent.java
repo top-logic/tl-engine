@@ -23,10 +23,12 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.state.Badge;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
@@ -112,6 +114,47 @@ public class TestChatDockContent extends BasicTestCase {
 		}
 		subSession().setPerson(_previousAccount);
 		super.tearDown();
+	}
+
+	/**
+	 * The launcher shows the badge of its channel, and the open channel follows the panel and opens
+	 * and closes it when written.
+	 */
+	public void testBadgeAndOpenChannel() throws Exception {
+		ReactWindowRegistry registry = _window.registry();
+		String window = "dockWindow";
+		DefaultViewContext view = new DefaultViewContext(
+			new DefaultReactContext("/app", window, registry.getOrCreateQueue(window), registry));
+		ViewChannel count = new DefaultViewChannel("count");
+		view.registerChannel("count", count);
+		ViewChannel open = new DefaultViewChannel("dockOpen");
+		view.registerChannel("dockOpen", open);
+		UIElement element = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(
+			(ChatDockElement.Config) parse(
+				"<chat-dock xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+					+ " config:interface='" + ChatDockElement.Config.class.getName() + "'"
+					+ " badge='count' open-channel='dockOpen'/>"));
+		ChatDockControl dock = (ChatDockControl) element.createControl(view);
+		try {
+			dock.attach();
+			assertEquals("The channel starts with the state of the panel.", Boolean.FALSE, open.get());
+			assertNull(state(dock).get(ChatDockControl.STATE_BADGE));
+
+			count.set(Integer.valueOf(3));
+			assertEquals("3", ((Map<?, ?>) state(dock).get(ChatDockControl.STATE_BADGE)).get(Badge.CONTENT__PROP));
+
+			dock.setPanelOpen(true);
+			assertEquals(Boolean.TRUE, open.get());
+
+			open.set(Boolean.FALSE);
+			assertFalse("Writing the channel closes the panel.", dock.isOpen());
+		} finally {
+			dock.cleanupTree();
+		}
+	}
+
+	private static Map<?, ?> state(ChatDockControl dock) throws Exception {
+		return (Map<?, ?>) JSON.fromString(dock.stateAsJSON());
 	}
 
 	/**

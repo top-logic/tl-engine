@@ -225,6 +225,21 @@ A `<button>` (`ButtonElement`) shows its one command the same way, so its mode i
 
 A command carries a badge - a count or a dot at its button, its menu entry and its `<command-item>` in the sidebar - through `badge`, `badge-role` and `badge-label` on its configuration (`ViewCommand.Config` mixes in `WithBadge`). The badge stands after the label, over the corner of the icon of an icon-only button, and is part of the button's accessible name. The value rules and how the badge follows the model are described in [Badges](doc:view-layer/badges).
 
+## A toggle: `active-expr`
+
+A command whose effect can be in force - a button that opens and closes a panel, a filter that is on or off - is a toggle: its `active-expr` is an expression over the command's arguments like `label-expr`, `image-expr` and `tooltip-expr`, evaluated whenever those are. While it yields a value TL-Script takes as true, the button is shown pressed; assistive technology reads the button of a toggle as pressed or not pressed (`aria-pressed`). A command without `active-expr` is no toggle.
+
+```xml
+<generic-command image="css:bi bi-layout-sidebar-reverse" inputs="railOpen" active-expr="$railOpen">
+	<label><en>Side rail</en></label>
+	<execute-script function="!$railOpen">
+		<with-result>
+			<write-channel name="railOpen"/>
+		</with-result>
+	</execute-script>
+</generic-command>
+```
+
 ## Floating actions: `<floating-action>`
 
 `<floating-action>` (`FloatingActionElement`) offers the one or few actions a page is about - adding an entry to a list, starting a conversation - as round buttons floating over a corner of the content, instead of a button among others in the toolbar. Its commands are written directly inside it, like the `<action>` of a `<button>`, either by the tag of the command or as `<action class="…"/>`; at least one is required. Each command decides with its own rules whether its action is shown and executable, and the element adds no rules of its own.

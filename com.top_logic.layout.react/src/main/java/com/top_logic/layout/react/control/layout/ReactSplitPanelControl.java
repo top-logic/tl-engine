@@ -26,8 +26,10 @@ import com.top_logic.layout.structure.Scrolling;
  * resizing.
  *
  * <p>
- * Tracks which children are collapsed. When all children are collapsed, the split panel itself
- * collapses in its parent (cascading collapse).
+ * Tracks which children are collapsed. A child that is a {@link CollapsibleChild} reports when it
+ * collapses, and its area shrinks to the size the child reports. When all children are collapsed,
+ * the split panel itself collapses in its own container, being a {@link CollapsibleChild} itself
+ * (cascading collapse).
  * </p>
  *
  * <p>
@@ -41,7 +43,7 @@ import com.top_logic.layout.structure.Scrolling;
  * {@code {size, unit, minSize, scrolling, collapsed}}</li>
  * </ul>
  */
-public class ReactSplitPanelControl extends ReactControl {
+public class ReactSplitPanelControl extends ReactControl implements CollapsibleChild {
 
 	private static final String REACT_MODULE = "TLSplitPanel";
 
@@ -98,9 +100,7 @@ public class ReactSplitPanelControl extends ReactControl {
 
 	private final boolean _resizable;
 
-	private ReactSplitPanelControl _parentSplitPanel;
-
-	private int _indexInParent = -1;
+	private CollapseContainer _container;
 
 	private final Consumer<Map<String, Float>> _onSizesChanged;
 
@@ -200,7 +200,7 @@ public class ReactSplitPanelControl extends ReactControl {
 	 * @param initialCollapsed
 	 *        Whether the child starts collapsed.
 	 * @param savedSize
-	 *        The size to restore when expanding (typically the config default).
+	 *        The size to restore when expanding.
 	 * @param savedUnit
 	 *        The unit of the saved size.
 	 */
@@ -216,13 +216,8 @@ public class ReactSplitPanelControl extends ReactControl {
 
 		_childDescriptors.add(entry.toDescriptor());
 
-		// If child is a panel, set up parent tracking.
-		if (child instanceof ReactPanelControl) {
-			((ReactPanelControl) child).setParentSplitPanel(this, _children.size() - 1);
-		}
-		// If child is a nested split panel, set up parent tracking.
-		if (child instanceof ReactSplitPanelControl) {
-			((ReactSplitPanelControl) child).setParentSplitPanel(this, _children.size() - 1);
+		if (child instanceof CollapsibleChild collapsible) {
+			collapsible.setCollapseContainer(new EntryContainer(entry));
 		}
 
 		if (isAttached()) {
@@ -241,22 +236,15 @@ public class ReactSplitPanelControl extends ReactControl {
 		ChildEntry removed = _children.remove(index);
 		_childDescriptors.remove(index);
 
+		if (removed._control instanceof CollapsibleChild collapsible) {
+			collapsible.setCollapseContainer(null);
+		}
+
 		// No longer displayed, so its contributions to the surroundings are withdrawn before disposal.
 		removed._control.detach();
 
 		// Unregister removed child and its subtree from SSE.
 		removed._control.cleanupTree();
-
-		// Update parent indices for subsequent children.
-		for (int i = index; i < _children.size(); i++) {
-			ReactControl c = _children.get(i)._control;
-			if (c instanceof ReactPanelControl) {
-				((ReactPanelControl) c).setParentSplitPanel(this, i);
-			}
-			if (c instanceof ReactSplitPanelControl) {
-				((ReactSplitPanelControl) c).setParentSplitPanel(this, i);
-			}
-		}
 	}
 
 	/**
@@ -279,28 +267,38 @@ public class ReactSplitPanelControl extends ReactControl {
 	}
 
 	/**
-	 * Called by a child {@link ReactPanelControl} or nested {@link ReactSplitPanelControl} when it
-	 * collapses or expands.
+	 * Updates the collapse state of the given child, reported through its {@link CollapseContainer}.
 	 *
 	 * <p>
-	 * Updates the child's collapsed flag and size. When ALL children are collapsed, cascades to the
-	 * parent split panel.
+	 * When all children are collapsed afterwards, the split panel collapses in its own container to
+	 * the sum of the collapsed sizes; when a child expands out of that state, it expands again.
 	 * </p>
 	 *
-	 * @param childIndex
-	 *        The index of the child in this split panel.
+	 * @param entry
+	 *        The child that collapsed or expanded.
 	 * @param collapsed
 	 *        {@code true} if the child collapsed, {@code false} if it expanded.
 	 * @param collapsedSize
 	 *        The pixel size of the collapsed child (e.g. toolbar header height).
 	 */
-	void childCollapsed(int childIndex, boolean collapsed, float collapsedSize) {
-		ChildEntry entry = _children.get(childIndex);
+	private void childCollapsed(ChildEntry entry, boolean collapsed, float collapsedSize) {
+		int childIndex = _children.indexOf(entry);
+		if (childIndex < 0) {
+			// No longer a child.
+			return;
+		}
+		boolean changed = entry._collapsed != collapsed;
+		if (!changed && !collapsed) {
+			return;
+		}
+		boolean allCollapsedBefore = allCollapsed();
 
 		if (collapsed) {
-			// Store original size for later restoration.
-			entry._savedSize = entry._constraint._size;
-			entry._savedUnit = entry._constraint._unit;
+			if (changed) {
+				// Store original size for later restoration.
+				entry._savedSize = entry._constraint._size;
+				entry._savedUnit = entry._constraint._unit;
+			}
 
 			entry._constraint._size = collapsedSize;
 			entry._constraint._unit = DisplayUnit.PIXEL;
@@ -318,81 +316,136 @@ public class ReactSplitPanelControl extends ReactControl {
 		// Patch the client.
 		patchChildren();
 
-		// Cascading collapse: if all children are now collapsed, notify parent.
-		if (_parentSplitPanel != null) {
-			boolean allCollapsed = _children.stream().allMatch(e -> e._collapsed);
-			if (allCollapsed && collapsed) {
-				float totalCollapsedSize = 0;
-				for (ChildEntry e : _children) {
-					totalCollapsedSize += e._constraint._size;
-				}
-				_parentSplitPanel.childCollapsed(_indexInParent, true, totalCollapsedSize);
-			} else if (!collapsed && wasAllCollapsed()) {
-				_parentSplitPanel.childCollapsed(_indexInParent, false, 0);
+		// Cascading collapse.
+		if (_container != null) {
+			if (allCollapsed()) {
+				_container.collapsed(collapsedSize());
+			} else if (allCollapsedBefore) {
+				_container.expanded();
 			}
 		}
-		if (_onChildCollapsed != null) {
+		if (changed && _onChildCollapsed != null) {
 			_onChildCollapsed.accept(Integer.valueOf(childIndex), Boolean.valueOf(collapsed));
 		}
 	}
 
 	/**
-	 * Checks whether the child at the given index is allowed to collapse.
+	 * Checks whether the given child is allowed to collapse.
 	 *
 	 * <p>
 	 * Returns {@code false} only when collapsing the child would make ALL children collapsed AND the
-	 * collapse cannot escalate to a parent split panel (i.e. this is the root). This prevents the
-	 * display from becoming broken when no visible panel remains.
+	 * collapse cannot escalate to the container of this split panel. This prevents the display from
+	 * becoming broken when no visible panel remains.
 	 * </p>
 	 *
-	 * @param childIndex
-	 *        The index of the child that wants to collapse.
+	 * @param entry
+	 *        The child that wants to collapse.
 	 * @return {@code true} if the collapse is allowed, {@code false} if it must be prevented.
 	 */
-	boolean canChildCollapse(int childIndex) {
-		int nonCollapsedOthers = 0;
-		for (int i = 0; i < _children.size(); i++) {
-			if (i != childIndex && !_children.get(i)._collapsed) {
-				nonCollapsedOthers++;
+	private boolean canChildCollapse(ChildEntry entry) {
+		for (ChildEntry other : _children) {
+			if (other != entry && !other._collapsed) {
+				return true;
 			}
 		}
-		if (nonCollapsedOthers > 0) {
-			return true;
-		}
 		// All siblings already collapsed --- this would make ALL children collapsed.
-		if (_parentSplitPanel == null) {
+		if (_container == null) {
 			return false; // Root: cannot escalate.
 		}
-		return _parentSplitPanel.canChildCollapse(_indexInParent);
+		return _container.canCollapse();
 	}
 
 	/**
-	 * Sets the parent split panel for cascading collapse.
-	 *
-	 * @param parent
-	 *        The parent split panel.
-	 * @param indexInParent
-	 *        The index of this split panel in the parent.
+	 * Sets the container of this split panel and reports to it whether all children are collapsed,
+	 * since this split panel is collapsed exactly then.
 	 */
-	void setParentSplitPanel(ReactSplitPanelControl parent, int indexInParent) {
-		_parentSplitPanel = parent;
-		_indexInParent = indexInParent;
+	@Override
+	public void setCollapseContainer(CollapseContainer container) {
+		_container = container;
+		if (container != null) {
+			if (allCollapsed()) {
+				container.collapsed(collapsedSize());
+			} else {
+				container.expanded();
+			}
+		}
+	}
+
+	private float collapsedSize() {
+		float result = 0;
+		for (ChildEntry e : _children) {
+			result += e._constraint._size;
+		}
+		return result;
 	}
 
 	private void patchChildren() {
 		putState(CHILDREN, _childDescriptors);
 	}
 
-	private boolean wasAllCollapsed() {
-		// Before this expand, all other children must still be collapsed.
-		int collapsed = 0;
-		for (ChildEntry entry : _children) {
-			if (entry._collapsed) {
-				collapsed++;
-			}
+	private boolean allCollapsed() {
+		return !_children.isEmpty() && _children.stream().allMatch(e -> e._collapsed);
+	}
+
+	/**
+	 * The {@link CollapseContainer} of a child of this split panel.
+	 */
+	private final class EntryContainer implements CollapseContainer {
+
+		private final ChildEntry _entry;
+
+		EntryContainer(ChildEntry entry) {
+			_entry = entry;
 		}
-		// Exactly one was just expanded, so if all-1 are still collapsed, it was "all collapsed" before.
-		return collapsed == _children.size() - 1;
+
+		@Override
+		public boolean isCollapsed() {
+			return _entry._collapsed;
+		}
+
+		@Override
+		public boolean canCollapse() {
+			return canChildCollapse(_entry);
+		}
+
+		@Override
+		public void collapsed(float collapsedSize) {
+			childCollapsed(_entry, true, collapsedSize);
+		}
+
+		@Override
+		public void expanded() {
+			childCollapsed(_entry, false, 0);
+		}
+
+		@Override
+		public void requestSize(float size, DisplayUnit unit) {
+			if (_entry._requestedUnit == unit && _entry._requestedSize == size) {
+				return;
+			}
+			_entry._requestedSize = size;
+			_entry._requestedUnit = unit;
+			updateDescriptor(_entry);
+		}
+
+		@Override
+		public void releaseSize() {
+			if (_entry._requestedUnit == null) {
+				return;
+			}
+			_entry._requestedUnit = null;
+			updateDescriptor(_entry);
+		}
+	}
+
+	private void updateDescriptor(ChildEntry entry) {
+		int index = _children.indexOf(entry);
+		if (index < 0) {
+			// No longer a child.
+			return;
+		}
+		_childDescriptors.set(index, entry.toDescriptor());
+		patchChildren();
 	}
 
 	/**
@@ -495,11 +548,28 @@ public class ReactSplitPanelControl extends ReactControl {
 
 		DisplayUnit _defaultUnit;
 
+		/**
+		 * The size the child asks for while it is open, see {@link CollapseContainer#requestSize(float,
+		 * DisplayUnit)}.
+		 */
+		float _requestedSize;
+
+		/** The unit of {@link #_requestedSize}, {@code null} without a request. */
+		DisplayUnit _requestedUnit;
+
 		ChildEntry(ReactControl control, ChildConstraint constraint) {
 			_control = control;
 			_constraint = constraint;
 			_defaultSize = constraint._size;
 			_defaultUnit = constraint._unit;
+		}
+
+		/**
+		 * Whether the child is laid out with the size it asked for instead of the size of its
+		 * constraint.
+		 */
+		boolean hasRequest() {
+			return _requestedUnit != null && !_collapsed;
 		}
 
 		/**
@@ -511,8 +581,9 @@ public class ReactSplitPanelControl extends ReactControl {
 			// The ReactControl itself will be serialized as {controlId, module, state} by
 			// writeJsonValue.
 			map.put(CONTROL, _control);
-			map.put(SIZE, Float.valueOf(_constraint._size));
-			map.put(UNIT, _constraint._unit.getExternalName());
+			boolean requested = hasRequest();
+			map.put(SIZE, Float.valueOf(requested ? _requestedSize : _constraint._size));
+			map.put(UNIT, (requested ? _requestedUnit : _constraint._unit).getExternalName());
 			map.put(MIN_SIZE, Integer.valueOf(_constraint._minSize));
 			map.put(SCROLLING, _constraint._scrolling.toOverflowAttribute());
 			map.put(COLLAPSED, Boolean.valueOf(_collapsed));
@@ -526,7 +597,10 @@ public class ReactSplitPanelControl extends ReactControl {
 	 * <p>
 	 * The client sends the sizes of the open panes, each in the unit of its pane. Every pane keeps its
 	 * unit. A collapsed pane is left untouched: its constraint holds the size of its collapsed header,
-	 * and the size it expands to does not change by a drag.
+	 * and the size it expands to does not change by a drag. A pane laid out with the size its child
+	 * {@link CollapseContainer#requestSize(float, DisplayUnit) asked for} takes the dragged size for as
+	 * long as the request holds, in the unit of the request; the size the user gave the pane stays
+	 * remembered and is what the pane gets back when the request ends.
 	 * </p>
 	 */
 	@SuppressWarnings("unchecked")
@@ -541,7 +615,13 @@ public class ReactSplitPanelControl extends ReactControl {
 				}
 				Object newSize = sizes.get(entry._control.getID());
 				if (newSize instanceof Number) {
-					entry._constraint._size = ((Number) newSize).floatValue();
+					float size = ((Number) newSize).floatValue();
+					if (entry.hasRequest()) {
+						// The size is in the unit of the request, and lasts as long as the request.
+						entry._requestedSize = size;
+						continue;
+					}
+					entry._constraint._size = size;
 				}
 			}
 			_childDescriptors.clear();

@@ -55,27 +55,7 @@ const StatusStub: React.FC<TLCellProps> = ({ controlId, state }) => (
   <span id={controlId} className="test-status">{String(state.text)}</span>
 );
 
-/** The observers the list created, so that a test can say "the host was resized". */
-const observers: FakeResizeObserver[] = [];
-
-class FakeResizeObserver {
-  constructor(private readonly callback: () => void) {
-    observers.push(this);
-  }
-  observe(): void {}
-  unobserve(): void {}
-  disconnect(): void {
-    observers.splice(observers.indexOf(this), 1);
-  }
-  fire(): void {
-    this.callback();
-  }
-}
-
 let sent: Sent[] = [];
-
-/** The width the host reports, in px (at a 16 px rem, 44 rem are 704 px). */
-let hostWidth = 1100;
 
 beforeAll(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -100,7 +80,6 @@ afterEach(async () => {
   act(() => unmount(LIST_ID));
   findMountPoint(LIST_ID)?.remove();
   vi.unstubAllGlobals();
-  observers.length = 0;
   await settle();
 });
 
@@ -122,7 +101,6 @@ async function settle(): Promise<void> {
 function listState(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     search: false,
-    collapsible: false,
     title: 'Contacts',
     emptyText: 'Nobody yet',
     selectedId: '',
@@ -135,11 +113,9 @@ function listState(overrides: Record<string, unknown> = {}): Record<string, unkn
   };
 }
 
-/** Mounts the list into a host of the width {@link hostWidth}, and records the commands it sends. */
-async function mountList(overrides: Record<string, unknown> = {}, width = 1100): Promise<void> {
+/** Mounts the list, and records the commands it sends. */
+async function mountList(overrides: Record<string, unknown> = {}): Promise<void> {
   sent = [];
-  hostWidth = width;
-  vi.stubGlobal('ResizeObserver', FakeResizeObserver);
   vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? '{}'));
     if (body.controlId === LIST_ID) {
@@ -149,33 +125,13 @@ async function mountList(overrides: Record<string, unknown> = {}, width = 1100):
   }));
   const element = document.createElement('div');
   element.setAttribute(MOUNT_ATTRIBUTE, LIST_ID);
-  Object.defineProperty(element, 'clientWidth', { get: () => hostWidth });
   document.body.appendChild(element);
   act(() => mount(LIST_ID, 'TLDataList', listState(overrides), 'w', '/ctx'));
   await settle();
 }
 
-/** The host becomes this wide, and the observer says so. */
-function resize(width: number): void {
-  hostWidth = width;
-  act(() => observers.forEach((observer) => observer.fire()));
-}
-
 function list(): HTMLElement {
   return document.getElementById(LIST_ID)!;
-}
-
-/** The toggle of the strip or column, not the one in an open drawer. */
-function toggle(): HTMLButtonElement {
-  return list().querySelector<HTMLButtonElement>(':scope > .tl-list__header > .tl-toggle')!;
-}
-
-function drawer(): HTMLElement | null {
-  return list().querySelector<HTMLElement>('aside.tl-drawer');
-}
-
-function scrim(): HTMLElement | null {
-  return list().querySelector<HTMLElement>('.tl-drawer__scrim');
 }
 
 function mains(root: ParentNode = list()): HTMLButtonElement[] {
@@ -296,116 +252,12 @@ describe('the trigger of the row commands', () => {
   });
 });
 
-describe('a collapsible list in a wide host', () => {
-  it('collapses to its strip and expands again', async () => {
-    await mountList({ collapsible: true });
+describe('a list', () => {
+  it('has no collapse of its own: no toggle, and its rows always shown', async () => {
+    await mountList({ title: 'Contacts' });
+    expect(list().querySelector('.tl-toggle')).toBeNull();
     expect(list().getAttribute('data-tl-state')).toBeNull();
-    click(toggle());
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
-    expect(toggle().getAttribute('aria-expanded')).toBe('false');
     expect(mains()).toHaveLength(3);
-    click(toggle());
-    expect(list().getAttribute('data-tl-state')).toBeNull();
-  });
-
-  it('starts collapsed when the element says so', async () => {
-    await mountList({ collapsible: true, collapsed: true });
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
-  });
-
-  it('needs collapsible to start collapsed', async () => {
-    await mountList({ collapsible: false, collapsed: true });
-    expect(list().getAttribute('data-tl-state')).toBeNull();
-    expect(toggle()).toBeNull();
-  });
-
-  it('is never a drawer with drawer-below 0', async () => {
-    await mountList({ collapsible: true, drawerBelow: 0 }, 320);
-    expect(list().getAttribute('data-tl-state')).toBeNull();
-    expect(observers).toHaveLength(0);
-  });
-});
-
-describe('a collapsible list in a narrow host', () => {
-  it('is a strip without rows, its toggle offering to open it', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44 }, 560);
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
-    expect(toggle().getAttribute('aria-expanded')).toBe('false');
-    expect(toggle().getAttribute('aria-label')).toBe('Expand list');
-    expect(mains()).toHaveLength(0);
-    expect(drawer()).toBeNull();
-  });
-
-  it('switches at the configured width, measured in rem', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44 }, 704);
-    expect(list().getAttribute('data-tl-state')).toBeNull();
-    resize(703);
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
-  });
-
-  it('opens as a modal drawer with a scrim, the focus on the selected row', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44, selectedId: 'r3' }, 560);
-    click(toggle());
-    const aside = drawer()!;
-    expect(aside.className).toBe('tl-drawer tl-drawer--start tl-drawer--narrow tl-drawer--container');
-    expect(aside.getAttribute('role')).toBe('dialog');
-    expect(aside.getAttribute('aria-modal')).toBe('true');
-    expect(scrim()).not.toBeNull();
-    expect(document.activeElement?.getAttribute('title')).toBe('Berta');
-  });
-
-  it('closes when a row is picked, still picks it, and hands the focus back to the toggle', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44 }, 560);
-    click(toggle());
-    expect(document.activeElement?.getAttribute('title')).toBe('Anna');
-    click(mains(drawer()!)[1]);
-    await settle();
-    expect(drawer()).toBeNull();
-    expect(document.activeElement).toBe(toggle());
-    expect(sent).toEqual([{ command: CMD_SELECT, args: { [ARG_ID]: 'r2' } }]);
-  });
-
-  it('closes on the scrim, on its own toggle and on a command', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44, buttons: [{ controlId: 'b1', module: 'TestCommand', state: {} }] }, 560);
-    click(toggle());
-    click(scrim()!);
-    expect(drawer()).toBeNull();
-
-    click(toggle());
-    click(drawer()!.querySelector('.tl-toggle')!);
-    expect(drawer()).toBeNull();
-
-    click(toggle());
-    click(drawer()!.querySelector('#b1')!);
-    expect(drawer()).toBeNull();
-  });
-
-  it('closes on Escape, but leaves Escape to a search field with text in it', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44, search: true }, 560);
-    click(toggle());
-    const input = drawer()!.querySelector<HTMLInputElement>('input')!;
-    type(input, 'ann');
-    act(() => input.focus());
-    key(input, 'Escape');
-    expect(drawer()).not.toBeNull();
-
-    type(input, '');
-    const event = key(input, 'Escape');
-    expect(event.defaultPrevented).toBe(true);
-    expect(drawer()).toBeNull();
-    expect(document.activeElement).toBe(toggle());
-  });
-
-  it('keeps the user’s column choice across the drawer and back', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44 }, 1100);
-    click(toggle());
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
-    resize(560);
-    click(toggle());
-    expect(drawer()).not.toBeNull();
-    resize(1100);
-    expect(drawer()).toBeNull();
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
   });
 });
 

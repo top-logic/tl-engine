@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { resetTLBridge, setTLState } from '../test/tl-react-bridge'
-import { closesOnKey, launcherMark, readDockState, TLChatDock } from './chat-dock'
+// @ts-expect-error The type check of the browser bundle knows no Node modules; the test runs on Node.
+import { readFileSync } from 'node:fs'
+import { escapeHandlers, resetTLBridge, setTLState, tlCommands } from '../test/tl-react-bridge'
+import { ARG_OPEN, CMD_SET_OPEN, DOCK_BADGE, launcherMark, readDockState, TLChatDock } from './chat-dock'
 import { chatStore, type ChatBootstrap } from './chat-store'
-import { seenCounts } from './rail-model'
 
 afterEach(() => resetTLBridge())
 
@@ -46,13 +47,6 @@ function seedChat(chatId: string, boot: Partial<ChatBootstrap> = {}) {
     welcomeName: '',
     language: 'en',
     traceMode: 'summary',
-    layoutKey: chatId,
-    railOpen: null,
-    railOpenDefault: false,
-    paneWidth: 0,
-    paneWidthDefault: 0,
-    badgeSeen: {},
-    sectionChoices: {},
     autoApprove: false,
     ...boot,
   })
@@ -66,21 +60,25 @@ describe('readDockState', () => {
       icon: 'css:bi bi-stars',
       label: 'Albert',
       open: false,
+      badge: null,
     })
   })
 
-  /**
-   * `dockOpen`, not `open`: `open` is how `<chat-rail/>` states its own first-load default, and the
-   * whole bootstrap is read out of one state map - a dock writing `open` would decide for the rail
-   * inside it whether that rail starts open.
-   */
-  it('takes the panel state from dockOpen and ignores the rail default', () => {
-    expect(readDockState({ dockOpen: true, open: false }).open).toBe(true)
+  it('takes the panel state from dockOpen', () => {
+    expect(readDockState({ dockOpen: true }).open).toBe(true)
     expect(readDockState({ open: true }).open).toBe(false)
   })
 
+  it('reads the badge the server sends', () => {
+    expect(readDockState({ [DOCK_BADGE]: { content: '4', label: 'New' } }).badge).toEqual({
+      content: '4',
+      label: 'New',
+    })
+    expect(readDockState({ [DOCK_BADGE]: null }).badge).toBeNull()
+  })
+
   it('is empty rather than broken when the control wrote nothing', () => {
-    expect(readDockState({})).toEqual({ icon: '', label: '', open: false })
+    expect(readDockState({})).toEqual({ icon: '', label: '', open: false, badge: null })
   })
 })
 
@@ -94,16 +92,33 @@ describe('launcherMark', () => {
   })
 })
 
-describe('closesOnKey', () => {
+describe('Escape in the dock', () => {
   /**
-   * Escape closes an open dock and means nothing to a closed one. That this handler is reached at
-   * all is the DOM's half of the rule - a popover inside the panel stops the key first - and is
-   * checked in the browser rather than here, since the vitest run has no DOM to dispatch into.
+   * Escape reaches the dock through the keyboard dispatcher's stack of scopes: the panel is a scope
+   * of its own, binding Escape to closing the dock, so a layer opened inside it - the drawer of a
+   * side rail, a popover - is a scope above it and answers Escape first. That the inner layer wins is
+   * the dispatcher's rule, tested with the drawer in the engine (TLDrawer.test.tsx).
    */
-  it('closes an open dock on Escape and nothing else', () => {
-    expect(closesOnKey('Escape', true)).toBe(true)
-    expect(closesOnKey('Escape', false)).toBe(false)
-    expect(closesOnKey('Enter', true)).toBe(false)
+  it('binds Escape in the scope of its panel to closing the dock', () => {
+    render(dockState({ dockOpen: true }))
+    expect(escapeHandlers).toHaveLength(1)
+
+    escapeHandlers[0]()
+    expect(tlCommands().map((sent) => [sent.name, sent.args])).toContainEqual([CMD_SET_OPEN, { [ARG_OPEN]: false }])
+  })
+})
+
+describe('the panel of the dock', () => {
+  /**
+   * A drawer opened inside the dock - the drawer of a side rail - is anchored at the nearest
+   * positioned element around it. That must be the panel, which clips it, not the dock with its
+   * launcher: otherwise the drawer and its scrim overflow the panel and cover the launcher.
+   */
+  it('is the positioned, clipping anchor of what opens inside it', () => {
+    const css: string = readFileSync(new URL('./styles.css', import.meta.url), 'utf8')
+    const rule = /\.tl-chat-dock__panel\s*\{([^}]*)\}/.exec(css)?.[1] ?? ''
+    expect(rule).toMatch(/position:\s*relative/)
+    expect(rule).toMatch(/overflow:\s*hidden/)
   })
 })
 
@@ -154,31 +169,16 @@ describe('the rendered dock', () => {
     )
   })
 
-  /** What the rail's sections reported, minus what the user has already looked at. */
-  it('counts the unseen news on the launcher of a closed dock', () => {
-    const { store, release } = seedChat('dock-badge')
-    store.actions.registerRail()
-    store.actions.publishRailBadge({ progress: { count: 4, role: 'brand', dot: false } })
-
-    const html = render(dockState({ chatId: 'dock-badge' }))
+  /** The badge the server sends stands on the launcher of a closed dock, not beside the open panel. */
+  it('shows the badge of the server on the launcher of a closed dock', () => {
+    const badge = { content: '4', label: 'New' }
+    const html = render(dockState({ chatId: 'dock-badge', [DOCK_BADGE]: badge }))
     expect(html).toContain('aria-label="Open Albert, New: 4"')
     expect(html).toContain('<tl-badge data-content="4" data-label="New" data-alone="true"></tl-badge>')
 
-    // Opening the dock is the user looking: the watermark moves to the counts, not to zero.
-    store.actions.markBadgesSeen(seenCounts(store.getState().railBadge))
-    expect(store.getState().badgeSeen).toEqual({ progress: 4 })
+    const open = render(dockState({ chatId: 'dock-badge', [DOCK_BADGE]: badge, dockOpen: true }))
+    expect(open).not.toContain('tl-badge')
     expect(render(dockState({ chatId: 'dock-badge' }))).not.toContain('tl-badge')
-
-    release()
-  })
-
-  it('shows no badge for news the user has already seen', () => {
-    const { store, release } = seedChat('dock-seen', { badgeSeen: { progress: 3 } })
-    store.actions.registerRail()
-    store.actions.publishRailBadge({ progress: { count: 3, role: 'brand', dot: false } })
-
-    expect(render(dockState({ chatId: 'dock-seen' }))).not.toContain('tl-badge')
-    release()
   })
 
   /** A launcher onto a chat the servlet refuses every call of is an invitation to a dead end. */
@@ -192,9 +192,8 @@ describe('the rendered dock', () => {
   /**
    * The other case where a dock must not appear: the page is showing this very conversation.
    *
-   * Two views of one conversation give its draft channel two composers and its layout two rails.
-   * The content is unmounted rather than hidden, so the rail inside the dock stops competing with
-   * the page's rail for the one remembered layout.
+   * Two views of one conversation give its draft channel two composers. The content is unmounted
+   * rather than hidden, so the conversation inside the dock stops competing with the page's.
    */
   it('stands down entirely while a page shows its conversation', () => {
     const { store, release } = seedChat('dock-stand-down')

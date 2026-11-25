@@ -1,4 +1,4 @@
-import { BACKGROUND_COMMAND, React, rootClassName, useTLCommand, useTLState } from 'tl-react-bridge'
+import { BACKGROUND_COMMAND, React, rootClassName, TLChild, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import type { ApprovalRequest, InteractionRequest } from './types'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
@@ -8,8 +8,6 @@ import type { ComposerApi, ReferenceCandidate } from './extensions'
 import { bundle } from './i18n'
 import { agentLabel } from './models'
 import type { ReferenceToken } from './reference'
-import { RailToggle } from './rail'
-import { seenCounts, unseenRailBadge } from './rail-model'
 import {
   registeredAnnotationRenderer,
   registeredReferenceSource,
@@ -25,6 +23,12 @@ const { useCallback, useEffect, useMemo, useRef } = React
 
 /** A conversation opens no source pane of its own; one function, so the transcript's memo holds. */
 const OPEN_NO_SOURCE = (): void => undefined
+
+/**
+ * State key of the toolbar of commands the view configured for the head of the transcript, e.g. the
+ * button opening a side rail. Absent: none. The server's `ChatConversationControl.HEADER_COMMANDS`.
+ */
+export const HEADER_COMMANDS = 'headerCommands'
 
 export interface ThreadConfig {
   citationMarkers: boolean
@@ -288,8 +292,8 @@ function PromptCards({
  *
  * It joins the chat through {@code chat-id}. A configured {@code input} channel selects the
  * session; without one the store is the source. A configured {@code busy} channel is written while
- * the agent works. Every picker can be switched off; sending still works. The pane a source or a
- * host section opens lives in a sibling {@code <chat-rail/>} on the same {@code chat-id}.
+ * the agent works. Every picker can be switched off; sending still works. The commands the view
+ * configures for the conversation stand at the end of the head of the transcript.
  *
  * The four turn settings - agent, model, effort and the attached MCP servers - travel over their own
  * two-way channels: a write from outside is applied as if the user had picked it, and what the user
@@ -341,7 +345,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
 
   // Tell the chat a conversation is on the page. A `<chat-dock/>` asks for this: it must not open a
   // second copy of the conversation the page is already showing, which would give one draft channel
-  // two composers and one remembered layout two rails. Its own nested conversation does not count -
+  // two composers. Its own nested conversation does not count -
   // `insideDock` says which is which, and comes from the view context rather than from the React tree.
   const insideDock = state.insideDock === true
   useEffect(() => actions.registerConversation(insideDock), [actions, insideDock])
@@ -362,7 +366,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // says the refused session has to go (#576).
   //
   // It runs when the channel moves, never when the store does. The store moves first whenever it
-  // opens a chat itself - a pick from the rail, a first send - and reports it; until the
+  // opens a chat itself - a pick from the chat list, a first send - and reports it; until the
   // channel answers, `selected` still names the chat that was left. Following it then opened that
   // chat again, the report of it went out, and the channel's answer to the first report asked for
   // the other one: the transcript switched between two conversations every few milliseconds, for as
@@ -385,7 +389,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   }, [selected, corrections, actions])
 
   // Write-back: publish the store's own session onto the channel (two-way), so a session list
-  // highlights it after the store creates one on first send or the user opens one from the rail.
+  // highlights it after the store creates one on first send or the user opens one from the list.
   //
   // It starts from "no chat" rather than from nothing. An element mounts with an empty store while
   // the chat its channel names is still loading, and reporting that emptiness cleared the channel
@@ -591,11 +595,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           onEditSend={onEditSend}
           onRegenerate={actions.regenerate}
           onRate={actions.rate}
-          onOpenRail={() => undefined}
-          railCollapsed={false}
-          onToggleRail={() => undefined}
           title={chat.sessionTitle}
-          sessionListToggle={false}
           canCopy={config.copy}
           canRate={config.rate && !readOnly}
           canRegenerate={config.regenerate && !readOnly}
@@ -607,7 +607,6 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           renderAnnotation={registeredAnnotationRenderer(
             typeof state.citationRenderer === 'string' ? state.citationRenderer : '',
           )}
-          openInPane={actions.openPane}
           subagents={chat.subagents}
           subagentLive={chat.subagentLive}
           delegationLive={chat.delegationLive}
@@ -615,18 +614,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           onSendSubagentMessage={readOnly ? undefined : actions.messageSubagent}
           leadName={agentLabel(chat.agent, chat.caps.agents)}
           onCancelSubagent={readOnly ? undefined : actions.cancelSubagent}
-          headerEnd={
-            // Derived, not configured: the badge button appears exactly when a `<chat-rail/>` on
-            // this `chat-id` is mounted, because with no rail it would toggle nothing visible.
-            chat.railMounted ? (
-              <RailToggle
-                open={chat.railDrawer ? chat.railDrawerOpen : chat.sideOpen}
-                badge={unseenRailBadge(chat.railBadge, chat.badgeSeen, labels.sideRailBadge)}
-                labels={labels}
-                onToggle={() => actions.toggleSide(seenCounts(chat.railBadge))}
-              />
-            ) : null
-          }
+          headerEnd={state[HEADER_COMMANDS] ? <TLChild control={state[HEADER_COMMANDS]} /> : null}
           onOpenSource={OPEN_NO_SOURCE}
         />
         {promptCards.length > 0 && promptCardsVisible(chat.sessionId, chat.messages.length) ? (

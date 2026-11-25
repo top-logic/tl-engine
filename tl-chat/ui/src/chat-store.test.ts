@@ -10,7 +10,6 @@ import {
 import { readComposerControls } from './chat-conversation'
 import { gateComposerControls, STATE_SUBJECT_FEATURES, type ConversationFeatures } from './features'
 import { bundle, PROVIDER_ERROR_NO_CREDENTIALS } from './i18n'
-import { seenCounts, unseenRailBadge } from './rail-model'
 import { cardsForTurn } from './subagent-card'
 import type { ChatMessage, SubagentRef } from './types'
 import {
@@ -62,7 +61,6 @@ import {
   FIELD_ATTACHED,
   type ChatCommand,
 } from './chat-stream'
-import { ARG_LAYOUT, ARG_LAYOUT_KEY, CMD_SAVE_LAYOUT } from './preferences'
 import {
   emitPatch,
   isSubscribed,
@@ -81,9 +79,9 @@ import {
  * `chat-store.ts` is deliberately free of the DOM apart from timers and the stream, so the whole
  * surface a test has to stand in for is `window.setTimeout`, `window.location`, `fetch`, the
  * window's event stream, which the bridge stub delivers, and the commands of the chat controls,
- * which {@link control} answers as the server's `ChatControl` would. Rendering is not what these tests are about - what a chat element does with the
- * state is `App`'s business, and the regression gate for that is the untouched suites beside this
- * one.
+ * which {@link control} answers as the server's `ChatControl` would. Rendering is not what these
+ * tests are about - what a chat element does with the state is tested by the suites of the
+ * elements.
  */
 
 /** The data URL of the chat elements; what the store reads a transcript from. */
@@ -95,8 +93,6 @@ const SESSION_DATA = 'key=session%2F'
 /** Every stream the store attached, in the order it attached them. */
 let streams: FakeStream[] = []
 
-/** The layouts the store saved (`saveLayout`), in order. */
-let preferenceWrites: unknown[] = []
 
 /** The text of every send, in order - what the model would actually receive. */
 let sentTexts: string[] = []
@@ -171,10 +167,6 @@ function control(conversation = 'chat'): ChatCommand {
       const frame = runStateFrame?.()
       return { success: true, [FIELD_OPENED]: !refuseOpen, ...(frame ? { [FIELD_RUN_STATE]: frame } : {}) }
     }
-    if (name === CMD_SAVE_LAYOUT) {
-      preferenceWrites.push(args?.[ARG_LAYOUT])
-      return { success: true }
-    }
     if (name === CMD_CANCEL) {
       cancelBodies.push({ ...(args ?? {}) })
       return { success: true, [FIELD_CANCELLED]: true }
@@ -242,13 +234,6 @@ const BOOT: ChatBootstrap = {
   welcomeName: 'Sandra',
   language: 'de',
   traceMode: 'summary',
-  layoutKey: '',
-  railOpen: null,
-  railOpenDefault: false,
-  paneWidth: 0,
-  paneWidthDefault: 0,
-  badgeSeen: {},
-  sectionChoices: {},
   autoApprove: false,
 }
 
@@ -261,7 +246,6 @@ async function settle(): Promise<void> {
 
 beforeEach(() => {
   streams = []
-  preferenceWrites = []
   sentTexts = []
   sentBodies = []
   turnCommands = []
@@ -389,17 +373,17 @@ describe('one store per chat id', () => {
 
   /**
    * The elements of one chat are all built in the same commit, before any of them subscribes. The
-   * second one must get the store the first one built - otherwise a `<chat-rail/>` beside a
+   * second one must get the store the first one built - otherwise a `<chat-dock/>` beside a
    * `<chat-conversation/>` on one `chat-id` keeps a store of its own, and the two show different
    * conversations with a stream each.
    */
   it('gives two elements built before either subscribes the same store', async () => {
     const conversation = chatStore('alpha', BOOT)
-    const rail = chatStore('alpha', BOOT)
-    expect(rail).toBe(conversation)
+    const dock = chatStore('alpha', BOOT)
+    expect(dock).toBe(conversation)
 
     const releaseConversation = conversation.subscribe(() => undefined, control(), DATA_URL)
-    const releaseRail = rail.subscribe(() => undefined, control(), DATA_URL)
+    const releaseDock = dock.subscribe(() => undefined, control(), DATA_URL)
     conversation.attach(BOOT)
     await settle()
 
@@ -407,37 +391,19 @@ describe('one store per chat id', () => {
     expect(liveChatCount()).toBe(1)
 
     releaseConversation()
-    releaseRail()
-  })
-
-  /** A rail built in that same commit reaches the transcript's store, not one beside it. */
-  it('lets a rail built before the transcript subscribed announce itself to it', () => {
-    const conversation = chatStore('alpha', BOOT)
-    const rail = chatStore('alpha', BOOT)
-    const releaseConversation = conversation.subscribe(() => undefined, control(), DATA_URL)
-    const releaseRail = rail.subscribe(() => undefined, control(), DATA_URL)
-
-    const unregister = rail.actions.registerRail()
-    expect(conversation.getState().railMounted).toBe(true)
-
-    unregister()
-    expect(conversation.getState().railMounted).toBe(false)
-
-    releaseConversation()
-    releaseRail()
+    releaseDock()
   })
 
   /**
    * The reason a chat with no `chat-id` keys its store by the control id rather than by a fixed
    * name.
    *
-   * Consulting's `CopilotRegistry` keeps a *list* of live panels, so one window can show two
-   * copilots. Two `App`s that fell back to one key would answer each other's questions into one
-   * transcript - silently, and only for the host that has two.
+   * One window can show two conversations. Two elements that fell back to one key would answer each
+   * other's questions into one transcript - silently, and only for the host that has two.
    */
-  it('testTwoAppsInOneWindowDoNotShareATranscript', async () => {
-    const left = chatIdOf({}, 'copilot-left')
-    const right = chatIdOf({}, 'copilot-right')
+  it('gives two conversations in one window two transcripts', async () => {
+    const left = chatIdOf({}, 'chat-left')
+    const right = chatIdOf({}, 'chat-right')
     expect(left).not.toBe(right)
     expect([left, right]).not.toContain('default')
 
@@ -489,8 +455,8 @@ describe('one store per chat id', () => {
   })
 
   /**
-   * {@code TLChatConversation} and {@code App} both call {@code useChat(chatId, boot)}. Two
-   * subscribers on one id are two elements on one conversation: one stream, one session list.
+   * Every chat element calls {@code useChat(chatId, boot)}. Two subscribers on one id are two
+   * elements on one conversation: one stream, one session list.
    */
   it('two elements on one chat-id see the same session list', async () => {
     const sessions = chatStore('main', BOOT)
@@ -547,8 +513,7 @@ describe('the transcript', () => {
 })
 
 /**
- * Pietro's own turn counter, copied from
- * `Consulting@crew/pietro-adopt-chat:ui-modules/src/modules/consulting-chat.tsx`.
+ * A host's own turn counter, as an application built on the chat writes one.
  *
  * It is the reason this matters: the host does not read the transcript for display, it counts it,
  * and an extra message shifts every number it writes into the prompt.
@@ -566,10 +531,9 @@ describe('the host\'s context prefix', () => {
    * The prefix describes the conversation the message is being added to, not the one it is already
    * in.
    *
-   * `App` got this for free: it handed `contextTag` a ref assigned during render, and a `useReducer`
-   * dispatch in the same handler cannot have updated it. The store's dispatch *does* update its
-   * state at once, so composing the outbound text after it handed the host the outgoing message -
-   * and Pietro, which counts user messages, wrote turn 2 into the first message of a fresh chat.
+   * The store's dispatch updates its state at once, so composing the outbound text after it would
+   * hand the host the outgoing message - and a host that counts user messages would write turn 2
+   * into the first message of a fresh chat.
    */
   it('contextTag sees the transcript without the outgoing message', async () => {
     const fresh = chatStore('alpha', BOOT)
@@ -1547,186 +1511,12 @@ describe('the stream', () => {
   })
 })
 
-describe('the layout preferences', () => {
-  /**
-   * E.4: exactly one writer, and one write per change.
-   *
-   * Opening the rail on a section is three changes at once - the pane closes, the rail opens, the
-   * badges count as seen. React batched those into the single effect run that produced one `PUT`;
-   * the store has to batch them too, or several elements on one chat would hammer one
-   * `PersonalConfiguration` key.
-   */
-  it('writes once for a handler that changes three of them', async () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    store.attach(BOOT)
-    await settle()
-    // Booting writes nothing: the bootstrap IS what the server holds.
-    expect(preferenceWrites).toHaveLength(0)
-
-    store.actions.showSection('progress', { progress: 4 })
-    await settle()
-
-    expect(preferenceWrites).toHaveLength(1)
-    expect(preferenceWrites[0]).toEqual({
-      railOpen: true,
-      paneWidth: 0,
-      badgeSeen: { progress: 4 },
-      // Opening the rail on a section expands that section, and that is a decision too.
-      sections: { progress: true },
-    })
-
-    release()
-  })
-
-  /**
-   * A reload must not persist what the page started with.
-   *
-   * The engine re-renders the control tree the window already holds, so before #423 a reloaded page
-   * booted from the first render's layout and its own bootstrap write made that stale value the
-   * stored one - the user's choice was overwritten by the page that was supposed to restore it.
-   */
-  it('does not write back the layout it booted with', async () => {
-    const store = chatStore('alpha', { ...BOOT, railOpen: true, paneWidth: 480, badgeSeen: { progress: 3 } })
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    store.attach({ ...BOOT, railOpen: true, paneWidth: 480, badgeSeen: { progress: 3 } })
-    await settle()
-
-    expect(preferenceWrites).toHaveLength(0)
-    expect(store.getState().sideOpen).toBe(true)
-
-    release()
-  })
-
-  it('does not write for a session that is not signed in', async () => {
-    const store = chatStore('alpha', { ...BOOT, authenticated: false })
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    store.attach({ ...BOOT, authenticated: false })
-    await settle()
-
-    expect(preferenceWrites).toHaveLength(0)
-    // Nor does such a session open a stream: one the server refuses is asked for again for as long
-    // as the page is open.
-    expect(streams).toHaveLength(0)
-
-    release()
-  })
-})
-
-describe('a mounted rail', () => {
-  /**
-   * The transcript's badge button is derived from this flag, so the flag is what decides whether a
-   * page without a `<chat-rail/>` shows a button that toggles nothing.
-   */
-  it('is not announced until a rail registers, and is withdrawn when it leaves', () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    expect(store.getState().railMounted).toBe(false)
-
-    const unregister = store.actions.registerRail()
-    expect(store.getState().railMounted).toBe(true)
-
-    unregister()
-    expect(store.getState().railMounted).toBe(false)
-
-    release()
-  })
-
-  /** A rail that mounts after the conversation must still flip the flag, so subscribers re-render. */
-  it('notifies the subscribers already listening', () => {
-    const store = chatStore('alpha', BOOT)
-    let notifications = 0
-    const release = store.subscribe(() => {
-      notifications += 1
-    })
-
-    const unregister = store.actions.registerRail()
-    expect(notifications).toBe(1)
-    expect(store.getState().railMounted).toBe(true)
-
-    unregister()
-    release()
-  })
-
-  /** Counted, not flagged: a remount during development leaves the flag set once, not stuck off. */
-  it('stays announced while a second rail is still mounted', () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-
-    const first = store.actions.registerRail()
-    const second = store.actions.registerRail()
-    first()
-    expect(store.getState().railMounted).toBe(true)
-
-    second()
-    expect(store.getState().railMounted).toBe(false)
-
-    release()
-  })
-
-  /**
-   * The chat quiescing between the two halves must not leave the count below zero.
-   *
-   * A store whose last element left is put back as declared and can be handed new subscribers, and
-   * the rail's own unregister still runs somewhere in that teardown. A count that went negative
-   * there would answer "no rail" to the next rail that mounts.
-   */
-  it('survives a quiesce between a rail registering and unregistering', () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    const unregister = store.actions.registerRail()
-
-    release()
-    unregister()
-
-    const again = store.subscribe(() => undefined, control(), DATA_URL)
-    store.actions.registerRail()
-    expect(store.getState().railMounted).toBe(true)
-
-    again()
-  })
-
-  /**
-   * The badge the transcript's toggle shows comes from the rail's sections, and opening the rail
-   * records what each of them counts.
-   *
-   * Passing nothing would reset `badgeSeen` in the user's preferences on every open, so the next
-   * unseen count was measured against nothing.
-   */
-  it('publishes the section badges the toggle shows and records', () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    store.actions.registerRail()
-
-    const rail = {
-      progress: { count: 3, role: 'error', dot: false },
-      marked: { count: 0, role: 'info', dot: true },
-    } as const
-    store.actions.publishRailBadge(rail)
-    expect(store.getState().railBadge).toEqual(rail)
-    expect(unseenRailBadge(store.getState().railBadge, store.getState().badgeSeen, 'New')).toEqual({
-      content: '3',
-      role: 'error',
-      label: 'New',
-    })
-
-    store.actions.toggleSide(seenCounts(store.getState().railBadge))
-    expect(store.getState().sideOpen).toBe(true)
-    expect(store.getState().badgeSeen).toEqual({ progress: 3 })
-    expect(unseenRailBadge(store.getState().railBadge, store.getState().badgeSeen, 'New')).toEqual({
-      dot: true,
-      role: 'info',
-      label: 'New',
-    })
-
-    release()
-  })
-
+describe('the conversations of a chat', () => {
   /**
    * The dock asks this before it shows itself at all.
    *
    * A dock offering a second view of the conversation the page already shows would give one draft
-   * channel two composers and one remembered layout two rails. Its own nested conversation must not
+   * channel two composers. Its own nested conversation must not
    * be what makes it hide, which is what `insideDock` says.
    */
   it('counts the conversations mounted outside a dock, and only those', () => {
@@ -1742,160 +1532,10 @@ describe('a mounted rail', () => {
 
     onPage()
     expect(store.getState().conversationsOutsideDock).toBe(0)
-    // Idempotent, like the rail's: a second release must not count below zero.
+    // Idempotent: a second release must not count below zero.
     onPage()
     inDock()
     expect(store.getState().conversationsOutsideDock).toBe(0)
-
-    release()
-  })
-
-  /**
-   * A `<chat-dock/>` is the user looking without the user opening the rail.
-   *
-   * The dock's launcher carries the same unseen count the transcript's rail button does, so opening
-   * it has to move the same watermark - but only that: it does not open the rail, and `toggleSide`
-   * would. To the total as it stands, never to zero, or the next thing a section reports would be
-   * measured against nothing.
-   */
-  it('records what has been seen without touching the rail', () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    store.actions.registerRail()
-    store.actions.publishRailBadge({ progress: { count: 4, role: 'brand', dot: false } })
-
-    store.actions.markBadgesSeen(seenCounts(store.getState().railBadge))
-    expect(store.getState().badgeSeen).toEqual({ progress: 4 })
-    expect(unseenRailBadge(store.getState().railBadge, store.getState().badgeSeen, 'New')).toBeNull()
-    expect(store.getState().sideOpen).toBe(false)
-    expect(store.getState().railDecided).toBe(false)
-
-    release()
-  })
-
-  /** Nothing to count once the rail is gone: a stale number on the button would open nothing. */
-  it('drops the badge total when the last rail leaves', () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-
-    const unregister = store.actions.registerRail()
-    store.actions.publishRailBadge({ progress: { count: 2, role: 'brand', dot: false } })
-    unregister()
-
-    expect(store.getState().railBadge).toEqual({})
-    release()
-  })
-
-  /**
-   * The rail states its own default, because a rail nobody has ever opened would otherwise show a
-   * standalone page nothing at all. Only the user's own toggle overrules it - and then for good.
-   */
-  it('applies the configured open default until the user decides', () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    expect(store.getState().sideOpen).toBe(false)
-
-    store.actions.applyRailDefault(true)
-    expect(store.getState().sideOpen).toBe(true)
-
-    // The user's own toggle wins: a remount, or a second rail, re-states the default and is ignored.
-    store.actions.toggleSide({})
-    expect(store.getState().sideOpen).toBe(false)
-    store.actions.applyRailDefault(true)
-    expect(store.getState().sideOpen).toBe(false)
-
-    release()
-  })
-
-  /** A rail the user closed stays closed on the next page load, configured default or not. */
-  it('lets the stored rail state overrule the configured default', () => {
-    const store = chatStore('alpha', { ...BOOT, railOpen: false, railOpenDefault: true })
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-
-    expect(store.getState().sideOpen).toBe(false)
-    store.actions.applyRailDefault(true)
-    expect(store.getState().sideOpen).toBe(false)
-
-    release()
-  })
-
-  /**
-   * Collapsing is remembered per section name.
-   *
-   * A section the user never touched follows its configured `open` flag, so adding a section to a
-   * rail gives it its configured state even for a user who arranged the others long ago.
-   */
-  it('lets a stored section choice overrule the configured default, per name', () => {
-    const store = chatStore('alpha', {
-      ...BOOT,
-      collapsedSections: ['context'],
-      sectionChoices: { context: true, progress: false },
-    })
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-
-    // context: configured collapsed, expanded by the user. progress: configured open, collapsed.
-    expect(store.getState().collapsedSections).toEqual(['progress'])
-
-    // A rail re-stating its defaults changes nothing the user decided, and adds what is new.
-    store.actions.applyCollapsedDefaults(['context', 'sources'])
-    expect(new Set(store.getState().collapsedSections)).toEqual(new Set(['sources', 'progress']))
-
-    release()
-  })
-
-  /** Toggling a section is a decision, and decisions are what gets stored. */
-  it('records a section toggle as the user choice', async () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    store.attach(BOOT)
-    await settle()
-
-    store.actions.toggleSection('progress')
-    await settle()
-
-    expect(store.getState().collapsedSections).toContain('progress')
-    expect(preferenceWrites).toHaveLength(1)
-    expect(preferenceWrites[0]).toEqual({
-      paneWidth: 0,
-      badgeSeen: {},
-      sections: { progress: false },
-    })
-
-    release()
-  })
-
-  /**
-   * The preference stores whole pixels and the server refuses a fraction, which a splitter's
-   * pointer produces (#588): what the store writes is the rounded width.
-   */
-  it('stores a pane width as whole pixels', async () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    store.attach(BOOT)
-    await settle()
-
-    store.actions.setPaneWidth(422.70001220703125)
-    await settle()
-
-    expect(store.getState().paneWidth).toBe(423)
-    expect(preferenceWrites).toHaveLength(1)
-    expect(preferenceWrites[0]).toMatchObject({ paneWidth: 423 })
-
-    release()
-  })
-
-  /** An unregister that runs twice must not push the count below zero. */
-  it('ignores a repeated unregister', () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-
-    const unregister = store.actions.registerRail()
-    unregister()
-    unregister()
-    expect(store.getState().railMounted).toBe(false)
-
-    store.actions.registerRail()
-    expect(store.getState().railMounted).toBe(true)
 
     release()
   })
@@ -1909,10 +1549,6 @@ describe('the bootstrap', () => {
         welcomeName: 'Sandra',
         language: 'de-DE',
         traceMode: 'detailed',
-        railOpen: true,
-        paneWidth: 480,
-        badgeSeen: { progress: 3 },
-        sectionChoices: { progress: false },
         approvalMode: 'AUTO_APPROVE',
       }),
     ).toEqual({
@@ -1921,25 +1557,8 @@ describe('the bootstrap', () => {
       welcomeName: 'Sandra',
       language: 'de',
       traceMode: 'detailed',
-      layoutKey: '',
-      railOpen: true,
-      railOpenDefault: false,
-      paneWidth: 480,
-      paneWidthDefault: 0,
-      badgeSeen: { progress: 3 },
-      sectionChoices: { progress: false },
       autoApprove: true,
-      collapsedSections: undefined,
     })
-  })
-
-  /** Seen counts are kept per section; a seen value of another form is nothing seen. */
-  it('reads the seen counts per section and ignores a single number', () => {
-    expect(readBootstrap({ badgeSeen: { progress: 3, sources: 100, bad: 'x', gone: -1 } }).badgeSeen).toEqual({
-      progress: 3,
-      sources: 100,
-    })
-    expect(readBootstrap({ badgeSeen: 13 }).badgeSeen).toEqual({})
   })
 
   it('falls back to a readable chat when the state says nothing', () => {
@@ -1949,31 +1568,16 @@ describe('the bootstrap', () => {
       welcomeName: '',
       language: 'en',
       traceMode: 'summary',
-      layoutKey: '',
-      railOpen: null,
-      railOpenDefault: false,
-      paneWidth: 0,
-      paneWidthDefault: 0,
-      badgeSeen: {},
-      sectionChoices: {},
       autoApprove: false,
-      collapsedSections: undefined,
     })
   })
 
   /** The element's configured default is what a user who never chose starts with. */
-  it('seeds the chat with the configured trace mode and the stored layout', () => {
-    const store = chatStore('alpha', {
-      ...BOOT,
-      traceMode: 'detailed',
-      railOpen: true,
-      paneWidth: 480,
-    })
+  it('seeds the chat with the configured trace mode', () => {
+    const store = chatStore('alpha', { ...BOOT, traceMode: 'detailed' })
     const release = store.subscribe(() => undefined, control(), DATA_URL)
 
     expect(store.getState().traceMode).toBe('detailed')
-    expect(store.getState().sideOpen).toBe(true)
-    expect(store.getState().paneWidth).toBe(480)
 
     release()
   })
@@ -2755,39 +2359,15 @@ describe('a draft per chat', () => {
  * conversation.
  */
 describe('every request names its conversation', () => {
-  it('sends the layout and attaches through a control of its own conversation', async () => {
+  it('attaches through a control of its own conversation', async () => {
     const store = chatStore('belege', BOOT)
     const release = store.subscribe(() => undefined, control('belege'), DATA_URL)
     store.attach(BOOT)
     await settle()
-    store.actions.toggleSide({})
-    await settle()
 
     expect(streams[0].conversation).toBe('belege')
-    const layouts = commands.filter((item) => item.name === CMD_SAVE_LAYOUT)
-    expect(layouts).toHaveLength(1)
     expect(commands.every((item) => item.conversation === 'belege')).toBe(true)
     expect(requested.filter((url) => url.includes('/chat/'))).toEqual([])
-
-    release()
-  })
-
-  /**
-   * The layout key and the conversation are two different keys: the layout key is where the layout
-   * is stored, the conversation is the chat of the window whose control the command goes to.
-   */
-  it('keeps the layout key apart from the conversation', async () => {
-    const boot = { ...BOOT, layoutKey: '' }
-    const store = chatStore('v42', boot)
-    const release = store.subscribe(() => undefined, control('v42'), DATA_URL)
-    store.attach(boot)
-    await settle()
-    store.actions.toggleSide({})
-    await settle()
-
-    const layout = commands.find((item) => item.name === CMD_SAVE_LAYOUT)
-    expect(layout?.conversation).toBe('v42')
-    expect(layout?.args[ARG_LAYOUT_KEY]).toBe('')
 
     release()
   })

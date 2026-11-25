@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Rail badges: a <chat-rail> whose sections carry badges, beside a conversation of its own.
+	Rail badges: a <side-rail> whose sections carry badges, beside a conversation of its own.
 	
 	Each section of the rail declares its badge like any other element carrying one (badge,
 	badge-role, badge-label): the badge stands beside the section's title and on its strip icon. The
-	rail button in the header of the conversation shows what the sections count together since the
-	user last opened the rail, in the most urgent role among the counting sections, and a dot when no
-	count is new but a section shows one.
+	rail writes what the sections count beyond what the user has seen of them to its badge-channel -
+	a section counts as seen while it is expanded in the open rail, so a collapsed section counts
+	also while the rail is open - and the rail button in the head of the conversation, a command
+	toggling the open-channel of the rail, shows that number as its badge.
 	
 	- Events counts the events of the demo, in the role of the brand. "New event" in the panel
 	creates one, the delete command of a row in the section removes one.
@@ -18,8 +19,8 @@
 	for a screen reader. A dot adds nothing to the sum.
 	- Notes has no badge and contributes nothing.
 	
-	The conversation and the rail join a chat of their own, so this page neither shares the layout of
-	the rail on the Chat page nor feeds the badge of the dock.
+	The conversation and the rail join a chat of their own, and the rail has a state of its own, so
+	this page neither shares the rail of the Chat page nor feeds the badge of the dock.
 -->
 <view>
 	<channels>
@@ -28,6 +29,8 @@
 		<channel name="trialCount"/>
 		<channel name="marked"/>
 		<channel name="selectedEvent"/>
+		<channel name="railOpen"/>
+		<channel name="railBadge"/>
 	</channels>
 
 	<chat
@@ -73,8 +76,8 @@
 				<stack gap="default">
 					<text>
 						<label>
-							<en>The sections of the rail on the right count the events and the venues of the demo. Create an event with "New event" or delete one in the section "Events", and its badge follows - as does the rail button in the header of the conversation while the rail is closed, which counts what is new since you last opened the rail. Enter a number to try the rules of a badge: 0 shows no badge, a number above 99 shows "99+". The checkbox marks the section "Marked" with a dot.</en>
-							<de>Die Abschnitte der Leiste rechts zählen die Veranstaltungen und die Veranstaltungsorte der Demo. Legen Sie mit „Neue Veranstaltung“ eine Veranstaltung an oder löschen Sie eine im Abschnitt „Veranstaltungen“, und dessen Badge folgt - wie auch die Leisten-Schaltfläche im Kopf der Unterhaltung, solange die Leiste geschlossen ist; sie zählt, was seit dem letzten Öffnen der Leiste neu ist. Geben Sie eine Zahl ein, um die Regeln eines Badges auszuprobieren: 0 zeigt kein Badge, eine Zahl über 99 zeigt „99+“. Das Kontrollkästchen markiert den Abschnitt „Markiert“ mit einem Punkt.</de>
+							<en>The sections of the rail on the right count the events and the venues of the demo. Create an event with "New event" or delete one in the section "Events", and its badge follows. The rail button in the head of the conversation shows how much the sections count beyond what you have seen of them: a section counts as seen while it is expanded in the open rail, so a collapsed section counts as new also while the rail is open. Enter a number to try the rules of a badge: 0 shows no badge, a number above 99 shows "99+". The checkbox marks the section "Marked" with a dot, which adds nothing to the count of the button.</en>
+							<de>Die Abschnitte der Leiste rechts zählen die Veranstaltungen und die Veranstaltungsorte der Demo. Legen Sie mit „Neue Veranstaltung“ eine Veranstaltung an oder löschen Sie eine im Abschnitt „Veranstaltungen“, und dessen Badge folgt. Die Leisten-Schaltfläche im Kopf der Unterhaltung zeigt, wie viel die Abschnitte über das hinaus zählen, was Sie von ihnen gesehen haben: Ein Abschnitt gilt als gesehen, solange er in der offenen Leiste aufgeklappt ist, ein zugeklappter Abschnitt zählt also auch bei offener Leiste als neu. Geben Sie eine Zahl ein, um die Regeln eines Badges auszuprobieren: 0 zeigt kein Badge, eine Zahl über 99 zeigt „99+“. Das Kontrollkästchen markiert den Abschnitt „Markiert“ mit einem Punkt, der nicht in die Zahl der Schaltfläche eingeht.</de>
 						</label>
 					</text>
 					<value-input
@@ -98,13 +101,38 @@
 				</stack>
 			</panel>
 
-			<!-- The panel bounds the conversation's height; its header carries the rail button. -->
+			<!-- The panel bounds the conversation's height; the head of the transcript carries the rail button. -->
 			<panel fill="true">
-				<chat-conversation/>
+				<chat-conversation>
+					<commands>
+						<generic-command
+							active-expr="$railOpen"
+							badge="railBadge"
+							image="css:bi bi-layout-sidebar-reverse"
+							inputs="railOpen"
+						>
+							<label>
+								<en>Side rail</en>
+								<de>Seitenleiste</de>
+							</label>
+							<execute-script function="!$railOpen">
+								<with-result>
+									<write-channel name="railOpen"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+					</commands>
+				</chat-conversation>
 			</panel>
 		</stack>
 
-		<chat-rail strip="true">
+		<side-rail
+			badge-channel="railBadge"
+			drawer-below="70"
+			open-channel="railOpen"
+			side="right"
+			width="300"
+		>
 			<section name="events"
 				badge="eventCount"
 				icon="css:bi bi-calendar-event"
@@ -115,7 +143,6 @@
 					<de>Veranstaltungen</de>
 				</label>
 				<data-list
-					collapsible="false"
 					count="eventCount"
 					observed-types="demo.events:Event"
 					row-actions="hover"
@@ -166,13 +193,13 @@
 				badge="venueCount"
 				badge-role="warning"
 				icon="css:bi bi-geo-alt"
+				open="false"
 			>
 				<label>
 					<en>Venues</en>
 					<de>Veranstaltungsorte</de>
 				</label>
 				<data-list
-					collapsible="false"
 					count="venueCount"
 					observed-types="demo.events:Venue"
 					search="false"
@@ -191,6 +218,7 @@
 				badge="trialCount"
 				badge-role="error"
 				icon="css:bi bi-123"
+				open="false"
 			>
 				<label>
 					<en>Trial</en>
@@ -207,6 +235,7 @@
 				badge="marked"
 				badge-role="success"
 				icon="css:bi bi-bookmark"
+				open="false"
 			>
 				<label>
 					<en>Marked</en>
@@ -225,6 +254,7 @@
 			</section>
 			<section name="notes"
 				icon="css:bi bi-journal-text"
+				open="false"
 			>
 				<label>
 					<en>Notes</en>
@@ -237,6 +267,6 @@
 					</label>
 				</text>
 			</section>
-		</chat-rail>
+		</side-rail>
 	</chat>
 </view>

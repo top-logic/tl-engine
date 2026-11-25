@@ -540,6 +540,15 @@
 							<de>Liste</de>
 						</label>
 					</nav-item>
+					<nav-item id="data-list-status-demo"
+						icon="css:bi bi-card-checklist"
+					>
+						<view-ref view="demo/data-list-status-demo.view.xml"/>
+						<label>
+							<en>Status list</en>
+							<de>Statusliste</de>
+						</label>
+					</nav-item>
 					<nav-item id="sensor-locking"
 						icon="css:bi bi-lock"
 					>

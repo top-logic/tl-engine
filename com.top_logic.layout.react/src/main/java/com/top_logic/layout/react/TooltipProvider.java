@@ -31,6 +31,12 @@ import com.top_logic.layout.react.servlet.ReactServlet;
  * clipped by its box or hidden altogether, so that a tooltip offers text the user cannot read
  * where it belongs.
  * </p>
+ *
+ * <p>
+ * The client keeps fetched content as long as the state of the control is unchanged. A control
+ * whose tooltip content changes therefore publishes a state change with it, e.g. by putting its
+ * {@code hasTooltip} state again; the next hover then fetches the new content.
+ * </p>
  */
 public interface TooltipProvider {
 

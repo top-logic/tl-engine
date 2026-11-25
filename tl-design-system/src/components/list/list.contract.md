@@ -2,8 +2,8 @@
 
 Eine auswählbare, gruppierbare, durchsuchbare Liste von Objekten im Stil einer Kontakt- oder Nachrichtenliste; Leser
 ist `TLDataList` (das Element `<data-list>`). Jeder Eintrag folgt einer festen Vorlage: vorn ein Avatar oder Icon,
-dann eine oder mehrere Zeilen Text (primär, sekundär), hinten Metadaten oder ein Badge, daneben der Auslöser der
-Befehle des Eintrags. TopLogic garantiert Funktion, Tastatur, Fokus und Ansage, nicht das Aussehen; wer ins Bild
+dann eine oder mehrere Zeilen Text (primär, sekundär), hinten Metadaten, ein Badge oder der Inhalt einer Vorlage der
+Anwendung, daneben der Auslöser der Befehle des Eintrags. TopLogic garantiert Funktion, Tastatur, Fokus und Ansage, nicht das Aussehen; wer ins Bild
 passen will, liest die Tokens.
 
 ## Zustand
@@ -20,6 +20,7 @@ passen will, liest die Tokens.
 | `rows[].trailing` | optional | Was hinten im Eintrag steht; fehlt es, steht nichts: |
 | `rows[].trailing.text` | string | Der Text. |
 | `rows[].trailing.badge` | boolean | Der Text steht als Zähler (Part `Badge`), sonst als Metadaten. |
+| `rows[].trailing.control` | Control, optional | Der Inhalt der Vorlage der Anwendung für den Eintrag, gezeichnet statt des Texts: `tl-list__trailing` steht dann neben `tl-list__main` im `tl-list__item`, nicht im Knopf, weil der Inhalt eigene Bedienelemente haben kann. Ein Klick auf ein solches Element gehört ihm, ein Klick auf den übrigen Inhalt wählt den Eintrag. Die Suche sieht den Inhalt nicht. |
 | `rows[].group` | string, optional | Zwischenüberschrift der Gruppe; Gruppen stehen in der Reihenfolge ihres ersten Eintrags. |
 | `rows[].cssClass` | string, optional | Klassen der Anwendung am Eintrag; sie gehören nicht zum Paket. |
 | `selectedId` | string | Der gewählte Eintrag. |

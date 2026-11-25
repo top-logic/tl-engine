@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<data-list observed-types="tl.model:TLClassifier">
+		<rows><![CDATA[all(`tl.model:TLClassifier`).filter(c -> $c.get(`tl.model:TLNamedPart#name`).stringStartsWith('test-'))
+	.sort(comparator(c -> $c.get(`tl.model:TLNamedPart#name`)))]]></rows>
+		<lines>
+			<line attribute="name"/>
+		</lines>
+		<trailing
+			element-channel="state"
+			value="c -> 'short form'"
+		>
+			<text
+				appearance="pill"
+				input="state as s"
+				tooltip="'State ' + $s.get(`tl.model:TLNamedPart#name`)"
+			/>
+		</trailing>
+	</data-list>
+</view>

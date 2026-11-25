@@ -50,7 +50,7 @@
  */
 import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
-import { isMountedControl } from './tl-react-bridge';
+import { isMountedControl, controlStateSnapshot } from './tl-react-bridge';
 import { getApiBase, getWindowName } from './page-context';
 import { TooltipPopover, TooltipData } from './TooltipPopover';
 import { wrapRoot } from './root-wrapper';
@@ -133,7 +133,23 @@ interface Active {
   fullText?: string;
 }
 
-const _cache = new Map<string, Promise<TooltipData | null>>();
+/**
+ * A tooltip fetched from a control, together with the state of the control it was fetched for.
+ */
+interface CachedTooltip {
+  /** The state of the control when the content was fetched. */
+  state: Record<string, unknown> | undefined;
+  content: Promise<TooltipData | null>;
+}
+
+/**
+ * The tooltips fetched from the server, by control and key.
+ *
+ * <p>An entry holds as long as the state of its control is the one it was fetched for. A control
+ * whose tooltip content changes publishes a state change (see {@code TooltipProvider}), so the next
+ * hover fetches the new content instead of showing the one fetched before.</p>
+ */
+const _cache = new Map<string, CachedTooltip>();
 let _hostDiv: HTMLDivElement | null = null;
 let _root: Root | null = null;
 let _openTimer: number | null = null;
@@ -465,15 +481,8 @@ function resolveSpec(spec: Spec, target: Element): Promise<TooltipData | null> |
       const text = shownText(spec.el);
       return text ? Promise.resolve({ text }) : null;
     }
-    case 'key': {
-      const cacheKey = spec.controlId + '\u0000' + spec.key;
-      let p = _cache.get(cacheKey);
-      if (!p) {
-        p = fetchTooltip(spec.controlId, spec.key);
-        _cache.set(cacheKey, p);
-      }
-      return p;
-    }
+    case 'key':
+      return cachedTooltip(spec.controlId, spec.key);
     case 'dynamic': {
       const detail: TooltipResolveDetail = { target, resolved: null };
       spec.host.dispatchEvent(new CustomEvent('tl-tooltip-resolve', { detail, bubbles: false }));
@@ -482,15 +491,25 @@ function resolveSpec(spec: Spec, target: Element): Promise<TooltipData | null> |
       if ('inline' in r) return Promise.resolve(r.inline);
       const controlId = resolveControlId(spec.host);
       if (!controlId) return null;
-      const cacheKey = controlId + '\u0000' + r.key;
-      let p = _cache.get(cacheKey);
-      if (!p) {
-        p = fetchTooltip(controlId, r.key);
-        _cache.set(cacheKey, p);
-      }
-      return p;
+      return cachedTooltip(controlId, r.key);
     }
   }
+}
+
+/**
+ * The content of the tooltip the given control answers for the given key: the one fetched before,
+ * as long as the state of the control has not changed since, otherwise fetched anew.
+ */
+function cachedTooltip(controlId: string, key: string): Promise<TooltipData | null> {
+  const cacheKey = controlId + '\u0000' + key;
+  const state = controlStateSnapshot(controlId);
+  const cached = _cache.get(cacheKey);
+  if (cached && cached.state === state) {
+    return cached.content;
+  }
+  const content = fetchTooltip(controlId, key);
+  _cache.set(cacheKey, { state, content });
+  return content;
 }
 
 /**

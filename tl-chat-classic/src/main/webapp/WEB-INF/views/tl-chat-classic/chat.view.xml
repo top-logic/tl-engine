@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The chat of the classic "Albert" tab (tl-chat/chat/agent.layout.xml), displayed by
+	The chat of the classic "Albert" tab (tl-chat/chat/agent.xml), displayed by
 	com.top_logic.ai.chat.classic.ReactViewComponent.
 
 	Generic on purpose: the user's chats on the left, the conversation in the middle, the agent's plan

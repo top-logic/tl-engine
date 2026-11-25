@@ -127,7 +127,7 @@ public class UserMemories {
 	 * Each line names its kind, because the three are acted on differently: a preference is
 	 * honoured, a fact is used, a piece of feedback is a correction to apply again. A text is put on
 	 * one line - the block is read line by line, and a second line would read as a memory of its
-	 * own.
+	 * own - and cannot write a tag of the block.
 	 * </p>
 	 *
 	 * @param entries
@@ -156,9 +156,17 @@ public class UserMemories {
 		return heading + "\n" + String.join("\n", lines);
 	}
 
-	/** Collapses every run of whitespace, so one memory occupies exactly one line. */
+	/**
+	 * One memory as exactly one line of the block.
+	 *
+	 * <p>
+	 * The text goes through {@link TurnContext#flatten(String)} first, like a fact value: a memory is
+	 * a value in the same block, and a line terminator or a block tag in it must not add a line to
+	 * the block or close it. Every run of white space is then collapsed.
+	 * </p>
+	 */
 	private static String oneLine(String text) {
-		return text == null ? "" : text.replaceAll("\\s+", " ").strip();
+		return TurnContext.flatten(text).replaceAll("\\s+", " ").strip();
 	}
 
 	/** The resource key naming the given kind to the model. */

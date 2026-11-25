@@ -40,7 +40,7 @@ body { margin: 0; background: var(--tl-surface-base); color: var(--tl-text-prima
 .tl-reorder-list__item.is-hover .tl-reorder-list__actions > .tl-button,
 .tl-reorder-list__item.is-focus .tl-reorder-list__handle,
 .tl-reorder-list__item.is-focus .tl-reorder-list__actions > .tl-button,
-.tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__eye,
+.tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__visibility,
 .tl-reorder-list__item[data-tl-state~="locked"] .tl-reorder-list__lock { opacity: 1; }
 .tl-reorder-list__item.is-hover { background: var(--tl-surface-interactive-hover); }
 .tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__label { color: var(--tl-text-disabled); }
@@ -81,7 +81,7 @@ body { margin: 0; background: var(--tl-surface-base); color: var(--tl-text-prima
         <li class="tl-reorder-list__item is-hover" data-row="Text" data-hover="1"></li>
         <li class="tl-reorder-list__item" data-tl-state="off" data-row="Aliasnamen" data-hidden="1"></li>
         <li class="tl-reorder-list__item" data-row="Status"></li>
-        <li class="tl-reorder-list__item is-focus" data-row="Priorität" data-focus="eye"></li>
+        <li class="tl-reorder-list__item is-focus" data-row="Priorität" data-focus="visibility"></li>
         <li class="tl-reorder-list__item" data-tl-state="off" data-row="Notizen" data-hidden="1"></li>
         <li class="tl-reorder-list__item" data-row="Betrag"></li>
       </ul>
@@ -163,7 +163,7 @@ body { margin: 0; background: var(--tl-surface-base); color: var(--tl-text-prima
       `<span class="tl-reorder-list__actions">` +
         btn(locked ? 'bi-lock-fill' : 'bi-unlock', locked ? `${name} lösen` : `${name} fixieren`, 'tl-reorder-list__lock') +
         btn(hidden ? 'bi-eye-slash' : 'bi-eye', hidden ? `${name} einblenden` : `${name} ausblenden`,
-            'tl-reorder-list__eye' + (li.dataset.focus === 'eye' ? ' mock-ring' : '')) +
+            'tl-reorder-list__visibility' + (li.dataset.focus === 'visibility' ? ' mock-ring' : '')) +
       `</span>`;
   }
 </script>

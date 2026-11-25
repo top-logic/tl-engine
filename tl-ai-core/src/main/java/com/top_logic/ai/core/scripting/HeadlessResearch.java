@@ -62,8 +62,9 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The run is unattended: nobody can answer a question or an approval. {@code askUser} answers at once
  * that nobody is there, and the policy's background allowlist bounds the tools, as for every
- * run with nobody to ask. The account's token and money budget bound it like a chat run; a run the
- * budget refuses records the refusal as its answer, so the owner reads why there is no report.
+ * run whose tool calls nobody approves. The account's token and money budget bound it like a chat
+ * run; a run the budget refuses records the refusal as its answer, so the owner reads why there is
+ * no report.
  * </p>
  *
  * @see AIScriptFunctions#research(String, String, Object)

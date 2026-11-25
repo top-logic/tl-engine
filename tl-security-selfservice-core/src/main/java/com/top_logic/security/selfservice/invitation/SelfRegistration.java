@@ -5,7 +5,9 @@
  */
 package com.top_logic.security.selfservice.invitation;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import com.top_logic.base.mail.MailSenderService;
@@ -17,10 +19,12 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.search.expr.DeleteObject;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.security.captcha.CaptchaService;
@@ -38,8 +42,9 @@ import com.top_logic.util.error.TopLogicException;
  * A visitor {@link #requestCode(String, String, String) requests a verification code} for an
  * e-mail address and {@link #register(String, String, String, char[]) registers} the account
  * after entering the code. Depending on the {@link Config#getMode() mode}, the account can log in
- * right away, or is locked until an administrator {@link #approve(Registration) approves} the
- * registration. Each registration is recorded as a {@link Registration}.
+ * right away, or is locked until an administrator {@link #approve(Registration) approves} or
+ * {@link #reject(Registration) rejects} the registration. Each registration is recorded as a
+ * {@link Registration}.
  * </p>
  *
  * <p>
@@ -505,8 +510,8 @@ public class SelfRegistration {
 	 *         <code>null</code> if no mail is configured.
 	 *
 	 * @throws TopLogicException
-	 *         With {@link I18NConstants#ERROR_REGISTRATION_NOT_PENDING} if the registration is
-	 *         approved already, or with {@link I18NConstants#ERROR_NO_PUBLIC_ADDRESS} if a mail is
+	 *         With {@link I18NConstants#ERROR_REGISTRATION_NOT_PENDING} if the registration is not
+	 *         {@link #isPending(Registration) pending}, or with {@link I18NConstants#ERROR_NO_PUBLIC_ADDRESS} if a mail is
 	 *         configured and the address of the login page cannot be built; nothing is changed
 	 *         then.
 	 */
@@ -536,6 +541,46 @@ public class SelfRegistration {
 		return InvitationModule.inLanguage(language,
 			() -> _approvalMail.execute(registration.getEmail(), InvitationModule.applicationTitle(), loginUrl,
 				text.getSubject(), text.getBody()));
+	}
+
+	/**
+	 * Rejects a pending {@link Registration}: deletes its account together with the user data of
+	 * the account, and with them the registration.
+	 *
+	 * <p>
+	 * The user data is the {@link Person#getUser()} of the account, if it is a persistent object,
+	 * e.g. the contact of the account if the contact module is used; it is deleted also if the
+	 * registration has taken over an existing contact. Afterwards, the address can be registered
+	 * again. No mail is sent.
+	 * </p>
+	 *
+	 * <p>
+	 * Must be called within a transaction, which the caller commits.
+	 * </p>
+	 *
+	 * @param registration
+	 *        The pending registration.
+	 *
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#ERROR_REGISTRATION_NOT_PENDING} if the registration is not
+	 *         {@link #isPending(Registration) pending}, or with
+	 *         {@link com.top_logic.model.search.expr.I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}
+	 *         if the current user may not delete the account (see
+	 *         {@link DeleteObject#checkDeletePermission(TLObject)}); nothing is deleted then.
+	 */
+	public void reject(Registration registration) {
+		if (!isPending(registration)) {
+			throw new TopLogicException(I18NConstants.ERROR_REGISTRATION_NOT_PENDING);
+		}
+		Person account = registration.getAccount();
+		DeleteObject.checkDeletePermission(account);
+
+		List<TLObject> deleted = new ArrayList<>(2);
+		if (account.getUser() instanceof TLObject user && user.tValid()) {
+			deleted.add(user);
+		}
+		deleted.add(account);
+		KBUtils.deleteAll(deleted);
 	}
 
 	/**

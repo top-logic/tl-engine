@@ -138,10 +138,15 @@ class ServletUnitHttpRequest implements HttpServletRequest {
 }
 
     /**
-     * Returns the query string that is contained in the request URL after the path.
+     * Returns the query string that is contained in the request URL after the path, or null if the
+     * URL has none.
      **/
     public String getQueryString() {
-        return _request.getQueryString();
+        try {
+            return _request.getURL().getQuery();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException( "Request with malformed URL: " + e );
+        }
     }
 
 

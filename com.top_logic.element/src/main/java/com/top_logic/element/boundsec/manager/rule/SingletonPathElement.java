@@ -62,6 +62,13 @@ public class SingletonPathElement extends AbstractConfiguredInstance<SingletonPa
 		_module = TLModelUtil.findModule(config.getModule());
 	}
 
+	/**
+	 * The singleton this step leads to, <code>null</code> if it does not exist.
+	 */
+	public TLObject getSingleton() {
+		return singleton();
+	}
+
 	private TLObject singleton() {
 		return _module.getSingleton(getConfig().getSingletonName());
 	}

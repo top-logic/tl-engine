@@ -78,3 +78,19 @@ test('Zahlenspalte: Fokus auf dem Sortierknopf deckt den Trichter in voller Brei
   })()`);
   assert.ok(Math.abs(breite - soll) < 0.5, `Trichter ${breite} px statt ${soll}`);
 });
+
+// Der Pflichtstern (#30383) steht in einer Zahlenspalte vor dem Titel: der Titel endet weiter bündig mit den Ziffern.
+for (const density of ['normal', 'compact'])
+  test(`Zahlenspalte mit Pflichtstern [${density}]: der Stern steht vor dem Titel, der Titel endet bündig mit den Zahlen`, async () => {
+    await browser.goto(origin + '/src/components/table/table.spec.html');
+    const m = await browser.evaluate(`(() => {
+      document.documentElement.dataset.tlDensity = '${density}';
+      const head = [...document.querySelectorAll('#ed-panel .tl-table__header-cell[data-tl-align="end"]')].find((h) => h.querySelector('.tl-table__required'));
+      const cell = document.querySelector('#ed-read .tl-table__cell[data-tl-align="end"] > span');
+      return { stern: head.querySelector('.tl-table__required').getBoundingClientRect().right,
+        titelLinks: head.querySelector('.tl-table__label').getBoundingClientRect().left,
+        titel: head.querySelector('.tl-table__label').getBoundingClientRect().right, zahl: cell.getBoundingClientRect().right };
+    })()`);
+    assert.ok(m.stern <= m.titelLinks + 0.5, 'der Stern steht vor dem Titel');
+    assert.ok(Math.abs(m.titel - m.zahl) < 1, `Titel endet ${(m.zahl - m.titel).toFixed(1)} px vor den Zahlen`);
+  });

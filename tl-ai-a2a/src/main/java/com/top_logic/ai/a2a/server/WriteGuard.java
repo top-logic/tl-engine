@@ -11,11 +11,13 @@ import com.top_logic.ai.core.security.SecurityContextProxy;
 
 /**
  * The rights of an A2A run of an agent exposed with {@code allow-writes="false"}: those of the
- * account, less every tool that changes the application.
+ * background run, less every tool that changes the application.
  *
  * <p>
- * Reading and asking stay allowed, and so do {@code EXTERNAL} tools (calling another agent), whose
- * change lands in another system. A run the agent delegates to keeps the rule ({@link #copy}).
+ * The guard only narrows. Reading, asking and {@code EXTERNAL} tools (calling another agent), whose
+ * change lands in another system, keep the decision of the wrapped context: the grants of the
+ * account and the {@code <background-allowlist>}. A run the agent delegates to keeps the rule
+ * ({@link #copy}).
  * </p>
  */
 final class WriteGuard extends SecurityContextProxy {

@@ -176,7 +176,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
             image={ICON_ATTACH}
             display={compact ? 'icon-only' : 'icon-label'}
             small={compact}
-            appearance="secondary"
+            appearance={compact ? 'ghost' : 'secondary'}
             disabled={uploading}
             aria-busy={uploading ? true : undefined}
             onClick={handleAddClick}

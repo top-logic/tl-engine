@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useUpload, useTLDataUrl, useI18N, useListReorder, reorderState, rootClassName, stateAttr, useFieldLabelProps, usePart, useFocusTrap, createPortal, ThemeIcon, ICON_ADD, ICON_UPLOAD, ICON_REMOVE, ICON_CLOSE, ICON_HANDLE, ICON_PREVIOUS, ICON_NEXT, ICON_MANAGE_IMAGES } from 'tl-react-bridge';
+import { React, ButtonDefaults, useTLState, useTLCommand, useUpload, useTLDataUrl, useI18N, useListReorder, reorderState, rootClassName, stateAttr, useFieldLabelProps, usePart, useFocusTrap, createPortal, ThemeIcon, ICON_ADD, ICON_UPLOAD, ICON_REMOVE, ICON_CLOSE, ICON_HANDLE, ICON_PREVIOUS, ICON_NEXT, ICON_MANAGE_IMAGES } from 'tl-react-bridge';
 import type { TLCellProps, UploadPart } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
 import { isFull } from './form/valueCount';
@@ -625,14 +625,17 @@ const ImageOverlay: React.FC<ImageOverlayProps> = ({ view, label, labelledBy, cl
       onClick={event => {
         if (event.target === event.currentTarget || event.target === contentRef.current) onClose();
       }}>
-      <div ref={contentRef} className="tl-image-overlay__content">{children}</div>
-      {stepButtons}
-      {counter}
-      {closeLabel && (
-        <span className="tl-image-overlay__close">
-          <Button label={closeLabel} image={ICON_CLOSE} display="icon-only" appearance="secondary" onClick={onClose} />
-        </span>
-      )}
+      {/* An overlay opening from a table row is no row: its buttons are normal ones. */}
+      <ButtonDefaults small={false}>
+        <div ref={contentRef} className="tl-image-overlay__content">{children}</div>
+        {stepButtons}
+        {counter}
+        {closeLabel && (
+          <span className="tl-image-overlay__close">
+            <Button label={closeLabel} image={ICON_CLOSE} display="icon-only" appearance="secondary" onClick={onClose} />
+          </span>
+        )}
+      </ButtonDefaults>
     </div>
   );
 };

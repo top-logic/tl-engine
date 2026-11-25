@@ -34,6 +34,12 @@ import com.top_logic.table.filter.TextFilterState;
  * </p>
  *
  * <p>
+ * A state stored while density, stripes and column lines were still kept per table carries the
+ * entries {@code density}, {@code striped} and {@code columnLines}: they are ignored when reading,
+ * those choices belong to the person now and are no longer part of a table's state.
+ * </p>
+ *
+ * <p>
  * The class is toolkit-neutral: it produces and consumes only standard JSON value types, so a
  * {@code ViewStateStore} can hand the result straight to any JSON-based personalization backend.
  * </p>

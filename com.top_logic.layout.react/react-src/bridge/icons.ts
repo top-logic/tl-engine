@@ -11,11 +11,8 @@
 /** The handle an entry is dragged and moved by (select chip, column selection, value list). */
 export const ICON_HANDLE = 'css:fa-solid fa-grip-vertical';
 
-/** Shows a hidden entry (column selection: the eye of a hidden column). */
-export const ICON_HIDDEN = 'css:fa-solid fa-eye-slash';
-
-/** Hides a shown entry (column selection: the eye of a shown column). */
-export const ICON_VISIBLE = 'css:fa-solid fa-eye';
+/** Hides a shown entry, removes it from what is shown (column selection: the minus of a shown column). */
+export const ICON_MINUS = 'css:fa-solid fa-minus';
 
 /** Releases a frozen entry (column selection: the lock of a frozen column). */
 export const ICON_LOCK = 'css:fa-solid fa-lock';
@@ -71,8 +68,11 @@ export const ICON_SORT_DESC = 'css:fa-solid fa-arrow-down';
 /** A column filter. */
 export const ICON_FILTER = 'css:fa-solid fa-filter';
 
-/** The column selection of a table. */
+/** The gear of a table, opening its view and column selection. */
 export const ICON_COLUMNS = 'css:fa-solid fa-gear';
+
+/** An entry resetting something to how it is defined (the view of a table). */
+export const ICON_RESET = 'css:fa-solid fa-arrow-rotate-left';
 
 /** Saving the current criteria under a name. */
 export const ICON_SAVE = 'css:fa-regular fa-bookmark';

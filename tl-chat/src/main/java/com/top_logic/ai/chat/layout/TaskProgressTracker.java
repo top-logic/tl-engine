@@ -18,6 +18,7 @@ import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.ai.core.agent.approval.ApprovalMode;
@@ -406,8 +407,16 @@ public class TaskProgressTracker {
 	}
 
 	/**
-	 * Sets the active session ID for persistence. Triggers session switching via
-	 * {@link ChatSessionManager}.
+	 * Makes the given session the one this window's chat shows, from outside the browser's own chat
+	 * element - a chat started by a command of the page ({@link ChatStart}), a scheduled run.
+	 *
+	 * <p>
+	 * A switch to another session is announced to the
+	 * {@link ChatSessionManager#addActiveSessionListener(ChatSessionManager.ActiveSessionListener)
+	 * listeners}: the chat elements displaying this window's chat write it onto their selection and
+	 * the browser opens it. A command of the browser's chat element switches with
+	 * {@link #adoptActiveSessionId(String, Person)} instead.
+	 * </p>
 	 *
 	 * @param sessionId
 	 *        The session ID; null to clear.
@@ -416,7 +425,43 @@ public class TaskProgressTracker {
 	 * @return whether the session is now the active one.
 	 */
 	public boolean setActiveSessionId(String sessionId, Person owner) {
-		return _sessionManager.switchSession(sessionId, owner);
+		return _sessionManager.switchSession(sessionId, owner, true);
+	}
+
+	/**
+	 * Makes the given session the one this window's chat shows, for a command of the browser's own
+	 * chat element - a pick from its list, a send, a regenerate.
+	 *
+	 * <p>
+	 * Not announced to the
+	 * {@link ChatSessionManager#addActiveSessionListener(ChatSessionManager.ActiveSessionListener)
+	 * listeners}: the browser has opened the session itself and reports it onto the selection once
+	 * its command is answered. An announcement would reach the browser before that answer - during
+	 * the first send of a new chat, before the browser knows the id of the chat its send created -
+	 * and the browser would open the "other" chat, resetting the conversation in the middle of its
+	 * turn.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The session ID; null to clear.
+	 * @param owner
+	 *        The person acting; the session must be theirs, or nothing is switched.
+	 * @return whether the session is now the active one.
+	 *
+	 * @see #setActiveSessionId(String, Person)
+	 */
+	public boolean adoptActiveSessionId(String sessionId, Person owner) {
+		return _sessionManager.switchSession(sessionId, owner, false);
+	}
+
+	/**
+	 * Registers a listener that is told whenever another session becomes this window's active one by
+	 * {@link #setActiveSessionId(String, Person)}.
+	 *
+	 * @see ChatSessionManager#addActiveSessionListener(ChatSessionManager.ActiveSessionListener)
+	 */
+	public Registration addActiveSessionListener(ChatSessionManager.ActiveSessionListener listener) {
+		return _sessionManager.addActiveSessionListener(listener);
 	}
 
 	/**

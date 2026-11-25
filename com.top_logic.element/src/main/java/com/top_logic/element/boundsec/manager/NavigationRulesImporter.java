@@ -22,6 +22,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
 import com.top_logic.element.boundsec.manager.rule.NavigationRule;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
+import com.top_logic.element.boundsec.manager.rule.RuleHistory;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.util.TLModelUtil;
@@ -98,6 +99,7 @@ public class NavigationRulesImporter {
 				addProblem(ex.getErrorKey());
 			}
 		}
+		RuleHistory history = RuleHistory.resolve(rule, path, false, this::addProblem);
 		if (path.isEmpty()) {
 			path.add(new IdentityPathElement());
 		}
@@ -106,7 +108,9 @@ public class NavigationRulesImporter {
 			// new problems occurred
 			return;
 		}
-		addRule(new NavigationRule(rule.getId(), metaElement, inherit, path));
+		NavigationRule navigationRule = new NavigationRule(rule.getId(), metaElement, inherit, path);
+		navigationRule.initHistory(history);
+		addRule(navigationRule);
 	}
 
 	void addRule(NavigationRule rule) {

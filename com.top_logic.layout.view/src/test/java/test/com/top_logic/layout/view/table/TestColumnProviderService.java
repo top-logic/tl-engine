@@ -50,6 +50,7 @@ import com.top_logic.model.config.annotation.UnorderedEnum;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
@@ -201,7 +202,7 @@ public class TestColumnProviderService extends TestCase {
 		assertEquals("A column whose type is unresolved is shown by its display label, in the label width.",
 			config().getLabelWidth(), column.defaultWidth());
 		assertTrue("The label column text-filters by the display label.",
-			column.filter().get() instanceof TextColumnFilter);
+			column.filter(ColumnFilter.KIND_TEXT).get() instanceof TextColumnFilter);
 	}
 
 	/**

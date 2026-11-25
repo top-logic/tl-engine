@@ -27,14 +27,15 @@ nothing by itself: without an active contribution, both documents name only the 
 ```xml
 <config service-class="com.top_logic.base.discovery.AgentDiscoveryService">
 	<instance
-		display-name="Order Management"
 		summary="Manages customer orders, deliveries and invoices."
 	/>
 </config>
 ```
 
-- `display-name`: the application name shown to agents; defaults to the name of the application
-  from its version information.
+- The application name shown to agents (the heading of `llms.txt` and `host.displayName` of the
+  AI Catalog) is the English application title `tl.title`
+  (`com.top_logic.layout.I18NConstants#APPLICATION_TITLE`), set in the application's resource
+  bundle - the same name users see in the browser tab and on the login page.
 - `summary`: the one-line English summary below the heading of `llms.txt`; left out if not set.
 
 If the service is not running, both paths answer `404`.

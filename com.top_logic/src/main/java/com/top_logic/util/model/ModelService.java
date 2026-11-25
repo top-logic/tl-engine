@@ -371,14 +371,20 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 		}
 		// A flat loop instead of a chain of Modification.andThen(), whose nesting depth would grow
 		// with the number of created objects.
-		return () -> {
+		//
+		// The initializers run without security checks, like the constraints and the change and
+		// lifecycle handlers of the same commit: they are part of the model semantics of the
+		// created type, the right to create the object has been checked before. Run secured, an
+		// initializer would silently see only the objects the committing user may read and would
+		// fail to create or modify technical companion objects the user has no rights on.
+		return () -> ThreadContext.withoutSecurityChecks(() -> {
 			for (int n = 0, cnt = objects.size(); n < cnt; n++) {
 				TLObject object = objects.get(n);
 				for (TLObjectInitializer initializer : initializersByObject.get(n)) {
 					initializer.initializeObject(object);
 				}
 			}
-		};
+		});
 	}
 
 	/**

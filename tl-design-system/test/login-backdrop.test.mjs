@@ -15,6 +15,14 @@ test('Wurzel: Fläche mit Rand, Inhalt mittig', () => {
     'background: var(--tl-surface-base);', 'padding: var(--tl-space-lg);']) has('.tl-login-backdrop', d);
 });
 
+test('schmales Fenster: Inhalt und Karte werden nie breiter als die Wurzel', () => {
+  // Die Karte trägt eine feste Breite (width="420px"); auf dem Handy (375 px) ragte sie rechts hinaus, und die
+  // Wurzel schnitt sie ab. Die Spalte darf unter ihren Inhalt schrumpfen, Inhalt und seine Kinder folgen ihr.
+  has('.tl-login-backdrop', 'grid-template-columns: minmax(0, 1fr);');
+  has('.tl-login-backdrop__content', 'max-width: 100%;');
+  has('.tl-login-backdrop__content > *', 'max-width: 100%;');
+});
+
 test('Wurzel verborgen: display none (hidden.test)', () => {
   has('.tl-login-backdrop[hidden]', 'display: none;');
 });

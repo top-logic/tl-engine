@@ -30,7 +30,8 @@ public enum RunEntryPoint {
 
 	/**
 	 * A request of another agent over the A2A endpoint ({@code tl-ai-a2a}), with a credential of its
-	 * own. The calling agent answers what the run asks, so such a run is not a background run.
+	 * own. The calling agent answers what the run asks, but it approves no tool call, so such a run
+	 * is a background run.
 	 */
 	A2A,
 

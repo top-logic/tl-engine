@@ -1,5 +1,5 @@
 import {
-  React, useTLState, TLChild, FillBarrier, rootClassName, SurfaceProvider, useSurface, cardSurfaceClass, paintedLevel,
+  React, useTLState, TLChild, FillBarrier, rootClassName, SurfaceProvider, useSurface, cardSurfaceClass, paintedLevel, ButtonDefaults,
 } from 'tl-react-bridge';
 import type { TLCellProps, CardStateJson, ChildControlJson, Surface } from 'tl-react-bridge';
 
@@ -33,9 +33,11 @@ const TLCard: React.FC<TLCellProps> = ({ controlId }) => {
           {title && <h2 className="tl-titlebar__title tl-type-heading-sm">{title}</h2>}
           {headerActions.length > 0 && (
             <div className="tl-titlebar__actions">
-              {headerActions.map((action, i) => (
-                <TLChild key={i} control={action} />
-              ))}
+              <ButtonDefaults appearance="ghost" small>
+                {headerActions.map((action, i) => (
+                  <TLChild key={i} control={action} />
+                ))}
+              </ButtonDefaults>
             </div>
           )}
         </div>

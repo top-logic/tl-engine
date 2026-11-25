@@ -40,6 +40,8 @@ import com.top_logic.tool.boundsec.wrap.RoleNameMapping;
 	RoleRuleConfig.XML_ATTRIBUTE_SOURCE_META_ELEMENT,
 	RoleRuleConfig.XML_ATTRIBUTE_SOURCE_ROLE,
 	RoleRuleConfig.XML_ATTRIBUTE_RESOURCE_KEY,
+	NavigationRuleConfig.HISTORY,
+	NavigationRuleConfig.ANCHORS,
 	RoleRuleConfig.XML_TAG_PATH_ELEMENT,
 })
 public interface RoleRuleConfig extends NavigationRuleConfig {

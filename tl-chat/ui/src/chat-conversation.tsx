@@ -139,6 +139,24 @@ export function readPromptCards(raw: unknown): PromptCard[] {
 }
 
 /**
+ * State entry of a `<chat-conversation/>` control: whether the conversation shown may only be read.
+ * Must match `ChatConversationControl.STATE_READ_ONLY`.
+ */
+export const STATE_READ_ONLY = 'readOnly'
+
+/**
+ * Whether the conversation is shown read-only: the server says the account may not change the chat
+ * shown ({@link STATE_READ_ONLY}), and a chat is shown at all.
+ *
+ * A new conversation is never read-only - it has no chat yet that could be refused. Asking for the
+ * open chat as well keeps a store that has just left a read-only chat for a new one from hiding the
+ * composer until the server has heard of the switch.
+ */
+export function readOnlyConversation(state: Record<string, unknown>, sessionId: string | null | undefined): boolean {
+  return state[STATE_READ_ONLY] === true && Boolean(sessionId)
+}
+
+/**
  * Whether the cards are shown right now: on a new chat, and nowhere else.
  *
  * Two conditions, and both are load-bearing. `sessionId` is what "new chat" means - nothing is
@@ -177,12 +195,10 @@ export function channelName(raw: unknown): string | undefined {
  * - `keep`: an empty channel that has always been empty; there is nothing to follow.
  */
 function followSelection(
-  hasInput: boolean,
   selected: string,
   wasSelected: string,
   corrected: boolean,
 ): 'select' | 'new' | 'keep' {
-  if (!hasInput) return 'keep'
   if (selected) return 'select'
   return wasSelected || corrected ? 'new' : 'keep'
 }
@@ -300,7 +316,6 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   )
   const selected = typeof state.selected === 'string' ? state.selected : ''
   const corrections = typeof state.selectedCorrections === 'number' ? state.selectedCorrections : 0
-  const hasInput = state.hasInput === true
   const placeholder = typeof state.placeholder === 'string' ? state.placeholder : ''
   // Keyed on the string, not on the state: a fresh form object on every state change would
   // re-render the memoised transcript for nothing.
@@ -353,12 +368,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // the other one: the transcript switched between two conversations every few milliseconds, for as
   // long as the page was open (#576).
   //
-  // Where a channel is wired it is the whole of the selection, so the tab's remembered chat is not
-  // restored over it: an empty channel means a fresh conversation here, not "whatever this tab had
-  // on the page before" (#577).
-  useEffect(() => {
-    if (hasInput) actions.followChannel()
-  }, [hasInput, actions])
+  // The channel is the whole of the selection - the configured one, or the element's own on the
+  // server, which keeps the open chat over a reload of the page. A chat the window switched to on
+  // the server, one a command of the page started, arrives the same way.
 
   const prevSelected = useRef(selected)
   const prevCorrections = useRef(corrections)
@@ -367,13 +379,13 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     const corrected = prevCorrections.current !== corrections
     prevSelected.current = selected
     prevCorrections.current = corrections
-    const follow = followSelection(hasInput, selected, wasSelected, corrected)
+    const follow = followSelection(selected, wasSelected, corrected)
     if (follow === 'select') void actions.selectSession(selected)
     else if (follow === 'new') actions.newChat()
-  }, [hasInput, selected, corrections, actions])
+  }, [selected, corrections, actions])
 
   // Write-back: publish the store's own session onto the channel (two-way), so a session list
-  // highlights it after the store creates one on first send or restores one on reload.
+  // highlights it after the store creates one on first send or the user opens one from the rail.
   //
   // It starts from "no chat" rather than from nothing. An element mounts with an empty store while
   // the chat its channel names is still loading, and reporting that emptiness cleared the channel
@@ -382,12 +394,11 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // is only sent after a chat was reported.
   const published = useRef<string | null>('')
   useEffect(() => {
-    if (!hasInput) return
     const id = chat.sessionId ?? ''
     if (published.current === id) return
     published.current = id
     void command('publishSession', { id }, BACKGROUND_COMMAND)
-  }, [hasInput, chat.sessionId, command])
+  }, [chat.sessionId, command])
 
   // The reports of the store's state to the channels (the session, the busy state, the turn
   // settings, the draft) run in the background: the user does not wait for them.
@@ -544,6 +555,12 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     [actions],
   )
 
+  // A chat the account may read but not change: the transcript stays, with copying, and everything
+  // that would change the chat goes - the composer with its attachments, the approval and question
+  // cards and the stop button, editing, regenerating, rating, and writing to or stopping a subagent.
+  // The server refuses all of these anyway; not offering them is what tells the reader why.
+  const readOnly = readOnlyConversation(state, chat.sessionId)
+
   if (!chat.authenticated) {
     return (
       <div id={controlId} className={rootClassName(state, 'tl-chat-conversation', 'is-signed-out')}>
@@ -577,9 +594,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           title={chat.sessionTitle}
           sessionListToggle={false}
           canCopy={config.copy}
-          canRate={config.rate}
-          canRegenerate={config.regenerate}
-          canEdit={chat.features.editMessages}
+          canRate={config.rate && !readOnly}
+          canRegenerate={config.regenerate && !readOnly}
+          canEdit={chat.features.editMessages && !readOnly}
           citationMarkers={config.citationMarkers}
           showTimestamp={config.timestamp}
           workingIndicator={workingIndicator}
@@ -592,9 +609,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           subagentLive={chat.subagentLive}
           delegationLive={chat.delegationLive}
           onLoadSubagentTranscript={actions.loadSubagentTranscript}
-          onSendSubagentMessage={actions.messageSubagent}
+          onSendSubagentMessage={readOnly ? undefined : actions.messageSubagent}
           leadName={agentLabel(chat.agent, chat.caps.agents)}
-          onCancelSubagent={actions.cancelSubagent}
+          onCancelSubagent={readOnly ? undefined : actions.cancelSubagent}
           headerEnd={
             // Derived, not configured: the badge button appears exactly when a `<chat-rail/>` on
             // this `chat-id` is mounted, because with no rail it would toggle nothing visible.
@@ -612,58 +629,64 @@ export function TLChatConversation({ controlId }: TLCellProps) {
         {promptCards.length > 0 && promptCardsVisible(chat.sessionId, chat.messages.length) ? (
           <PromptCards cards={promptCards} label={labels.promptCards} onPick={onPickPrompt} />
         ) : null}
-        <Composer
-          onImprovePrompt={actions.improvePrompt}
-          onCancelImprovePrompt={actions.cancelPromptImprovement}
-          onRespond={actions.respond}
-          agents={chat.caps.agents}
-          models={chat.offeredModels}
-          agent={chat.agent}
-          model={chat.model}
-          onAgent={actions.selectAgent}
-          onModel={actions.selectModel}
-          mcpServers={chat.caps.mcpServers}
-          selectedMcp={chat.mcp}
-          onToggleMcp={actions.toggleMcp}
-          traceMode={chat.traceMode}
-          onTraceMode={actions.selectTraceMode}
-          effort={chat.effort}
-          effortLevels={chat.effortLevels}
-          onEffort={actions.selectEffort}
-          labels={labels}
-          autoApprove={chat.autoApprove}
-          onToggleAutoApprove={() => void actions.toggleAutoApprove()}
-          pendingApprovals={pendingApprovals}
-          pendingQuestions={pendingQuestions}
-          dispatch={actions.dispatch}
-          promptImprovementEnabled={promptImprovementEnabled && chat.caps.promptImproverAvailable !== false}
-          subagents={chat.subagents}
-          onCancelSubagent={actions.cancelSubagent}
-          subagentLive={chat.subagentLive}
-          subagentBudget={chat.subagentBudget}
-          onRefreshSubagents={actions.refreshSubagents}
-          language={chat.language}
-          onStopSubagents={actions.stopSubagents}
-          onLoadSubagentTranscript={actions.loadSubagentTranscript}
-          busy={chat.busy}
-          connection={chat.connection}
-          notice={chat.notice}
-          noticeDetail={chat.noticeDetail}
-          noticeTone={chat.noticeTone}
-          onDismissNotice={() => actions.showNotice('')}
-          onSend={onSend}
-          attachments={chat.draftAttachments}
-          onAttach={actions.attach}
-          onRemoveAttachment={actions.removeAttachment}
-          onStop={actions.stop}
-          onDraft={onDraft}
-          placeholder={placeholder || undefined}
-          extraMenuItems={extraMenuItems}
-          referenceCandidates={referenceCandidates}
-          runs={runs}
-          ref={(api: ComposerApi | null) => actions.bindComposer(api)}
-          {...controls}
-        />
+        {readOnly ? (
+          <div className="read-only-note" role="status">
+            <span>{labels.readOnly}</span>
+          </div>
+        ) : (
+          <Composer
+            onImprovePrompt={actions.improvePrompt}
+            onCancelImprovePrompt={actions.cancelPromptImprovement}
+            onRespond={actions.respond}
+            agents={chat.caps.agents}
+            models={chat.offeredModels}
+            agent={chat.agent}
+            model={chat.model}
+            onAgent={actions.selectAgent}
+            onModel={actions.selectModel}
+            mcpServers={chat.caps.mcpServers}
+            selectedMcp={chat.mcp}
+            onToggleMcp={actions.toggleMcp}
+            traceMode={chat.traceMode}
+            onTraceMode={actions.selectTraceMode}
+            effort={chat.effort}
+            effortLevels={chat.effortLevels}
+            onEffort={actions.selectEffort}
+            labels={labels}
+            autoApprove={chat.autoApprove}
+            onToggleAutoApprove={() => void actions.toggleAutoApprove()}
+            pendingApprovals={pendingApprovals}
+            pendingQuestions={pendingQuestions}
+            dispatch={actions.dispatch}
+            promptImprovementEnabled={promptImprovementEnabled && chat.caps.promptImproverAvailable !== false}
+            subagents={chat.subagents}
+            onCancelSubagent={actions.cancelSubagent}
+            subagentLive={chat.subagentLive}
+            subagentBudget={chat.subagentBudget}
+            onRefreshSubagents={actions.refreshSubagents}
+            language={chat.language}
+            onStopSubagents={actions.stopSubagents}
+            onLoadSubagentTranscript={actions.loadSubagentTranscript}
+            busy={chat.busy}
+            connection={chat.connection}
+            notice={chat.notice}
+            noticeDetail={chat.noticeDetail}
+            noticeTone={chat.noticeTone}
+            onDismissNotice={() => actions.showNotice('')}
+            onSend={onSend}
+            attachments={chat.draftAttachments}
+            onAttach={actions.attach}
+            onRemoveAttachment={actions.removeAttachment}
+            onStop={actions.stop}
+            onDraft={onDraft}
+            placeholder={placeholder || undefined}
+            extraMenuItems={extraMenuItems}
+            referenceCandidates={referenceCandidates}
+            runs={runs}
+            ref={(api: ComposerApi | null) => actions.bindComposer(api)}
+            {...controls}
+          />
+        )}
       </div>
     </div>
   )

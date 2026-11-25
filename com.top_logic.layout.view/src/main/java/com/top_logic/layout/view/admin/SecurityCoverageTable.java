@@ -77,6 +77,7 @@ import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.table.impl.TreeRowSource;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -1186,19 +1187,33 @@ public class SecurityCoverageTable implements UIElement {
 	/**
 	 * The description of the access parent the given type delegates to, <code>null</code> for a
 	 * type deciding for itself.
+	 *
+	 * <p>
+	 * An access parent deciding only some operations is described with these operations, the
+	 * other operations being decided by the type itself.
+	 * </p>
 	 */
 	private static ResKey delegation(TypeCoverage coverage) {
 		AccessParentFunction parent = coverage.accessParent();
 		if (parent == null) {
 			return null;
 		}
-		if (parent instanceof ContainerRelation container && container.composition() == null) {
+		Set<BoundCommandGroup> operations = parent.getOperations();
+		if (parent.getRelation() instanceof ContainerRelation container && container.composition() == null) {
 			String containers = coverage.containerReferences().stream()
 				.map(TLModelUtil::qualifiedName)
 				.collect(Collectors.joining(VALUE_SEPARATOR));
+			if (operations != null) {
+				return I18NConstants.COVERAGE_DELEGATED_RESTRICTED_CONTAINER__CONTAINERS_OPERATIONS.fill(containers,
+					SecurityGrantFunctions.operationLabels(operations));
+			}
 			return container.configured()
 				? I18NConstants.COVERAGE_DELEGATED_CONTAINER__CONTAINERS.fill(containers)
 				: I18NConstants.COVERAGE_DELEGATED_DEFAULT__CONTAINERS.fill(containers);
+		}
+		if (operations != null) {
+			return I18NConstants.COVERAGE_DELEGATED_RESTRICTED__PARENT_OPERATIONS.fill(parent.getRelation().getLabel(),
+				SecurityGrantFunctions.operationLabels(operations));
 		}
 		return I18NConstants.COVERAGE_DELEGATED__PARENT.fill(accessParent(coverage));
 	}
@@ -1227,6 +1242,10 @@ public class SecurityCoverageTable implements UIElement {
 			case UNCHECKED_GRANT -> I18NConstants.COVERAGE_PROBLEM_UNCHECKED_GRANT__OPERATION_ROLES.fill(
 				finding.getOperationLabel(),
 				finding.getRoles().stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(VALUE_SEPARATOR)));
+			// A finding about the rules for historic versions names the rules and what to change.
+			case ANCHOR_NEVER_COVERS, ANCHOR_WITHOUT_INDEX, ROLE_CYCLE, ANCHOR_STEP_FROM_CURRENT, NO_CURRENT_ROLE_SOURCE,
+					RULE_NOT_STORED, MIXED_BACKWARDS_STEP ->
+				finding.getMessage();
 		};
 	}
 
@@ -1275,6 +1294,10 @@ public class SecurityCoverageTable implements UIElement {
 			case UNCHECKED_GRANT -> {
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_UNCHECKED_GRANT);
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_ADD_CHECK);
+			}
+			case ANCHOR_NEVER_COVERS, ANCHOR_WITHOUT_INDEX, ROLE_CYCLE, ANCHOR_STEP_FROM_CURRENT, NO_CURRENT_ROLE_SOURCE,
+					RULE_NOT_STORED, MIXED_BACKWARDS_STEP -> {
+				// The solution is part of the problem description.
 			}
 		}
 		return solutions;

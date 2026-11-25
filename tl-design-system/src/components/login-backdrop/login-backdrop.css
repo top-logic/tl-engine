@@ -11,6 +11,9 @@
   /* Oben der Inhalt, mittig im freien Platz; unten die Fußzeile. Reicht die Höhe nicht, wächst die erste Zeile
      über das Fenster hinaus und die Wurzel scrollt, die Fußzeile steht dann am Ende. */
   grid-template-rows: 1fr auto;
+  /* Die Spalte darf unter die Breite ihres Inhalts schrumpfen: eine Karte mit fester Breite ragt sonst auf dem
+     Handy über den Rand hinaus, und die Wurzel schneidet sie ab. */
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   overflow: hidden auto;
   padding: var(--tl-space-lg);
@@ -33,8 +36,14 @@
   flex-direction: column;
   align-items: center;
   gap: var(--tl-space-md);
+  max-width: 100%;
   /* Die Wurzel scrollt und schneidet auch seitlich: der Innenabstand lässt dem Fokusring Platz (focus-clip). */
   padding: calc(var(--tl-focus-width) + var(--tl-focus-offset));
+}
+
+/* Eine feste Breite der Karte (width an <panel>) ist ein Höchstmaß: im schmalen Fenster nimmt sie die Breite des Inhalts. */
+.tl-login-backdrop__content > * {
+  max-width: 100%;
 }
 
 .tl-login-backdrop__brand {

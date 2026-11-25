@@ -34,6 +34,7 @@ import CheckboxPart from './form/CheckboxPart';
 import TextInputPart from './form/TextInputPart';
 import ChipPart from './chip/ChipPart';
 import SkeletonPart from './skeleton/SkeletonPart';
+import MenuTriggerPart from './button/MenuTriggerPart';
 import BadgePart from './chip/BadgePart';
 
 declare global {
@@ -109,6 +110,8 @@ beforeAll(() => {
   registerPart('TextInput', TextInputPart);
   registerPart('Chip', ChipPart);
   registerPart('Skeleton', SkeletonPart);
+  // The gear of the view is on every table.
+  registerPart('MenuTrigger', MenuTriggerPart);
   registerPart('Badge', BadgePart);
   register('TableTestEditor', EditorCell);
   register('TableTestText', TextCell);
@@ -223,6 +226,30 @@ describe('a table whose rows are not all edited', () => {
     await settle();
 
     expect(selections()).toEqual([]);
+  });
+});
+
+describe('the heading of a column that requires a value', () => {
+  const REQUIRED = '.tl-table__required';
+
+  it('shows the required mark, hidden from assistive technology, in a sortable and in a plain heading', () => {
+    mountTable({
+      columns: [
+        { name: COL_NAME, label: 'Name', width: 100, sortable: true, required: true },
+        { name: COL_INFO, label: 'Info', width: 100, sortable: false, required: true },
+      ],
+    });
+
+    const marks = document.querySelectorAll(REQUIRED);
+    expect(marks).toHaveLength(2);
+    marks.forEach(mark => expect(mark.getAttribute('aria-hidden')).toBe('true'));
+    expect(document.querySelector('.tl-table__sort ' + REQUIRED)).not.toBeNull();
+  });
+
+  it('shows no mark for a column that does not require a value', () => {
+    mountTable({});
+
+    expect(document.querySelector(REQUIRED)).toBeNull();
   });
 });
 

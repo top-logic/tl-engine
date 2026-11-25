@@ -3,8 +3,8 @@
 // role of a choice field that is not editable, a text drawn as a pill, the counts of the sidebar -
 // drawn by the MUI adapters of the parts Chip and Badge: one replacement of a part reaches all of them.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup, within, act } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { screen, cleanup, within, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CMD_VALUE_CHANGED, OPTION_TOOLTIP_PREFIX, TOOLTIP_ATTR, fieldLabel, replacePart } from 'tl-react-bridge';
 import TLOptionChips from '../../../com.top_logic.layout.react/react-src/controls/TLOptionChips';
@@ -15,6 +15,7 @@ import TLChoiceGroup from '../../../com.top_logic.layout.react/react-src/control
 import TLText from '../../../com.top_logic.layout.react/react-src/controls/TLText';
 import TLSidebar from '../../../com.top_logic.layout.react/react-src/controls/TLSidebar';
 import TLBottomBar from '../../../com.top_logic.layout.react/react-src/controls/TLBottomBar';
+import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import MuiBadgeAdapter from './MuiBadgeAdapter';
@@ -26,9 +27,10 @@ import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiDividerAdapter from './MuiDividerAdapter';
 import MuiProgressBarAdapter from './MuiProgressBarAdapter';
 import MuiSpinnerAdapter from './MuiSpinnerAdapter';
-import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, patchState, settle, resetTableView } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
 
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 replacePart('Chip', MuiChipAdapter);
 replacePart('Skeleton', MuiSkeletonAdapter);
 replacePart('Badge', MuiBadgeAdapter);
@@ -80,8 +82,13 @@ class NoResizeObserver {
   disconnect() {}
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.unstubAllGlobals();
 });
 
@@ -447,6 +454,25 @@ describe('the presets of a table (TLTableView) that do not fit in the row of the
     const menu = await openMenu();
     expect(moreChip()!.getAttribute('aria-expanded')).toBe('true');
     expect(entryLabels(menu)).toEqual(['Preset 4', 'Preset 5', 'Preset 6', 'Preset 7', 'Preset 8']);
+  });
+
+  it('closes the menu on a second click of its chip, without opening it again', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    await openMenu();
+    await userEvent.click(moreChip()!);
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(moreChip()!.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('closes the menu on Escape from its chip', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    await openMenu();
+    fireEvent.keyDown(moreChip()!, { key: 'Escape' });
+    expect(screen.queryByRole('menu')).toBeNull();
   });
 
   it('shows no chip "+ n more" when all presets fit', async () => {

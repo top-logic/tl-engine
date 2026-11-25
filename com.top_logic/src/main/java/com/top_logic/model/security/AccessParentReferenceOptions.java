@@ -20,11 +20,13 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.util.model.ModelService;
 
 /**
  * Option functions for the reference of an {@link AccessParentDefinition}, offering the references
- * fitting the type of the enclosing {@link TLClassAccessRights} entry.
+ * fitting the type of the enclosing {@link TLClassAccessRights} entry, and for the operations it is
+ * restricted to.
  */
 public class AccessParentReferenceOptions {
 
@@ -52,6 +54,20 @@ public class AccessParentReferenceOptions {
 		public Collection<TLReference> apply(String typeName) {
 			TLClass type = type(typeName);
 			return type == null ? Collections.emptyList() : sorted(toOneReferences(type));
+		}
+
+	}
+
+	/**
+	 * The operations applying to the named type, see {@link OperationRestriction}.
+	 */
+	public static class Operations extends Function1<Collection<BoundCommandGroup>, String> {
+
+		@Override
+		public Collection<BoundCommandGroup> apply(String typeName) {
+			TLClass type = type(typeName);
+			return type == null ? Collections.emptyList()
+				: ModelAccessRights.getInstance().getOperations(type).getOperations();
 		}
 
 	}

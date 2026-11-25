@@ -1110,9 +1110,10 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 *
 	 * <p>
 	 * Each newly signalled run is logged at <code>INFO</code> with the account that asked for the
-	 * stop. Every way to stop a run comes through here (TL-Script, the command of the agent
-	 * activity, an A2A cancel, the delete of a session), so the log names the account for each of
-	 * them.
+	 * stop. Each stop that sets the cancel marker comes through here (TL-Script, the command of
+	 * the agent activity, an A2A cancel, the delete of a session), so the log names the account for
+	 * each of them. The stop button of the chat does not set the marker: it cancels the run through
+	 * the window that runs it and writes no such line.
 	 * </p>
 	 *
 	 * @param execution

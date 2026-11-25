@@ -29,7 +29,7 @@ import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
-import com.top_logic.table.NegatedFilterState;
+import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.Sort;
@@ -45,6 +45,7 @@ import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.RangeFilterState;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.table.filter.TextMatchMode;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.DelegatingColumn;
@@ -258,7 +259,7 @@ public class TestDefaultTableView extends TestCase {
 	public void testInvertedFilterAcceptsNonMatching() {
 		TableView<Person> view = newView();
 		// "Charlie" and "alice" contain "li"; inverting keeps exactly the rest.
-		view.filter("name", new NegatedFilterState(new Contains("li")));
+		view.filter("name", ColumnFilterState.invert(new Contains("li")));
 		assertEquals(List.of("Bob"), names(view));
 	}
 
@@ -356,7 +357,7 @@ public class TestDefaultTableView extends TestCase {
 		TableId id = new TableId("t-search");
 
 		TableView<Person> view1 = newView(store, id);
-		view1.search(new TextFilterState("LI", false, false, false));
+		view1.search(new TextFilterState("LI", false, TextMatchMode.CONTAINS));
 		assertEquals(List.of("Charlie", "alice"), names(view1));
 
 		// A fresh view over the same store restores the persisted search (and re-applies it).
@@ -803,6 +804,75 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals("A table declared without grouping displays no group headers.", List.of(),
 			groupValues(view));
 		assertEquals(List.of("Charlie", "alice", "Bob"), names(view));
+	}
+
+	/**
+	 * Tests that an initial grouping and sort naming a column the table does not have - one withheld
+	 * from the user, for instance - take no effect, while the known sort column does, and that a
+	 * reset does not bring the unknown column back.
+	 */
+	public void testInitialGroupingAndSortByUnknownColumnHaveNoEffect() {
+		List<Column<Person, ?>> columns = personColumns();
+		TableViewState initial = DefaultTableView.initialState(columns,
+			new SortSpec(List.of(new SortColumn("missing", true), new SortColumn("age", false))), List.of());
+		initial.setGrouping(new GroupSpec(List.of("missing")));
+		TableView<Person> view = new DefaultTableView<>(columns, new ListRowSource<>(people(), columns), initial);
+
+		assertEquals(GroupSpec.NONE, view.state().getGrouping());
+		assertEquals(List.of(new SortColumn("age", false)), view.state().getSort());
+		assertEquals("The table is not grouped.", List.of(), groupValues(view));
+		assertEquals("The known sort column orders the rows.", List.of("Bob", "Charlie", "alice"), names(view));
+
+		view.group(new GroupSpec(List.of("age")));
+		view.sort(SortSpec.ascending("name"));
+		view.resetToDefaults();
+		assertEquals(GroupSpec.NONE, view.state().getGrouping());
+		assertEquals(List.of(new SortColumn("age", false)), view.state().getSort());
+		assertEquals(List.of(), groupValues(view));
+		assertEquals(List.of("Bob", "Charlie", "alice"), names(view));
+	}
+
+	/**
+	 * Tests that an initial grouping by a known column groups the table.
+	 */
+	public void testInitialGroupingByKnownColumnTakesEffect() {
+		List<Column<Person, ?>> columns = personColumns();
+		TableViewState initial = DefaultTableView.initialState(columns, SortSpec.NONE, List.of());
+		initial.setGrouping(new GroupSpec(List.of("age")));
+		TableView<Person> view = new DefaultTableView<>(columns, new ListRowSource<>(people(), columns), initial);
+
+		assertEquals(new GroupSpec(List.of("age")), view.state().getGrouping());
+		assertEquals(List.of(25, 30, 40), groupValues(view));
+	}
+
+	/**
+	 * Tests that grouping or sorting by a column the table does not have is rejected and leaves the
+	 * table as it was.
+	 */
+	public void testGroupAndSortByUnknownColumnAreRejected() {
+		TableView<Person> view = newView();
+		view.group(new GroupSpec(List.of("age")));
+		view.sort(SortSpec.ascending("name"));
+		List<Object> groups = groupValues(view);
+		List<String> rows = dataNames(view);
+
+		try {
+			view.group(new GroupSpec(List.of("missing")));
+			fail("A grouping by an unknown column must be rejected.");
+		} catch (IllegalArgumentException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("missing"));
+		}
+		try {
+			view.sort(new SortSpec(List.of(new SortColumn("age", false), new SortColumn("missing", true))));
+			fail("An order by an unknown column must be rejected.");
+		} catch (IllegalArgumentException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("missing"));
+		}
+
+		assertEquals(new GroupSpec(List.of("age")), view.state().getGrouping());
+		assertEquals(List.of(new SortColumn("name", true)), view.state().getSort());
+		assertEquals(groups, groupValues(view));
+		assertEquals(rows, dataNames(view));
 	}
 
 	// ---- named filters ----

@@ -1,4 +1,5 @@
 import { React, useTLState, useUpload, useI18N, usePart, rootClassName, ICON_RECORD, ICON_STOP } from 'tl-react-bridge';
+import { ButtonDefaults } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -131,6 +132,8 @@ const TLAudioRecorder: React.FC<TLCellProps> = ({ controlId }) => {
   const t = useI18N(I18N_KEYS);
 
   return (
+    // Media buttons keep their size in a table row: they are the exception that needs a surface (skalen 23.11.).
+    <ButtonDefaults small={false}>
     <div id={controlId} className={rootClassName(state, 'tl-upload')}>
       <Button
         label={t['js.audioRecorder.record']}
@@ -151,6 +154,7 @@ const TLAudioRecorder: React.FC<TLCellProps> = ({ controlId }) => {
         <span className="tl-file-upload__status tl-type-label" role="alert">{error}</span>
       )}
     </div>
+    </ButtonDefaults>
   );
 };
 

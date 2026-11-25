@@ -526,6 +526,11 @@
 						<access-parent>
 							<container reference="tl.demo.projectManagement:ProjectScope#milestones"/>
 						</access-parent>
+						<!-- The container decides alone: the grants of the module do not apply. -->
+						<revoke operation="Read"/>
+						<revoke operation="Write"/>
+						<revoke operation="Create"/>
+						<revoke operation="Delete"/>
 					</class>
 					<part name="tl.demo.projectManagement:Milestone#approved">
 						<grant
@@ -537,6 +542,11 @@
 						<access-parent>
 							<container reference="tl.demo.projectManagement:ProjectScope#notes"/>
 						</access-parent>
+						<!-- The container decides alone: the grants of the module do not apply. -->
+						<revoke operation="Read"/>
+						<revoke operation="Write"/>
+						<revoke operation="Create"/>
+						<revoke operation="Delete"/>
 					</class>
 					<!--
 						The ticket-watcher scenario, showing the Discover right: an account whose person

@@ -24,8 +24,8 @@ user inherits from the container.
 
 A type that needs neither has an **access parent** instead: its objects delegate the decision,
 grants and roles, to another object, or to several, any of which may allow the operation - the
-*whole* decision, unless the access parent is restricted to some operations, see
-[Access parent](#access-parent-delegating-the-decision). A composition part gets its container as
+*whole* decision, unless the access parent is restricted to some operations or names the object
+itself as candidate, see [Access parent](#access-parent-delegating-the-decision). A composition part gets its container as
 access parent by default, so the rows of a composition table, the comments of a ticket or the
 attachments of a comment need no definition of their own. See
 [Access parent](#access-parent-delegating-the-decision).
@@ -58,6 +58,8 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
    allows the operation. With `operations` on the access parent, only the delegated operations
    (and delegated implying ones) are asked; if the parent does not allow them, the decision
    continues at step 5 with the roles on the object itself, as for the operations not delegated.
+   The same holds for every operation when the access parent names the object itself as candidate
+   (`<any-of><self/>...</any-of>`, see [The object itself as candidate](#the-object-itself-as-candidate-self)).
    The parent may delegate further. An object whose relation leads nowhere (no container, an empty
    reference) is denied the delegated operations (without `operations`: every operation), unless
    the own grants of the type imply them. The same holds where the chain of access parents runs in
@@ -343,11 +345,15 @@ revision cannot hold roles).
 ### Access parent: delegating the decision
 
 A `<class>` entry with an `<access-parent>` element other than `<self/>` makes the type
-delegate to its **access parent**, the object whose access definition decides. Unless the access
-parent is restricted to some operations (see below), the type has no
-grants, no marks and no roles of its own (an entry combining them is rejected at startup and by the
-editor); with `operations`, grants are allowed for the operations that are not delegated, while the
-marks `internal` and `without-security` remain rejected:
+delegate to its **access parent**, the object whose access definition decides. The marks
+`internal` and `without-security` contradict an access parent and are rejected at startup and by
+the editor. Unless the access parent is restricted to some operations (see below) or names the
+object itself as candidate (see [The object itself as candidate](#the-object-itself-as-candidate-self)),
+the type has no grants and no roles of its own: grants of the type for an operation the access
+parent decides alone take no effect. They are no error, since a module may ship the grants and an
+application the access parent in the entry merged from both; they are reported as a warning at
+startup ("... decides the operations ... alone, the grants of the type for them are ignored"), by
+the editor, and as finding "ignored grant" of the [coverage check](#checking-that-the-definition-is-complete-the-coverage-check):
 
 - Read, Write and Export on the object are Read, Write and Export on the parent.
 - Create and Delete of the object are **Write** on the parent, since a part is created or deleted
@@ -385,7 +391,7 @@ unambiguous:
 | `<referer reference="..."/>` with a reference pointing to the type | the objects pointing to the object through the reference (navigated backwards), any cardinality |
 | `<script expr="..."/>` | the objects a TL-Script function computes, see below |
 | `<any-of>` with several of the above | the access parents of all candidates, see [Several access parents](#several-access-parents-any-of-referer) |
-| `<self/>` | none: the type decides through its own grants and roles |
+| `<self/>` | none: the type decides through its own grants and roles; as candidate of `<any-of>`, the type decides beside the other candidates, see [The object itself as candidate](#the-object-itself-as-candidate-self) |
 
 A reference not fitting the definition (a composition not holding the type for `container`, a
 foreign reference for `target`, a reference whose target type does not fit the type for `referer`)
@@ -409,9 +415,11 @@ all others itself:
 - The operations that are not delegated fall back to the grants of the type itself, checked with
   the roles the user holds on the object itself (assignments, role rules, role parents). Without a
   grant the operation is denied.
-- A type with own grants for an operation it delegates is a configuration error (also for a
-  specialization inheriting the restricted access parent). Grants inherited with `inherit="true"` from
-  a generalization for delegated operations are dropped silently.
+- Grants of the type for an operation it delegates take no effect and are reported as ignored
+  (see above), whether the type declares them itself, inherits them with `inherit="true"` from a
+  generalization, or receives them from the entry of its module. To leave the operation to the
+  access parent without a warning, revoke them (`<revoke operation="Read"/>`, also for a delegated
+  operation); to let them decide beside the access parent, name the object itself as candidate.
 - Unknown or inapplicable operation names are configuration errors. `operations` is not allowed on
   `<self/>`, on `<any-of>` nor on `<access-parent>` itself.
 - At runtime, the role holder (the object whose roles decide, see step 7 above), the explanation of
@@ -433,7 +441,7 @@ a right of its own, granted to a role the user holds on the entry itself:
 ```
 
 Read and Discover of an entry follow the catalog; Write is allowed to holders of `Editor` on the
-entry. A Read grant on `my.module:Entry` would be a configuration error.
+entry. A Read grant on `my.module:Entry` would be ignored and reported.
 
 **Upgrading from `TL_8.0.0-alpha9`.** The attributes `access-parent="..."` and `access-reference="..."`
 of a `<class>` entry are gone and rejected at startup: `access-parent="container"` becomes
@@ -547,8 +555,9 @@ folder may do everything with it.
   its candidates; the access parents of the object are those of all candidates. A building block
   directly in `<access-parent>` behaves like a single candidate (also for Create, see below). A
   nested `<any-of>` adds its candidates, an `<any-of>` with a single candidate is that candidate.
-  `<self/>` as candidate, an empty `<any-of>` and `operations` on `<any-of>` are configuration
-  errors; each candidate restricts its own operations.
+  An empty `<any-of>` and `operations` on `<any-of>` are configuration errors; each candidate
+  restricts its own operations. `<self/>` is a candidate as well, see
+  [The object itself as candidate](#the-object-itself-as-candidate-self).
 - **A candidate not delegating an operation abstains** for it. An operation delegated by no
   candidate is decided by the grants of the type itself, as for a single restricted access parent.
   Discover is delegated by a candidate delegating any operation.
@@ -600,6 +609,47 @@ folder may do everything with it.
   delegates (and `Create` where no container candidate delegates it); the coverage view names every
   candidate in the access parent column, separated by semicolons.
 
+### The object itself as candidate (`<self/>`)
+
+`<self/>` as candidate of `<any-of>` lets the type decide by its own grants and the roles users
+hold on its objects, **beside** its access parents: an operation is allowed when the grants of the
+type allow it on the object itself, or when one of the access parents deciding it allows it. A
+candidate restricted to some operations abstains for the others, which are decided by the grants
+of the type alone, as before.
+
+Example: a module ships Read and Write on its chat sessions for the role of their owner. An
+application lets every user who may read the subject of a session read the session as well, without
+taking the rights away from the owner and without a role rule of its own:
+
+```xml
+<class name="tl.ai.execution:AgentSession">
+	<access-parent>
+		<any-of>
+			<self/>
+			<target reference="tl.ai.execution:AgentSession#subject" operations="Read"/>
+		</any-of>
+	</access-parent>
+</class>
+```
+
+Read is allowed to the owner (the shipped grants) or to a reader of the subject; Write stays with
+the owner. A session without subject is decided by the grants of the type alone, it does not
+become inaccessible.
+
+- `<self/>` is resolved by `<any-of>` only; inside a combinator of an application it is a
+  configuration error. An `<any-of>` naming nothing but `<self/>` is the type deciding for itself.
+- The roles held on the object itself are checked directly, not by a decision on the object, so the
+  candidate closes no cycle.
+- The object is a role holder of every operation beside the ends of the chains of its access
+  parents (`getRoleHolders`), attribute grants are checked on it as well, and Create is allowed by
+  Write on the container or by the own `Create` grants of the type, checked on the context.
+- No grant of the type is ignored, so the warning of ignored grants does not apply. Role rules of
+  the type take effect and are not reported as shadowed.
+- In the tooling, the grants editor shows grant columns for every operation, setting such an access
+  parent in the access rights dialog keeps the grants of the type, and the explanation of the
+  effective access and the coverage view describe the type as deciding itself and through its
+  access parents.
+
 ### Combining access parents in an application
 
 `<any-of>` combines its candidates by OR. An application needing another combination (all of
@@ -627,7 +677,9 @@ A combinator that is not an OR returns `false` from `isDisjunctive()`. The users
 admitting role on one of the role holders are then a superset of the users the combinator admits,
 and the explanation of the effective access says so. `delegates(operation)` tells which
 operations the combinator decides; `delegatesAll()` tells whether it decides every operation, so
-that the type has no grants of its own. By default this is the case unless `getOperations()`
+that the type has no grants of its own (`includesSelf()` tells whether the object itself decides
+beside the access parents, as the candidate `<self/>` of `<any-of>` does). By default this is the
+case unless `getOperations()`
 lists the delegated operations: a combinator of restricted building blocks that does not override
 `delegatesAll()` decides every operation, denying those no building block delegates, and the grants
 the type inherits do not apply. `getParentTypes(type)` returns the union of the parent types of
@@ -824,6 +876,7 @@ module not listed in its `excluded-modules` and reports, per type:
 | no read grant | no role is granted `Read` on the type (after module and inherited grants), so its objects are inaccessible to every user | grant on the type or its module, or mark internal |
 | dead grant | an operation is granted to roles that no rule can deliver where the operation is checked; the grant never takes effect. `Create` is checked on the context the caller passes (`isAllowedCreate(person, type, context)`, the security root without context). As the context is not known statically, a role counts when it can be delivered on one of the plausible contexts or their role parents: the security root; a container, i.e. a concrete class whose composition - as in effect on that class, a narrowing override included - holds the type or one of its generalizations; a type the created type references (the targets of its references in effect, inverse references included, and their specializations; computed references and its own compositions left out). Every other operation is checked on the type or its role parents | add a rule delivering the role there, or grant a role delivered there |
 | shadowed rules | the type has a configured access parent, but role rules or role parent rules apply to it; they have no effect | delete the rules, or drop the access parent |
+| ignored grant | an operation is granted on the type (by the type, a generalization or its module), but the access parent decides it alone; the grant has no effect | name the object itself as candidate (`<any-of><self/>...</any-of>`), or revoke the grant |
 | ungranted operation | an operation declared for the type (not a built-in one) is held by no role there, neither by a grant nor through an implying operation, so every check of it on the type is refused | grant it to a role, or declare it `implied-by` an operation the roles hold |
 | inapplicable operation | a view unit, a command, a form or a privileged script checks an operation on the type that does not apply to it (a check on the security root is reported for the type of the root) | declare the operation for the type, or check another one |
 | unknown operation | such a place checks an operation that is no registered command group | register the command group, or check another one |

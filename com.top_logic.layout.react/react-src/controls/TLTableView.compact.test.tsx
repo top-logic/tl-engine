@@ -202,4 +202,16 @@ describe('the columns of a table on a phone', () => {
 
     expect(sent).toContainEqual({ command: 'setFrozenColumnCount', args: { count: 3 } });
   });
+
+  it('move a column to the place among all columns, counting the columns left out', async () => {
+    mountTable({ compact: true });
+    const person = document.querySelector<HTMLElement>(`#${TABLE_ID} [role=columnheader]`)!;
+    await act(async () => {
+      person.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true, cancelable: true }));
+      await settle();
+    });
+
+    expect(sent).toContainEqual({
+      command: 'columnMove', args: { column: 'person', targetIndex: 2, locked: false, visible: true } });
+  });
 });

@@ -173,6 +173,25 @@ public class TestContextMenuOpener extends TestCase {
 	}
 
 	/**
+	 * An entry carries the tooltip of its command, which for a disabled command is the reason it is
+	 * disabled, so the menu can tell the user why the entry cannot be selected.
+	 */
+	public void testTheEntryCarriesTheTooltipOfItsCommand() {
+		CountingCommandModel refused = new CountingCommandModel("delete");
+		refused._state = ExecutableState.createDisabledState(ResKey.text("Not deleted here."));
+		refused._tooltip = "Not deleted here.";
+		CountingCommandModel plain = new CountingCommandModel("edit");
+
+		AtomicReference<Object> target = new AtomicReference<>();
+		ContextMenuContribution contribution = new ContextMenuContribution(target::set, List.of(refused, plain));
+		RecordingRenderer renderer = new RecordingRenderer();
+		new ContextMenuOpener(renderer).open(0, 0, List.of(new Targeted(contribution, "row")));
+
+		assertEquals("Not deleted here.", renderer.lastItems.get(0).tooltip());
+		assertNull("A command without tooltip makes an entry without one.", renderer.lastItems.get(1).tooltip());
+	}
+
+	/**
 	 * The failure of a selected command is the failure of the selection - it is not dropped on the
 	 * way.
 	 */
@@ -336,6 +355,9 @@ public class TestContextMenuOpener extends TestCase {
 		/** What the command throws when it runs, {@code null} for none. */
 		TopLogicException _failure;
 
+		/** The text explaining the command, see {@link #getTooltip()}. */
+		String _tooltip;
+
 		CountingCommandModel(String name) {
 			this(name, false);
 		}
@@ -363,6 +385,11 @@ public class TestContextMenuOpener extends TestCase {
 		@Override
 		public ExecutableState getExecutableState() {
 			return _state;
+		}
+
+		@Override
+		public String getTooltip() {
+			return _tooltip;
 		}
 
 		@Override

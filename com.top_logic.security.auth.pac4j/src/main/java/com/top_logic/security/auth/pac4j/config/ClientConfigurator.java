@@ -55,11 +55,10 @@ public interface ClientConfigurator {
 
 		/**
 		 * User-visible label for this login method, shown on a login UI's SSO button (e.g.
-		 * "Login with Google").
+		 * "Sign in with Google").
 		 *
 		 * <p>
-		 * A label without text, e.g. taken from an environment variable that is not set, counts
-		 * as not set. Without a label, the button reads "Log in with single sign-on".
+		 * Without a label, the button reads "Sign in with Single Sign-On".
 		 * </p>
 		 *
 		 * @see com.top_logic.security.auth.pac4j.login.Pac4jLoginMethodProvider#buttonLabel(ResKey)

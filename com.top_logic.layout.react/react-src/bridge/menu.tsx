@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { usePart } from './parts';
+import { ButtonDefaults } from './button-defaults';
 import { anchoredOverlayProps } from './focus-trap';
 import type { PopoverAnchor, PopoverOptions } from './popover';
 import { usePopupSurface } from './popup-surface';
@@ -138,7 +139,8 @@ export const Menu: React.FC<MenuProps> = ({ open, anchor, onClose, placement, id
       onKeyDown={onKeyDown}
       {...anchoredOverlayProps}
     >
-      {children}
+      {/* A menu opening from a table row is no row: its buttons are normal ones. */}
+      <ButtonDefaults small={false}>{children}</ButtonDefaults>
     </div>,
     document.body,
   );

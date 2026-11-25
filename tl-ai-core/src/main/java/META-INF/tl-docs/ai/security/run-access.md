@@ -1,5 +1,5 @@
 ---
-description: Read before restricting which agents, models and MCP servers a role may use - <agent-access default="all|none">, <model-access default="assigned|all|none">, <mcp-access default="agent|all|none"> in the AiToolAccessService policy, the five decision rules (RoleAccessPolicy, RunAuthorization), infrastructure agents (infrastructure="true", SecurityContext.withoutAgentChoice), the chat entry point, the chat's capabilities and 403 refusals, delegation, and the boot check of names (AgentNameCheck).
+description: Read before restricting which agents, models and MCP servers a role may use - <agent-access default="all|none">, <model-access default="assigned|all|none">, <mcp-access default="agent|all|none"> in the AiToolAccessService policy, the five decision rules (RoleAccessPolicy, RunAuthorization), infrastructure agents (infrastructure="true", SecurityContext.withoutAgentChoice), the chat entry point, the chat's capabilities and 403 refusals, delegation, the model of a TL-Script aiChat call (the default model in the place of the model of the agent), and the boot check of names (AgentNameCheck).
 order: 75
 ---
 
@@ -79,9 +79,21 @@ The mark is a statement about the agent, not about a role, and `<agent-access>` 
 
 The product's own call path still works: what makes the improve-prompt run legal is not which class started it but what the run says about itself - it is built with `SecurityContext.withoutAgentChoice()`, the one seam that states in code that the **product**, and not the user, named this agent. An entry point of an application that runs an infrastructure agent on a user's behalf says the same thing the same way. Mark an agent `infrastructure` when it does a piece of work on a user's behalf and its answer is consumed by the application rather than read as a reply; to hide an agent from most roles, use `<agent-access>` - an `infrastructure` agent is hidden from everybody, administrators included.
 
+## `aiChat`: a call without an agent
+
+`aiChat(messages, model, ...)` runs one exchange with a model and has no agent. So the default model of the installation takes the place of the model of the agent: the `default-model` of `AgentRuntimeService`, or the first model of the first available provider when none is configured. The five rules apply with that model in rule 3:
+
+- a call that names no model, or names the default model, runs, unless a role denies the default model (rule 1);
+- a call that names another model needs a `<grant>` of a held role (rule 2), or `default="all"` for an account whose roles the section does not name;
+- while no default model can be resolved - no `default-model` and no available provider - the call fails with the error of the providers, which names the missing secrets.
+
+The call acts as the account that executed the script. A refused call stops with a `TopLogicException` before any request is sent, and its message is the reason of the policy in the language of the user. Under the shipped default it is *"The model … is not available to you. A call without an agent runs on the default model of the application."* Administrators are not restricted. The failover chain of a permitted model is configuration of the administrator and is not checked against `<model-access>`, as for an agent run.
+
+`TestAIScriptChatModelAccess` and `SecDemoScriptModelAccessTest` assert: the default model needs no grant, with or without its name; another model is refused without a grant and runs with one; a deny of the default model refuses a call without a model name; an administrator is not restricted. Scenario M1 of the [test bed](doc:ai/security/test-bed) shows it in the script console.
+
 ## Where it is enforced
 
-`AgentFactory.runAgent(..., RunOverrides)` is the choke point - the chat, `AgentRunner`, the scheduler and TL-Script all pass through it - and it authorizes before applying anything of the request, so no provider round trip is spent on a run that may not happen. `RoleAccessPolicy` decides all three sections, and `RunAuthorization` carries the decision on the security context. A refusal is a `ToolSecurityException` carrying a `ResKey`; the chat's `send` and `regenerate` commands pre-check the same three questions and answer `forbidden` with that text, which the user reads in the notice strip above the composer, in their language.
+`AgentFactory.runAgent(..., RunOverrides)` is the choke point - the chat, `AgentRunner`, the scheduler and the TL-Script functions that run an agent all pass through it - and it authorizes before applying anything of the request, so no provider round trip is spent on a run that may not happen. `aiChat` runs no agent and asks the model section itself, the same way. `RoleAccessPolicy` decides all three sections, and `RunAuthorization` carries the decision on the security context. A refusal is a `ToolSecurityException` carrying a `ResKey`, and for `aiChat` a `TopLogicException` with that reason; the chat's `send` and `regenerate` commands pre-check the same three questions and answer `forbidden` with that text, which the user reads in the notice strip above the composer, in their language.
 
 The chat's capabilities (the state of a `<chat-conversation>`) list the agents and MCP servers a run of that account accepts. The model list is the one thing a single payload cannot make exact - it is written per render, and the agent can change without another round trip - so it lists the models the account may choose with *some* agent it may run, and marks each with whether the account's roles grant it; the shipped chat narrows that to the selected agent.
 

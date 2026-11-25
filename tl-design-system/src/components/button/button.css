@@ -135,6 +135,8 @@
   width: var(--tl-size-control);
   height: var(--tl-size-control);
   padding: 0;
+  /* In einer Flex-Zeile neben einem Feld nicht gestaucht: sonst schmal und hoch statt quadratisch. */
+  flex-shrink: 0;
 }
 
 .tl-button--icon.tl-button--sm {

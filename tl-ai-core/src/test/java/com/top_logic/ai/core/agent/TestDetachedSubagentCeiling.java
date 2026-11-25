@@ -182,8 +182,8 @@ public class TestDetachedSubagentCeiling extends TestCase {
 		String notice = new AgentCapabilities(name -> resolve(name), child)
 			.notice(List.of(WRITE_TOOL.name(), READ_TOOL.name()), List.of());
 
-		assertTrue("The notice must say the run is unattended: " + notice,
-			notice.contains("unattended"));
+		assertTrue("The notice must say the run is a background run: " + notice,
+			notice.contains("background run"));
 		assertTrue("...and name the capability it lost: " + notice,
 			notice.contains(ToolGroups.DATA_WRITE));
 		assertFalse("It must not claim the user lacks a capability they hold: " + notice,
@@ -198,8 +198,8 @@ public class TestDetachedSubagentCeiling extends TestCase {
 		assertTrue("model.structure is held by nobody here: " + notice,
 			notice.contains("This user does **not** hold"));
 		assertTrue(notice, notice.contains(ToolGroups.MODEL_STRUCTURE));
-		assertFalse("An attended run must not be described as unattended: " + notice,
-			notice.contains("unattended"));
+		assertFalse("An attended run must not be described as a background run: " + notice,
+			notice.contains("background run"));
 	}
 
 	/** The detached child of the given parent turn, exactly as {@code SubagentSpawner} builds it. */

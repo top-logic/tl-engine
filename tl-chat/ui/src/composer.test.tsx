@@ -560,3 +560,85 @@ describe('the model menu', () => {
     expect(trigger()).toBeNull()
   })
 })
+
+/**
+ * The Enter that ends the composition of an input method (#30487).
+ *
+ * A person who types with an input method - for Japanese, say - ends a composition with Enter. That
+ * Enter is the input method's: it neither sends the message nor takes a reference from the "@" list.
+ * The next Enter does.
+ */
+describe('the Enter that ends a composition', () => {
+  /** How a browser reports that Enter: the composition ends before or after its keydown. */
+  const FORMS: [string, { endsFirst: boolean; keyCode: number; isComposing: boolean }][] = [
+    ['during the composition, as Chromium and Firefox report it', { endsFirst: false, keyCode: 229, isComposing: true }],
+    ['during the composition, with the key code of Enter', { endsFirst: false, keyCode: 13, isComposing: true }],
+    ['after the end of the composition, as Safari reports it', { endsFirst: true, keyCode: 229, isComposing: false }],
+  ]
+
+  function endWithEnter(field: HTMLElement, form: { endsFirst: boolean; keyCode: number; isComposing: boolean }) {
+    const end = () => field.dispatchEvent(new window.CompositionEvent('compositionend', { bubbles: true }))
+    if (form.endsFirst) end()
+    field.dispatchEvent(
+      new window.KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: form.keyCode,
+        isComposing: form.isComposing,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+    if (!form.endsFirst) end()
+  }
+
+  function pressEnter(field: HTMLElement) {
+    field.dispatchEvent(
+      new window.KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true, cancelable: true }),
+    )
+  }
+
+  it.each(FORMS)('sends nothing when it comes %s; the next Enter sends', async (_form, form) => {
+    const sent: string[] = []
+    const { field } = await mount({
+      onSend: async (text: string) => {
+        sent.push(text)
+        return true
+      },
+    })
+
+    field.dispatchEvent(new window.CompositionEvent('compositionstart', { bubbles: true }))
+    await burst(field, '日本語の文章')
+    endWithEnter(field, form)
+    await settle()
+
+    expect(sent).toEqual([])
+
+    pressEnter(field)
+    await eventually(() => expect(sent).toEqual(['日本語の文章']))
+  })
+
+  it.each(FORMS)('takes no reference when it comes %s; the next Enter takes it', async (_form, form) => {
+    const candidate: ReferenceCandidate = {
+      id: 'doc-1',
+      label: 'Konzept.docx',
+      token: { kind: 'document', id: 'doc-1', label: 'Konzept.docx', location: '', text: '' },
+    }
+    const { field } = await mount({
+      referenceCandidates: (query: string) =>
+        'konzept.docx'.includes(query.toLocaleLowerCase()) ? [candidate] : [],
+    })
+
+    await burst(field, '@')
+    field.dispatchEvent(new window.CompositionEvent('compositionstart', { bubbles: true }))
+    await burst(field, 'Konz')
+    await eventually(() => expect(document.querySelector('.mention-popover button')).toBeTruthy())
+    endWithEnter(field, form)
+    await settle()
+
+    expect(field.querySelectorAll('.ref-token').length).toBe(0)
+
+    pressEnter(field)
+    await eventually(() => expect(field.querySelectorAll('.ref-token').length).toBe(1))
+  })
+})

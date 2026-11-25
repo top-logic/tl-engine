@@ -1,5 +1,5 @@
 ---
-description: Read before showing a selectable list of objects in a .view.xml in the style of a contact or message list - <data-list> (DataListElement, client TLDataList, design system tl-list) with rows, inputs, observed-types, lines (attribute / value / emphasis), <leading> avatar or icon, <trailing> metadata text or badge or a template with element-channel (e.g. a status pill with a tooltip), group-by, selection and count channels, search, collapsible / collapsed, drawer-below, header commands, row-commands / row-channel / row-actions, row-css-class, and a <context-menu> around the list.
+description: Read before showing a selectable list of objects in a .view.xml in the style of a contact or message list - <data-list> (DataListElement, client TLDataList, design system tl-list) with rows, inputs, observed-types, lines (attribute / value / emphasis), <leading> avatar or icon, <trailing> metadata text or badge or a template with element-channel (e.g. a status pill with a tooltip), group-by, selection and count channels, search, a list in a collapsible <side-rail>, header commands, row-commands / row-channel / row-actions, row-css-class, and a <context-menu> around the list.
 order: 62
 ---
 
@@ -7,8 +7,8 @@ order: 62
 
 A `<data-list>` shows a set of objects as a list of entries in the style of a contact or message
 list: in front an avatar or an icon, then one or more lines of text, after them metadata text or a
-badge, and a trigger for the commands of the entry. The entries can be grouped under headings,
-searched and collapsed to a narrow strip; a click selects an entry. It is the element of choice for
+badge, and a trigger for the commands of the entry. The entries can be grouped under headings and
+searched; a click selects an entry. It is the element of choice for
 a master-detail picker of moderate size. It renders all of its entries - for large sets of objects,
 use a [table](doc:view-layer/tables), which loads its rows as they scroll into view.
 
@@ -125,22 +125,29 @@ The referenced view derives the status from the row object and shows it as a pil
   of the template - the text of a pill - selects the entry like a click on its lines.
 - The search of the list filters by the lines of the entries, not by the content of the template.
 
-## Groups, search, collapse
+## Groups, search, a collapsible list
 
 - `group-by` is a function of one row computing the heading of its group. The groups stand in the
   order of their first row, so `rows` sorted by the same key gives sorted groups. Without it the
   list is flat.
 - `search` (default on) shows a search field filtering the entries by the text of their lines, in
   the browser.
-- `collapsible` (default on) puts a toggle into the header that collapses the list to a narrow
-  strip; `collapsed` is the state the list starts in on every page load. `title` and `empty-text`
-  name the list and its empty state.
-- `drawer-below` is the width in rem of the element containing the list below which a collapsible
-  list becomes a drawer: it keeps only its strip in the flow, and its toggle opens the list as a
-  modal drawer over its neighbours (`tl-drawer--container`, with a scrim covering just the
-  container). Opening moves the focus to the selected entry; Escape, the scrim, the toggle, a picked
-  entry and a command close it and give the focus back to the toggle. Set it to the width the list
-  and its neighbours need side by side; `0` (the default) keeps a column at every width.
+- `title` and `empty-text` name the list and its empty state.
+- A list that collapses to a narrow strip, and opens as a drawer over its neighbours where its place
+  is narrow, stands in a [`<side-rail>`](doc:view-layer/side-rail) with
+  one section; the list itself has no collapse of its own. A list with a title of its own takes a
+  section without header, and `dismiss-on` naming the list's `selection` closes the drawer on a pick:
+
+  ```xml
+  <side-rail drawer-below="44" width="264">
+  	<section name="contacts" header="false" icon="css:bi bi-people" dismiss-on="contact">
+  		<label><en>Contacts</en></label>
+  		<data-list selection="contact" ...>
+  			<title><en>Contacts</en></title>
+  		</data-list>
+  	</section>
+  </side-rail>
+  ```
 
 ## Selection and commands
 

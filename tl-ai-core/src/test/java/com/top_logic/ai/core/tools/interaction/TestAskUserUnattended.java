@@ -103,8 +103,8 @@ public class TestAskUserUnattended extends TestCase {
 	/**
 	 * A question nobody answers in time ends the wait, and the model is told that this is no consent:
 	 * it writes nothing the question was about and ends the turn with the question open. Told to go
-	 * on with an option of its own, a Pietro run created a methodology nobody had accepted; told to
-	 * stop and ask, an earlier one deleted the document it had made (Openium/Pietro#744).
+	 * on with an option of its own, a run created a methodology nobody had accepted; told to stop and
+	 * ask, an earlier one deleted the document it had made.
 	 */
 	public void testAQuestionNobodyAnswersEndsTheTurnWithTheQuestionOpen() throws Exception {
 		UserInteractionStore store = new UserInteractionStore();

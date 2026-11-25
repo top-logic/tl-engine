@@ -20,7 +20,7 @@ declare module 'tl-react-bridge' {
    * A container element's Java control serializes each child it displays as `{controlId, module,
    * state}`; this component looks the module up, gives the child its own state store and SSE
    * subscription, and renders it. That is what lets a chat element host arbitrary configured view
-   * elements - `<chat-rail>`'s sections, for one.
+   * elements - the steps of a `<presentation-pane>`, for one.
    */
   export const TLChild: ReactTypes.FC<{ control: unknown }>
 
@@ -29,6 +29,19 @@ declare module 'tl-react-bridge' {
    * its height against the element around them, and nothing further out reacts to it.
    */
   export const FillBarrier: ReactTypes.FC<{ children?: ReactTypes.ReactNode }>
+
+  /**
+   * Opens a keyboard scope for its children on the dispatcher's stack of scopes: the innermost
+   * active scope binding a gesture handles it, the scopes around it only when none inside did.
+   */
+  export const KeyboardScopeProvider: ReactTypes.FC<{
+    active?: () => boolean
+    modal?: boolean
+    children?: ReactTypes.ReactNode
+  }>
+
+  /** Binds Escape to `onClose` in the enclosing keyboard scope. */
+  export const EscapeToClose: ReactTypes.FC<{ onClose: () => void }>
 
   export function useTLState(): Record<string, unknown>
 
@@ -146,4 +159,28 @@ declare module 'tl-react-bridge' {
     label: string | undefined,
     badge: Partial<BadgeJson> | null | undefined,
   ): string | undefined
+
+  /** The encoded theme image of the "previous" arrow, e.g. of a back button. */
+  export const ICON_PREVIOUS: string
+
+  /** The encoded theme image of a close button. */
+  export const ICON_CLOSE: string
+
+  /**
+   * The texts of the given i18n keys in the language of the session, each falling back to the
+   * default given with it until the translations have arrived.
+   */
+  export function useI18N<K extends string>(keys: Record<K, string>): Record<K, string>
+
+  /** The props of the part `Button`, as far as this bundle draws buttons through it. */
+  export interface ButtonPartProps {
+    label?: string
+    image?: string
+    display: 'icon-only' | 'icon-label' | 'label-only'
+    appearance: 'primary' | 'secondary' | 'ghost' | 'link'
+    onClick?: (event: ReactTypes.MouseEvent<HTMLElement>) => void
+  }
+
+  /** The drawing of a part, which a component library may replace. */
+  export function usePart(name: 'Button'): ReactTypes.FC<ButtonPartProps>
 }

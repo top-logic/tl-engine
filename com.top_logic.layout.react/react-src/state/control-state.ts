@@ -33,6 +33,8 @@
  *   TLSlider          - SliderState
  *   TLFloatingAction  - FloatingActionState
  *   TLDataList        - DataListState
+ *   TLSideRail        - SideRailState
+ *   TLSideRailSections - SideRailSectionsState
  *
  * The message of an atomic control, which draws its look through the parts of 'tl-react-bridge'
  * (see "replacePart" and the developer article view-layer/parts). A component library replaces
@@ -171,6 +173,13 @@ export interface ButtonStateJson extends ControlStateJson {
 	 * a pressed toggle. Absent when not.
 	 */
 	active: boolean;
+
+	/**
+	 * Whether the button is a toggle: it reports to assistive technology whether it is pressed -
+	 * {@link ButtonStateJson.active} - or not, e.g. a button opening and closing a panel. Absent for a button that
+	 * is no toggle, which reports pressed only while it is {@link ButtonStateJson.active}.
+	 */
+	toggle: boolean;
 
 	/**
 	 * The icon of the button, the encoded form of a theme image (e.g. `css:fas fa-edit` for
@@ -2361,23 +2370,6 @@ export interface DataListStateJson extends ControlStateJson {
 	search: boolean;
 
 	/**
-	 * Whether the header carries the toggle collapsing the list to a narrow strip.
-	 */
-	collapsible: boolean;
-
-	/**
-	 * Whether the list starts collapsed; needs {@link DataListStateJson.collapsible}.
-	 */
-	collapsed: boolean;
-
-	/**
-	 * The width of the element containing the list, in rem, below which a {@link DataListStateJson.collapsible} list
-	 * keeps only its strip and its toggle opens the list as a drawer over its neighbours. Zero: the
-	 * list never becomes a drawer.
-	 */
-	drawerBelow: number;
-
-	/**
 	 * The command buttons of the list, in display order. Absent: none.
 	 */
 	buttons: ChildControlJson[];
@@ -2523,4 +2515,155 @@ export namespace DataListStateJson {
 		 */
 		cssClass: string;
 	}
+}
+
+/**
+ * State of a side rail: a collapsible column beside another element, with sections, the component
+ * `TLSideRail`.
+ *
+ * The rail shows a strip with the icon of every {@link SideRailStateJson.Section} and, while it is {@link SideRailStateJson.open}, a
+ * column with the sections stacked ({@link SideRailStateJson.body}). A click on an icon of the strip sends the command
+ * `showSection` with the argument `name` (the {@link SideRailStateJson.Section.name}): it opens the rail
+ * with the section expanded, or closes the rail when that section is already shown in it.
+ *
+ * Where the area the rail measures itself against (its nearest positioned ancestor) is narrower than
+ * {@link SideRailStateJson.drawerBelow} rem, the rail shows only its strip and renders the {@link SideRailStateJson.drawer} in place of
+ * the column; it reports this with the command `setDrawer` and the argument `drawer`
+ * (boolean). While it is a drawer, {@link SideRailStateJson.open} says whether the drawer is open.
+ *
+ * Dragging the inner edge of a {@link SideRailStateJson.resizable} column sends the command `setWidth` with the
+ * argument `width`, the new width in pixels.
+ */
+export interface SideRailStateJson extends ControlStateJson {
+	/**
+	 * The side of its neighbour the rail stands on. Absent means `'left'`.
+	 */
+	side: SideRailStateJson.Side;
+
+	/**
+	 * Whether the strip of section icons is shown. A rail without strip shows nothing while it is
+	 * closed.
+	 */
+	strip: boolean;
+
+	/**
+	 * Whether the rail is open: its column, or - while it is a drawer - its drawer.
+	 */
+	open: boolean;
+
+	/**
+	 * The width of the area the rail stands in, in rem, below which it is a drawer. Zero: never.
+	 */
+	drawerBelow: number;
+
+	/**
+	 * The sections, top to bottom, without their content.
+	 */
+	sections: SideRailStateJson.Section[];
+
+	/**
+	 * The column with the sections and their content, rendered while the rail is open and not a
+	 * drawer.
+	 */
+	body?: ChildControlJson;
+
+	/**
+	 * The drawer showing the {@link SideRailStateJson.body}, rendered in place of the column while the rail is a
+	 * drawer.
+	 */
+	drawer?: ChildControlJson;
+
+	/**
+	 * Whether the column has a width of its own, which the user changes by dragging its inner edge.
+	 * Otherwise the column fills the area of the rail, e.g. the pane of a split panel, whose size the
+	 * split panel decides.
+	 */
+	resizable: boolean;
+
+	/**
+	 * The width of a {@link SideRailStateJson.resizable} column in pixels.
+	 */
+	width: number;
+
+	/**
+	 * The width in pixels an expanded section asks for while it is shown, taking precedence over
+	 * {@link SideRailStateJson.width}. Zero: none.
+	 */
+	sectionWidth: number;
+}
+
+export namespace SideRailStateJson {
+	/**
+	 * The side of its neighbour the rail stands on.
+	 */
+	export type Side =
+		/**
+		 * The rail stands at the start (left in a left-to-right page); its column opens towards the end.
+		 */
+		| 'left'
+		/**
+		 * The rail stands at the end; its column opens towards the start.
+		 */
+		| 'right';
+
+	/**
+	 * A section of the rail, as the strip and the column show it.
+	 */
+	export interface Section {
+		/**
+		 * The name of the section, unique within the rail.
+		 */
+		name: string;
+
+		/**
+		 * The label of the section, in its header and as the name of its strip icon.
+		 */
+		label: string;
+
+		/**
+		 * The icon on the strip, the encoded form of a theme image. Absent: a generic glyph.
+		 */
+		icon: string;
+
+		/**
+		 * Whether the body of the section is expanded in the column.
+		 */
+		expanded: boolean;
+
+		/**
+		 * Whether the section is left out of the rail, strip icon and header included.
+		 */
+		hidden: boolean;
+
+		/**
+		 * The badge of the section, on its strip icon and in its header. Absent: none.
+		 */
+		badge?: BadgeJson;
+
+		/**
+		 * Whether the section has no header: it is always expanded, for content that brings a title
+		 * bar of its own.
+		 */
+		headless: boolean;
+
+		/**
+		 * The content of the section. Present in {@link SideRailSectionsStateJson.sections} only.
+		 */
+		content?: ChildControlJson;
+	}
+}
+
+/**
+ * State of the column of a side rail: the sections stacked, each with a header and its content, the
+ * component `TLSideRailSections`.
+ *
+ * A click on the header of a section sends the command `toggleSection` with the argument
+ * `name` (the name of the {@link SideRailStateJson.Section}). The content of a collapsed section stays
+ * mounted and hidden, so that it keeps what the user did there and keeps reporting its badge.
+ */
+export interface SideRailSectionsStateJson extends ControlStateJson {
+	/**
+	 * The sections, top to bottom, with their content.
+	 */
+	sections: SideRailStateJson.Section[];
 }

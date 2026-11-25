@@ -17,7 +17,6 @@ import java.util.Map;
 
 import com.top_logic.ai.chat.api.AccountRuns;
 import com.top_logic.ai.chat.api.ApprovalChoice;
-import com.top_logic.ai.chat.api.ChatPreferencesStore;
 import com.top_logic.ai.chat.api.ChatSSEHandler;
 import com.top_logic.ai.chat.api.ChatTranscripts;
 import com.top_logic.ai.chat.api.DtoMapper;
@@ -25,7 +24,6 @@ import com.top_logic.ai.chat.api.RunStateFrame;
 import com.top_logic.ai.chat.api.SendRefusal;
 import com.top_logic.ai.chat.api.messages.AttachmentUploadReply;
 import com.top_logic.ai.chat.api.messages.CancelReply;
-import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.ai.chat.api.messages.ChatSendReply;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
 import com.top_logic.ai.chat.api.messages.ChatStatusReply;
@@ -48,7 +46,6 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
-import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -75,16 +72,15 @@ import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
-import de.haumacher.msgbuf.io.StringR;
-import de.haumacher.msgbuf.json.JsonReader;
 
 /**
  * Base class of the controls of the chat elements that join a conversation's browser store - a
- * {@code <chat-conversation>}, a {@code <chat-rail>}, a {@code <chat-dock>}, a rail section.
+ * {@code <chat-conversation>}, a {@code <chat-dock>}, a {@code <chat-sources>}.
  *
  * <p>
  * Every such control binds its window's conversation once through {@link ChatViewBinding}, writes
- * the bootstrap the store is built from, and reads the user's stored layout again on every render.
+ * the bootstrap the store is built from, and reads who is signed in and the language again on every
+ * render.
  * The store holds one stream of the conversation's frames for all elements of the conversation and
  * attaches it through whichever of them it can reach, so every one of these controls answers the
  * stream commands: {@link #CMD_ATTACH_STREAM}, {@link #CMD_DETACH_STREAM} and
@@ -104,8 +100,8 @@ import de.haumacher.msgbuf.json.JsonReader;
  * {@link #CMD_DELETE_SESSION}), sending ({@link #CMD_SEND}, {@link #CMD_EDIT_SEND},
  * {@link #CMD_REGENERATE}), answering and stopping runs and subagents ({@link #CMD_RESPOND},
  * {@link #CMD_CANCEL}, {@link #CMD_MESSAGE_SUBAGENT}, {@link #CMD_CANCEL_SUBAGENT}), the
- * auto-approve switch ({@link #CMD_SET_APPROVAL_MODE}), ratings ({@link #CMD_RATE}), the prompt
- * improver ({@link #CMD_IMPROVE_PROMPT}) and the layout ({@link #CMD_SAVE_LAYOUT}); and it serves
+ * auto-approve switch ({@link #CMD_SET_APPROVAL_MODE}), ratings ({@link #CMD_RATE}) and the prompt
+ * improver ({@link #CMD_IMPROVE_PROMPT}); and it serves
  * the transcripts the
  * browser reads ({@link #getDownloadData(String)}): a chat's transcript is read from the
  * {@code /react-api/data} endpoint of the control, under a key {@link #DATA_SESSION} or
@@ -439,18 +435,6 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 */
 	public static final String CMD_CANCEL_SUBAGENT = "cancelSubagent";
 
-	/**
-	 * Technical command that stores the user's layout of one chat - rail, pane width, sections - in
-	 * the personal configuration ({@link ChatPreferencesStore}).
-	 *
-	 * <p>
-	 * Takes {@link #ARG_LAYOUT_KEY}, the key the layout is stored under - one layout per
-	 * {@code chat-id} - and {@link #ARG_LAYOUT}, a {@link ChatPreferencesDto} holding what the user
-	 * decided: a fact they never touched is absent.
-	 * </p>
-	 */
-	public static final String CMD_SAVE_LAYOUT = "saveLayout";
-
 	/** Argument of {@link #CMD_RESPOND} and the prompt improvement: the id of the request. */
 	public static final String ARG_REQUEST_ID = "requestId";
 
@@ -489,12 +473,6 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * that started the subagent, which tells it from a namesake.
 	 */
 	public static final String ARG_PARENT_TOOL_CALL_ID = "parentToolCallId";
-
-	/** Argument of {@link #CMD_SAVE_LAYOUT}: the key the layout is stored under. */
-	public static final String ARG_LAYOUT_KEY = "layoutKey";
-
-	/** Argument of {@link #CMD_SAVE_LAYOUT}: the layout, as a {@link ChatPreferencesDto}. */
-	public static final String ARG_LAYOUT = "layout";
 
 
 
@@ -536,7 +514,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * @param chatId
 	 *        The resolved {@code chat-id} of the conversation the element joins.
 	 * @param element
-	 *        The element's tag, e.g. {@code chat-rail}, for the join diagnostic.
+	 *        The element's tag, e.g. {@code chat-dock}, for the join diagnostic.
 	 */
 	protected ChatControl(ReactContext context, String reactModule, String chatId, String element) {
 		super(context, null, reactModule);
@@ -568,7 +546,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	}
 
 	/**
-	 * Re-reads who is signed in, the session's language and the user's stored layout.
+	 * Re-reads who is signed in, the session's language and the user's auto-approve choice.
 	 *
 	 * <p>
 	 * A browser reload re-renders the control tree the window already holds, so this hook is the
@@ -1230,31 +1208,6 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			stringArg(args, ARG_SESSION_ID), stringArg(args, ARG_SUBAGENT_ID),
 			stringArg(args, ARG_PARENT_TOOL_CALL_ID));
 		return CancelReply.create().setCancelled(cancelled);
-	}
-
-	/**
-	 * Stores the user's layout of a chat, see {@link #CMD_SAVE_LAYOUT}.
-	 */
-	@ReactCommandHandler(value = CMD_SAVE_LAYOUT, technical = true, params = {
-		@ReactParam(name = ARG_LAYOUT_KEY, type = "string", description = "The key the layout is stored under."),
-		@ReactParam(name = ARG_LAYOUT, type = "object", required = true, description = "The layout.")
-	})
-	public void saveLayout(Map<String, Object> args) {
-		if (actingPerson() == null) {
-			return;
-		}
-		Object layout = args == null ? null : args.get(ARG_LAYOUT);
-		if (!(layout instanceof Map<?, ?>)) {
-			return;
-		}
-		ChatPreferencesDto preferences;
-		try {
-			preferences = ChatPreferencesDto.readChatPreferencesDto(new JsonReader(new StringR(JSON.toString(layout))));
-		} catch (IOException | RuntimeException ex) {
-			Logger.info("Ignoring an unreadable chat layout: " + ex.getMessage(), ChatControl.class);
-			return;
-		}
-		ChatPreferencesStore.save(stringArg(args, ARG_LAYOUT_KEY), preferences);
 	}
 
 	/**

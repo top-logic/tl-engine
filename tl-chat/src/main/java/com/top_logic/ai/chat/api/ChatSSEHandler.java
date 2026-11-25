@@ -606,7 +606,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 		// Heartbeat if no activity for 15s - into a stream that is read. A queue that still holds what
 		// it could not write has no browser on it: the browser attaches again when it misses the
 		// heartbeat, and a page that is gone would collect one more heartbeat every 15 s until its
-		// session ends (Pietro #738).
+		// session ends.
 		long now = System.currentTimeMillis();
 		if (now - _lastActivityTime > HEARTBEAT_INTERVAL_MS && _queue.pendingEventCount() == 0) {
 			sendHeartbeat();

@@ -28,6 +28,7 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Config;
 import com.top_logic.ai.chat.view.ChatConversationElement.Context;
 import com.top_logic.ai.chat.view.ChatConversationElement.Controls;
 import com.top_logic.ai.chat.view.ChatConversationElement.Fact;
+import com.top_logic.ai.chat.view.ChatConversationElement.HeaderCommands;
 import com.top_logic.ai.chat.view.ChatConversationElement.Mention;
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompt;
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompts;
@@ -40,12 +41,19 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CommandCliqueService;
+import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -256,6 +264,12 @@ public class ChatConversationControl extends ChatControl {
 	/** Whether {@link #_offers} are offered now. */
 	private boolean _offering;
 
+	/**
+	 * State: the toolbar of the {@link Config#getCommands() commands} at the end of the head of the
+	 * transcript; absent without commands.
+	 */
+	public static final String HEADER_COMMANDS = "headerCommands";
+
 	/** The dock this conversation is in, <code>null</code> outside a dock. */
 	private ChatDockScope _dock;
 
@@ -264,8 +278,10 @@ public class ChatConversationControl extends ChatControl {
 	 * {@link Config#getAgentCommands() agent commands} on its own.
 	 */
 	public ChatConversationControl(ViewContext context, Config config) {
-		this(context, config, ChatConversationElement.instantiateAgentCommands(
-			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config));
+		this(context, config,
+			ChatConversationElement.instantiateAgentCommands(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+				config),
+			HeaderCommands.instantiate(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config));
 	}
 
 	/**
@@ -273,8 +289,11 @@ public class ChatConversationControl extends ChatControl {
 	 *
 	 * @param agentCommands
 	 *        The commands instantiated from {@link Config#getAgentCommands()}, in their order.
+	 * @param headerCommands
+	 *        The commands instantiated from {@link Config#getCommands()}, in their order.
 	 */
-	public ChatConversationControl(ViewContext context, Config config, List<ViewCommand> agentCommands) {
+	public ChatConversationControl(ViewContext context, Config config, List<ViewCommand> agentCommands,
+			HeaderCommands headerCommands) {
 		// The element's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
 		// "default".
 		super(context, blankToDefault(config.getReactElement(), "TLChatConversation"),
@@ -311,6 +330,7 @@ public class ChatConversationControl extends ChatControl {
 		putState("timestamp", Boolean.valueOf(actions.getTimestamp()));
 		List<String> host = actions.getHost();
 		putState("hostActions", host == null ? List.of() : List.copyOf(host));
+		writeHeaderCommands(context, headerCommands);
 
 		// Composer.
 		putState("promptImprovementEnabled", Boolean.valueOf(configuredImprover != null));
@@ -984,8 +1004,8 @@ public class ChatConversationControl extends ChatControl {
 	 * {@code <chat-dock>} only while that dock is open.
 	 *
 	 * <p>
-	 * A closed dock keeps its content displayed - hidden, so that the rail's badges and the browser
-	 * store follow the conversation - but nobody sees it. One conversation has one set of
+	 * A closed dock keeps its content displayed - hidden, so that the browser store follows the
+	 * conversation - but nobody sees it. One conversation has one set of
 	 * registrations on its {@link ChatViewBinding}, and the allow list of {@code present} is the
 	 * union of the window's displayed channels, so a closed dock that offered its pane would take the
 	 * tables of a page showing the same conversation, the last one attached winning.
@@ -1367,5 +1387,21 @@ public class ChatConversationControl extends ChatControl {
 			return flag.booleanValue();
 		}
 		return value != null && Boolean.parseBoolean(String.valueOf(value));
+	}
+
+	/**
+	 * Puts the {@link Config#getCommands() commands} as a toolbar into the head of the transcript.
+	 */
+	private void writeHeaderCommands(ViewContext context, HeaderCommands headerCommands) {
+		if (headerCommands.commands().isEmpty()) {
+			return;
+		}
+		List<ViewCommandModel> models =
+			ViewCommands.buildCommandModels(context, headerCommands.commands(), headerCommands.configs());
+		ViewCommands.registerLifecycle(context, models, this);
+		ReactToolbarControl toolbar = ToolbarBuilder.buildLive(context, new CommandScope(models),
+			List.of(CommandPlacement.TOOLBAR, CommandPlacement.BUTTON_BAR), CommandCliqueService.getInstance(),
+			ButtonDisplayMode.ICON_ONLY);
+		putState(HEADER_COMMANDS, toolbar);
 	}
 }

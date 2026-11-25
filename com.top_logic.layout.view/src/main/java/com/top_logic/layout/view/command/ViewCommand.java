@@ -76,6 +76,9 @@ public interface ViewCommand {
 		/** Configuration name for {@link #getTooltipExpr()}. */
 		String TOOLTIP_EXPR = "tooltip-expr";
 
+		/** Configuration name for {@link #getActiveExpr()}. */
+		String ACTIVE_EXPR = "active-expr";
+
 		/** Configuration name for {@link #getCssClasses()}. */
 		String CSS_CLASSES = "css-classes";
 
@@ -205,6 +208,25 @@ public interface ViewCommand {
 		@Name(TOOLTIP_EXPR)
 		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getTooltipExpr();
+
+		/**
+		 * Whether the effect of this command is in force, computed from its arguments.
+		 *
+		 * <p>
+		 * While the expression yields a value TL-Script takes as true, the button of the command is
+		 * shown pressed and reported pressed to assistive technology - e.g. a button that opens and
+		 * closes a panel, while the panel is open. Without an expression, the button is never
+		 * pressed.
+		 * </p>
+		 *
+		 * <p>
+		 * The expression sees the same variables and is evaluated at the same moments as the
+		 * {@link #getLabelExpr() label expression}.
+		 * </p>
+		 */
+		@Name(ACTIVE_EXPR)
+		@ScriptContextVariables(ActionScriptVariables.class)
+		Expr getActiveExpr();
 
 		/**
 		 * Additional CSS classes to apply to the command's UI element.

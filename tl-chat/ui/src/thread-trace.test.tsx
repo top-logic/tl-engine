@@ -61,9 +61,6 @@ async function openTrace(actions: ChatAction[], language: Language, entries = tr
       onEditSend: async () => true,
       onRegenerate: () => undefined,
       onRate: () => undefined,
-      onOpenRail: () => undefined,
-      railCollapsed: true,
-      onToggleRail: () => undefined,
       title: 'Titel',
     } as never),
   ))
@@ -83,7 +80,7 @@ const APPROVED: ChatAction[] = [
     type: 'ADD_APPROVAL',
     approvalRequestId: 'p1',
     toolCallId: 't1',
-    toolName: 'consulting.recordStatement',
+    toolName: 'notes.recordStatement',
     argsJson: '{"text":"FACT-004"}',
     displayReason: 'Modifies shared application data.',
     toolMode: 'DATA_WRITE',
@@ -122,7 +119,7 @@ function callWith(input: unknown): ChatAction[] {
   return [
     { type: 'ADD_USER', id: 'u1', text: 'Schreib das auf' },
     { type: 'START_RUN', runId: 'r1' },
-    { type: 'ADD_TOOL', toolUseId: 't1', name: 'consulting.recordStatement', input },
+    { type: 'ADD_TOOL', toolUseId: 't1', name: 'notes.recordStatement', input },
     { type: 'ADD_TOOL_RESULT', toolUseId: 't1', output: 'ok' },
     { type: 'UPDATE_TOOL', toolUseId: 't1', status: 'done', durationMs: 12 },
     { type: 'END_RUN', runId: 'r1' },

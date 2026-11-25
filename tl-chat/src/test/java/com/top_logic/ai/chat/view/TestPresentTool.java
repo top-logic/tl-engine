@@ -28,6 +28,7 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -523,6 +524,46 @@ public class TestPresentTool extends BasicTestCase {
 		} finally {
 			pane.dispose();
 		}
+	}
+
+	/**
+	 * The {@code <presentation-pane>} shows the steps of its channel; its back button returns to the
+	 * step below and writes its value back, its close button empties the channel and the pane.
+	 */
+	public void testThePaneControlGoesBackAndCloses() throws Exception {
+		withWindow();
+		allow();
+		ReactWindowRegistry registry = new ReactWindowRegistry("test-session");
+		String window = "paneControlWindow";
+		DefaultReactContext react = new DefaultReactContext("/app", window, registry.getOrCreateQueue(window), registry);
+		ViewChannel input = new DefaultViewChannel("paneInput");
+		PresentationPaneControl control = new PresentationPaneControl(new DefaultViewContext(react), input);
+		try {
+			assertFalse(control.isOpen());
+			present("{\"Open\": 3, \"Closed\": 5}");
+			Object chart = _channel.get();
+			input.set(chart);
+			_tool.present("{\"Open\": {\"count\": 3, \"sum\": 2.5}}", null, PresentAs.TABLE, null, null, "",
+				context(ModelSecurity.UNCHECKED));
+			input.set(_channel.get());
+			assertEquals(2, steps(control).size());
+
+			control.executeCommand(PresentationPaneControl.CMD_BACK, Map.of());
+			assertEquals(1, steps(control).size());
+			assertSame("The channel follows the step shown.", chart, input.get());
+
+			control.executeCommand(PresentationPaneControl.CMD_CLOSE, Map.of());
+			assertNull("Closing empties the channel.", input.get());
+			assertEquals(0, steps(control).size());
+			assertFalse(control.isOpen());
+		} finally {
+			control.cleanupTree();
+		}
+	}
+
+	private static List<?> steps(ReactControl control) throws Exception {
+		Map<?, ?> state = (Map<?, ?>) JSON.fromString(control.stateAsJSON());
+		return (List<?>) state.get(PresentationPaneControl.STEPS);
 	}
 
 	/** The same object named twice is one object: the page shows what the model meant. */

@@ -266,6 +266,9 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 	/** @see #isActive() */
 	String ACTIVE__PROP = "active";
 
+	/** @see #isToggle() */
+	String TOGGLE__PROP = "toggle";
+
 	/** @see #getImage() */
 	String IMAGE__PROP = "image";
 
@@ -329,6 +332,18 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 	 * @see #isActive()
 	 */
 	com.top_logic.layout.react.state.ButtonState setActive(boolean value);
+
+	/**
+	 * Whether the button is a toggle: it reports to assistive technology whether it is pressed -
+	 * {@link #isActive()} - or not, e.g. a button opening and closing a panel. Absent for a button that
+	 * is no toggle, which reports pressed only while it is {@link #isActive()}.
+	 */
+	boolean isToggle();
+
+	/**
+	 * @see #isToggle()
+	 */
+	com.top_logic.layout.react.state.ButtonState setToggle(boolean value);
 
 	/**
 	 * The icon of the button, the encoded form of a theme image (e.g. {@code css:fas fa-edit} for

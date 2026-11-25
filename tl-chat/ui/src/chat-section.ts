@@ -6,8 +6,8 @@ const { useEffect, useRef } = React
 /**
  * Reports a section's current count on its {@code badge} channel.
  *
- * The chat's counts are derived in the browser store, and the rail is a separate view element that
- * sees nothing but its channels - so the number has to travel browser to server to rail. Only a
+ * The chat's counts are derived in the browser store, and a `<side-rail>` is a separate view element
+ * that sees nothing but its channels - so the number has to travel browser to server to rail. Only a
  * change is sent, and only when a channel is configured, so a section nobody counts costs nothing.
  * The report runs in the background.
  */

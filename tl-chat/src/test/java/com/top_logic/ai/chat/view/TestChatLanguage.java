@@ -8,7 +8,6 @@ package com.top_logic.ai.chat.view;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -16,7 +15,6 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.knowledge.KBSetup;
 
-import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.util.TLContext;
@@ -37,22 +35,19 @@ public class TestChatLanguage extends BasicTestCase {
 	public void testTheNextRenderSpeaksTheSwitchedLanguage() {
 		TLContext context = TLContext.getContext();
 		Locale previous = context.getCurrentLocale();
-		Function<String, ChatPreferencesDto> previousSource = ChatViewBinding.preferenceSource;
-		ChatViewBinding.preferenceSource = chatId -> ChatPreferencesDto.create();
 		try {
 			TypedAnnotatable window = new LazyTypedAnnotatable();
 			context.setCurrentLocale(Locale.GERMAN);
-			assertEquals("de", render(ChatViewBinding.bind(window, "pietro")).get("language"));
+			assertEquals("de", render(ChatViewBinding.bind(window, "language")).get("language"));
 
 			context.setCurrentLocale(Locale.ENGLISH);
-			ChatViewBinding again = ChatViewBinding.bind(window, "pietro");
+			ChatViewBinding again = ChatViewBinding.bind(window, "language");
 			assertEquals("The window's chat answers in the language chosen since.", "en",
 				render(again).get("language"));
 			Map<String, Object> reload = new HashMap<>();
 			again.writeRenderState(reload::put);
 			assertEquals("A reload re-renders the chat in the language chosen since.", "en", reload.get("language"));
 		} finally {
-			ChatViewBinding.preferenceSource = previousSource;
 			context.setCurrentLocale(previous);
 		}
 	}

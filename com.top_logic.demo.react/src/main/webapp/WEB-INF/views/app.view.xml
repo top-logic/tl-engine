@@ -549,6 +549,15 @@
 							<de>Liste</de>
 						</label>
 					</nav-item>
+					<nav-item id="side-rail-demo"
+						icon="css:bi bi-layout-sidebar"
+					>
+						<view-ref view="demo/side-rail-demo.view.xml"/>
+						<label>
+							<en>Side rail</en>
+							<de>Seitenspalte</de>
+						</label>
+					</nav-item>
 					<nav-item id="data-list-status-demo"
 						icon="css:bi bi-card-checklist"
 					>

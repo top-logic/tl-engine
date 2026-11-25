@@ -40,14 +40,14 @@ public class TestChatPlaceholderBy extends BasicTestCase {
 	/** The text follows its input, and an empty one leaves the fixed placeholder in force. */
 	public void testThePlaceholderFollowsTheChannel() throws Exception {
 		DefaultViewChannel scope = new DefaultViewChannel(SCOPE);
-		scope.set("Netzausbau");
+		scope.set("Roadmap");
 		ChatConversationControl conversation = conversation(scope,
 			"<placeholder><en>Ask anything.</en></placeholder>"
 				+ "<placeholder-by><inputs><input channel='" + SCOPE + "'/></inputs>"
 				+ "<value>s -> if($s == null, \"Ask about all projects.\", \"Ask about \" + $s + \".\")</value>"
 				+ "</placeholder-by>");
 		try {
-			assertEquals("Ask about Netzausbau.", placeholder(conversation));
+			assertEquals("Ask about Roadmap.", placeholder(conversation));
 
 			scope.set(null);
 			assertEquals("Ask about all projects.", placeholder(conversation));

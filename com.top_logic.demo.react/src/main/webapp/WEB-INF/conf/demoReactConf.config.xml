@@ -125,6 +125,7 @@
 			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
 				<group name="Approve" type="write"/>
 				<group name="ShowPlanning" type="read"/>
+				<group name="ArrangeCockpit" type="write"/>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
@@ -375,9 +376,15 @@
 						and P2 disables it for an account that is a member of P1 only.
 
 						The "Planning" tile of the project cockpit needs the operation "ShowPlanning" on
-						the project, which only its administrators hold: a member of the project sees
-						the "no access" placeholder in its place. The "Approvals" tile needs the same
+						the project, which only its administrators hold: a member of the project who
+						administers another project sees the "no access" placeholder in its place; a
+						member who administers no project is not offered the tile at all. The "Approvals" tile needs the same
 						operation, and is not displayed at all to a member.
+
+						The arrangement of the tiles of the project cockpit is stored at the project, the
+						same for all its users. Changing it needs the operation "ArrangeCockpit" on the
+						project, which only its administrators hold, and only they write the attributes
+						holding it: a member of the project is offered no editing of the cockpit layout.
 					-->
 					<module name="tl.demo.projectManagement">
 						<grant
@@ -407,6 +414,7 @@
 						<operations>
 							<operation name="Approve"/>
 							<operation name="ShowPlanning"/>
+							<operation name="ArrangeCockpit"/>
 						</operations>
 						<grant
 							inherit="true"
@@ -419,6 +427,10 @@
 						/>
 						<grant
 							operation="ShowPlanning"
+							roles="demo.react.ProjectAdmin"
+						/>
+						<grant
+							operation="ArrangeCockpit"
 							roles="demo.react.ProjectAdmin"
 						/>
 						<!--
@@ -457,6 +469,18 @@
 						/>
 					</part>
 					<part name="tl.demo.projectManagement:ProjectScope#admins">
+						<grant
+							operation="Write"
+							roles="demo.react.ProjectAdmin"
+						/>
+					</part>
+					<part name="tl.demo.projectManagement:ProjectScope#cockpitOrder">
+						<grant
+							operation="Write"
+							roles="demo.react.ProjectAdmin"
+						/>
+					</part>
+					<part name="tl.demo.projectManagement:ProjectScope#cockpitHidden">
 						<grant
 							operation="Write"
 							roles="demo.react.ProjectAdmin"

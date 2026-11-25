@@ -7,6 +7,7 @@ package com.top_logic.base.discovery;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import com.top_logic.base.discovery.catalog.AiCatalog;
 import com.top_logic.base.discovery.catalog.CatalogEntry;
@@ -23,7 +24,8 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.RuntimeCategory;
-import com.top_logic.basic.version.Version;
+import com.top_logic.layout.I18NConstants;
+import com.top_logic.util.Resources;
 
 /**
  * Describes the application to agents (machine clients) that know only its URL.
@@ -59,9 +61,6 @@ public class AgentDiscoveryService extends ConfiguredManagedClass<AgentDiscovery
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<AgentDiscoveryService> {
 
-		/** Configuration name of {@link #getDisplayName()}. */
-		String DISPLAY_NAME = "display-name";
-
 		/** Configuration name of {@link #getSummary()}. */
 		String SUMMARY = "summary";
 
@@ -70,17 +69,6 @@ public class AgentDiscoveryService extends ConfiguredManagedClass<AgentDiscovery
 
 		/** Tag name of an entry in {@link #getContributions()}. */
 		String CONTRIBUTION = "contribution";
-
-		/**
-		 * The name of the application shown to agents.
-		 *
-		 * <p>
-		 * If not set, the name of the application from its version information is used.
-		 * </p>
-		 */
-		@Name(DISPLAY_NAME)
-		@Nullable
-		String getDisplayName();
 
 		/**
 		 * A one-line English summary of what the application is for.
@@ -125,13 +113,15 @@ public class AgentDiscoveryService extends ConfiguredManagedClass<AgentDiscovery
 
 	/**
 	 * The name of the application shown to agents.
+	 *
+	 * <p>
+	 * The application title {@link I18NConstants#APPLICATION_TITLE}, the same name users see,
+	 * resolved in English, since <code>llms.txt</code> and the AI Catalog are English documents
+	 * for models.
+	 * </p>
 	 */
 	public String displayName() {
-		String configured = getConfig().getDisplayName();
-		if (!StringServices.isEmpty(configured)) {
-			return configured;
-		}
-		return Version.getApplicationVersion().getName();
+		return Resources.getInstance(Locale.ENGLISH).getString(I18NConstants.APPLICATION_TITLE);
 	}
 
 	/**

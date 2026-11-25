@@ -6,6 +6,8 @@
 package test.com.top_logic.base.accesscontrol;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -29,16 +31,19 @@ import com.meterware.servletunit.ServletUnitClient;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
 import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
+import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet.ForwardRequiredException;
 import com.top_logic.base.accesscontrol.ExternalLoginFailure;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
 import com.top_logic.base.accesscontrol.I18NConstants;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
+import com.top_logic.base.accesscontrol.Login.LoginFailedException;
 import com.top_logic.base.accesscontrol.Login.UnknownAccountException;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.accesscontrol.VerificationResult;
+import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
@@ -54,8 +59,8 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.Resources;
 
 /**
- * Test for the identity verification and the unknown account branch of
- * {@link ExternalAuthenticationServlet}.
+ * Test for the identity verification, the unknown account branch and the handling of rejected logins
+ * of {@link ExternalAuthenticationServlet}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -66,6 +71,16 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	 * no one.
 	 */
 	public static class TestingServlet extends ExternalAuthenticationServlet {
+
+		/**
+		 * Number of calls to {@link #discardRejectedAuthentication(HttpServletRequest, HttpServletResponse)}.
+		 */
+		static final AtomicInteger _discards = new AtomicInteger();
+
+		@Override
+		protected void discardRejectedAuthentication(HttpServletRequest request, HttpServletResponse response) {
+			_discards.incrementAndGet();
+		}
 
 		@Override
 		public String getVerificationToken(HttpServletRequest request) {
@@ -157,7 +172,7 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	/**
 	 * {@link ExternalAuthenticationServlet} whose login fails with {@link #_failure}, before or after
 	 * the session has been changed for the user (e.g. like a login whose tokens cannot be
-	 * installed).
+	 * installed), or succeeds without a {@link #_failure}.
 	 */
 	public static class FailingLoginServlet extends TestingServlet {
 
@@ -167,7 +182,8 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 		static volatile Person _user;
 
 		/**
-		 * The {@link RuntimeException} or {@link Error} the login fails with.
+		 * The {@link RuntimeException}, {@link InMaintenanceModeException} or {@link Error} the login
+		 * fails with, <code>null</code> for a successful login.
 		 */
 		static volatile Throwable _failure;
 
@@ -193,8 +209,14 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 			if (!_failBeforeLogin) {
 				super.loginUser(person, request, response);
 			}
+			if (_failure == null) {
+				return;
+			}
 			if (_failure instanceof Error error) {
 				throw error;
+			}
+			if (_failure instanceof InMaintenanceModeException maintenance) {
+				throw maintenance;
 			}
 			throw (RuntimeException) _failure;
 		}
@@ -255,6 +277,8 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		_userSessions = UserSessionCleanup.snapshot(PersistencyLayer.getKnowledgeBase());
+
+		TestingServlet._discards.set(0);
 
 		ServletRunner runner = new ServletRunner();
 		runner.registerServlet("lpServlet", TLLayoutServlet.class.getName());
@@ -462,6 +486,119 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * A login rejected because the application has no account for the authenticated identity
+	 * discards that identity.
+	 */
+	public void testUnknownAccountDiscardsAuthentication() throws Exception {
+		service(UNKNOWN_ACCOUNT_SERVLET);
+
+		assertEquals("Rejected authentication not discarded exactly once.", 1, TestingServlet._discards.get());
+	}
+
+	/**
+	 * A denied login discards the authentication and keeps the session with the reason of the
+	 * denial.
+	 */
+	public void testLoginDeniedDiscardsAuthentication() throws Exception {
+		assertDeniedMessage(DENIED_WITH_REASON_SERVLET, DeniedWithReasonServlet.REASON);
+
+		assertEquals("Rejected authentication not discarded exactly once.", 1, TestingServlet._discards.get());
+	}
+
+	/**
+	 * A failed login discards the authentication and keeps the session with the reason of the
+	 * failure.
+	 */
+	public void testLoginFailedDiscardsAuthentication() throws Exception {
+		assertRejectionDiscardsAuthentication(user -> new LoginFailedException("Login failed in this test."));
+	}
+
+	/**
+	 * A login rejected in maintenance mode discards the authentication and keeps the session with
+	 * the reason of the rejection.
+	 */
+	public void testMaintenanceModeDiscardsAuthentication() throws Exception {
+		assertRejectionDiscardsAuthentication(user -> new InMaintenanceModeException(user));
+	}
+
+	/**
+	 * A login failing with an unexpected error discards the authentication and keeps the session
+	 * with the reason of the failure.
+	 */
+	public void testUnexpectedErrorDiscardsAuthentication() throws Exception {
+		assertRejectionDiscardsAuthentication(user -> new IllegalStateException("Unexpected failure in this test."));
+	}
+
+	private void assertRejectionDiscardsAuthentication(Function<Person, Throwable> failure)
+			throws Exception {
+		Person user = createPerson("externalRejectedUser");
+		try {
+			FailingLoginServlet._user = user;
+			FailingLoginServlet._failure = failure.apply(user);
+			FailingLoginServlet._failBeforeLogin = true;
+			InvocationContext invocation =
+				_client.newInvocation(new GetMethodWebRequest("http://ignore/" + FAILING_LOGIN_SERVLET));
+			doPost(invocation);
+
+			assertContains(LoginRetryServlet.MARKER, invocation.getServletResponse().getText());
+			assertEquals("Rejected authentication not discarded exactly once.", 1, TestingServlet._discards.get());
+			HttpSession session = invocation.getRequest().getSession(false);
+			assertNotNull("Session carrying the reason of the rejection must be kept.", session);
+			assertNotNull("Reason of the rejection must stay in the session.", ExternalLoginFailure.take(session));
+		} finally {
+			FailingLoginServlet.reset();
+			deleteIfValid(user);
+		}
+	}
+
+	/**
+	 * A login forwarded elsewhere is no rejection and keeps the authentication.
+	 */
+	public void testForwardKeepsAuthentication() throws Exception {
+		Person user = createPerson("externalForwardedUser");
+		try {
+			FailingLoginServlet._user = user;
+			FailingLoginServlet._failure =
+				new ForwardRequiredException(ApplicationPages.getInstance().getLoginRetrySSOPage());
+			FailingLoginServlet._failBeforeLogin = true;
+			InvocationContext invocation =
+				_client.newInvocation(new GetMethodWebRequest("http://ignore/" + FAILING_LOGIN_SERVLET));
+			doPost(invocation);
+
+			assertContains(LoginRetryServlet.MARKER, invocation.getServletResponse().getText());
+			assertEquals("Forwarded login must not discard the authentication.", 0, TestingServlet._discards.get());
+		} finally {
+			FailingLoginServlet.reset();
+			deleteIfValid(user);
+		}
+	}
+
+	/**
+	 * A successful login keeps the authentication.
+	 */
+	public void testSuccessfulLoginKeepsAuthentication() throws Exception {
+		SessionService service = SessionService.getInstance();
+		Person user = createPerson("externalSuccessfulUser");
+		try {
+			FailingLoginServlet._user = user;
+			InvocationContext invocation =
+				_client.newInvocation(new GetMethodWebRequest("http://ignore/" + FAILING_LOGIN_SERVLET));
+			doPost(invocation);
+
+			HttpSession session = invocation.getRequest().getSession(false);
+			assertNotNull("Login must establish a session.", session);
+			assertEquals("Login did not succeed.", user, service.getUser(session.getId()));
+			assertEquals("Successful login must not discard the authentication.", 0,
+				TestingServlet._discards.get());
+
+			service.terminateSession(session.getId());
+		} finally {
+			FailingLoginServlet.reset();
+			deleteIfValid(user);
+		}
+	}
+
 	private static void doPost(InvocationContext invocation) throws Exception {
 		ExternalAuthenticationServlet servlet = (ExternalAuthenticationServlet) invocation.getServlet();
 		ThreadContext.inSystemContext(TestExternalAuthenticationServlet.class, () -> {
@@ -597,7 +734,7 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	 */
 	public static Test suite() {
 		Test test = ServiceTestSetup.createSetup(new TestSuite(TestExternalAuthenticationServlet.class),
-			SessionService.Module.INSTANCE, Login.Module.INSTANCE);
+			SessionService.Module.INSTANCE, Login.Module.INSTANCE, MaintenanceWindowManager.Module.INSTANCE);
 		return PersonManagerSetup.createPersonManagerSetup(test);
 	}
 

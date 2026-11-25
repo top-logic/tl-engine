@@ -9,12 +9,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 import org.pac4j.core.client.Client;
-import org.pac4j.core.config.Config;
-import org.pac4j.core.context.WebContext;
-import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.util.Pac4jConstants;
-import org.pac4j.jee.context.JEEContext;
-import org.pac4j.jee.context.session.JEESessionStore;
 import org.pac4j.jee.filter.SecurityFilter;
 
 import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
@@ -26,6 +21,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.security.auth.pac4j.config.ClientConfigurator;
 import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
+import com.top_logic.security.auth.pac4j.servlet.Pac4jAuthenticationServlet;
 import com.top_logic.security.auth.pac4j.servlet.Pac4jUserTokens;
 import com.top_logic.util.AbstractTopLogicServlet;
 
@@ -207,11 +203,7 @@ public class Pac4jLoginMethod implements LoginMethod {
 	 * </p>
 	 */
 	private static void dropStoredProfile(DisplayContext context) {
-		Config config = Pac4jConfigFactory.getInstance().getPac4jConfig();
-		WebContext webContext = new JEEContext(context.asRequest(), context.asResponse());
-		ProfileManager manager = config.getProfileManagerFactory().apply(webContext, new JEESessionStore());
-		manager.setConfig(config);
-		manager.removeProfiles();
+		Pac4jAuthenticationServlet.removeProfiles(context.asRequest(), context.asResponse());
 	}
 
 	private static String encode(String value) {

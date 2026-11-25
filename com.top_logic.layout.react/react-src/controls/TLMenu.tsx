@@ -31,7 +31,7 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
       {items.map((item, i) => item.type === 'separator' ? <MenuSeparator key={i} />
         : item.type === 'header' ? <MenuHeader key={i} label={item.label} />
         : <MenuItem key={item.id} icon={item.icon} label={item.label} disabled={item.disabled} current={item.active}
-            danger={item.tone === 'danger'} className={item.cssClasses} onSelect={() => selectItem(CMD_SELECT_ITEM, { [ARG_ITEM_ID]: item.id })} />)}
+            danger={item.tone === 'danger'} className={item.cssClasses} tooltip={item.tooltip} onSelect={() => selectItem(CMD_SELECT_ITEM, { [ARG_ITEM_ID]: item.id })} />)}
     </Menu>
   );
 };

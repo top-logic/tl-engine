@@ -1,5 +1,5 @@
 ---
-description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A5, object tools, stored agents of a project S1-S6, closed doors P1-P2) and the SecDemo*Test classes asserting each.
+description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A9, model choice in TL-Script M1, object tools, stored agents of a project S1-S6, closed doors P1-P2) and the SecDemo*Test classes asserting each.
 order: 6
 ---
 
@@ -11,7 +11,7 @@ order: 6
 
 | Element | Value |
 |---|---|
-| model | module `pm`: `pm:Project {name, partners, tickets, agents, skills}`, `pm:Ticket {title, body}`, and the stored agents and skills of a project `pm:ProjectAgent`, `pm:ProjectSkill` (specializations of `tl.ai.core:Agent` and `tl.ai.core:Skill`) (`WEB-INF/model/pm.model.xml`) |
+| model | module `pm`: `pm:Project {name, partners, tickets, agents, skills}`, `pm:Ticket {title, body, related}`, and the stored agents and skills of a project `pm:ProjectAgent`, `pm:ProjectSkill` (specializations of `tl.ai.core:Agent` and `tl.ai.core:Skill`) (`WEB-INF/model/pm.model.xml`) |
 | seed data | two projects (Alpha, Beta), three tickets |
 | roles | `projectPartner`, `ticketReader` - both appear in both grant tables |
 | rules | four declarative role rules and one security-parent rule; nothing assigned from Java |
@@ -41,7 +41,7 @@ L1 cannot see objects, so Anna and Dora are indistinguishable at L1 and opposite
 
 ## Enabling and resetting
 
-1. Uncomment `secdemo.config.xml` in `tl-ai-demo/src/main/webapp/WEB-INF/conf/metaConf.txt` and comment out `research.config.xml`, whose background allowlist is a second one.
+1. Uncomment `secdemo.config.xml` in `tl-ai-demo/src/main/webapp/WEB-INF/conf/metaConf.txt` and comment out `research.config.xml`, whose background allowlist is a second one. Keep `a2a-demo.config.xml` off for the same reason: it puts `egress` on the list.
 2. Build and start the demo (the `tl-app` skill, or `mvn -B` in `tl-ai-demo`); the log ends with `***** up and running *****`.
 3. Check two lines of `tl-ai-demo/tmp/app-data/logs/top-logic.tl-ai.log`:
 
@@ -51,7 +51,7 @@ L1 cannot see objects, so Anna and Dora are indistinguishable at L1 and opposite
    ```
 
    A warning above the first line names a persona and a role a rule failed to produce; every scenario of that persona is then wrong in a way that looks like a policy problem. On the first boot of a fresh database the line comes at the end of the startup, after the startup transaction committed. In the second line, `baseline=default[model.read, data.read]` means the `<baseline/>` did not reach the service and `roles=0` that the aspect did not reach the application ([diagnosis](doc:ai/security/tool-access-recipes)).
-4. Between scenarios run `reset.tlscript` as `root` with **execute and save changes**: it deletes the tickets a scenario created and restores missing seed tickets. A second run must report `none` on both lines.
+4. Between scenarios run `reset.tlscript` as `root` with **execute and save changes**: it deletes the tickets a scenario created, restores missing seed tickets and clears the `related` links of the seed tickets. A second run must report `none` on every line.
 
 To turn it off, comment the line out again **and delete `tl-ai-demo/tmp/h2.mv.db`**: withdrawing the `pm` model makes the model upgrade delete the module, which fails while instances exist. To keep the database, delete the instances as `root` first (``all(`pm:Ticket`).concat(all(`pm:ProjectAgent`)).concat(all(`pm:ProjectSkill`)).concat(all(`pm:Project`)).foreach(x -> $x.delete())``, the parts first) and restart after disabling.
 
@@ -163,6 +163,20 @@ A run with nobody to answer an approval prompt auto-approves every call, so it i
 | A3 | it binds administrators too | `root` | 3.2 (as `root`, `fire` fires every case) | still refused: the missing approval prompt is the reason, not the principal's authority |
 | A4 | what the allowlist admits works | `ben` | 3.3, 3.4, 3.5 | the listings, with the model rights applied |
 | A5 | an enforcing policy must declare an allowlist | - | delete `<background-allowlist>` from `secdemo.config.xml` and restart | the application refuses to start ([capping unattended runs](doc:ai/security/tool-access-recipes)) |
+| A6 | an A2A request is a background run that can still ask | `anna` | test | the calling agent approves no tool call, so the list caps the run; `askUser` moves the task to `INPUT_REQUIRED` and returns the answer of the calling agent (`testAQuestionOfTheRunGoesToTheCallingAgent`) |
+| A7 | `allow-writes="true"` alone opens no write tool | `anna`, then `root` | test | `secdemo-editing.addTicket` refused naming the allowlist, also for the administrator |
+| A8 | a write tool on the list follows `allow-writes` | `anna` | test | the gate admits `script-exec.changeData` with `allow-writes="true"` and refuses it with `"false"` by the served agent's switch; a change that it saves still needs `data.write`, which is off the list (A2) |
+| A9 | a READ or EXTERNAL tool off the list is refused over A2A | `root` | test | `a2a.listAgents` and `a2a.askAgent` (`egress`) refused naming the allowlist, whatever `allow-writes` says |
+
+### Model choice in TL-Script
+
+`aiChat` runs no agent, so the default model takes the place of the model of the agent ([run access](doc:ai/security/run-access)). `<model-access>` of the fixture grants `ticketReader` the Haiku model.
+
+| # | Behaviour | Persona | Do this (console) | You should see |
+|---|---|---|---|---|
+| M1 | `aiChat` follows `<model-access>` | `ben` | `aiChat(["Hello"], "claude-opus-5-5")`, then `aiChat(["Hello"])` | `The model claude-opus-5-5 is not available to you. Your roles do not include it.`, and no request is sent; then an answer of the default model (needs a key). `claude-haiku-5-5` answers too |
+
+As `anna`, whose role the section does not name, `claude-haiku-5-5` is refused as well, with `... A call without an agent runs on the default model of the application.` A `<deny>` of the default model for `ticketReader` refuses Ben's `aiChat(["Hello"])` too, naming the role. `SecDemoScriptModelAccessTest` asserts the row, the case of Anna and the deny with a scripted provider under the same model names.
 
 ### The object tools
 
@@ -172,6 +186,8 @@ A write is checked by the tool that makes it, and the turn commits what its tool
 |---|---|---|
 | `anna` | change the title of an Alpha ticket / a Beta ticket | changed, the revision's author is Anna / refused, nothing written |
 | `anna` | set `partners` of Alpha | refused, naming `'partners'`: no role may write who partners on a project |
+| `anna` | set `related` of an Alpha ticket that `root` linked to a Beta ticket first, with *execute and save changes*: ``all(`pm:Ticket`).filter(t -> $t.get(`pm:Ticket#title`) == "Alpha: cut the release branch").firstElement().add(`pm:Ticket#related`, all(`pm:Ticket`).filter(t -> $t.get(`pm:Ticket#title`) == "Beta: import the customer list").firstElement())``. Anna sends the list she reads plus the other Alpha ticket / the list she reads | the Beta ticket stays, and the answer does not name it / `No change` |
+| `anna`, in a run that may not read the other Alpha ticket (test only) | set `related` of an Alpha ticket linked to it to `[]` | `No change`, and the link stays: the run sees less than Anna, and it keeps what it does not see |
 | `anna` | create a ticket in Alpha / in Beta | created / refused |
 | `anna` | delete an Alpha ticket | refused: `pm:Ticket` has no Delete grant |
 | `ben` | any of the three | not offered (no `data.write`), refused by the model rights when handed the tool anyway |
@@ -212,7 +228,7 @@ To turn the aspect off again, delete the instances of `pm:ProjectAgent` and `pm:
 The scenario tables are for exploring; the tests keep the feature honest, against a real application boot with real roles, rules, accounts, the shipped aspect file and the running tool registry:
 
 ```bash
-mvn -B test -DskipTests=false -pl tl-ai-demo -Dtest='com.top_logic.ai.demo.SecDemo*' -Dsurefire.failIfNoSpecifiedTests=false
+mvn -B test -DskipTests=false -pl tl-ai-demo -Dtest='com.top_logic.ai.demo.SecDemo*,com.top_logic.ai.a2a.server.SecDemo*' -Dsurefire.failIfNoSpecifiedTests=false
 ```
 
 | Class | Scenarios | Class | Scenarios |
@@ -224,7 +240,8 @@ mvn -B test -DskipTests=false -pl tl-ai-demo -Dtest='com.top_logic.ai.demo.SecDe
 | `SecDemoCapabilityNoticeTest` | C1, C2 | `SecDemoRoleRuleTest` | the boot check |
 | `SecDemoSkillAbsenceTest` | C1, C4-C6 | `SecDemoMcpEndpointTest` | P1 |
 | `SecDemoListToolsTest` | C3, C4, C8 | `SecDemoModelSecurityTest` | the worked example, persona by persona |
-| `SecDemoVectorIndexTest` | the vector index | | |
+| `SecDemoVectorIndexTest` | the vector index | `SecDemoA2ARunTest` (package `com.top_logic.ai.a2a.server`) | A6-A9 |
+| `SecDemoScriptModelAccessTest` | M1 | | |
 
 `SecDemoStoredAgentAccessTest` (S1-S6, and the authoring tools under the model rights), `SecDemoSpawnFilterTest` (a spawn is decided per child context), `SecDemoDeclaredTypesTest` (a tool declaring `pm:Project` refuses a persona without read access before it runs), `SecDemoInfrastructureAgentTest` (an agent the application runs for a user, such as the prompt improver, cannot be run as a chat persona, whatever `<agent-access>` says), `SecDemoHarnessScriptsTest` (the harness compiles) and the tests of the [policy editor](doc:ai/security/tool-access-editor) (`SecDemoEffectiveAccessTest`, `SecDemoPolicyEditorTest`, `SecDemoApplyPolicyGuardTest`, `SecDemoToolDescriptionTest`, `SecDemoGermanTerminologyTest`) run in the same suite because they need the booted fixture. The unit-level counterparts in `tl-ai-core` use hand-built policies: `TestRoleToolAccess`, `TestToolAuthorization`, `TestAiToolAccessService`, `TestAgentCapabilities`, `TestDelegateFilter`, `TestSpawnFilter`, `TestDetachedSubagentCeiling`, `TestSkillTool`, `TestSkillAbsenceReason`, `TestTopLogicSecurityContext`, `TestReadFilter`.
 

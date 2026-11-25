@@ -95,6 +95,17 @@
 				<property name="body"
 					type="tl.core:String"
 				/>
+				<!--
+					Other tickets, also of another project. A partner writes this reference on a ticket
+					of her project, and it can hold a ticket that she may not read. The object tools
+					keep such a ticket when she changes the value.
+				-->
+				<reference name="related"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Ticket"
+				/>
 			</attributes>
 		</class>
 	</module>

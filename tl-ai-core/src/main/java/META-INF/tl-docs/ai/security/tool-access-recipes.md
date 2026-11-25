@@ -114,6 +114,8 @@ The element is a sibling of `<tool-access>` in the policy. It is a **ceiling**, 
 
 **A detached subagent is a background run.** `spawn_subagent` hands the calling agent a handle, the chat turn ends, and the subagent works on with nobody watching it - so this list caps it as well. A subagent may therefore not be able to do what the same agent does when talked to directly in the chat. The drop is logged at INFO with the subagent's id and the capabilities it lost, and the subagent's own prompt says which ones and that the reason is the allowlist rather than the account's roles. For subagents that write, put the capability on this list. A *synchronous* delegation is unaffected - it finishes inside the turn being watched.
 
+**An A2A request is a background run.** The calling agent answers the questions of the run, but it approves no tool call, so this list caps a served agent too. `allow-writes="true"` of the served agent alone opens no write tool: name the write tool here as well, a single tool rather than its group, because the list holds for every unattended run. A served agent that calls other agents (`a2a.askAgent`) needs `egress`.
+
 **`script` on this list does not admit writes.** Making a change with `changeData` needs `data.write`, and the ceiling applies to that capability exactly as to a tool - so a list carrying `script` without `data.write` lets an unattended run *try* a change in a dry run and refuses to let it persist, administrators included.
 
 **The allowlist has to be declared.** As soon as `<tool-access>` names a role, a policy with no `<background-allowlist>` element is a configuration error and the application refuses to start - and the policy editor refuses to save it:

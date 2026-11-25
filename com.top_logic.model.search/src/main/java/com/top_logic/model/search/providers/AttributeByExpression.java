@@ -167,7 +167,15 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 			TLPrimitive primitiveType = (TLPrimitive) type;
 			StorageMapping<?> mapping = primitiveType.getStorageMapping();
 
-			return mapping.normalizeValue(element);
+			try {
+				return mapping.normalizeValue(element);
+			} catch (ClassCastException | IllegalArgumentException ex) {
+				// The storage mapping cannot convert the script result to the attribute's type.
+				throw new TopLogicException(
+					I18NConstants.ERROR_SCRIPT_RESULT_OF_INCOMPATIBLE_TYPE__ATTR_EXPECTED_ACTUAL.fill(
+						TLModelUtil.qualifiedName(attribute), type, element == null ? null : element.getClass().getName()),
+					ex);
+			}
 		} else {
 			checkValue(object, attribute, type, mandatory, element);
 			return element;

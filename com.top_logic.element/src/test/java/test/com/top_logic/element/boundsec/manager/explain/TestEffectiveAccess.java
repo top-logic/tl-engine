@@ -50,6 +50,10 @@ import com.top_logic.util.model.ModelService;
  * {@code DirectlyAssigned} object grants read to a role no rule delivers.
  * </p>
  * <p>
+ * An {@code Entry} of the model module {@code TestAccessParentOperations} delegates read to its
+ * {@code Catalog} only, and decides write by the roles held on the entry itself.
+ * </p>
+ * <p>
  * The analysis runs in the system context of the test, in which the security checks are bypassed:
  * the decisions must nevertheless be made for the explained account.
  * </p>
@@ -81,6 +85,16 @@ public class TestEffectiveAccess extends BasicTestCase {
 
 	private static final String RULE_COVERED = "TestSecurityCoverage_covered";
 
+	private static final String RESTRICTED_MODULE = "TestAccessParentOperations";
+
+	private static final String CATALOG = RESTRICTED_MODULE + ":Catalog";
+
+	private static final String ENTRY = RESTRICTED_MODULE + ":Entry";
+
+	private static final String ROLE_CATALOG_READER = RESTRICTED_MODULE + ".CatalogReader";
+
+	private static final String ROLE_ENTRY_EDITOR = RESTRICTED_MODULE + ".EntryEditor";
+
 	private BoundedRole _reader;
 
 	private BoundedRole _direct;
@@ -95,6 +109,8 @@ public class TestEffectiveAccess extends BasicTestCase {
 
 	private Person _other;
 
+	private Person _entryEditor;
+
 	private TLObject _covered;
 
 	private TLObject _child;
@@ -104,6 +120,10 @@ public class TestEffectiveAccess extends BasicTestCase {
 	private TLObject _assigned;
 
 	private TLObject _unsecured;
+
+	private TLObject _catalog;
+
+	private TLObject _entry;
 
 	private final List<TLObject> _created = new ArrayList<>();
 
@@ -117,6 +137,7 @@ public class TestEffectiveAccess extends BasicTestCase {
 		_member = createPerson("effectiveAccessMember");
 		_directHolder = createPerson("effectiveAccessDirect");
 		_other = createPerson("effectiveAccessOther");
+		_entryEditor = createPerson("effectiveAccessEntryEditor");
 		inTransaction(() -> {
 			_reader = BoundedRole.getRoleByName(ROLE_READER);
 			_direct = BoundedRole.getRoleByName(ROLE_DIRECT);
@@ -138,6 +159,14 @@ public class TestEffectiveAccess extends BasicTestCase {
 
 			BoundedRole.assignRole(_covered, _group, _reader);
 			BoundedRole.assignRole(_assigned, _directHolder, _direct);
+
+			_catalog = create(CATALOG);
+			_catalog.tUpdateByName("reader", _owner);
+		});
+		inTransaction(() -> {
+			_entry = create(ENTRY);
+			_entry.tUpdateByName("catalog", _catalog);
+			_entry.tUpdateByName("editor", _entryEditor);
 		});
 	}
 
@@ -251,11 +280,57 @@ public class TestEffectiveAccess extends BasicTestCase {
 			delete.checkedOperation());
 		assertSame("Reading a part is checked as reading its container.", SimpleBoundCommandGroup.READ,
 			read.checkedOperation());
+		assertSame("Every operation is checked on the container.", _covered, read.roleHolder());
+		assertSame("Every operation is checked on the container.", _covered, delete.roleHolder());
 
 		RoleAssignment source = singleSource(explanation, _reader);
 		assertFalse(explanation.isInherited(source));
 		assertSame(_covered, source.object());
 		assertEquals(RULE_COVERED, source.ruleId());
+	}
+
+	public void testRestrictedAccessParent() {
+		BoundedRole catalogReader = BoundedRole.getRoleByName(ROLE_CATALOG_READER);
+		BoundedRole entryEditor = BoundedRole.getRoleByName(ROLE_ENTRY_EDITOR);
+
+		AccessExplanation explanation = explain(_owner, _entry);
+
+		assertSame("The catalog decides on reading the entry.", _catalog, explanation.decidingObject());
+		assertTrue(explanation.isDelegating());
+
+		OperationDecision read = decision(explanation, SimpleBoundCommandGroup.READ);
+		assertSame(_catalog, read.roleHolder());
+		assertTrue(read.allowed());
+		assertEquals(Set.of(catalogReader), read.grantingRoles());
+
+		OperationDecision write = decision(explanation, SimpleBoundCommandGroup.WRITE);
+		assertSame("The entry decides on writing itself.", _entry, write.roleHolder());
+		assertSame(SimpleBoundCommandGroup.WRITE, write.checkedOperation());
+		assertFalse(write.allowed());
+		assertEquals(Set.of(entryEditor), write.admittingRoles());
+		assertEquals(Set.of(), write.grantingRoles());
+
+		AccessExplanation editorExplanation = explain(_entryEditor, _entry);
+		OperationDecision editorWrite = decision(editorExplanation, SimpleBoundCommandGroup.WRITE);
+		assertTrue(editorWrite.allowed());
+		assertEquals("The role is held on the entry, not on the catalog.", Set.of(entryEditor),
+			editorWrite.grantingRoles());
+		assertFalse(decision(editorExplanation, SimpleBoundCommandGroup.READ).allowed());
+		assertEquals("Write is decided by the entry itself, no own role of a delegating object.", Set.of(),
+			editorWrite.ownGrantingRoles());
+
+		OperationDecision editorDiscover = decision(editorExplanation, SimpleBoundCommandGroup.DISCOVER);
+		assertSame("Discover is delegated to the catalog.", _catalog, editorDiscover.roleHolder());
+		assertTrue("The own Write grant of the entry implies Discover.", editorDiscover.allowed());
+		assertEquals(Set.of(catalogReader, entryEditor), editorDiscover.admittingRoles());
+		assertEquals(Set.of(entryEditor), editorDiscover.grantingRoles());
+		assertEquals("The role is held on the entry, not on the catalog.", Set.of(entryEditor),
+			editorDiscover.ownGrantingRoles());
+
+		OperationDecision readerDiscover = decision(explanation, SimpleBoundCommandGroup.DISCOVER);
+		assertTrue(readerDiscover.allowed());
+		assertEquals(Set.of(catalogReader), readerDiscover.grantingRoles());
+		assertEquals("The role is held on the catalog.", Set.of(), readerDiscover.ownGrantingRoles());
 	}
 
 	public void testDenied() {

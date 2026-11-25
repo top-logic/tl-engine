@@ -224,6 +224,7 @@ public class TestChannelScripts extends BasicTestCase {
 		instantiation.checkErrors();
 		ViewChannel channel = factory.createChannel(_context);
 		_context.registerChannel(config.getName(), channel);
+		factory.bindChannel(_context, channel);
 		return channel;
 	}
 

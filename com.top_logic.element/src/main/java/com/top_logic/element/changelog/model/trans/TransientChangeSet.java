@@ -43,6 +43,7 @@ public class TransientChangeSet extends TransientTLObjectImpl implements ChangeS
 		super(TlChangelogFactory.getChangeSetType(), null);
 		_initializer = initializer;
 		_uninitialized = Set.of(uninitialized);
+		setIncomplete(false);
 	}
 
 	/**

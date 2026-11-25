@@ -7,15 +7,13 @@ package com.top_logic.model.security;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Container;
-import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.Step;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLClass;
@@ -37,13 +35,11 @@ public class TargetAccessParent extends AbstractConfiguredInstance<TargetAccessP
 	 * Configuration of {@link TargetAccessParent}.
 	 */
 	@TagName("target")
-	public interface Config extends PolymorphicConfiguration<TargetAccessParent>, ConfigPart {
+	@DisplayOrder({ Config.REFERENCE, OperationRestriction.OPERATIONS })
+	public interface Config extends PolymorphicConfiguration<TargetAccessParent>, OperationRestriction {
 
 		/** Configuration name for {@link #getReference()}. */
 		String REFERENCE = "reference";
-
-		/** Configuration name for {@link #getOwner()}. */
-		String OWNER = "owner";
 
 		/**
 		 * The to-one reference of the type whose target is the access parent, navigated forwards.
@@ -61,14 +57,6 @@ public class TargetAccessParent extends AbstractConfiguredInstance<TargetAccessP
 		 * Setter for {@link #getReference()}.
 		 */
 		void setReference(TLModelPartRef value);
-
-		/**
-		 * The setting this definition belongs to.
-		 */
-		@Name(OWNER)
-		@Hidden
-		@Container
-		AccessParentConfig getOwner();
 	}
 
 	/**

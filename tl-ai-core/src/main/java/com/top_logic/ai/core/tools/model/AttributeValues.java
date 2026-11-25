@@ -57,7 +57,9 @@ import com.top_logic.util.Resources;
  * <li>A <b>reference</b> takes the identifier of an object, resolved through {@link TidResolver} and
  * therefore read-checked: a reference to an object the principal may not read is refused like one to
  * an object that does not exist.</li>
- * <li>A <b>multiple</b> attribute takes a list of such values and replaces the whole collection.</li>
+ * <li>A <b>multiple</b> attribute takes a list of such values. For a reference, the list is the new
+ * value as the principal reads it: {@link ObjectEditTool} keeps the elements that the principal may
+ * not read.</li>
  * </ul>
  *
  * <p>
@@ -486,11 +488,9 @@ final class AttributeValues {
 		if (value instanceof Collection<?> items) {
 			List<Object> result = new ArrayList<>(items.size());
 			for (Object item : items) {
-				if (item instanceof TLObject object && !(item instanceof TLClassifier)
-					&& !filter.canRead(object)) {
-					continue;
+				if (shown(item, filter)) {
+					result.add(echo(part, item, filter));
 				}
-				result.add(echo(part, item, filter));
 			}
 			return result;
 		}
@@ -502,6 +502,19 @@ final class AttributeValues {
 		}
 		// A model object becomes its identity, as in every other tool result.
 		return filter.disclose(value);
+	}
+
+	/**
+	 * Whether the model reads the given element of a stored value.
+	 *
+	 * <p>
+	 * The check of {@link #echo(TLStructuredTypePart, Object, ReadFilter)}, so that a write applies a
+	 * value to exactly the elements that a read of the value shows. A classifier is always shown: it is
+	 * a model element, which every user may read.
+	 * </p>
+	 */
+	static boolean shown(Object element, ReadFilter filter) {
+		return !(element instanceof TLObject object) || element instanceof TLClassifier || filter.canRead(object);
 	}
 
 	private static String dateText(TLStructuredTypePart part, Date date) {

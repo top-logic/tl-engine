@@ -156,6 +156,11 @@ public class UpdateTLObjectProcessor extends AbstractConfiguredInstance<UpdateTL
 	}
 
 	private void internalDoMigration(MigrationContext context, Log log, PooledConnection connection) throws Exception {
+		if (context.getPersistentRepository().getTypeOrNull(getConfig().getTable()) == null) {
+			log.info("No table '" + getConfig().getTable() + "' in the persistent schema, there are no objects to update at "
+				+ getConfig().location() + ".", Log.WARN);
+			return;
+		}
 		int rows = updateObject(context, connection);
 
 		log.info("Updated '" + rows + "' for object in '" + getConfig().getTable() + "' with keys '" + _keyValues

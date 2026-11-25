@@ -28,9 +28,7 @@ import org.w3c.dom.NodeList;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -46,13 +44,9 @@ import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
-import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.dob.schema.config.MetaObjectName;
-import com.top_logic.dob.schema.config.MetaObjectsConfig;
 import com.top_logic.dob.xml.DOXMLConstants;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.BranchSupport;
-import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 import com.top_logic.knowledge.service.migration.DeleteTableProcessor.Config.TableRef;
 
 /**
@@ -132,30 +126,18 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 			DBHelper sqlDialect = connection.getSQLDialect();
 			CompiledStatement statement = delete.toSql(sqlDialect);
 
-			PersistencyLayer.Config kbConfig = (PersistencyLayer.Config) ApplicationConfig.getInstance()
-				.getServiceConfiguration(PersistencyLayer.class);
-			String kbName = kbConfig.getDefaultKnowledgeBase();
-			String schemaXml = KBSchemaUtil.loadSchemaRaw(connection, kbName);
-			Document schema = DOMUtil.parse(schemaXml);
+			Document schema = StoredSchemaTypes.loadStoredSchema(connection);
 
 			Map<String, String> found = new HashMap<>();
 			Set<String> withoutTable = new HashSet<>();
 			if (!getConfig().getTables().isEmpty()) {
-				String filter = getConfig().getTables().stream()
-					.map(config -> "@object_name='" + config.getObjectName() + "'").collect(Collectors.joining(" or "));
-
-				XPath xPath = XPathFactory.newInstance().newXPath();
-				XPathExpression tablesQuery =
-					xPath.compile("//metaobject[" + filter + "] | //association[" + filter + "] | //alternative["
-						+ filter + "]");
-				NodeList tables = (NodeList) tablesQuery.evaluate(schema, XPathConstants.NODESET);
-				for (int n = tables.getLength() - 1; n >= 0; n--) {
-					Element table = (Element) tables.item(n);
+				List<String> typeNames =
+					getConfig().getTables().stream().map(TableRef::getObjectName).collect(Collectors.toList());
+				for (Element table : StoredSchemaTypes.findTypes(schema, typeNames)) {
 					table.getParentNode().removeChild(table);
-					String tableName = table.getAttributeNS(null, "object_name");
-					String dbName = StringServices.nonEmpty(table.getAttributeNS(null, "db_name"));
-					found.put(tableName, dbName);
-					if (!hasTable(table)) {
+					String tableName = StoredSchemaTypes.typeName(table);
+					found.put(tableName, StoredSchemaTypes.explicitTableName(table));
+					if (!StoredSchemaTypes.hasTable(table)) {
 						withoutTable.add(tableName);
 					}
 				}
@@ -212,26 +194,10 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 				}
 			}
 
-			String newSchemaXml = DOMUtil.toString(schema);
-			KBSchemaUtil.storeSchemaRaw(connection, kbName, newSchemaXml);
+			StoredSchemaTypes.storeSchema(connection, schema);
 		} catch (SQLException | ConfigurationException | XPathExpressionException ex) {
 			log.error("Delete table migration failed.", ex);
 		}
-	}
-
-	/**
-	 * Whether the given type definition of the stored schema has a table in the database.
-	 * 
-	 * <p>
-	 * Abstract types and alternatives only exist in the schema.
-	 * </p>
-	 */
-	private static boolean hasTable(Element type) {
-		if (MetaObjectsConfig.ALTERNATIVE_TAG_NAME.equals(type.getLocalName())
-			|| MetaObjectsConfig.ALTERNATIVE_TAG_NAME.equals(type.getTagName())) {
-			return false;
-		}
-		return !Boolean.parseBoolean(type.getAttributeNS(null, DOXMLConstants.ABSTRACT_ATTRIBUTE));
 	}
 
 }

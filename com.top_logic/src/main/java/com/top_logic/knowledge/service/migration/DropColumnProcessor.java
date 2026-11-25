@@ -8,6 +8,7 @@ package com.top_logic.knowledge.service.migration;
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
 import com.top_logic.basic.CalledByReflection;
@@ -103,9 +104,13 @@ public class DropColumnProcessor extends AbstractConfiguredInstance<DropColumnPr
 				SchemaSetup setup =
 					new SchemaSetup(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, persistentSchema);
 				MORepository repository = setup.createMORepository(context.getSQLDialect(), DefaultMOFactory.INSTANCE);
-				MOClass specifiedType = (MOClass) repository.getMetaObject(typeName);
+				MOClass specifiedType = (MOClass) repository.getTypeOrNull(typeName);
+				if (specifiedType == null) {
+					log.info("No table '" + typeName + "' found in persistent schema, skipping column drop.",
+						Log.WARN);
+				}
 
-				for (MetaObject type : repository.getMetaObjects()) {
+				for (MetaObject type : specifiedType == null ? List.<MetaObject> of() : repository.getMetaObjects()) {
 					if (!(type instanceof MOClass)) {
 						continue;
 					}

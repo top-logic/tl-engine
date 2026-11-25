@@ -116,7 +116,8 @@ public abstract class AddMOAttributeProcessor
 		Map<String, MetaObjectName> currentTypes = currentSchema.getMetaObjects().getTypes();
 		MetaObjectName mo = currentTypes.get(config.getTable());
 		if (mo == null) {
-			log.error("Table '" + config.getTable() + "' does not exist.");
+			log.info("Table '" + config.getTable() + "' does not exist, skipping addition of attribute '"
+				+ config.getAttribute().getAttributeName() + "'.", Log.WARN);
 			return;
 		}
 		if (!(mo instanceof MetaObjectConfig)) {
@@ -124,7 +125,10 @@ public abstract class AddMOAttributeProcessor
 			return;
 		}
 		MetaObjectConfig tableDefinition = (MetaObjectConfig) mo;
-		addNewAttribute(log, tableDefinition);
+		if (!addNewAttribute(log, tableDefinition)) {
+			// The table already has the attribute, its columns exist.
+			return;
+		}
 		
 		SchemaSetup setup = new SchemaSetup(instantiationContext(), currentSchema);
 		MORepository allTypes = setup.createMORepository(context.getSQLDialect(), DefaultMOFactory.INSTANCE);
@@ -204,7 +208,13 @@ public abstract class AddMOAttributeProcessor
 		}
 	}
 
-	private void addNewAttribute(Log log, MetaObjectConfig tableDefinition) {
+	/**
+	 * Adds the new attribute to the given table definition.
+	 * 
+	 * @return Whether the attribute was added, <code>false</code> when the table definition already
+	 *         has an attribute of this name.
+	 */
+	private boolean addNewAttribute(Log log, MetaObjectConfig tableDefinition) {
 		AttributeConfig newAttribute = TypedConfiguration.copy(getConfig().getAttribute());
 
 		String newAttributeName = newAttribute.getAttributeName();
@@ -214,7 +224,7 @@ public abstract class AddMOAttributeProcessor
 		if (existing.isPresent()) {
 			log.info("Attribute '" + newAttributeName
 				+ "' already present in table definition, skipping addition. Existing: " + existing.get());
-			return;
+			return false;
 		}
 
 		String beforeAttr = getConfig().getBefore();
@@ -236,6 +246,7 @@ public abstract class AddMOAttributeProcessor
 		} else {
 			attributes.add(newAttribute);
 		}
+		return true;
 	}
 
 	private InstantiationContext instantiationContext() {

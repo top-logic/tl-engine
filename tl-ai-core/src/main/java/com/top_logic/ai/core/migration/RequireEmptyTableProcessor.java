@@ -8,24 +8,31 @@ package com.top_logic.ai.core.migration;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
+
+import javax.xml.xpath.XPathExpressionException;
+
+import org.w3c.dom.Element;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
-import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.migration.DeleteTableProcessor;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.knowledge.service.migration.StoredSchemaTypes;
 
 /**
  * {@link MigrationProcessor} that fails the migration when a table still holds live rows.
@@ -49,6 +56,14 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
  * <p>
  * A table that the database does not know at all is reported and accepted: an application that
  * never deployed the module owning the table has nothing to lose.
+ * </p>
+ *
+ * <p>
+ * The processor reads the definition of the table from the stored schema as DOM (see
+ * {@link StoredSchemaTypes}), not as typed configuration. It typically runs as pre-processor in
+ * front of a {@link DeleteTableProcessor}, at a time when pre-processors of other migrations may
+ * not yet have adjusted the stored schema to the current code, e.g. removed a type whose
+ * implementation class no longer exists.
  * </p>
  */
 public class RequireEmptyTableProcessor
@@ -99,16 +114,32 @@ public class RequireEmptyTableProcessor
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		String tableName = getConfig().getTable();
-		MetaObject type = context.getPersistentRepository().getTypeOrNull(tableName);
-		if (!(type instanceof MOStructure table)) {
+		List<Element> types;
+		try {
+			types = StoredSchemaTypes.findTypes(StoredSchemaTypes.loadStoredSchema(connection), List.of(tableName));
+		} catch (ConfigurationException | XPathExpressionException ex) {
+			throw new TableNotEmpty("Unable to look up table '" + tableName + "' in the persistent schema, so it"
+				+ " cannot be established that dropping it is safe: " + ex.getMessage());
+		}
+		if (types.isEmpty()) {
 			log.info("Table '" + tableName
 				+ "' does not exist in the persistent schema, there is nothing to check.", Log.WARN);
 			return;
 		}
+		Element type = types.get(0);
+		if (!StoredSchemaTypes.hasTable(type)) {
+			log.info("Type '" + tableName + "' has no table, there is nothing to check.");
+			return;
+		}
 
-		String dbName = table.getDBMapping().getDBName();
+		String dbName = StoredSchemaTypes.tableName(type);
 		long rows;
 		try {
+			if (!DBSchemaUtils.exists(connection, dbName)) {
+				log.info("Table '" + dbName + "' does not exist in the database, there is nothing to check.",
+					Log.WARN);
+				return;
+			}
 			DBHelper sqlDialect = connection.getSQLDialect();
 			String sql = "SELECT COUNT(*) FROM " + sqlDialect.tableRef(dbName)
 				+ " WHERE " + sqlDialect.columnRef(BasicTypes.REV_MAX_DB_NAME) + " = " + Revision.CURRENT_REV;

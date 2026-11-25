@@ -444,7 +444,11 @@ public final class ChatTranscripts {
 	 * own agent for <code>null</code>.
 	 */
 	public static ConversationFeaturesDto featuresDto(ConversationBackend backend) {
-		BackendFeatures features = backend == null ? BackendFeatures.INTERNAL : backend.features();
+		return featuresDto(backend == null ? BackendFeatures.INTERNAL : backend.features());
+	}
+
+	/** What the chat offers in a conversation with the given features. */
+	public static ConversationFeaturesDto featuresDto(BackendFeatures features) {
 		return ConversationFeaturesDto.create()
 			.setRegenerate(features.regenerate())
 			.setEditMessages(features.editMessages())

@@ -18,6 +18,8 @@ import java.util.function.Supplier;
 
 import com.top_logic.ai.chat.api.ChatCapabilities;
 import com.top_logic.ai.chat.api.ChatTranscripts;
+import com.top_logic.ai.chat.backend.BackendFeatures;
+import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.api.messages.ChatCapabilitiesResponse;
 import com.top_logic.ai.chat.view.ChatConversationElement.Actions;
@@ -112,6 +114,15 @@ public class ChatConversationControl extends ChatControl {
 	 * A new conversation, which has no session yet, is never read-only.
 	 */
 	public static final String STATE_READ_ONLY = "readOnly";
+
+	/**
+	 * State key: what a conversation about the subject of the element offers
+	 * ({@link ConversationBackendService#featuresFor(TLStructuredType)} for the type of the object
+	 * in the {@link ChatConversationElement.Config#getSubject() subject} channel), written when the
+	 * control is built and whenever the channel changes. The browser offers these controls in a chat
+	 * that shows no conversation yet; without a subject, the ones of the framework's own agent.
+	 */
+	public static final String STATE_SUBJECT_FEATURES = "subjectFeatures";
 
 	/**
 	 * Command by which the browser reports the conversation it shows, see
@@ -357,10 +368,18 @@ public class ChatConversationControl extends ChatControl {
 		// What a conversation started here is about: offered to the chat while this control offers
 		// the agent anything (offersToAgent), and read by the request that creates the conversation,
 		// before its first message is sent.
+		// What a conversation about it offers is what an empty chat offers, and follows the channel.
 		ChannelRef subjectRef = config.getSubject();
 		if (subjectRef != null) {
 			ViewChannel subject = context.resolveChannel(subjectRef);
 			offerToAgent(() -> binding().offerSubject(subject), () -> binding().withdrawSubject(subject));
+			ViewChannel.ChannelListener featuresListener =
+				(sender, oldValue, newValue) -> writeSubjectFeatures(newValue);
+			subject.addListener(featuresListener);
+			addCleanupAction(() -> subject.removeListener(featuresListener));
+			writeSubjectFeatures(subject.get());
+		} else {
+			writeSubjectFeatures(null);
 		}
 
 		ChannelRef busyRef = config.getBusy();
@@ -473,6 +492,33 @@ public class ChatConversationControl extends ChatControl {
 		Person person = signedInPerson();
 		putState(STATE_CAPABILITIES, person == null ? ChatCapabilitiesResponse.create()
 			: ChatCapabilities.build(person, binding().tracker().getPromptImproverAgentName()));
+	}
+
+	/**
+	 * Writes {@link #STATE_SUBJECT_FEATURES} for the given value of the subject channel.
+	 *
+	 * @param subjectValue
+	 *        The channel's value; no single object (see {@link ChatViewBinding#singleObject(Object)})
+	 *        is no subject.
+	 */
+	private void writeSubjectFeatures(Object subjectValue) {
+		TLObject subject = ChatViewBinding.singleObject(subjectValue);
+		putState(STATE_SUBJECT_FEATURES, ChatTranscripts.featuresDto(subjectFeatures(subject)));
+	}
+
+	private static BackendFeatures subjectFeatures(TLObject subject) {
+		if (subject == null) {
+			return BackendFeatures.INTERNAL;
+		}
+		try {
+			return ConversationBackendService.featuresFor(subject.tType());
+		} catch (RuntimeException ex) {
+			// The send asks the resolvers again and fails there, where the user is told; showing the
+			// chat must not break on it.
+			Logger.warn("Could not ask what a conversation about " + subject.tHandle().getObjectName().toExternalForm()
+				+ " offers.", ex, ChatConversationControl.class);
+			return BackendFeatures.INTERNAL;
+		}
 	}
 
 	/**

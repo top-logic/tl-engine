@@ -27,6 +27,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -119,8 +120,8 @@ public class TestScheduledRunCancelMarker extends BasicTestCase {
 		try {
 			assertTrue("The run did not reach its model call.", modelWorks.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
 			HistoryUtils.updateSessionRevision();
-			session = (AgentSession) ChatHistoryService.findOwnedSessionById(task.tracker().getActiveSessionId(),
-				_owner);
+			session = (AgentSession) ChatHistoryService.findAccessibleSession(task.tracker().getActiveSessionId(), _owner,
+				SimpleBoundCommandGroup.READ);
 			assertNotNull("The sitting was not recorded as a session.", session);
 			assertTrue("aiAgentRunCancel found no running execution of the sitting.",
 				AIScriptFunctions.agentRunCancel(session, false));
@@ -144,7 +145,8 @@ public class TestScheduledRunCancelMarker extends BasicTestCase {
 
 		HistoryUtils.updateSessionRevision();
 		AgentSession session =
-			(AgentSession) ChatHistoryService.findOwnedSessionById(task.tracker().getActiveSessionId(), _owner);
+			(AgentSession) ChatHistoryService.findAccessibleSession(task.tracker().getActiveSessionId(), _owner,
+				SimpleBoundCommandGroup.READ);
 		assertNotNull("The sitting was not recorded as a session.", session);
 		assertEquals("COMPLETE", statusOfLastRun(session));
 		assertEquals(ResultType.SUCCESS, TestScheduledAgentRun.resultType(task));

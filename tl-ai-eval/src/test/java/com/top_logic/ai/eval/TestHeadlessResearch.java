@@ -146,7 +146,8 @@ public class TestHeadlessResearch extends BasicTestCase {
 		assertTrue("The footnote names the page, for the chat to show.",
 			run.getTranscript().contains("\"citations\":[{\"index\":1") && run.getTranscript().contains(URL));
 		assertTrue("The question is on record in the chat.", run.getTranscript().contains("Which heat pump"));
-		assertEquals("The report is what the handle answers.", report, AIScriptFunctions.agentRunResult(handle));
+		assertEquals("The report is what the handle answers.", report,
+			AIScriptFunctions.agentRunResult(handle, false));
 
 		ResearchRun kept = keptRun(QUESTION);
 		assertEquals("The run is kept for the owner, not for the system context it was started in.", root,

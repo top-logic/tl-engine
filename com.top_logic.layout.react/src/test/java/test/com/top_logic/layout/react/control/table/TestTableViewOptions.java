@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.react.control.table;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -16,6 +17,8 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.thread.InContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
@@ -24,12 +27,13 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.ApplyNamedFilterArguments;
 import com.top_logic.layout.react.control.table.SearchArguments;
-import com.top_logic.layout.react.control.table.SetViewOptionsArguments;
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.react.control.table.TableViewPreferences;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.table.Column;
 import com.top_logic.table.FilterCodec;
+import com.top_logic.table.GroupSpec;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
@@ -44,8 +48,9 @@ import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.util.Resources;
 
 /**
- * Tests the view options a {@link TableViewControl} accepts from the client - density, stripes and
- * column lines -, the view reset, and the active filter its row count names.
+ * Tests what a {@link TableViewControl} offers about its view - stripes and column lines are kept
+ * per person in the {@link TableViewPreferences} and not in the state of a table -, the view reset,
+ * and the active filter its row count names.
  */
 public class TestTableViewOptions extends TestCase {
 
@@ -56,17 +61,9 @@ public class TestTableViewOptions extends TestCase {
 	/** The identifier of the declared filter holding the rows with an {@code a} in the name. */
 	private static final String HOLDS_A = "holdsA";
 
-	private static final String STATE_VIEW_DENSITY = "viewDensity";
-
-	private static final String STATE_STRIPED = "striped";
-
-	private static final String STATE_COLUMN_LINES = "columnLines";
-
 	private static final String STATE_VIEW_OPTIONS = "viewOptions";
 
 	private static final String STATE_ROW_COUNT = "rowCount";
-
-	private static final String CMD_SET_VIEW_OPTIONS = "setViewOptions";
 
 	private static final String CMD_RESET_VIEW = "resetView";
 
@@ -138,14 +135,13 @@ public class TestTableViewOptions extends TestCase {
 	}
 
 	/**
-	 * Tests that a table without any view option set tells the client the factory settings, and
-	 * offers the view options.
+	 * Tests that a table offers the view options, and that its state no longer carries the options
+	 * themselves: those are the person's, not the table's.
 	 */
 	public void testInitialState() {
-		assertEquals("", _table.clientState(STATE_VIEW_DENSITY));
-		assertEquals(Boolean.FALSE, _table.clientState(STATE_STRIPED));
-		assertEquals(Boolean.FALSE, _table.clientState(STATE_COLUMN_LINES));
 		assertEquals(Boolean.TRUE, _table.clientState(STATE_VIEW_OPTIONS));
+		assertNull(_table.clientState("striped"));
+		assertNull(_table.clientState("columnLines"));
 	}
 
 	/**
@@ -170,75 +166,25 @@ public class TestTableViewOptions extends TestCase {
 	}
 
 	/**
-	 * Tests that the command changes the view, pushes the new options to the client, and persists
-	 * them.
+	 * Tests that the view reset restores the arrangement - column order, sort and grouping - and
+	 * leaves the options of the person alone: those are not part of the table.
 	 */
-	public void testSetViewOptionsUpdatesStateAndPersists() {
-		setViewOptions("compact", true, true);
+	public void testResetViewKeepsOptionsOfThePerson() {
+		inContext(() -> {
+			TableViewPreferences.setStriped(true);
+			TableViewPreferences.setColumnLines(true);
+			_view.setColumnOrder(List.of(COLUMN_STATUS, COLUMN_NAME));
+			_view.sort(SortSpec.ascending(COLUMN_NAME));
+			_view.group(new GroupSpec(List.of(COLUMN_STATUS)));
 
-		assertEquals("compact", _table.clientState(STATE_VIEW_DENSITY));
-		assertEquals(Boolean.TRUE, _table.clientState(STATE_STRIPED));
-		assertEquals(Boolean.TRUE, _table.clientState(STATE_COLUMN_LINES));
-		assertEquals("compact", _view.state().getDensity());
-		assertTrue(_view.state().isStriped());
-		assertTrue(_view.state().isColumnLines());
+			_table.executeClientCommand(CMD_RESET_VIEW, Map.of());
 
-		assertNotNull("The options are persisted.", _store._saved);
-		assertEquals("compact", _store._saved.getDensity());
-		assertTrue(_store._saved.isStriped());
-		assertTrue(_store._saved.isColumnLines());
-
-		setViewOptions("normal", false, true);
-		assertEquals("normal", _table.clientState(STATE_VIEW_DENSITY));
-		assertEquals(Boolean.FALSE, _table.clientState(STATE_STRIPED));
-		assertEquals(Boolean.TRUE, _table.clientState(STATE_COLUMN_LINES));
-	}
-
-	/**
-	 * Tests that a density the table does not know is the default.
-	 */
-	public void testUnknownDensityIsDefault() {
-		setViewOptions("compact", false, false);
-		setViewOptions("roomy", false, false);
-		assertEquals("", _table.clientState(STATE_VIEW_DENSITY));
-		assertEquals("", _view.state().getDensity());
-	}
-
-	/**
-	 * Tests that the empty density the client sends for "like everywhere" is accepted, and that a
-	 * command without a density means the same.
-	 */
-	public void testEmptyAndMissingDensityIsDefault() {
-		setViewOptions("compact", true, false);
-
-		setViewOptions("", true, false);
-		assertEquals("", _table.clientState(STATE_VIEW_DENSITY));
-		assertEquals("", _view.state().getDensity());
-		assertEquals("", _store._saved.getDensity());
-		assertEquals(Boolean.TRUE, _table.clientState(STATE_STRIPED));
-
-		setViewOptions("compact", false, false);
-		_table.executeClientCommand(CMD_SET_VIEW_OPTIONS, Map.of(
-			SetViewOptionsArguments.STRIPED, Boolean.TRUE,
-			SetViewOptionsArguments.COLUMN_LINES, Boolean.FALSE));
-		assertEquals("", _table.clientState(STATE_VIEW_DENSITY));
-		assertEquals("", _view.state().getDensity());
-		assertEquals(Boolean.TRUE, _table.clientState(STATE_STRIPED));
-	}
-
-	/**
-	 * Tests that the view reset restores the view options, and tells the client so.
-	 */
-	public void testResetViewRestoresOptions() {
-		setViewOptions("compact", true, true);
-
-		_table.executeClientCommand(CMD_RESET_VIEW, Map.of());
-
-		assertEquals("", _table.clientState(STATE_VIEW_DENSITY));
-		assertEquals(Boolean.FALSE, _table.clientState(STATE_STRIPED));
-		assertEquals(Boolean.FALSE, _table.clientState(STATE_COLUMN_LINES));
-		assertEquals("", _view.state().getDensity());
-		assertFalse(_store._saved.isStriped());
+			assertTrue(TableViewPreferences.striped());
+			assertTrue(TableViewPreferences.columnLines());
+			assertEquals(List.of(COLUMN_NAME, COLUMN_STATUS), _view.state().getColumnOrder());
+			assertTrue(_view.state().getSort().isEmpty());
+			assertTrue(_view.state().getGrouping().columns().isEmpty());
+		});
 	}
 
 	/**
@@ -246,7 +192,6 @@ public class TestTableViewOptions extends TestCase {
 	 */
 	public void testResetViewKeepsFilters() {
 		search("zzz");
-		setViewOptions("compact", true, true);
 
 		_table.executeClientCommand(CMD_RESET_VIEW, Map.of());
 
@@ -308,11 +253,9 @@ public class TestTableViewOptions extends TestCase {
 		assertEquals("2 Filter aktiv", de.getString(I18NConstants.TABLE_FILTERS_ACTIVE__COUNT.fill(2)));
 	}
 
-	private void setViewOptions(String density, boolean striped, boolean columnLines) {
-		_table.executeClientCommand(CMD_SET_VIEW_OPTIONS, Map.of(
-			SetViewOptionsArguments.DENSITY, density,
-			SetViewOptionsArguments.STRIPED, Boolean.valueOf(striped),
-			SetViewOptionsArguments.COLUMN_LINES, Boolean.valueOf(columnLines)));
+	/** Runs the given test body as a person: the options are stored in a user context. */
+	private static void inContext(InContext body) {
+		ThreadContext.inSystemContext(TestTableViewOptions.class, body);
 	}
 
 	private void search(String term) {
@@ -326,7 +269,7 @@ public class TestTableViewOptions extends TestCase {
 	private static List<Column<Item, ?>> columns() {
 		return List.of(
 			DefaultColumn.<Item, String> builder(COLUMN_NAME, Item::name).filter(TextColumnFilter.forStrings())
-				.build(),
+				.sort(() -> Comparator.<String> naturalOrder()).build(),
 			DefaultColumn.<Item, String> builder(COLUMN_STATUS, Item::status).filter(TextColumnFilter.forStrings())
 				.build());
 	}

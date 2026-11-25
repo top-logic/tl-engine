@@ -93,7 +93,6 @@
 				<visibility value="read-only"/>
 			</annotations>
 		</create-reference>
-		<reorder-part name="tl.accounts:Person#oidcIdentities"/>
 	</processors>
 	<post-processors/>
 </migration>

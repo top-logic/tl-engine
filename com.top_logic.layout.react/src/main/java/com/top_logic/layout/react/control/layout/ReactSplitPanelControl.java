@@ -417,6 +417,35 @@ public class ReactSplitPanelControl extends ReactControl implements CollapsibleC
 		public void expanded() {
 			childCollapsed(_entry, false, 0);
 		}
+
+		@Override
+		public void requestSize(float size, DisplayUnit unit) {
+			if (_entry._requestedUnit == unit && _entry._requestedSize == size) {
+				return;
+			}
+			_entry._requestedSize = size;
+			_entry._requestedUnit = unit;
+			updateDescriptor(_entry);
+		}
+
+		@Override
+		public void releaseSize() {
+			if (_entry._requestedUnit == null) {
+				return;
+			}
+			_entry._requestedUnit = null;
+			updateDescriptor(_entry);
+		}
+	}
+
+	private void updateDescriptor(ChildEntry entry) {
+		int index = _children.indexOf(entry);
+		if (index < 0) {
+			// No longer a child.
+			return;
+		}
+		_childDescriptors.set(index, entry.toDescriptor());
+		patchChildren();
 	}
 
 	/**
@@ -519,11 +548,28 @@ public class ReactSplitPanelControl extends ReactControl implements CollapsibleC
 
 		DisplayUnit _defaultUnit;
 
+		/**
+		 * The size the child asks for while it is open, see {@link CollapseContainer#requestSize(float,
+		 * DisplayUnit)}.
+		 */
+		float _requestedSize;
+
+		/** The unit of {@link #_requestedSize}, {@code null} without a request. */
+		DisplayUnit _requestedUnit;
+
 		ChildEntry(ReactControl control, ChildConstraint constraint) {
 			_control = control;
 			_constraint = constraint;
 			_defaultSize = constraint._size;
 			_defaultUnit = constraint._unit;
+		}
+
+		/**
+		 * Whether the child is laid out with the size it asked for instead of the size of its
+		 * constraint.
+		 */
+		boolean hasRequest() {
+			return _requestedUnit != null && !_collapsed;
 		}
 
 		/**
@@ -535,8 +581,9 @@ public class ReactSplitPanelControl extends ReactControl implements CollapsibleC
 			// The ReactControl itself will be serialized as {controlId, module, state} by
 			// writeJsonValue.
 			map.put(CONTROL, _control);
-			map.put(SIZE, Float.valueOf(_constraint._size));
-			map.put(UNIT, _constraint._unit.getExternalName());
+			boolean requested = hasRequest();
+			map.put(SIZE, Float.valueOf(requested ? _requestedSize : _constraint._size));
+			map.put(UNIT, (requested ? _requestedUnit : _constraint._unit).getExternalName());
 			map.put(MIN_SIZE, Integer.valueOf(_constraint._minSize));
 			map.put(SCROLLING, _constraint._scrolling.toOverflowAttribute());
 			map.put(COLLAPSED, Boolean.valueOf(_collapsed));
@@ -550,7 +597,10 @@ public class ReactSplitPanelControl extends ReactControl implements CollapsibleC
 	 * <p>
 	 * The client sends the sizes of the open panes, each in the unit of its pane. Every pane keeps its
 	 * unit. A collapsed pane is left untouched: its constraint holds the size of its collapsed header,
-	 * and the size it expands to does not change by a drag.
+	 * and the size it expands to does not change by a drag. A pane laid out with the size its child
+	 * {@link CollapseContainer#requestSize(float, DisplayUnit) asked for} takes the dragged size for as
+	 * long as the request holds, in the unit of the request; the size the user gave the pane stays
+	 * remembered and is what the pane gets back when the request ends.
 	 * </p>
 	 */
 	@SuppressWarnings("unchecked")
@@ -565,7 +615,13 @@ public class ReactSplitPanelControl extends ReactControl implements CollapsibleC
 				}
 				Object newSize = sizes.get(entry._control.getID());
 				if (newSize instanceof Number) {
-					entry._constraint._size = ((Number) newSize).floatValue();
+					float size = ((Number) newSize).floatValue();
+					if (entry.hasRequest()) {
+						// The size is in the unit of the request, and lasts as long as the request.
+						entry._requestedSize = size;
+						continue;
+					}
+					entry._constraint._size = size;
 				}
 			}
 			_childDescriptors.clear();

@@ -16,9 +16,11 @@ const I18N_KEYS = {
 /**
  * A slide-in panel from the edge of the viewport or of the container it is rendered in.
  *
- * The drawer is not modal: the content it overlays stays scrollable and clickable, so focus is
- * moved into the drawer when it opens and returned to its origin when it closes, but never
- * confined to it.
+ * Without `modal`, the content the drawer overlays stays scrollable and clickable, so focus is moved
+ * into the drawer when it opens and returned to its origin when it closes, but never confined to it.
+ * A modal drawer puts a scrim before itself, which covers the area the drawer is anchored in and
+ * closes the drawer on a click, is a dialog for assistive technology, and confines the focus while
+ * it is open.
  *
  * State:
  * - open: boolean
@@ -27,6 +29,7 @@ const I18N_KEYS = {
  * - anchor: "viewport" | "container"  (default: "viewport")
  * - width: number | null  - explicit extent in pixels, overriding the named size
  * - title: string | null  (null = no header)
+ * - modal: boolean  (default: false)
  * - child: ChildDescriptor
  */
 const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
@@ -42,6 +45,7 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
   const width = typeof state.width === 'number' ? state.width : null;
   const title = (state.title as string) ?? null;
   const child = state.child;
+  const modal = state.modal === true;
 
   const handleClose = useCallback(() => {
     sendCommand('close');
@@ -49,13 +53,21 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
 
   const Button = usePart('Button');
 
-  // Escape key closes the drawer (via the shared keyboard dispatcher).
-  useStandaloneKeyboardScope(open, { ESCAPE: handleClose });
+  // Escape closes the drawer (via the shared keyboard dispatcher) - unless it is clearing a search
+  // field that has text in it, which is what Escape does there first.
+  useStandaloneKeyboardScope(open, {
+    ESCAPE: () => {
+      const active = document.activeElement as HTMLInputElement | null;
+      if (active?.type === 'search' && active.value) return false;
+      handleClose();
+      return true;
+    },
+  });
 
   // Opening hands the keyboard to the drawer, closing gives it back to wherever it came from (typically
-  // the list the drawer details). Without a trap: what lies underneath stays reachable. Without
-  // scrolling: the drawer is still parked outside the clipped box of its area while it slides in.
-  useFocusTrap(open, rootRef, 'first', { trap: false, preventScroll: true });
+  // the list the drawer details). Without a trap unless modal: what lies underneath stays reachable.
+  // Without scrolling: the drawer is still parked outside the clipped box of its area while it slides in.
+  useFocusTrap(open, rootRef, 'first', { trap: modal, preventScroll: true });
 
   const side = position === 'left' ? 'start' : position === 'bottom' ? 'bottom' : 'end';
   const className = [
@@ -71,12 +83,14 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
   const style = width === null ? undefined
     : position === 'bottom' ? { height: `${width}px` } : { width: `${width}px` };
 
-  return (
+  const drawer = (
     <aside
       id={controlId}
       className={rootClassName(state, className)}
       data-tl-state={open ? 'open' : undefined}
       inert={!open}
+      role={modal ? 'dialog' : undefined}
+      aria-modal={modal ? true : undefined}
       aria-labelledby={title !== null ? titleId : undefined}
       tabIndex={-1}
       ref={rootRef}
@@ -103,6 +117,16 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
         </SurfaceProvider>
       </div>
     </aside>
+  );
+
+  // A pointer's way out of a modal drawer. Keyboard and screen reader users have Escape and the close
+  // button. Always the first of two children, so that the drawer itself stays mounted when it appears.
+  const scrimClass = anchor === 'container' ? 'tl-drawer__scrim' : 'tl-drawer__scrim tl-drawer__scrim--viewport';
+  return (
+    <>
+      {modal && open ? <div className={scrimClass} aria-hidden="true" onClick={handleClose} /> : null}
+      {drawer}
+    </>
   );
 };
 

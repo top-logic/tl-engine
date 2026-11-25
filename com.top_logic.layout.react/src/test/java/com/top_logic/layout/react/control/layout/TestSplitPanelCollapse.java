@@ -219,6 +219,54 @@ public class TestSplitPanelCollapse extends TestCase {
 		assertChild(outer, 1, 72, DisplayUnit.PIXEL, true);
 	}
 
+	/**
+	 * A size a child requests applies while the request holds, and is not reported as the user's
+	 * size; releasing it gives the pane the user's size back.
+	 */
+	public void testRequestedSizeIsTemporary() {
+		List<Map<String, Float>> saved = new ArrayList<>();
+		ReactSplitPanelControl split =
+			new ReactSplitPanelControl(_context, Orientation.HORIZONTAL, true, saved::add, null);
+		Collapsible rail = new Collapsible(_context);
+		ReactTextControl detail = text();
+		split.addChild(rail, ChildConstraint.percent(30));
+		split.addChild(detail, ChildConstraint.percent(70));
+
+		rail._container.requestSize(480, DisplayUnit.PIXEL);
+		assertChild(split, 0, 480, DisplayUnit.PIXEL, false);
+
+		// A drag while the request holds moves the request, the user's size stays.
+		split.executeCommand(ReactSplitPanelControl.UPDATE_SIZES_COMMAND,
+			Map.of(ReactSplitPanelControl.SIZES_ARG, Map.of(rail.getID(), 520, detail.getID(), 100)));
+		assertChild(split, 0, 520, DisplayUnit.PIXEL, false);
+		assertEquals("The requested size is not the user's.", 30f, saved.get(0).get(rail.getID()).floatValue(),
+			0.001f);
+
+		rail._container.releaseSize();
+		assertChild(split, 0, 30, DisplayUnit.PERCENT, false);
+	}
+
+	/**
+	 * A collapsed child keeps its collapsed size while it requests a size; it gets the requested size
+	 * when it expands while the request holds, and the user's size after the request is released.
+	 */
+	public void testRequestAppliesOnlyWhileOpen() {
+		ReactSplitPanelControl split = split();
+		Collapsible rail = new Collapsible(_context);
+		split.addChild(rail, ChildConstraint.pixels(280));
+		split.addChild(text(), ChildConstraint.percent(100));
+
+		rail._container.collapsed(48);
+		rail._container.requestSize(400, DisplayUnit.PIXEL);
+		assertChild(split, 0, 48, DisplayUnit.PIXEL, true);
+
+		rail._container.expanded();
+		assertChild(split, 0, 400, DisplayUnit.PIXEL, false);
+
+		rail._container.releaseSize();
+		assertChild(split, 0, 280, DisplayUnit.PIXEL, false);
+	}
+
 	private ReactSplitPanelControl split() {
 		return new ReactSplitPanelControl(_context, Orientation.HORIZONTAL, true, null,
 			(index, collapsed) -> _reported.add(index + ":" + collapsed));

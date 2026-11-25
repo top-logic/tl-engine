@@ -1,0 +1,172 @@
+/* Side rail — die einklappbare Spalte neben einem Inhalt (`<side-rail>`, TLSideRail). Ein Streifen mit einem Icon je
+   Abschnitt (Knöpfe ohne Rahmen, der gezeigte gedrückt), daneben offen die Spalte mit den Abschnitten untereinander,
+   jeder mit einem Kopf (Chevron, Titel, Badge) wie der Auslöser des Accordions. Die Seite ist ein Modifikator
+   (tl-side-rail--start, --end); Zustände sind Attribute: data-tl-state~="open", ~="drawer", ~="resizable".
+   Als Schublade steht statt der Spalte ein tl-drawer--container mit Scrim (drawer.css); sein Anker ist das
+   positionierte Element um die Leiste, die Leiste selbst ist darum nicht positioniert. */
+
+.tl-side-rail {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  background: var(--tl-surface-layer);
+  color: var(--tl-text-primary);
+}
+.tl-side-rail[hidden] { display: none; }
+
+/* Am Ende stehend: der Streifen außen am Ende, die Spalte öffnet zum Anfang hin. */
+.tl-side-rail--end {
+  flex-direction: row-reverse;
+}
+
+/* Ohne eigene Breite (in einem Split) füllt die Leiste ihren Bereich. */
+.tl-side-rail:not([data-tl-state~="resizable"]) {
+  width: 100%;
+}
+
+.tl-side-rail__strip {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--tl-space-2xs);
+  padding: var(--tl-space-2xs);
+}
+
+.tl-side-rail--start > .tl-side-rail__strip {
+  border-inline-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-side-rail--end > .tl-side-rail__strip {
+  border-inline-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-side-rail__column {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.tl-side-rail__column[hidden] { display: none; }
+
+/* Mit eigener Breite hat die Spalte die Breite, die der Client setzt; der Inhalt daneben nimmt den Rest. */
+.tl-side-rail[data-tl-state~="resizable"] > .tl-side-rail__column {
+  flex: none;
+}
+
+/* Der Griff an der Innenkante der Spalte; wie der Griff des Splits: eine Linie, die beim Zeigen kräftiger wird. */
+.tl-side-rail__handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--tl-space-xs);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.tl-side-rail--start .tl-side-rail__handle {
+  inset-inline-end: calc(-1 * var(--tl-space-xs) / 2);
+}
+
+.tl-side-rail--end .tl-side-rail__handle {
+  inset-inline-start: calc(-1 * var(--tl-space-xs) / 2);
+}
+
+.tl-side-rail__handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--tl-border-width-sm);
+  translate: -50% 0;
+  background: var(--tl-border-separator);
+}
+
+.tl-side-rail__handle:is(:hover, :active, :focus-visible)::after {
+  width: var(--tl-border-width-md);
+  background: var(--tl-border-interactive);
+}
+
+.tl-side-rail__handle:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Die Abschnitte rollen in sich; ein Wischen, das das Ende erreicht, läuft nicht in die Seite weiter. */
+.tl-side-rail__sections {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* In der Schublade füllen die Abschnitte den Körper der Schublade, der selbst rollt. */
+.tl-drawer__body > .tl-side-rail__sections {
+  overflow: visible;
+}
+
+.tl-side-rail__section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tl-side-rail__section + .tl-side-rail__section {
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* Reset ohne Spezifität: die Typo-Klasse am Element gewinnt. */
+:where(.tl-side-rail__header) { font: inherit; }
+
+.tl-side-rail__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-bar);
+  padding: 0 var(--tl-space-control-x);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.tl-side-rail__header:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+/* Der Kopf spannt die ganze Breite der Spalte, die beschneidet: der Ring liegt innen. */
+.tl-side-rail__header:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-side-rail__chevron {
+  flex: none;
+  color: var(--tl-icon-primary);
+  transition: rotate var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-side-rail__header[aria-expanded="true"] > .tl-side-rail__chevron {
+  rotate: 90deg;
+}
+
+.tl-side-rail__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ein aufgeklappter Abschnitt nimmt den Platz, den sein Inhalt braucht; der Inhalt rollt selbst. */
+.tl-side-rail__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.tl-side-rail__body[hidden] { display: none; }

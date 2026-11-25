@@ -225,6 +225,20 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.drawer.close")
 	public static ResKey JS_DRAWER_CLOSE;
 
+	// -- Side rail client-side i18n keys --
+
+	/**
+	 * @en Sections
+	 */
+	@CustomKey("js.sideRail.strip")
+	public static ResKey JS_SIDE_RAIL_STRIP;
+
+	/**
+	 * @en Width of the side column
+	 */
+	@CustomKey("js.sideRail.resize")
+	public static ResKey JS_SIDE_RAIL_RESIZE;
+
 	// -- Client-side i18n keys (js.* prefix, names match keys used by React controls) --
 
 	/**

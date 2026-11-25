@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Side Rail</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .stage { position: relative; display: flex; height: 22rem; overflow: hidden; background: var(--tl-surface-base); }
+  .stage .rail-280 > .tl-side-rail__column { width: 17.5rem; }
+  .stage .neighbour { flex: 1 1 auto; padding: var(--tl-space-md); }
+</style>
+</head>
+<body>
+<div class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Side Rail</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Offen: Streifen mit Badge, ein Abschnitt aufgeklappt, einer zugeklappt, Griff</p>
+    <div class="stage">
+      <div class="tl-side-rail tl-side-rail--start rail-280" data-tl-state="open resizable">
+        <nav class="tl-side-rail__strip" aria-label="Abschnitte">
+          <button type="button" class="tl-button tl-button--ghost tl-button--icon-only tl-side-rail__strip-item" aria-pressed="true" aria-label="Aufgaben, 3"><span class="tl-icon-badge"><i class="tl-icon bi bi-list-check" aria-hidden="true"></i><span class="tl-icon-badge__count"><span class="tl-badge tl-type-label-strong tl-nums" aria-hidden="true">3</span></span></span></button>
+          <button type="button" class="tl-button tl-button--ghost tl-button--icon-only tl-side-rail__strip-item" aria-pressed="false" aria-label="Quellen"><i class="tl-icon bi bi-link-45deg" aria-hidden="true"></i></button>
+        </nav>
+        <div class="tl-side-rail__column">
+          <div class="tl-side-rail__sections">
+            <section class="tl-side-rail__section">
+              <button type="button" id="s1-h" class="tl-side-rail__header tl-type-body-strong" aria-expanded="true" aria-controls="s1-b"><i class="tl-icon-sm tl-side-rail__chevron bi bi-chevron-right" aria-hidden="true"></i><span class="tl-side-rail__label">Aufgaben</span> <span class="tl-badge tl-type-label-strong tl-nums">3</span></button>
+              <div id="s1-b" class="tl-side-rail__body tl-region" role="region" aria-labelledby="s1-h"><p class="tl-type-body neighbour">Inhalt des Abschnitts</p></div>
+            </section>
+            <section class="tl-side-rail__section">
+              <button type="button" id="s2-h" class="tl-side-rail__header tl-type-body-strong" aria-expanded="false" aria-controls="s2-b"><i class="tl-icon-sm tl-side-rail__chevron bi bi-chevron-right" aria-hidden="true"></i><span class="tl-side-rail__label">Quellen</span></button>
+              <div id="s2-b" class="tl-side-rail__body tl-region" role="region" aria-labelledby="s2-h" hidden></div>
+            </section>
+          </div>
+          <div class="tl-side-rail__handle" role="separator" aria-orientation="vertical" aria-label="Breite der Seitenspalte" aria-valuenow="280" tabindex="0"></div>
+        </div>
+      </div>
+      <p class="tl-type-body neighbour">Der Nachbar nimmt den Rest.</p>
+    </div>
+  </section>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Zu, am Ende: nur der Streifen</p>
+    <div class="stage">
+      <p class="tl-type-body neighbour">Der Nachbar.</p>
+      <div class="tl-side-rail tl-side-rail--end" data-tl-state="resizable">
+        <nav class="tl-side-rail__strip" aria-label="Abschnitte">
+          <button type="button" class="tl-button tl-button--ghost tl-button--icon-only tl-side-rail__strip-item" aria-pressed="false" aria-label="Aufgaben"><i class="tl-icon bi bi-list-check" aria-hidden="true"></i></button>
+        </nav>
+        <div class="tl-side-rail__column" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Schmal: der Streifen und die modale Schublade über dem Nachbarn</p>
+    <div class="stage">
+      <div class="tl-side-rail tl-side-rail--start" data-tl-state="open drawer resizable">
+        <nav class="tl-side-rail__strip" aria-label="Abschnitte">
+          <button type="button" class="tl-button tl-button--ghost tl-button--icon-only tl-side-rail__strip-item" aria-pressed="true" aria-label="Aufgaben"><i class="tl-icon bi bi-list-check" aria-hidden="true"></i></button>
+        </nav>
+        <div class="tl-drawer__scrim" aria-hidden="true"></div>
+        <aside class="tl-drawer tl-drawer--start tl-drawer--narrow tl-drawer--container" data-tl-state="open" role="dialog" aria-modal="true" tabindex="-1">
+          <div class="tl-drawer__body tl-region">
+            <div class="tl-side-rail__sections">
+              <section class="tl-side-rail__section">
+                <button type="button" id="s3-h" class="tl-side-rail__header tl-type-body-strong" aria-expanded="true" aria-controls="s3-b"><i class="tl-icon-sm tl-side-rail__chevron bi bi-chevron-right" aria-hidden="true"></i><span class="tl-side-rail__label">Aufgaben</span></button>
+                <div id="s3-b" class="tl-side-rail__body tl-region" role="region" aria-labelledby="s3-h"><p class="tl-type-body">Inhalt in der Schublade</p></div>
+              </section>
+            </div>
+          </div>
+        </aside>
+      </div>
+      <p class="tl-type-body neighbour">Der Nachbar liegt unter dem Scrim.</p>
+    </div>
+  </section>
+
+</div>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

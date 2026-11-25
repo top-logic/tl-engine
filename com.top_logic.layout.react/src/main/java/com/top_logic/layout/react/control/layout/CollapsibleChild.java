@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.react.control.layout;
 
+import com.top_logic.layout.DisplayUnit;
+
 /**
  * A control that can collapse to a small size of its own, e.g. a panel minimized to its header.
  *
@@ -12,7 +14,8 @@ package com.top_logic.layout.react.control.layout;
  * A container that lays out its children with sizes, such as a {@link ReactSplitPanelControl},
  * hands each collapsible child a {@link CollapseContainer}. Through it the child reports that it
  * collapsed or expanded, so that the container gives its area the collapsed size or the size it had
- * before.
+ * before. While it is open, the child may also ask for a size of its own for a while, e.g. for
+ * content that needs more room.
  * </p>
  */
 public interface CollapsibleChild {
@@ -49,7 +52,9 @@ public interface CollapsibleChild {
 		 *
 		 * <p>
 		 * A child must not collapse when nothing would remain open, i.e. when all other children are
-		 * collapsed and the container cannot collapse in its own container.
+		 * collapsed and the container cannot collapse in its own container. A child that stays usable
+		 * while collapsed, e.g. a {@link ReactSideRailControl} keeping its strip, may collapse without
+		 * asking.
 		 * </p>
 		 */
 		boolean canCollapse();
@@ -76,6 +81,28 @@ public interface CollapsibleChild {
 		 * </p>
 		 */
 		void expanded();
+
+		/**
+		 * Asks for the given size of the child while it is open, until {@link #releaseSize()}.
+		 *
+		 * <p>
+		 * The request is temporary: the size the user gave the child stays remembered and is what the
+		 * child gets back when the request is released. A user who resizes the child while the
+		 * request holds changes the requested size, for as long as the request holds.
+		 * </p>
+		 *
+		 * @param size
+		 *        The size along the axis of the container.
+		 * @param unit
+		 *        The unit of the size.
+		 */
+		void requestSize(float size, DisplayUnit unit);
+
+		/**
+		 * Ends a {@link #requestSize(float, DisplayUnit) request}; the child gets the size the user
+		 * gave it back. Without a request, nothing happens.
+		 */
+		void releaseSize();
 
 	}
 

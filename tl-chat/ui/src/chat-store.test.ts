@@ -400,8 +400,8 @@ describe('one store per chat id', () => {
    * other's questions into one transcript - silently, and only for the host that has two.
    */
   it('gives two conversations in one window two transcripts', async () => {
-    const left = chatIdOf({}, 'copilot-left')
-    const right = chatIdOf({}, 'copilot-right')
+    const left = chatIdOf({}, 'chat-left')
+    const right = chatIdOf({}, 'chat-right')
     expect(left).not.toBe(right)
     expect([left, right]).not.toContain('default')
 
@@ -511,8 +511,7 @@ describe('the transcript', () => {
 })
 
 /**
- * Pietro's own turn counter, copied from
- * `Consulting@crew/pietro-adopt-chat:ui-modules/src/modules/consulting-chat.tsx`.
+ * A host's own turn counter, as an application built on the chat writes one.
  *
  * It is the reason this matters: the host does not read the transcript for display, it counts it,
  * and an extra message shifts every number it writes into the prompt.

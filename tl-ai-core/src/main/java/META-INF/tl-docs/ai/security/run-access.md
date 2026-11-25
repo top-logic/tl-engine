@@ -10,7 +10,7 @@ The [tool access policy](doc:ai/security/tool-access-configuration) decides what
 ```xml
 <agent-access default="all">            <!-- all | none -->
     <role name="SalesUser">
-        <grants><grant agents="sales-assistant, pietro"/></grants>
+        <grants><grant agents="sales-assistant, planner"/></grants>
         <denies><deny agents="framework-wiring-agent"/></denies>
     </role>
 </agent-access>

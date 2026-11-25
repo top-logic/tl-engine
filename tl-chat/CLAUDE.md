@@ -1066,9 +1066,8 @@ browser.
 
 #### The draft as a channel (#440)
 
-A page button could not put text into the chat, so consulting built a view action that found the
-chat control, reached the browser and typed into the composer with a DOM hack (`SendToCopilotAction`,
-issue #414). One element changing another element's editable state is what a channel is for, and
+A page button could not put text into the chat, so an application built a view action that found
+the chat control, reached the browser and typed into the composer with a DOM hack (issue #414). One element changing another element's editable state is what a channel is for, and
 `draft` is that channel:
 
 ```xml

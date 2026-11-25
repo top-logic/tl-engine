@@ -404,9 +404,9 @@ export function eventBelongsToChat(name: string, raw: unknown, sessionId: string
  * Which store a chat element joins.
  *
  * `chat-id` is what lets separate elements find each other. An element that hands down none falls
- * back to the control's own id, so two chats in one window stay two chats - `CopilotRegistry` in
- * Consulting keeps a *list* of live panels, and a fixed key would silently merge their
- * transcripts.
+ * back to the control's own id, so two chats in one window stay two chats - a host that keeps a
+ * *list* of live chat panels would otherwise see their transcripts silently merged under a fixed
+ * key.
  */
 export function chatIdOf(state: Record<string, unknown>, controlId: string): string {
   const configured = typeof state.chatId === 'string' ? state.chatId.trim() : ''

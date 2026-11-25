@@ -45,8 +45,8 @@ import com.top_logic.knowledge.service.migration.Version;
  *
  * <p>
  * Each case here is a database state some installation has: the stored versions are what tl-ai
- * 2.0.4 on 8.0.0-alpha8 wrote, and the application's own migration is modelled after the ones
- * Consulting wrote on 2.0.4 and after its move to {@code Issue_487} on 2.0.5.
+ * 2.0.4 on 8.0.0-alpha8 wrote, and the application's own migration is modelled after the ones an
+ * application wrote on 2.0.4 and after its move to {@code Issue_487} on 2.0.5.
  * </p>
  */
 public class TestMigrationScheduling extends BasicTestCase {
@@ -104,7 +104,7 @@ public class TestMigrationScheduling extends BasicTestCase {
 
 	/**
 	 * A database that did start on tl-ai 2.0.5 with the old {@code Issue_487} and skipped it, and
-	 * whose application then moved its migrations to depend on {@code Issue_487} - Consulting. The
+	 * whose application then moved its migrations to depend on {@code Issue_487}. The
 	 * stored {@code tl-ai-core} version is still {@code Issue_230}, but the application's own
 	 * version now reaches {@code Issue_487}, so only the migrations after it run there.
 	 */

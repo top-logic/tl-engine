@@ -289,7 +289,7 @@
    * A floor, but never wider than the window.
    *
    * `min-width: 0` alone let a host squeeze the element to the width of its own scrollbar - 22 px,
-   * a slit with a composer in it (Consulting #234). Measured in the demo at a 320 px window, the
+   * a slit with a composer in it. Measured in the demo at a 320 px window, the
    * conversation was 32 px while the page beside it had room to spare.
    *
    * The second measure is `100vw` and deliberately **not** `100%`: the box this element is placed

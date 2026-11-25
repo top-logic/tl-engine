@@ -4,7 +4,7 @@
 import type { ButtonAppearance } from 'tl-react-bridge';
 import type { ButtonProps } from '@mui/material/Button';
 import type { IconButtonProps } from '@mui/material/IconButton';
-import type { SxProps, Theme } from '@mui/material/styles';
+import type { CSSObject, SxProps, Theme } from '@mui/material/styles';
 
 /** The MUI variant of each appearance of a button outside a menu. */
 const VARIANTS: Record<Exclude<ButtonAppearance, 'menu-item'>, ButtonProps['variant']> = {
@@ -52,4 +52,26 @@ export function buttonColor(danger: boolean): ButtonProps['color'] {
  */
 export function iconButtonColor(appearance: ButtonAppearance, danger: boolean): IconButtonProps['color'] {
   return danger ? 'error' : appearance === 'primary' ? 'primary' : 'default';
+}
+
+/**
+ * The selector of the funnel of a table column whose filter is in force, relative to the root of
+ * the MUI `IconButton` drawing it: the heading of the column carries the state `filtered`
+ * (`data-tl-state`) and the funnel the class `tl-table__filter`.
+ */
+const ACTIVE_FILTER_SELECTOR = '[data-tl-state~="filtered"] > &.tl-table__filter';
+
+/**
+ * The style the root of an MUI `IconButton` has before the theme's `styleOverrides` of
+ * `MuiIconButton` (see `withRootStyleDefaults` of MuiRoot, which puts it in front of them): the
+ * funnel of a filtered table column in the primary color of the theme, the link color of MUI, as
+ * the design system draws it in its link color (the table styles of the design system, which the
+ * MUI renderer does not load). The funnels of the other columns keep the color of the button. A
+ * theme restyles the funnel through `components.MuiIconButton.styleOverrides.root` with the same
+ * selector.
+ */
+export function iconButtonRootStyle({ theme }: { theme: Theme }): CSSObject {
+  return {
+    [ACTIVE_FILTER_SELECTOR]: { color: (theme.vars ?? theme).palette.primary.main },
+  };
 }

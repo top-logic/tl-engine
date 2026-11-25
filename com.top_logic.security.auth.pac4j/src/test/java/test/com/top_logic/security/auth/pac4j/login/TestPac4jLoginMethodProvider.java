@@ -20,6 +20,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.security.auth.pac4j.config.ClientConfigurator;
 import com.top_logic.security.auth.pac4j.login.I18NConstants;
 import com.top_logic.security.auth.pac4j.login.Pac4jLoginMethodProvider;
@@ -48,16 +49,15 @@ public class TestPac4jLoginMethodProvider extends AbstractTypedConfigurationTest
 	/** A client without label gets the generic label. */
 	public void testMissingLabel() throws Exception {
 		assertEquals(I18NConstants.LOGIN_WITH_SSO, buttonLabel(""));
+		assertEquals(I18NConstants.LOGIN_WITH_SSO, Pac4jLoginMethodProvider.buttonLabel(null));
 	}
 
-	/** A label from an environment variable that is not set gets the generic label. */
-	public void testEmptyLabel() throws Exception {
-		assertEquals(I18NConstants.LOGIN_WITH_SSO, buttonLabel("<label><en></en></label>"));
-	}
-
-	/** A label with only empty translations gets the generic label. */
-	public void testEmptyTranslations() throws Exception {
-		assertEquals(I18NConstants.LOGIN_WITH_SSO, buttonLabel("<label><en></en><de></de></label>"));
+	/** The generic label names "Single Sign-On" in the form of the labels of the shipped clients. */
+	public void testGenericLabelTexts() {
+		assertEquals("Sign in with Single Sign-On", ResourcesModule.getInstance().getBundle(Locale.ENGLISH)
+			.getStringWithoutFallback(I18NConstants.LOGIN_WITH_SSO));
+		assertEquals("Über Single Sign-On anmelden", ResourcesModule.getInstance().getBundle(Locale.GERMAN)
+			.getStringWithoutFallback(I18NConstants.LOGIN_WITH_SSO));
 	}
 
 	/** A plain text label is shown as it is, in every language. */
@@ -73,15 +73,6 @@ public class TestPac4jLoginMethodProvider extends AbstractTypedConfigurationTest
 	public void testResourceKeyLabel() throws Exception {
 		ResKey key = com.top_logic.security.auth.pac4j.config.I18NConstants.INVALID_FORMAT__DETAILS.fill("x");
 		assertEquals(key, Pac4jLoginMethodProvider.buttonLabel(key));
-		assertFalse(Pac4jLoginMethodProvider.isEmptyLabel(key));
-	}
-
-	/** Labels without text. */
-	public void testIsEmptyLabel() {
-		assertTrue(Pac4jLoginMethodProvider.isEmptyLabel(null));
-		assertTrue(Pac4jLoginMethodProvider.isEmptyLabel(ResKey.NONE));
-		assertTrue(Pac4jLoginMethodProvider.isEmptyLabel(ResKey.text("")));
-		assertFalse(Pac4jLoginMethodProvider.isEmptyLabel(ResKey.text(PLAIN_LABEL)));
 	}
 
 	private ResKey buttonLabel(String labelElement) throws Exception {

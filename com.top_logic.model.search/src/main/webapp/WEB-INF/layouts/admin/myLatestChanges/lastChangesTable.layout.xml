@@ -5,7 +5,7 @@
 	template="com.top_logic/table.template.xml"
 >
 	<arguments
-		defaultColumns="date,message"
+		defaultColumns="date,message,incomplete"
 		resetInvisible="true"
 		type="tl.changelog:ChangeSet"
 	>

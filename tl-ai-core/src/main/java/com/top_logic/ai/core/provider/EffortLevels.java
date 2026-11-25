@@ -65,7 +65,8 @@ public final class EffortLevels {
 	 * Where an effort level for this model belongs.
 	 *
 	 * @param providerId
-	 *        catalog provider ID, e.g. {@code "anthropic"}; {@code null} counts as unknown
+	 *        the model's API family ({@link LLMProviderConfig#getApiFamily(String)}), e.g.
+	 *        {@code "anthropic"}; {@code null} counts as unknown
 	 * @param info
 	 *        the model's catalog entry, or {@code null} when the model is not in the catalogue
 	 * @return {@link Kind#NONE} when the model cannot reason or its provider offers no such setting

@@ -77,6 +77,7 @@ import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExistence;
+import com.top_logic.layout.view.table.ColumnFilterFieldFactory;
 import com.top_logic.layout.view.table.ColumnHeader;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
@@ -1066,10 +1067,13 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The CSS class of a row computed from its object, {@code null} for none.
 	 * @param rowColor
 	 *        The color role of a row computed from its object, {@code null} for none.
+	 * @param grouping
+	 *        The grouping the table starts with.
 	 */
 	protected final RowSetTableControl createRowEditControl(ViewContext context, FormControl formControl,
 			RowSetBinding binding, RowTypes types, List<TLStructuredType> rowTypes, List<ViewChannel> inputChannels,
-			Function<? super TLObject, String> rowCssClass, Function<? super TLObject, ValueColor> rowColor) {
+			Function<? super TLObject, String> rowCssClass, Function<? super TLObject, ValueColor> rowColor,
+			GroupSpec grouping) {
 		TLStructuredType rowType = rowTypes.isEmpty() ? null : rowTypes.get(0);
 		ChannelRef selectionRef = _config.getSelection();
 		ViewChannel selectionChannel = selectionRef != null ? context.resolveChannel(selectionRef) : null;
@@ -1097,6 +1101,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		control.setDisplayedRowsChannel(channel(context, _config.getDisplayedRows()));
 		control.setFilterBar(filterBar());
 		control.setDefaultSort(defaultSort());
+		control.setGrouping(
+			columns -> ColumnDeclarations.grouping(_log, tableId.value(), grouping, declaredNames, columns));
 		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
 		control.setSelectionMode(_config.getSelectionMode());
@@ -1297,7 +1303,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		Set<String> hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
 		initialState.setFrozenCount(_config.getFixedColumns());
-		initialState.setGrouping(grouping);
+		initialState.setGrouping(ColumnDeclarations.grouping(_log, tableId.value(), grouping, declaredNames, columns));
 		initialState.setSelection(Selection.none(_config.getSelectionMode()));
 		// The columns that do not exist must not be displayed from the first state on, and no
 		// declared filter may refer to a column withheld from the user.
@@ -1320,6 +1326,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		activate.bind(control);
 		control.setCssClass(_config.getCssClass());
 		control.setFilterBar(filterBar());
+		control.setFilterFieldFactory(ColumnFilterFieldFactory.of(setups));
 		control.setHiddenWhenCompact(ColumnDeclarations.hiddenWhenCompact(declarations));
 		if (_config.getDrag() != null) {
 			installDragSource(context, control);

@@ -439,6 +439,10 @@ public class DBProperties implements DBPropertiesSchema {
 						assert !result.next() : "More than one row with the same key values.";
 						return updated;
 					} else {
+						if (expect != null) {
+							/* No entry, but a value was expected. */
+							return false;
+						}
 						insert(result, nodeName, property, update);
 						return true;
 					}

@@ -60,14 +60,24 @@ public class AttributeCellEditing implements CellEditing {
 
 	private final String _attribute;
 
+	private final boolean _required;
+
 	/**
 	 * Creates an {@link AttributeCellEditing}.
 	 *
 	 * @param attribute
 	 *        The name of the attribute holding the cell values.
+	 * @param required
+	 *        Whether every row type holding the attribute requires a value for it.
 	 */
-	public AttributeCellEditing(String attribute) {
+	public AttributeCellEditing(String attribute, boolean required) {
 		_attribute = attribute;
+		_required = required;
+	}
+
+	@Override
+	public boolean required() {
+		return _required;
 	}
 
 	/**

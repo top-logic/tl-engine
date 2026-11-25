@@ -5,6 +5,9 @@
  */
 package test.com.top_logic.knowledge.service.migration;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import junit.framework.Test;
@@ -51,10 +54,14 @@ public class TestMigrationLock extends BasicTestCase {
 	}
 
 	/**
-	 * The lock property exists exactly while the lock is held.
+	 * The lock property exists exactly while the lock is held. Its value identifies the JVM by its
+	 * runtime name and start time.
 	 */
 	public void testLockProperty() throws Exception {
+		RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
 		try (MigrationLock lock = MigrationLock.acquire(new BufferingProtocol(), _pool)) {
+			assertEquals(runtime.getName() + " since " + Instant.ofEpochMilli(runtime.getStartTime()),
+				lock.getOwner());
 			assertEquals(lock.getOwner(), lockProperty());
 		}
 		assertNull(lockProperty());
@@ -86,7 +93,8 @@ public class TestMigrationLock extends BasicTestCase {
 	}
 
 	/**
-	 * A lock left behind by a terminated node blocks until the property is deleted manually.
+	 * A lock left behind by another, terminated node blocks until the property is deleted
+	 * manually.
 	 */
 	public void testLeftOverLockBlocks() throws Exception {
 		_properties.setProperty(MigrationLock.LOCK_PROPERTY, "crashed node");
@@ -103,6 +111,51 @@ public class TestMigrationLock extends BasicTestCase {
 
 		Thread.sleep(2500);
 		assertFalse("Lock acquired while held by another node.", acquired.get());
+
+		_properties.setProperty(MigrationLock.LOCK_PROPERTY, null);
+		future.check(30000);
+		assertTrue("Lock not acquired after manual deletion.", acquired.get());
+	}
+
+	/**
+	 * A lock left behind by a former run of this node (same runtime name, earlier start time) is
+	 * taken over at once: Afterwards, the lock property holds the own owner identification.
+	 */
+	public void testLeftOverLockOfThisNodeTakenOver() throws Exception {
+		String formerRun = ManagementFactory.getRuntimeMXBean().getName() + " since 2026-01-01T00:00:00Z";
+		_properties.setProperty(MigrationLock.LOCK_PROPERTY, formerRun);
+
+		long start = System.currentTimeMillis();
+		BufferingProtocol log = new BufferingProtocol();
+		try (MigrationLock lock = MigrationLock.acquire(log, _pool)) {
+			assertTrue("Acquisition waited for the lock.", System.currentTimeMillis() - start < 1000);
+			assertEquals("Lock not taken over.", lock.getOwner(), lockProperty());
+			assertTrue("Take-over not reported: " + log.getInfos(),
+				log.getInfos().stream().anyMatch(message -> message.contains("Took over") && message.contains(formerRun)));
+		}
+		assertNull(lockProperty());
+	}
+
+	/**
+	 * A lock held with a foreign runtime name is not taken over, the acquisition keeps waiting.
+	 */
+	public void testLeftOverLockOfOtherNodeNotTakenOver() throws Exception {
+		String otherNode = "1@other-host since 2026-01-01T00:00:00Z";
+		_properties.setProperty(MigrationLock.LOCK_PROPERTY, otherNode);
+
+		AtomicBoolean acquired = new AtomicBoolean();
+		TestFuture future = inParallel(new Execution() {
+			@Override
+			public void run() throws Exception {
+				try (MigrationLock lock = MigrationLock.acquire(new BufferingProtocol(), _pool)) {
+					acquired.set(true);
+				}
+			}
+		});
+
+		Thread.sleep(2500);
+		assertFalse("Lock of another node taken over.", acquired.get());
+		assertEquals(otherNode, lockProperty());
 
 		_properties.setProperty(MigrationLock.LOCK_PROPERTY, null);
 		future.check(30000);
@@ -153,6 +206,22 @@ public class TestMigrationLock extends BasicTestCase {
 		try (MigrationLock other = MigrationLock.acquire(new BufferingProtocol(), _pool)) {
 			assertEquals(other.getOwner(), lockProperty());
 		}
+	}
+
+	/**
+	 * Releasing a lock whose property has vanished reports a warning, but neither fails nor
+	 * creates the property.
+	 */
+	public void testCloseWithoutLockProperty() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		MigrationLock lock = MigrationLock.acquire(log, _pool);
+		_properties.setProperty(MigrationLock.LOCK_PROPERTY, null);
+
+		lock.close();
+
+		assertFalse(log.getError(), log.hasErrors());
+		assertTrue(log.getOutput(), log.getOutput().contains("Migration lock was no longer held by this node."));
+		assertNull(lockProperty());
 	}
 
 	private String lockProperty() {

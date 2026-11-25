@@ -19,6 +19,7 @@ export function SearchField({
   onChange,
   onClear,
   onKeyDown,
+  onBlur,
   placeholder,
   label,
   tooltip,
@@ -33,6 +34,8 @@ export function SearchField({
    *  through `onChange`. */
   onClear?: () => void;
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  /** Called when the input loses the focus, for a control that sends the term on leaving the field. */
+  onBlur?: (event: React.FocusEvent<HTMLElement>) => void;
   placeholder?: string;
   /** The name of the input (`aria-label`). */
   label: string;
@@ -68,6 +71,7 @@ export function SearchField({
         value={value}
         onChange={onChange}
         onKeyDown={onKeyDown}
+        onBlur={onBlur}
         action={value !== '' && <ClearButton onClick={handleClear} />}
       />
     </div>

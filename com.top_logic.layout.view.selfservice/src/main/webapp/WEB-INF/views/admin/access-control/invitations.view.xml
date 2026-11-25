@@ -3,14 +3,24 @@
 <!--
 	The administration of the invitations (tl.security.selfservice:Invitation): all invitations
 	with their state, newest first, inviting a new address, sending an invitation again and
-	revoking one. An accepted invitation is the record of the account created from it, so it is
-	neither sent again nor revoked.
+	revoking one. An accepted invitation is the record of the account created from it and is
+	deleted with that account: it is not sent again, and instead of revoking the invitation,
+	"Revoke access" removes its account (the contact data of the person remain).
 
 	Ids for overlays: the panel "list-panel" and the table "table".
 -->
 <view>
 	<channels>
 		<channel name="selectedInvitation"/>
+		<!--
+			What "Revoke access" deletes: the account of the selected invitation, or the invitation
+			itself if it has no account.
+		-->
+		<derived-channel name="invitationRevokeTarget"
+			expr="if($selectedInvitation == null, null, if($selectedInvitation.get(`tl.security.selfservice:Invitation#account`) == null, $selectedInvitation, $selectedInvitation.get(`tl.security.selfservice:Invitation#account`)))"
+			inputs="selectedInvitation"
+			observed-types="tl.security.selfservice:Invitation,tl.accounts:Person"
+		/>
 	</channels>
 	<panel id="list-panel">
 		<title>
@@ -79,20 +89,47 @@
 					</with-result>
 				</execute-script>
 			</generic-command>
+			<!-- Shown for an open or expired invitation, replaced by "Revoke access" for an accepted one. -->
 			<generic-command
 				image="css:bi bi-x-circle"
 				inputs="selectedInvitation"
 				placement="TOOLBAR"
 			>
 				<label>
-					<en>Revoke</en>
+					<en>Revoke invitation</en>
 					<de>Zurückziehen</de>
 				</label>
 				<executability>
+					<visible-if expr="$selectedInvitation.get(`tl.security.selfservice:Invitation#state`) != `tl.security.selfservice:InvitationState#ACCEPTED`"/>
 					<null-input-disabled/>
-					<disabled-if expr="if($selectedInvitation.get(`tl.security.selfservice:Invitation#state`) == `tl.security.selfservice:InvitationState#ACCEPTED`, #('The invitation has been accepted, it is the record of the account created from it.'@en, 'Die Einladung wurde angenommen, sie ist der Nachweis des damit angelegten Kontos.'@de), null)"/>
 				</executability>
 				<confirm expr="#('Revoke the invitation to {0}? Its link no longer works.'@en, 'Die Einladung an {0} zurückziehen? Ihr Link funktioniert dann nicht mehr.'@de).fill($selectedInvitation.get(`tl.security.selfservice:Invitation#email`))"/>
+				<delete-object/>
+				<write-channel name="selectedInvitation"
+					clear="true"
+				/>
+			</generic-command>
+			<!--
+				Shown for an accepted invitation: removes the login created with the invitation, which
+				deletes the invitation with it. Only the account is deleted, the contact data of the
+				person remain. An accepted invitation without account is deleted itself.
+			-->
+			<generic-command name="revoke-access"
+				image="css:bi bi-person-x"
+				inputs="invitationRevokeTarget, selectedInvitation"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Revoke access</en>
+					<de>Widerrufen</de>
+				</label>
+				<executability>
+					<visible-if expr="$selectedInvitation.get(`tl.security.selfservice:Invitation#state`) == `tl.security.selfservice:InvitationState#ACCEPTED`"/>
+					<null-input-disabled/>
+					<disabled-if expr="if($invitationRevokeTarget == currentUser(), #('A user cannot delete himself.'@en, 'Ein Benutzer kann sich nicht selber löschen.'@de), null)"/>
+					<disabled-if expr="if($invitationRevokeTarget.instanceOf(`tl.accounts:Person`) and $invitationRevokeTarget.get(`tl.accounts:Person#admin`), #('An administrator cannot be deleted.'@en, 'Ein Administrator kann nicht gelöscht werden.'@de), null)"/>
+				</executability>
+				<confirm expr="if($invitationRevokeTarget.instanceOf(`tl.accounts:Person`), #('Remove the login of {0}? The invitation is removed with it, the contact data is kept.'@en, 'Den Login von {0} entfernen? Die Einladung wird mit entfernt, die Kontaktdaten bleiben erhalten.'@de).fill($selectedInvitation.get(`tl.security.selfservice:Invitation#email`)), #('Remove the invitation to {0}?'@en, 'Die Einladung an {0} entfernen?'@de).fill($selectedInvitation.get(`tl.security.selfservice:Invitation#email`)))"/>
 				<delete-object/>
 				<write-channel name="selectedInvitation"
 					clear="true"

@@ -19,6 +19,8 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 
 		private boolean _disabled = false;
 
+		private String _tooltip = "";
+
 		private boolean _active = false;
 
 		private String _cssClasses = "";
@@ -116,6 +118,22 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 		}
 
 		@Override
+		public final String getTooltip() {
+			return _tooltip;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.MenuState.Entry setTooltip(String value) {
+			internalSetTooltip(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #getTooltip()} without chain call utility. */
+		protected final void internalSetTooltip(String value) {
+			_tooltip = value;
+		}
+
+		@Override
 		public final boolean isActive() {
 			return _active;
 		}
@@ -182,6 +200,8 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 			out.value(getIcon());
 			out.name(DISABLED__PROP);
 			out.value(isDisabled());
+			out.name(TOOLTIP__PROP);
+			out.value(getTooltip());
 			out.name(ACTIVE__PROP);
 			out.value(isActive());
 			out.name(CSS_CLASSES__PROP);
@@ -198,6 +218,7 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 				case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case ICON__PROP: setIcon(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case DISABLED__PROP: setDisabled(in.nextBoolean()); break;
+				case TOOLTIP__PROP: setTooltip(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case ACTIVE__PROP: setActive(in.nextBoolean()); break;
 				case CSS_CLASSES__PROP: setCssClasses(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case TONE__PROP: setTone(com.top_logic.layout.react.state.ButtonState.Tone.readTone(in)); break;

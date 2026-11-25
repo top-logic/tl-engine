@@ -49,6 +49,36 @@
       info(#"tl.security.selfservice.registrations.approve.sent"))
 }]]></operation>
 			</button>
+			<button id="rejectRegistration"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				form-apply="false"
+				image="css:bi bi-person-x"
+				target="selection(self())"
+				transaction="true"
+			>
+				<resourceKey key="dynamic.f5936930-4791-4708-8377-c1e493457b09">
+					<en>Reject registration</en>
+					<de>Registrierung zurückweisen</de>
+				</resourceKey>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.ScriptedConfirmation"
+					function="message -> registration -> command -> $message.fill($registration.get(`tl.security.selfservice:Registration#email`))"
+				>
+					<message key="dynamic.aaa49873-9254-42da-9174-69ed9c0fdefc">
+						<en>Reject the registration of {0}? The account and its personal data are deleted.</en>
+						<de>Die Registrierung von {0} zurückweisen? Das Konto und seine Personendaten werden gelöscht.</de>
+					</message>
+				</confirmation>
+				<executability>
+					<rule-by-expression
+						decision="registration -> $registration == null ? false : ($registration.get(`tl.security.selfservice:Registration#state`) == `tl.security.selfservice:RegistrationState#APPROVED` ? #&quot;tl.security.selfservice.registrations.reject.approved&quot; : true)"
+						show-disabled="true"
+					/>
+				</executability>
+				<operation><![CDATA[registration -> {
+  registrationReject($registration);
+  info(#"tl.security.selfservice.registrations.reject.done")
+}]]></operation>
+			</button>
 		</buttons>
 		<contextMenu class="com.top_logic.element.layout.grid.GridContextMenuProvider">
 			<contextMenuFactory>

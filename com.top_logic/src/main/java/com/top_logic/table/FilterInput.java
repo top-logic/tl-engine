@@ -36,18 +36,29 @@ public sealed interface FilterInput {
 	}
 
 	/**
-	 * A multi-select filter over a fixed set of {@link Option}s, optionally annotated with
+	 * A multi-select filter over a set of {@link Option}s, optionally annotated with
 	 * {@link MatchCounts facet counts}.
 	 *
 	 * @param values
-	 *        The selectable options.
+	 *        The selectable options, if they are fixed.
+	 * @param occurring
+	 *        Whether the options are the values occurring in the rows of the table, the
+	 *        {@link MatchCounts#values() facet values} of the column, instead of the given fixed
+	 *        {@link #values()}.
 	 */
-	record Options(List<Option> values) implements FilterInput {
+	record Options(List<Option> values, boolean occurring) implements FilterInput {
 		/**
 		 * Creates an {@link Options} descriptor with a defensive, immutable copy.
 		 */
 		public Options {
 			values = List.copyOf(values);
+		}
+
+		/**
+		 * Creates an {@link Options} descriptor over the given fixed options.
+		 */
+		public Options(List<Option> values) {
+			this(values, false);
 		}
 	}
 

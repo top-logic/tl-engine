@@ -114,8 +114,46 @@ public interface Column<R, V> {
 
 	/**
 	 * The filter capability, or empty if the column is not filterable.
+	 *
+	 * <p>
+	 * A column offering a single kind of filter overrides this method. A column offering several
+	 * kinds overrides {@link #filters()} and answers its first one here.
+	 * </p>
 	 */
 	default Optional<ColumnFilter<V>> filter() {
+		return Optional.empty();
+	}
+
+	/**
+	 * The kinds of filter this column offers, empty if the column is not filterable.
+	 *
+	 * <p>
+	 * The column is filtered by one of them at a time, the one its {@link ColumnFilterState}
+	 * names; a plain {@link FilterState} is one of the first. Their {@link ColumnFilter#kind()
+	 * kinds} are unique within the list. The default is the single {@link #filter()}.
+	 * </p>
+	 */
+	default List<ColumnFilter<V>> filters() {
+		Optional<ColumnFilter<V>> filter = filter();
+		return filter.isPresent() ? List.of(filter.get()) : List.of();
+	}
+
+	/**
+	 * The filter of the given {@link ColumnFilter#kind() kind}, or empty if this column offers no
+	 * such filter.
+	 *
+	 * @param kind
+	 *        The kind of filter, {@code null} for the {@link #filter() first} one.
+	 */
+	default Optional<ColumnFilter<V>> filter(String kind) {
+		if (kind == null) {
+			return filter();
+		}
+		for (ColumnFilter<V> filter : filters()) {
+			if (filter.kind().equals(kind)) {
+				return Optional.of(filter);
+			}
+		}
 		return Optional.empty();
 	}
 
@@ -192,6 +230,19 @@ public interface Column<R, V> {
 	 * </p>
 	 */
 	default boolean pinnedEnd() {
+		return false;
+	}
+
+	/**
+	 * Whether a value is required in every cell of this column the user edits, so that its heading
+	 * marks the column as mandatory.
+	 *
+	 * <p>
+	 * Only a column that edits its cells can require a value. A value that is required in some rows
+	 * only is marked at the input of the cell, not at the heading.
+	 * </p>
+	 */
+	default boolean required() {
 		return false;
 	}
 

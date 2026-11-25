@@ -17,6 +17,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.security.HiddenElements;
 
 /**
  * {@link RowSetBinding} anchored at a reference attribute of the form object.
@@ -156,20 +157,10 @@ public class AttributeRowSetBinding implements RowSetBinding {
 	 * The given rows, with the rows the given owner stores but the current user may not discover
 	 * inserted at their stored positions.
 	 */
-	private List<TLObject> withHiddenRows(TLObject owner, List<TLObject> rows) {
+	private List<Object> withHiddenRows(TLObject owner, List<TLObject> rows) {
 		List<?> stored = SearchExpression.asList(baseObject(owner).tValue(_part));
-		List<?> discoverable = SearchExpression.asList(SearchExpression.filterSecurity(stored));
-		if (discoverable.size() == stored.size()) {
-			return rows;
-		}
-		Set<?> visible = new HashSet<>(discoverable);
-		List<TLObject> result = new ArrayList<>(rows);
-		for (int index = 0, cnt = stored.size(); index < cnt; index++) {
-			if (stored.get(index) instanceof TLObject hidden && !visible.contains(hidden) && !result.contains(hidden)) {
-				result.add(Math.min(index, result.size()), hidden);
-			}
-		}
-		return result;
+		Set<?> discoverable = new HashSet<>(SearchExpression.asList(SearchExpression.filterSecurity(stored)));
+		return HiddenElements.keep(stored, rows, discoverable::contains);
 	}
 
 	private boolean isComposite() {

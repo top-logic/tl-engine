@@ -7,6 +7,7 @@ package com.top_logic.ai.core.mcp;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.ToolExecutionContext;
@@ -102,10 +103,14 @@ public class McpTool implements Tool {
 	public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 		McpSchema.CallToolResult result;
 		try {
-			// Stopping the run ends the wait for the server.
-			result = context.cancellationToken().whileBlocked(() -> _registry.callTool(_serverName, _mcpToolName, args));
-		} catch (InterruptedException ex) {
-			Thread.currentThread().interrupt();
+			// The connection waits for the server: its credential provider runs before the wait.
+			result = _registry.callTool(_serverName, _mcpToolName, args);
+		} catch (CancellationException ex) {
+			if (context.cancellationToken().isCancelled()) {
+				// The stop of the run ends the run.
+				throw ex;
+			}
+			// Another party interrupted the thread; the interrupt flag stays set.
 			return ToolResult.failure("Error: the call to " + name() + " was interrupted.");
 		}
 		return answer(name(), result);

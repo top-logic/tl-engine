@@ -160,6 +160,17 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 CHANGES__FIRST_NEXT;
 
+	/**
+	 * Warning in the agent settings when an agent forces a tool call on a model whose provider does
+	 * not accept that.
+	 *
+	 * @en The provider of the model {0} accepts only the tool choices {1}: a run of this agent that
+	 *     forces a tool call fails.
+	 * @de Der Anbieter des Modells {0} nimmt nur die Tool-Auswahlen {1} an: Ein Lauf dieses Agenten,
+	 *     der einen Tool-Aufruf erzwingt, schlägt fehl.
+	 */
+	public static ResKey2 WARNING_TOOL_CHOICE_NOT_ACCEPTED__MODEL_CHOICES;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

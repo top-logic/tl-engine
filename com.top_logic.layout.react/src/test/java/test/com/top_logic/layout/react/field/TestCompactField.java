@@ -22,6 +22,7 @@ import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -38,6 +39,7 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -463,6 +465,52 @@ public class TestCompactField extends TestCase {
 		assertTrue(compact.stateAsJSON().contains("\"stateWords\":\"edit\""));
 		assertFalse(opener.getCssClass().contains("tl-reveal-on-hover"));
 		assertTrue(opener.stateAsJSON().contains("fa-pen-to-square"));
+	}
+
+	/**
+	 * A field that may be edited and requires a value carries the state word
+	 * <code>required</code>, following the mandatory flag and the editability.
+	 */
+	public void testRequiredFollowsMandatory() {
+		AbstractFieldModel model = new AbstractFieldModel("A");
+		ReactCompactFieldControl compact = compactText(model, FieldControlRegistry.TEXT);
+		assertTrue(compact.stateAsJSON().contains("\"stateWords\":\"edit\""));
+
+		model.setMandatory(true);
+		assertTrue(compact.stateAsJSON().contains("\"stateWords\":\"edit required\""));
+
+		model.setEditable(false);
+		assertFalse(compact.stateAsJSON().contains("required"));
+
+		model.setEditable(true);
+		assertTrue(compact.stateAsJSON().contains("\"stateWords\":\"edit required\""));
+
+		model.setMandatory(false);
+		assertTrue(compact.stateAsJSON().contains("\"stateWords\":\"edit\""));
+	}
+
+	/**
+	 * The opener of a field that may be edited and requires a value names the requirement in its
+	 * label, since the root (a group) cannot carry <code>aria-required</code>.
+	 */
+	public void testOpenerNamesRequirement() {
+		AbstractFieldModel model = new AbstractFieldModel("A");
+		ReactCompactFieldControl compact = compactText(model, FieldControlRegistry.TEXT);
+		ReactButtonControl opener = descendants(compact, ReactButtonControl.class).get(0);
+		String required = Resources.getInstance().getString(I18NConstants.COMPACT_FIELD_EDIT_REQUIRED_BUTTON);
+		String edit = Resources.getInstance().getString(I18NConstants.COMPACT_FIELD_EDIT_BUTTON);
+		assertTrue(opener.stateAsJSON().contains(edit));
+
+		model.setMandatory(true);
+		assertTrue(opener.stateAsJSON().contains(required));
+
+		model.setEditable(false);
+		assertFalse(opener.stateAsJSON().contains(required));
+
+		model.setEditable(true);
+		model.setMandatory(false);
+		assertFalse(opener.stateAsJSON().contains(required));
+		assertTrue(opener.stateAsJSON().contains(edit));
 	}
 
 	/**

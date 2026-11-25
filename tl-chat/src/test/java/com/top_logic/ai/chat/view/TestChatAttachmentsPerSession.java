@@ -45,8 +45,11 @@ import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -64,6 +67,8 @@ import com.top_logic.util.model.ModelService;
  * </p>
  */
 public class TestChatAttachmentsPerSession extends SecurityCheckedTestCase {
+
+	private static final String SUBJECT = "chatSubject";
 
 	private static final byte[] PNG = { (byte) 0x89, 'P', 'N', 'G' };
 
@@ -93,11 +98,16 @@ public class TestChatAttachmentsPerSession extends SecurityCheckedTestCase {
 			anna = TestPerson.createPerson("anna-attaching-per-chat");
 			ben = TestPerson.createPerson("ben-reading-annas-chat");
 		}
-		_chatA = idOf(ChatHistoryService.createSession("A " + getName(), anna));
-		_chatB = idOf(ChatHistoryService.createSession("B " + getName(), anna));
+		TLObject subject = ChatHistoryService.createSession("What A and B are about " + getName(), anna);
+		_chatA = idOf(ChatHistoryService.createSession("A " + getName(), anna, ApprovalMode.MANUAL, subject));
+		_chatB = idOf(ChatHistoryService.createSession("B " + getName(), anna, ApprovalMode.MANUAL, subject));
 		HistoryUtils.updateSessionRevision();
 		_driver = new ChatCommandDriver("attachmentsWindow", "attachments-" + getName());
-		_conversation = _driver.conversation(anna);
+		// A conversation the first send creates is about the same subject, so the backend answers it.
+		ViewChannel subjectChannel = new DefaultViewChannel(SUBJECT);
+		subjectChannel.set(subject);
+		_driver.registerChannel(SUBJECT, subjectChannel);
+		_conversation = _driver.conversation(anna, "subject='" + SUBJECT + "'", "");
 		_window = ChatCommandDriver.tracker(_conversation);
 	}
 
@@ -277,7 +287,7 @@ public class TestChatAttachmentsPerSession extends SecurityCheckedTestCase {
 				return "";
 			}
 		};
-		ScriptedBackend.install(session -> backend);
+		ScriptedBackend.install(subject -> backend);
 	}
 
 	/** Waits until no run of the window is in flight, so that none outlives its test. */

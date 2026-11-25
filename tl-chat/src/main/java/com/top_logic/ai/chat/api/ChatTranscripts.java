@@ -429,7 +429,7 @@ public final class ChatTranscripts {
 			return null;
 		}
 		try {
-			return ConversationBackendService.backendFor(agentSession);
+			return ConversationBackendService.backendFor(agentSession.getSubject());
 		} catch (RuntimeException ex) {
 			// The run asks again and fails there, where the user is told; a request that only reads
 			// the conversation must not break on it.

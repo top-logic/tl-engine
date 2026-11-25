@@ -267,7 +267,8 @@ public class ChatProcessor {
 			// active one), so a completed run is never written under the wrong session.
 			AgentSession agentSession = resolveAgentSession(state.getSessionId(), taskTracker.getSessionOwner());
 
-			ConversationBackend backend = ConversationBackendService.backendFor(agentSession);
+			ConversationBackend backend =
+				agentSession == null ? null : ConversationBackendService.backendFor(agentSession.getSubject());
 			String result;
 			if (backend != null && state.isWake()) {
 				// A lead turn for subagents' news is a turn of the framework's own agent, which does

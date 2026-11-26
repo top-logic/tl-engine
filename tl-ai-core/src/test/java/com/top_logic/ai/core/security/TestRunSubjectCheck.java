@@ -146,14 +146,15 @@ public class TestRunSubjectCheck extends BasicTestCase {
 	}
 
 	/**
-	 * {@code aiAgentChatAsync} states its subject for the run: the session of the run is about it.
+	 * {@code aiAgentChatAsync} with a subject leaves the session of its run without a subject.
 	 *
 	 * <p>
-	 * The agent does not exist, so the run fails, but only after it wrote its subject onto the
-	 * session.
+	 * A role rule over the subject of a session can give read access to the session. So a subject
+	 * on the session of a script run would show its transcript to each account that may read the
+	 * object. The agent does not exist, so the run fails, but only after it started on its session.
 	 * </p>
 	 */
-	public void testAsyncScriptRunStatesItsSubject() {
+	public void testAsyncScriptRunLeavesItsSessionWithoutSubject() {
 		TLContextManager.inPersonContext(owner, () -> {
 			String handle = AIScriptFunctions.agentChatAsync("__no_such_agent__", "hello", subject);
 			String status = null;
@@ -165,7 +166,8 @@ public class TestRunSubjectCheck extends BasicTestCase {
 				}
 			}
 			assertEquals(ExecutionStatus.ERROR.name(), status);
-			assertEquals(subject, AgentExecutionStore.getInstance().findSessionById(handle).getSubject());
+			assertNull("The session of a script run is about the subject of the run.",
+				AgentExecutionStore.getInstance().findSessionById(handle).getSubject());
 		});
 	}
 

@@ -686,7 +686,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * <p>
 	 * A run about an object names it as {@code subject}. The agent reads it in the environment block
 	 * of its run, as {@code - Subject:} with the identity of the object, if the account may read it.
-	 * The run's session is then about that object, as a chat started on the page of the object is.
+	 * The session of the run gets no subject.
 	 * </p>
 	 *
 	 * <p>

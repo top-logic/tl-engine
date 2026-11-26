@@ -23,9 +23,10 @@ import com.top_logic.model.TLObject;
  * <p>
  * A resolver only finds the object; it need not check whether the calling account may read it. The
  * engine checks that at each run, with the rights of the run. Only a subject the account may read
- * reaches the agent (in the environment block of its run), the
- * {@link com.top_logic.ai.core.execution.model.AgentSession} the conversation is recorded in, the
- * answer to the calling application and the {@link A2AArtifactContributor}s.
+ * reaches the agent (in the environment block of its run), the answer to the calling application
+ * and the {@link A2AArtifactContributor}s. The
+ * {@link com.top_logic.ai.core.execution.model.AgentSession} the conversation is recorded in gets
+ * no subject.
  * </p>
  */
 public interface A2ASubjectResolver {

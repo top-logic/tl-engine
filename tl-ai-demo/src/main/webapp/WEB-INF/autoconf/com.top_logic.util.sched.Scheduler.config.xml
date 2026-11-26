@@ -33,8 +33,8 @@
 						An AgentTask about one object: <subject-expression> computes the event the run is
 						about, here the first one by its start date. The agent reads the event in the
 						environment block of its run, in the line "- Subject: ..." (Agent activity, the
-						run, group "Environment"), and the sitting in root's chat history is about that
-						event, so it is in the list of the chats about it.
+						run, group "Environment"). The sitting in root's chat history gets no subject, so
+						it is not in the list of the chats about the event.
 
 						Disabled for the same reason as the task above. Start it by hand: Administration >
 						Scheduler > Tasks > NextEventBriefing > "Start task".

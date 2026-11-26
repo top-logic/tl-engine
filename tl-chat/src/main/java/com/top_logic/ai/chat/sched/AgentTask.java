@@ -162,8 +162,8 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 		 * <p>
 		 * For a task about one object - "summarise the week of this project". The agent reads the
 		 * object in the environment block of its run, as the line {@code - Subject:} with the
-		 * identity of the object, and the recorded chat session is about it. The object reaches the
-		 * run only if the {@code run-as} account may read it.
+		 * identity of the object. The object reaches the run only if the {@code run-as} account may
+		 * read it. The recorded chat session gets no subject.
 		 * </p>
 		 *
 		 * <p>
@@ -397,8 +397,9 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 			return;
 		}
 
-		// The subject travels with the message rather than on the session: a task that records no
-		// session has its subject too, and the run writes onto the session only a subject it may read.
+		// The subject travels with the message and never goes onto the session: a task that records no
+		// session has its subject too, and a role rule over the subject of a session would open the
+		// transcript of a run that acts as the run-as account to each reader of the object.
 		SendResult sent = ChatProcessor.sendMessage(tracker, subSession, account.getName(), prompt, null,
 			new ChatRunOptions(getConfig().getAgent(), null, false, List.of(), null, subject));
 		if (sent.isBusy()) {

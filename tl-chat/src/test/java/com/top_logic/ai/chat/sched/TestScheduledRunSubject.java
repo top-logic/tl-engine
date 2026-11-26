@@ -45,7 +45,7 @@ import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 
 /**
  * The {@code subject-expression} of an {@link AgentTask}: the run is about the object it computes,
- * if the {@code run-as} account may read it.
+ * if the {@code run-as} account may read it. The recorded session never gets the subject.
  *
  * <p>
  * The run goes the whole way through the chat to a scripted model, which records the system prompt
@@ -78,8 +78,12 @@ public class TestScheduledRunSubject extends BasicTestCase {
 		});
 	}
 
-	/** The run is about the object the expression computes: the model reads it, and the session is about it. */
-	public void testReadableSubjectReachesTheRunAndTheSession() throws Exception {
+	/**
+	 * The run is about the object the expression computes: the model reads it. The recorded session
+	 * stays without a subject: a role rule over the subject of a session would otherwise show the
+	 * transcript of the run, which acts as the {@code run-as} account, to each reader of the object.
+	 */
+	public void testReadableSubjectReachesTheRunButNotTheSession() throws Exception {
 		AgentSession subject = conversation(account, "readable-task-subject");
 
 		ProbeTask task = task("readable-task-subject");
@@ -88,7 +92,8 @@ public class TestScheduledRunSubject extends BasicTestCase {
 		assertFalse("The model was not asked.", _systemPrompts.isEmpty());
 		assertTrue("The environment block names the subject: " + _systemPrompts.get(0),
 			_systemPrompts.get(0).contains("- Subject: " + ReadFilter.identityJson(subject)));
-		assertEquals("The recorded session is about the subject.", subject, recordedSession().getSubject());
+		assertNull("The session of a scheduled run is about the subject of the run.",
+			recordedSession().getSubject());
 	}
 
 	/** A subject the run-as account may not read reaches neither the model nor the session. */

@@ -135,9 +135,9 @@ The check uses the model access rights of the run. In an application without a m
 
 A delegate and a subagent get the security context of their parent, and with it the same checked subject. The entry point gives the subject to the run as a value: the chat reads the subject of the session on the thread of the send, because the thread of the run can see an older state of a session that was created just before the send.
 
-**On the session.** A top-level run with a subject writes it onto its session (`AgentSession#subject`) if the session has none yet (`AgentRunner`). So the session of a script, of a scheduled task and of an A2A conversation is in the list of the conversations about the object, as a chat is. Who sees the session there is a question of that list; with the filter of the example on `<chat-conversation subject>`, only the account of the run sees it. Only a checked subject is written.
+**Not on the session.** A run does not write its subject onto its session (`AgentSession#subject`). Only the chat gives a session a subject: the subject of `<chat-conversation subject>` or of `chatStart`, when it creates the conversation. The session of a script, of a scheduled task and of an A2A conversation has no subject, and it is not in the list of the conversations about the object. The reason: a role rule over `AgentSession#subject` can let further accounts read a session ([the shipped access policy for conversations](doc:ai/security/administration#the-shipped-access-policy-for-conversations)). These runs can act as an account other than the readers of the object, for example a scheduled task with `run-as="root"`. With a subject on its session, the transcript of such a run would be open to each account that may read the object.
 
-**A2A.** The engine checks the subject, not the `A2ASubjectResolver`. The header of an A2A message names the calling agent but not the subject. A subject that the calling account may not read is named nowhere: not to the agent, not on the session, not in the answer to the other application (the task metadata `subject`), and not to an `A2AArtifactContributor`. The A2A client sends the checked subject of the run as `metadata.tlAi.subject`, and never the subject of the session.
+**A2A.** The engine checks the subject, not the `A2ASubjectResolver`. The header of an A2A message names the calling agent but not the subject. A subject that the calling account may not read is named nowhere: not to the agent, not in the answer to the other application (the task metadata `subject`), and not to an `A2AArtifactContributor`. The A2A client sends the checked subject of the run as `metadata.tlAi.subject`, and never the subject of the session.
 
 ## Prompt contributors
 
@@ -242,7 +242,7 @@ The filled block is written onto the run as `tl.ai.execution:AgentExecution#envi
 | `agent/environment/EnvironmentTemplate`, `RunEnvironment` | the default text, empty sections, composing one run's block |
 | `agent/environment/EnvironmentConfig`, `EnvironmentSettings` | the `<environment>` section and the resource behind it |
 | `agent/environment/AgentFact`, `EnvironmentFact`, `RunFactsBinding` | facts: declared, evaluated, bound for a run |
-| `security/RunPrincipal`, `security/RunSecurity#contextFor`, `AgentFactory#runFacts`, `execution/AgentRunner` | the subject of a run: stated, checked, its line, written onto the session |
+| `security/RunPrincipal`, `security/RunSecurity#contextFor`, `AgentFactory#runFacts` | the subject of a run: stated, checked, its line |
 | `agent/environment/TurnContext`, `AgentLoop#ensureTurnContext` | the per-turn block and where it is attached |
 | `agent/environment/UserPreferences`, `PreferencesLengthConstraint` | the preference text and its cap |
 | `agent/environment/UserMemories`, `UserMemoryBinding`, `UserMemoryConfig`, `UserMemorySettings` | the memory section and its configuration |

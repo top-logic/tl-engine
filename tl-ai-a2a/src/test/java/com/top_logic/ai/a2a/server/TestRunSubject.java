@@ -41,14 +41,15 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * The subject an {@link A2ASubjectResolver} finds for an incoming A2A conversation reaches the
- * session and the answer to the calling application only when the calling account may read it.
+ * answer to the calling application only when the calling account may read it, and it never
+ * reaches the session.
  *
  * <p>
  * The subject here is a conversation of another account. Under the access policy that
  * {@code tl-ai-core} ships for conversations, only its owner may read it, so the caller of the
  * second test has no Read on it. No language model is involved: the run is refused before its first
  * request, because no agent service runs. Everything the engine names about the subject is named
- * before that point, in the answer and on the session.
+ * before that point, in the answer.
  * </p>
  */
 public class TestRunSubject extends BasicTestCase {
@@ -77,12 +78,17 @@ public class TestRunSubject extends BasicTestCase {
 		HistoryUtils.updateSessionRevision();
 	}
 
-	/** The control case: an account that may read the subject gets it on the session and in the answer. */
+	/**
+	 * The control case: an account that may read the subject gets it in the answer. The session
+	 * stays without a subject: a role rule over the subject of a session would otherwise show the
+	 * transcript of the A2A run to each reader of the object.
+	 */
 	public void testReadableSubjectIsKept() throws Exception {
 		A2ATask task = runTask(owner, "ctx-readable").task();
 
 		assertNotNull("The answer names the subject: " + metadata(task), metadata(task).get("subject"));
-		assertEquals(subject, sessionOf(owner, "ctx-readable").getSubject());
+		assertNull("The session of an A2A run is about the subject of the run.",
+			sessionOf(owner, "ctx-readable").getSubject());
 	}
 
 	/**

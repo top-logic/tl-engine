@@ -82,8 +82,9 @@ import com.top_logic.util.TLContextManager;
  * <li>The subject of a context is what the {@link A2ASubjectResolver}s find, else the subject
  * remembered for the context. It is a statement, not yet a disclosure: each run states it, and
  * {@link RunSecurity} keeps it only if the calling account may read it. Only that checked subject
- * reaches the agent (in the environment block of its run), the session, the answer and the artifact
- * contributors.</li>
+ * reaches the agent (in the environment block of its run), the answer and the artifact
+ * contributors. The session gets no subject: a role rule over the subject of a session would open
+ * the transcript of the run to each reader of the object.</li>
  * </ul>
  */
 public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {

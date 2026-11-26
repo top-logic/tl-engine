@@ -45,7 +45,7 @@ A refusal is a `ProviderException` of kind `INVALID_REQUEST`, raised while the r
 aiAgentChat("my-agent", "Which tickets are still open here?", $project)
 ```
 
-The agent reads the object in the environment block of its run, as the line `- Subject:`, if the calling account may read it, and the session of the run is then about it. See [the subject of a run](doc:ai/environment#the-subject-of-a-run).
+The agent reads the object in the environment block of its run, as the line `- Subject:`, if the calling account may read it. The session of the run gets no subject. See [the subject of a run](doc:ai/environment#the-subject-of-a-run).
 
 ### Asynchronous runs
 
@@ -96,7 +96,7 @@ Read a handle in a later request than the one that started the run: the run's se
 | `agent` | the entry-point agent | which agent answers; the `run-as` account must be allowed to run it, as in the chat |
 | `prompt` | - | the message as plain text, written as an element |
 | `prompt-expression` | - | TL-Script computing the message, evaluated at the start of every run; configure exactly one of `prompt` and `prompt-expression`, or the task refuses at boot |
-| `subject-expression` | - | TL-Script computing the object the run is about, evaluated at the start of every run beside the prompt; the agent reads it as [the subject of the run](doc:ai/environment#the-subject-of-a-run) if the `run-as` account may read it, and the recorded session is about it. The result is one object, or nothing for a run without a subject; any other result, and an expression that fails, end the run with an error |
+| `subject-expression` | - | TL-Script computing the object the run is about, evaluated at the start of every run beside the prompt; the agent reads it as [the subject of the run](doc:ai/environment#the-subject-of-a-run) if the `run-as` account may read it; the recorded session gets no subject. The result is one object, or nothing for a run without a subject; any other result, and an expression that fails, end the run with an error |
 | `run-as` | `root` | the account the run acts as: its roles decide the tools and agents, its access rights the objects, and the recorded session belongs to it |
 | `approval-mode` | `AUTO_APPROVE` | see below |
 | `record-session` | `true` | whether the sitting is kept as a chat session of that account |

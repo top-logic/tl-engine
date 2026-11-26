@@ -54,6 +54,8 @@ import com.top_logic.ai.core.message.ContentPart;
 import com.top_logic.ai.core.message.Conversation;
 import com.top_logic.ai.core.message.TextContent;
 import com.top_logic.ai.core.message.UserMessage;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.ai.core.security.RunEntryPoint;
 import com.top_logic.ai.core.security.RunPrincipal;
 import com.top_logic.ai.core.security.RunSecurity;
@@ -64,6 +66,7 @@ import com.top_logic.ai.core.session.Part;
 import com.top_logic.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.ai.core.tools.ToolRegistry;
 import com.top_logic.ai.core.tools.interaction.ToolRegistryReloadFlag;
+import com.top_logic.ai.core.tools.model.TidResolver;
 import com.top_logic.ai.core.tools.task.TaskStore;
 import com.top_logic.util.TLContextManager;
 
@@ -84,7 +87,8 @@ import com.top_logic.util.TLContextManager;
  * {@link RunSecurity} keeps it only if the calling account may read it. Only that checked subject
  * reaches the agent (in the environment block of its run), the answer and the artifact
  * contributors. The session gets no subject: a role rule over the subject of a session would open
- * the transcript of the run to each reader of the object.</li>
+ * the transcript of the run to each reader of the object. The checked subject is kept in the
+ * session's metadata instead, so that the context has it again after a restart.</li>
  * </ul>
  */
 public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
@@ -93,6 +97,12 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 
 	/** How many tasks a context keeps in its session's metadata. */
 	private static final int MAX_PERSISTED_TASKS = 100;
+
+	/**
+	 * Entry of the {@code a2a} metadata that holds the identifier of the checked subject of a
+	 * context, for {@link #restore}.
+	 */
+	private static final String SUBJECT_ID = "subjectId";
 
 	private final A2AService _service;
 
@@ -226,15 +236,16 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 			}
 			AgentSession session = context._session != null ? context._session
 				: createSession(store, person, task, agent, context, metadata, text);
-			persist(task, context);
 
 			ToolContext toolContext = toolContext(person, agent.getAllowWrites(),
 				ExecutionRecorder.conversationIdOf(session), context._subject, token);
 			TLObject subject = toolContext.security().principal().subject();
 			if (subject != null) {
 				task.putMetadata(A2AJson.SUBJECT_METADATA, label(subject));
+				rememberForRestart(context, subject);
 			}
 			_service.contexts().rememberSubject(context._contextId, subject);
+			persist(task, context);
 			run[0] = toolContext;
 
 			String prompt = header(message, task.peer()) + text;
@@ -516,8 +527,47 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 				}
 			}
 			context._metadata = a2a;
-			bind(context, session, session.getSubject());
+			bind(context, session, restoredSubject(person, a2a));
 			return;
+		}
+	}
+
+	/**
+	 * Keeps the identifier of the checked subject of a context in its {@code a2a} metadata, which
+	 * {@link #persist} writes and {@link #restore} reads after a restart.
+	 *
+	 * <p>
+	 * Not as the subject of the session: see the class comment. Only a subject that the calling
+	 * account may read is kept, so the metadata never names another one.
+	 * </p>
+	 */
+	private static void rememberForRestart(Context context, TLObject subject) {
+		String id = ReadFilter.idOf(subject);
+		if (id == null) {
+			return;
+		}
+		synchronized (context) {
+			context._metadata.put(SUBJECT_ID, id);
+		}
+	}
+
+	/**
+	 * The subject that a context had before the restart, or <code>null</code> for none.
+	 *
+	 * <p>
+	 * An object that was deleted or that the account may no longer read gives none. Each run checks
+	 * the subject again.
+	 * </p>
+	 */
+	private static TLObject restoredSubject(Person person, Map<String, Object> a2a) {
+		String id = Json.str(a2a, SUBJECT_ID);
+		if (id == null) {
+			return null;
+		}
+		try {
+			return TidResolver.resolve(id, new ModelAccessRightsSecurity(person));
+		} catch (IllegalArgumentException ex) {
+			return null;
 		}
 	}
 

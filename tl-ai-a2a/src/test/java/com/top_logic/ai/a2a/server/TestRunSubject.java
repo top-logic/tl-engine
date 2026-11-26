@@ -35,6 +35,7 @@ import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
@@ -105,8 +106,10 @@ public class TestRunSubject extends BasicTestCase {
 
 		assertNull("The answer to the calling application names a subject its account may not read: "
 			+ metadata(task), metadata(task).get(A2AJson.SUBJECT_METADATA));
-		assertNull("The session is about a subject its owner may not read.",
-			sessionOf(stranger, "ctx-unreadable").getSubject());
+		AgentSession session = sessionOf(stranger, "ctx-unreadable");
+		assertNull("The session is about a subject its owner may not read.", session.getSubject());
+		assertFalse("The metadata of the session names the identifier of the subject: " + session.getMetadata(),
+			session.getMetadata().contains(ReadFilter.idOf(subject)));
 		String told = userText(run.backend().conversationLog("ctx-unreadable"));
 		assertTrue("The message the agent was given: " + told, told.contains("Which tickets are still open here?"));
 		assertFalse("The message names the identifier of the subject: " + told,
@@ -115,15 +118,44 @@ public class TestRunSubject extends BasicTestCase {
 			told.contains(MetaLabelProvider.INSTANCE.getLabel(subject)));
 	}
 
+	/**
+	 * A context that a new backend continues, as after a restart of the application, has its checked
+	 * subject again, although its session has none and no resolver finds one.
+	 */
+	public void testRestoredContextKeepsItsSubject() throws Exception {
+		runTask(owner, "ctx-restored", "ctx-restored-first", subject);
+
+		A2ATask next = runTask(owner, "ctx-restored", "ctx-restored-next", null).task();
+
+		assertNotNull("The continued context names its subject: " + metadata(next),
+			metadata(next).get(A2AJson.SUBJECT_METADATA));
+		assertNull("The session of an A2A run is about the subject of the run.",
+			sessionOf(owner, "ctx-restored").getSubject());
+	}
+
 	/** A task and the backend that ran it. */
 	private record Run(A2ATask task, AgentRunBackend backend) {
 		// Plain data.
 	}
 
-	/** Runs one task of the exposed agent as the given account, until its run ends. */
+	/** Runs one task of the exposed agent as the given account, with a resolver that finds {@link #subject}. */
 	private static Run runTask(Person caller, String contextId) throws Exception {
-		AgentRunBackend backend = new AgentRunBackend(service());
-		A2ATask task = new A2ATask(contextId + "-task", contextId, "alpha", caller.getName());
+		return runTask(caller, contextId, contextId + "-task", subject);
+	}
+
+	/**
+	 * Runs one task of the exposed agent as the given account, until its run ends.
+	 *
+	 * <p>
+	 * Each call has a backend of its own, as an application after a restart has.
+	 * </p>
+	 *
+	 * @param found
+	 *        What the resolver of the service finds, <code>null</code> for nothing.
+	 */
+	private static Run runTask(Person caller, String contextId, String taskId, TLObject found) throws Exception {
+		AgentRunBackend backend = new AgentRunBackend(service(found));
+		A2ATask task = new A2ATask(taskId, contextId, "alpha", caller.getName());
 		try {
 			backend.start(task,
 				A2AJson.textMessage(A2AJson.ROLE_USER, contextId, task.id(), "Which tickets are still open here?"),
@@ -154,8 +186,8 @@ public class TestRunSubject extends BasicTestCase {
 		return result.toString();
 	}
 
-	/** The service the backend serves: one exposed agent, and a resolver that finds {@link #subject}. */
-	private static A2AService service() throws Exception {
+	/** The service the backend serves: one exposed agent, and a resolver that finds the given object. */
+	private static A2AService service(TLObject found) throws Exception {
 		A2AService.Config<?> config = (A2AService.Config<?>) TypedConfiguration.parse(CharacterContents.newContent(
 			"<service xmlns:config='http://www.top-logic.com/ns/config/6.0'"
 				+ " config:interface='" + A2AService.Config.class.getName() + "'"
@@ -165,7 +197,7 @@ public class TestRunSubject extends BasicTestCase {
 		return new A2AService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config) {
 			@Override
 			public List<A2ASubjectResolver> subjectResolvers() {
-				return List.of(request -> subject);
+				return List.of(request -> found);
 			}
 		};
 	}

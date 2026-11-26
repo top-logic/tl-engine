@@ -127,8 +127,6 @@ The line gives the identity of the object as JSON, in the form that the tool res
 | `com.top_logic.ai.chat.sched.AgentTask` | `<subject-expression>`, TL-Script evaluated at each run start ([agents on a schedule](doc:ai/script-and-scheduled-runs#agents-on-a-schedule)) |
 | A2A | what an `A2ASubjectResolver` finds, else the subject remembered for the context |
 
-`aiResearch`, the prompt improver of the chat and the MCP endpoint state no subject.
-
 **One read check.** The entry point states the subject in the run description `RunPrincipal`. `RunSecurity.contextFor` asks the `SecurityContextFactory` with the stated subject, and then checks Read on it with the `modelSecurity()` of the context that the factory returned: the rights that the run really has. If the run may not read the object, the run has no subject, and the log gets one line at level INFO with the entry point, the account, and the type and the identifier of the object, but not its label. Example: a user opens an old link to a project that the user may not read. The run has no subject, and the agent answers as without a project.
 
 The check uses the model access rights of the run. In an application without a model security configuration (`<security-config>`), an account that is not an administrator may read no object. So its run gets no subject line. That is the same answer that its tools get.

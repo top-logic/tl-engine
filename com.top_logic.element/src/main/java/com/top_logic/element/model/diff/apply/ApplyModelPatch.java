@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -28,7 +29,6 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.schema.config.DBColumnType;
@@ -404,12 +404,44 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	 * @param processors
 	 *        Output list to fill with configurations of {@link MigrationProcessor}s that can be
 	 *        used to apply the patch in SQL.
+	 * @throws TopLogicException
+	 *         If the patch makes a property of a persistent model store its values in a system
+	 *         column, see {@link PrimitiveStorage#systemColumnError(TLStructuredTypePart)}.
 	 */
 	public static void applyPatch(Protocol log, TLModel model, TLFactory factory, List<? extends DiffElement> patch,
 			List<? super PolymorphicConfiguration<? extends MigrationProcessor>> processors) {
+		boolean checkSystemColumns = !model.tTransient();
+		Set<TLStructuredTypePart> systemColumnPropertiesBefore =
+			checkSystemColumns ? PrimitiveStorage.systemColumnProperties(model) : Set.of();
+
 		ApplyModelPatch apply = new ApplyModelPatch(log, model, factory, processors);
 		apply.applyPatch(patch);
 		apply.complete();
+
+		if (checkSystemColumns) {
+			refuseNewSystemColumnProperties(model, systemColumnPropertiesBefore);
+		}
+	}
+
+	/**
+	 * Refuses a property that the patch made store its values in a system column, see
+	 * {@link PrimitiveStorage#systemColumnError(TLStructuredTypePart)}.
+	 *
+	 * <p>
+	 * The whole model is checked after the patch, because several kinds of change lead to such a
+	 * property: a new property, a rename, a new value type, a removed storage annotation, or a
+	 * changed multiplicity. A property that stored its values in a system column before the patch
+	 * is not refused: the model load only reports it, so that an application with such a property
+	 * from an earlier version can still upgrade its model. A transient model is not checked: it
+	 * only computes the migration processors of the patch.
+	 * </p>
+	 */
+	private static void refuseNewSystemColumnProperties(TLModel model, Set<TLStructuredTypePart> before) {
+		for (TLStructuredTypePart part : PrimitiveStorage.systemColumnProperties(model)) {
+			if (!before.contains(part)) {
+				throw new TopLogicException(PrimitiveStorage.systemColumnError(part));
+			}
+		}
 	}
 
 	/**
@@ -1059,24 +1091,9 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 	}
 
-	/**
-	 * Refuses a new property that would store its values in a system column, see
-	 * {@link PrimitiveStorage#systemColumnError(TLStructuredTypePart)}.
-	 *
-	 * <p>
-	 * A transient copy of the model is not checked: it only computes the migration processors of
-	 * the patch.
-	 * </p>
-	 */
 	@Override
 	public TLProperty createProperty(TLStructuredType owner, AttributeConfig attributeConfig) {
 		TLProperty property = super.createProperty(owner, attributeConfig);
-		if (!property.tTransient()) {
-			ResKey error = PrimitiveStorage.systemColumnError(property);
-			if (error != null) {
-				throw new TopLogicException(error);
-			}
-		}
 
 		if (createProcessors()) {
 			CreateTLPropertyProcessor.Config config = newConfigItem(CreateTLPropertyProcessor.Config.class);

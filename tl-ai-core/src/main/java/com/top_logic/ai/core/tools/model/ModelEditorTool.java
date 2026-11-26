@@ -607,7 +607,7 @@ public class ModelEditorTool {
 			property = (TLClassProperty) existingPart;
 		} else {
 			TLType resolvedType = resolvePrimitiveType(model, propertyType);
-			if (PrimitiveStorage.systemColumnError(propertyName, resolvedType, multipleFlag) != null) {
+			if (PrimitiveStorage.systemColumnError(tlClass, propertyName, resolvedType, multipleFlag, null) != null) {
 				throw new IllegalArgumentException("Property name '" + propertyName
 					+ "' is the name of a system column of each object; choose another name.");
 			}

@@ -12,11 +12,11 @@
 
 <h3>Reserved names</h3>
 
-<p>Each object has system columns in its table. An attribute stores its value in the column of its name if the table has such a column. Thus the name of a system column cannot be the name of an attribute: the model editor and a model upgrade refuse it. These names are reserved:</p>
+<p>Each object has system columns in its table. An attribute stores its value in the column of its name if the table has such a column. Thus the name of a system column cannot be the name of an attribute: the model editor and a model upgrade refuse it. A model upgrade also refuses a rename or a new value type that makes an attribute use such a column. These names are reserved:</p>
 
 <p><code class="hljs inlineCode">_branch</code>, <code class="hljs inlineCode">_identifier</code>, <code class="hljs inlineCode">_rev_max</code>, <code class="hljs inlineCode">_rev_min</code>, <code class="hljs inlineCode">createRev</code>, <code class="hljs inlineCode">created</code>, <code class="hljs inlineCode">creatorid</code>, <code class="hljs inlineCode">modified</code>, <code class="hljs inlineCode">modifier</code>, <code class="hljs inlineCode">physicalResource</code>, <code class="hljs inlineCode">tType</code></p>
 
-<p>These are the columns of the tables <code class="hljs inlineCode">Item</code>, <code class="hljs inlineCode">KnowledgeObject</code> and <code class="hljs inlineCode">TLObject</code>. A reference is not affected, because it does not store its value in a column of its name. An attribute whose value type has a storage of its own (for example <code class="hljs inlineCode">tl.model.i18n:I18NString</code>) is not affected either. An attribute with an explicit storage column (<code class="hljs inlineCode">&lt;primitive-storage storage-attribute="..."/&gt;</code>) uses this column deliberately and is accepted. The name of a column of a table of the application is allowed.</p>
+<p>These are the columns of the tables <code class="hljs inlineCode">Item</code>, <code class="hljs inlineCode">KnowledgeObject</code> and <code class="hljs inlineCode">TLObject</code>. A reference is not affected, because it does not store its value in a column of its name. An attribute whose value type has a storage of its own (for example <code class="hljs inlineCode">tl.model.i18n:I18NString</code>) is not affected either. An attribute with an explicit storage column (<code class="hljs inlineCode">&lt;primitive-storage storage-attribute="..."/&gt;</code>) uses this column deliberately and is accepted. In the dialog for a new attribute, add this storage annotation first, then enter the name. The name of a column of a table of the application is allowed.</p>
 
 <h2>Selecting the value type</h2>
 

@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -27,9 +28,9 @@ import com.top_logic.basic.shared.io.StringR;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.ex.UnknownTypeException;
+import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeException;
@@ -39,6 +40,8 @@ import com.top_logic.element.meta.kbbased.StorageImplementationFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.FlexAttributeFetch;
 import com.top_logic.knowledge.service.db2.PersistentObject;
+import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLProperty;
@@ -125,14 +128,18 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 	 * The error for a new property that would store its values in a system column.
 	 *
 	 * <p>
-	 * A property without a storage annotation of its own uses the storage of its value type, see
+	 * A property uses the storage of its {@link TLStorage} annotation. Without such an annotation,
+	 * it uses the storage of its value type, see
 	 * {@link StorageImplementationFactory#defaultPropertyStorage(TLType, boolean, java.util.function.BooleanSupplier)}.
 	 * If this is a {@link PrimitiveStorage} without an explicit {@link Config#getStorageAttribute()
 	 * storage attribute}, the property uses the column of its own name, if the table of its owner
-	 * has one. The system columns are the columns of the base table
-	 * {@value PersistentObject#OBJECT_TYPE} of each object, its inherited columns included. A value
-	 * that a property writes into such a column fails at run time or changes data of the engine. An
-	 * application table can declare more columns: a property may use them by name.
+	 * has one (see {@link #init(TLStructuredTypePart)}). A system column is a column of the table of
+	 * the owner that the base table {@value PersistentObject#OBJECT_TYPE} of each object also has,
+	 * its inherited columns included. A value that a property writes into such a column fails at
+	 * run time or changes data of the engine. An application table can declare more columns: a
+	 * property may use them by name. A link table has only a part of the columns of
+	 * {@value PersistentObject#OBJECT_TYPE}: only these are system columns for a property of a link
+	 * type.
 	 * </p>
 	 *
 	 * <p>
@@ -140,35 +147,52 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 	 * not use it.
 	 * </p>
 	 *
+	 * @param owner
+	 *        The type that gets the new property.
 	 * @param propertyName
 	 *        The name of the new property.
 	 * @param valueType
 	 *        The value type of the new property.
 	 * @param multiple
 	 *        Whether the new property holds several values.
+	 * @param storage
+	 *        The {@link TLStorage} annotation of the new property, or <code>null</code> if it has
+	 *        none.
 	 * @return The error that names the column, or <code>null</code> if the property does not store
 	 *         its values in a system column.
 	 */
 	@FrameworkInternal
-	public static ResKey systemColumnError(String propertyName, TLType valueType, boolean multiple) {
-		return systemColumnError(propertyName,
-			StorageImplementationFactory.defaultPropertyStorage(valueType, multiple, () -> false));
+	public static ResKey systemColumnError(TLStructuredType owner, String propertyName, TLType valueType,
+			boolean multiple, TLStorage storage) {
+		PolymorphicConfiguration<?> storageConfig = storage != null ? storage.getImplementation()
+			: StorageImplementationFactory.defaultPropertyStorage(valueType, multiple, () -> false);
+		if (!(storageConfig instanceof Config<?> primitiveStorage) || primitiveStorage.getStorageAttribute() != null) {
+			return null;
+		}
+		MORepository repository = PersistencyLayer.getKnowledgeBase().getMORepository();
+		if (!hasColumn(repository, TLAnnotations.getTable(owner), propertyName)
+			|| !hasColumn(repository, PersistentObject.OBJECT_TYPE, propertyName)) {
+			return null;
+		}
+		return I18NConstants.ERROR_SYSTEM_COLUMN_NAME__COLUMN.fill(propertyName);
+	}
+
+	private static boolean hasColumn(MORepository repository, String tableName, String columnName) {
+		return repository.getTypeOrNull(tableName) instanceof MOStructure table
+			&& table.getAttributeOrNull(columnName) != null;
 	}
 
 	/**
 	 * The error for an existing property that stores its values in a system column, see
-	 * {@link #systemColumnError(String, TLType, boolean)}.
+	 * {@link #systemColumnError(TLStructuredType, String, TLType, boolean, TLStorage)}.
 	 *
 	 * <p>
 	 * The check reads the storage configuration and does not create the storage: during a model
 	 * upgrade, the storage of a property can refer to parts that the upgrade creates later. The
 	 * check follows the storage selection of
 	 * {@link StorageImplementationFactory#createStorageImplementation(TLStructuredTypePart)}: an
-	 * override uses the storage of the part that it overrides, an abstract property has no
-	 * storage, and the {@link TLStorage} annotation of the property wins over the storage of the
-	 * value type. A property of a TLAssociation is checked against the columns of
-	 * {@value PersistentObject#OBJECT_TYPE} too, although a link table has not all of them: such a
-	 * property is rare, and the refusal is accepted.
+	 * override uses the storage of the part that it overrides, and an abstract property has no
+	 * storage.
 	 * </p>
 	 *
 	 * <p>
@@ -184,24 +208,35 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 		if (!(part instanceof TLProperty) || part.isOverride() || part.isAbstract()) {
 			return null;
 		}
-		TLStorage annotation = part.getAnnotation(TLStorage.class);
-		if (annotation == null) {
-			return systemColumnError(part.getName(), part.getType(), part.isMultiple());
-		}
-		return systemColumnError(part.getName(), annotation.getImplementation());
+		return systemColumnError(part.getOwner(), part.getName(), part.getType(), part.isMultiple(),
+			part.getAnnotation(TLStorage.class));
 	}
 
-	private static ResKey systemColumnError(String propertyName, PolymorphicConfiguration<?> storage) {
-		if (!(storage instanceof Config<?> primitiveStorage) || primitiveStorage.getStorageAttribute() != null) {
-			return null;
+	/**
+	 * All properties of the given model that store their values in a system column, see
+	 * {@link #systemColumnError(TLStructuredTypePart)}.
+	 *
+	 * <p>
+	 * This check serves the model upgrade and the model load of the engine. An application must not
+	 * use it.
+	 * </p>
+	 */
+	@FrameworkInternal
+	public static Set<TLStructuredTypePart> systemColumnProperties(TLModel model) {
+		Set<TLStructuredTypePart> result = new LinkedHashSet<>();
+		for (TLModule module : model.getModules()) {
+			for (TLType type : module.getTypes()) {
+				if (!(type instanceof TLStructuredType structuredType)) {
+					continue;
+				}
+				for (TLStructuredTypePart part : structuredType.getLocalParts()) {
+					if (systemColumnError(part) != null) {
+						result.add(part);
+					}
+				}
+			}
 		}
-		MetaObject baseTable =
-			PersistencyLayer.getKnowledgeBase().getMORepository().getTypeOrNull(PersistentObject.OBJECT_TYPE);
-		if (!(baseTable instanceof MOStructure baseStructure)
-			|| baseStructure.getAttributeOrNull(propertyName) == null) {
-			return null;
-		}
-		return I18NConstants.ERROR_SYSTEM_COLUMN_NAME__COLUMN.fill(propertyName);
+		return result;
 	}
 
 	@Override

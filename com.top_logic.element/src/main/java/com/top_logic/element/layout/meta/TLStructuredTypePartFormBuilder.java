@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.layout.meta;
 
+import java.util.Collection;
 import java.util.Locale;
 
 import com.top_logic.base.config.i18n.Internationalized;
@@ -24,6 +25,7 @@ import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.Step;
+import com.top_logic.basic.config.constraint.algorithm.GenericPropertyConstraint;
 import com.top_logic.basic.config.constraint.algorithm.GenericValueDependency3;
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
 import com.top_logic.basic.config.constraint.algorithm.ValueConstraint;
@@ -36,6 +38,7 @@ import com.top_logic.basic.func.Not;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.TypedPartAspect;
+import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
@@ -220,8 +223,9 @@ public class TLStructuredTypePartFormBuilder extends
 		@RegexpConstraint(value = PartNameConstraints.RECOMMENDED_TYPE_PART_NAME_PATTERN, errorKey = PartNameConstraints.RecommendedTypePartNameKey.class, asWarning = true)
 		@Constraint(value = TypePartNotExistsConstraint.class, args = { @Ref({ EDIT_MODEL, EditModel.CONTEXT_TYPE }),
 			@Ref(OVERRIDE), @Ref({ EDIT_MODEL, EditModel.CREATING }) })
-		@Constraint(value = SystemColumnNameConstraint.class, args = { @Ref(RESOLVED_TYPE), @Ref(MULTIPLE_PROPERTY),
-			@Ref(CREATING_NEW_ATTRIBUTE) })
+		@Constraint(value = SystemColumnNameConstraint.class, args = { @Ref(CREATING_NEW_ATTRIBUTE),
+			@Ref({ EDIT_MODEL, EditModel.CONTEXT_TYPE }), @Ref(RESOLVED_TYPE), @Ref(MULTIPLE_PROPERTY),
+			@Ref(ANNOTATIONS) })
 		public String getName();
 
 		/**
@@ -342,38 +346,65 @@ public class TLStructuredTypePartFormBuilder extends
 		}
 
 		/**
-		 * {@link ValueConstraint} that refuses the name of a system column for a new property.
+		 * Constraint that refuses the name of a system column for a new property.
 		 *
-		 * @see PrimitiveStorage#systemColumnError(String, TLType, boolean)
+		 * <p>
+		 * A {@link TLStorage} annotation in the form counts: with an explicit storage attribute, the
+		 * property uses this column on purpose. The form checks the name again when an annotation
+		 * is added or removed, but not when a value inside an annotation changes.
+		 * </p>
+		 *
+		 * @see PrimitiveStorage#systemColumnError(TLStructuredType, String, TLType, boolean,
+		 *      TLStorage)
 		 */
-		class SystemColumnNameConstraint extends GenericValueDependency3<String, TLType, Boolean, Boolean> {
-
-			/**
-			 * Creates a {@link SystemColumnNameConstraint}.
-			 */
-			public SystemColumnNameConstraint() {
-				super(String.class, TLType.class, Boolean.class, Boolean.class);
-			}
+		class SystemColumnNameConstraint extends GenericPropertyConstraint {
 
 			@Override
-			protected void checkValue(PropertyModel<String> propertyModel, PropertyModel<TLType> typeModel,
-					PropertyModel<Boolean> multipleModel, PropertyModel<Boolean> creatingNewModel) {
-				if (!Boolean.TRUE.equals(creatingNewModel.getValue())) {
+			public void check(PropertyModel<?>... models) {
+				PropertyModel<?> nameModel = models[0];
+				if (!Boolean.TRUE.equals(models[1].getValue())) {
+					return;
+				}
+				if (!(models[2].getValue() instanceof TLStructuredType owner)) {
 					return;
 				}
 				// Only a property stores its value in the column of its name.
-				if (!(typeModel.getValue() instanceof TLPrimitive valueType)) {
+				if (!(models[3].getValue() instanceof TLPrimitive valueType)) {
 					return;
 				}
-				String newPartName = propertyModel.getValue();
+				String newPartName = (String) nameModel.getValue();
 				if (StringServices.isEmpty(newPartName)) {
 					return;
 				}
-				ResKey error = PrimitiveStorage.systemColumnError(newPartName, valueType,
-					Boolean.TRUE.equals(multipleModel.getValue()));
+				boolean multiple = Boolean.TRUE.equals(models[4].getValue());
+				ResKey error = PrimitiveStorage.systemColumnError(owner, newPartName, valueType, multiple,
+					storageAnnotation((Collection<?>) models[5].getValue()));
 				if (error != null) {
-					propertyModel.setProblemDescription(error);
+					nameModel.setProblemDescription(error);
 				}
+			}
+
+			private static TLStorage storageAnnotation(Collection<?> annotations) {
+				if (annotations == null) {
+					return null;
+				}
+				for (Object annotation : annotations) {
+					if (annotation instanceof TLStorage storage) {
+						return storage;
+					}
+				}
+				return null;
+			}
+
+			@Override
+			public boolean isChecked(int index) {
+				return index == 0;
+			}
+
+			@Override
+			public Class<?>[] signature() {
+				return new Class<?>[] { String.class, Boolean.class, TLStructuredType.class, TLType.class,
+					Boolean.class, Collection.class };
 			}
 
 		}

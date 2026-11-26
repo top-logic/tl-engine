@@ -25,7 +25,11 @@ import com.top_logic.element.meta.kbbased.storage.I18NConstants;
 import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.element.model.diff.apply.ApplyModelPatch;
 import com.top_logic.element.model.diff.config.CreateStructuredTypePart;
+import com.top_logic.element.model.diff.config.DiffElement;
+import com.top_logic.element.model.diff.config.RenamePart;
+import com.top_logic.element.model.diff.config.UpdatePartType;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
@@ -54,6 +58,10 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 	private static final String APPLICATION_TABLE = "StructuredElement";
 
 	private static final String APPLICATION_COLUMN = "name";
+
+	private static final String LINK_TABLE = "hasWrapperAttValue";
+
+	private static final String OBJECT_COLUMN = "tType";
 
 	private TLModule _module;
 
@@ -84,6 +92,82 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 			assertEquals(I18NConstants.ERROR_SYSTEM_COLUMN_NAME__COLUMN.fill(SYSTEM_COLUMN), ex.getErrorKey());
 		}
 		assertNull(_type.getPart(SYSTEM_COLUMN));
+	}
+
+	/**
+	 * A model upgrade that renames a property to the name of a system column fails.
+	 */
+	public void testUpgradeRefusesRenameToSystemColumn() {
+		try (Transaction tx = beginTX()) {
+			TLModelUtil.addProperty(_type, "createdNote", TLModelUtil.findType(STRING));
+			tx.commit();
+		}
+		RenamePart rename = TypedConfiguration.newConfigItem(RenamePart.class);
+		rename.setPart(TLModelUtil.qualifiedName(_type) + "#createdNote");
+		rename.setNewName(SYSTEM_COLUMN);
+		try (Transaction tx = beginTX()) {
+			applyPatch(rename);
+			fail("A model upgrade must refuse to rename a property to the system column '" + SYSTEM_COLUMN + "'.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_SYSTEM_COLUMN_NAME__COLUMN.fill(SYSTEM_COLUMN), ex.getErrorKey());
+		}
+	}
+
+	/**
+	 * A model upgrade that gives a property with the name of a system column a value type without a
+	 * storage of its own fails.
+	 */
+	public void testUpgradeRefusesTypeChangeToSystemColumn() {
+		try (Transaction tx = beginTX()) {
+			TLModelUtil.addProperty(_type, SYSTEM_COLUMN, TLModelUtil.findType(I18N_STRING));
+			tx.commit();
+		}
+		UpdatePartType typeChange = TypedConfiguration.newConfigItem(UpdatePartType.class);
+		typeChange.setPart(TLModelUtil.qualifiedName(_type) + "#" + SYSTEM_COLUMN);
+		typeChange.setTypeSpec(STRING);
+		try (Transaction tx = beginTX()) {
+			applyPatch(typeChange);
+			fail("A model upgrade must refuse the value type '" + STRING + "' for the property '" + SYSTEM_COLUMN
+				+ "'.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_SYSTEM_COLUMN_NAME__COLUMN.fill(SYSTEM_COLUMN), ex.getErrorKey());
+		}
+	}
+
+	/**
+	 * A property that stored its values in a system column before the upgrade does not stop the
+	 * upgrade: the model load only reports it.
+	 */
+	public void testUpgradeKeepsExistingSystemColumnProperty() {
+		try (Transaction tx = beginTX()) {
+			TLModelUtil.addProperty(_type, SYSTEM_COLUMN, TLModelUtil.findType(STRING));
+			tx.commit();
+		}
+		try (Transaction tx = beginTX()) {
+			applyCreateProperty(_type, newProperty("createdNote", STRING));
+			assertNotNull(_type.getPart("createdNote"));
+		}
+	}
+
+	/**
+	 * A property of a link type is checked against the columns of its link table: a column of each
+	 * object that the link table does not have is no system column there.
+	 */
+	public void testLinkTableHasItsOwnColumns() throws Exception {
+		MOStructure linkTable = (MOStructure) _kb.getMORepository().getMetaObject(LINK_TABLE);
+		assertNull(linkTable.getAttributeOrNull(OBJECT_COLUMN));
+		TLAssociation association;
+		try (Transaction tx = beginTX()) {
+			association = TLModelUtil.addAssociation(_module, "Link");
+			TableName table = TypedConfiguration.newConfigItem(TableName.class);
+			table.setName(LINK_TABLE);
+			association.setAnnotation(table);
+			tx.commit();
+		}
+		TLType string = TLModelUtil.findType(STRING);
+		assertNull(PrimitiveStorage.systemColumnError(association, OBJECT_COLUMN, string, false, null));
+		assertEquals(I18NConstants.ERROR_SYSTEM_COLUMN_NAME__COLUMN.fill(SYSTEM_COLUMN),
+			PrimitiveStorage.systemColumnError(association, SYSTEM_COLUMN, string, false, null));
 	}
 
 	/**
@@ -129,7 +213,7 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 	 */
 	public void testOwnStorageOfValueTypeAccepted() {
 		TLType i18nString = TLModelUtil.findType(I18N_STRING);
-		assertNull(PrimitiveStorage.systemColumnError(SYSTEM_COLUMN, i18nString, false));
+		assertNull(PrimitiveStorage.systemColumnError(_type, SYSTEM_COLUMN, i18nString, false, null));
 		try (Transaction tx = beginTX()) {
 			applyCreateProperty(_type, newProperty(SYSTEM_COLUMN, I18N_STRING));
 			assertNotNull(_type.getPart(SYSTEM_COLUMN));
@@ -176,14 +260,15 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 
 	/**
 	 * The editor of the classic model editor refuses a new property with the name of a system
-	 * column.
+	 * column, unless the form binds the column on purpose with an explicit storage attribute.
 	 */
 	public void testClassicEditorRefusesSystemColumnProperty() {
 		assertEquals(1, editorErrors(SYSTEM_COLUMN).size());
 		assertEquals(List.of(), editorErrors("createdAt"));
+		assertEquals(List.of(), editorErrors(SYSTEM_COLUMN, explicitStorage(SYSTEM_COLUMN)));
 	}
 
-	private List<String> editorErrors(String name) {
+	private List<String> editorErrors(String name, TLStorage... annotations) {
 		TLPropertyFormBuilder.EditModel editModel =
 			TypedConfiguration.newConfigItem(TLPropertyFormBuilder.EditModel.class);
 		editModel.setCreating(true);
@@ -191,6 +276,9 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 		PartModel part = editModel.getPartModel();
 		part.setName(name);
 		part.setTypeSpec(STRING);
+		for (TLStorage annotation : annotations) {
+			part.getAnnotations().add(annotation);
+		}
 
 		BufferingProtocol log = new BufferingProtocol();
 		new ConstraintChecker().check(log, editModel);
@@ -209,15 +297,19 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 	}
 
 	private static void applyCreateProperties(TLClass type, AttributeConfig... properties) {
-		List<CreateStructuredTypePart> patch = new ArrayList<>();
+		List<DiffElement> patch = new ArrayList<>();
 		for (AttributeConfig property : properties) {
 			CreateStructuredTypePart create = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
 			create.setType(TLModelUtil.qualifiedName(type));
 			create.setPart(property);
 			patch.add(create);
 		}
+		applyPatch(patch.toArray(DiffElement[]::new));
+	}
+
+	private static void applyPatch(DiffElement... patch) {
 		ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelService.getApplicationModel(),
-			ModelService.getInstance().getFactory(), patch);
+			ModelService.getInstance().getFactory(), List.of(patch));
 	}
 
 	private static TLStorage fallbackStorage(String storageAttribute, String fallbackAttribute) {

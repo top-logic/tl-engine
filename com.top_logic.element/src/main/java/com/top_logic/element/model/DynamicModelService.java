@@ -71,7 +71,6 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLScope;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotatedConfig;
@@ -570,21 +569,12 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	 * </p>
 	 */
 	static void logSystemColumnProperties(Protocol log, TLModel model) {
-		for (TLModule module : model.getModules()) {
-			for (TLType type : module.getTypes()) {
-				if (!(type instanceof TLStructuredType structuredType)) {
-					continue;
-				}
-				for (TLStructuredTypePart part : structuredType.getLocalParts()) {
-					if (PrimitiveStorage.systemColumnError(part) != null) {
-						log.error("Attribute '" + TLModelUtil.qualifiedName(part)
-							+ "' stores its values in the system column '" + part.getName()
-							+ "'. Rename the attribute with a model migration and move its values with a data migration,"
-							+ " or bind the column on purpose with <primitive-storage storage-attribute=\"" + part.getName()
-							+ "\"/> (an add-annotations migration).");
-					}
-				}
-			}
+		for (TLStructuredTypePart part : PrimitiveStorage.systemColumnProperties(model)) {
+			log.error("Attribute '" + TLModelUtil.qualifiedName(part)
+				+ "' stores its values in the system column '" + part.getName()
+				+ "'. Rename the attribute with a model migration and move its values with a data migration,"
+				+ " or bind the column on purpose with <primitive-storage storage-attribute=\"" + part.getName()
+				+ "\"/> (an add-annotations migration).");
 		}
 	}
 

@@ -28,8 +28,8 @@ import com.top_logic.model.annotate.util.ConstraintCheck;
 import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.impl.TypedObjectClasses;
-import com.top_logic.model.search.expr.DeleteObject;
 import com.top_logic.model.search.expr.Update;
+import com.top_logic.model.security.DeleteRight;
 import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.util.error.TopLogicException;
 
@@ -648,7 +648,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 *
 	 * <p>
 	 * A changed composition must not take out a part the current user may not delete, see
-	 * {@link DeleteObject#checkRemovedParts(TLObject, TLStructuredTypePart, Object)}: the save
+	 * {@link DeleteRight#checkRemovedParts(TLObject, TLStructuredTypePart, Object)}: the save
 	 * deletes such a part.
 	 * </p>
 	 *
@@ -671,7 +671,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 				// Rows of a composition are buffered in overlays, which stand for their objects.
 				Object resolved = value instanceof Collection<?> values ? resolveAll(values) : resolve(value);
 				DiscoverRight.checkNewTargets(_base, part, resolved);
-				DeleteObject.checkRemovedParts(_base, part, resolved);
+				DeleteRight.checkRemovedParts(_base, part, resolved);
 			}
 		}
 	}

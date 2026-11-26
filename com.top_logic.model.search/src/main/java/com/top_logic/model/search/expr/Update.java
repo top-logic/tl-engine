@@ -12,6 +12,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
+import com.top_logic.model.security.DeleteRight;
 import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -91,7 +92,7 @@ public class Update extends SearchExpressionWithSecurity {
 		if (usesSecurity()) {
 			checkWritePermission(self, part);
 			DiscoverRight.checkNewTargets(self, part, value);
-			DeleteObject.checkRemovedParts(self, part, value);
+			DeleteRight.checkRemovedParts(self, part, value);
 		}
 
 		self.tUpdate(part, value);

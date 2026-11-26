@@ -37,7 +37,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.ValidationResult;
-import com.top_logic.model.search.expr.DeleteObject;
+import com.top_logic.model.security.DeleteRight;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContext;
@@ -1088,7 +1088,7 @@ public class RowSetEditSession implements FormParticipant {
 	 * <p>
 	 * A row removed from the rows of a persistent owner is deleted when the form is saved, if the
 	 * binding {@link RowSetBinding.RemoveMode#DELETE deletes} removed rows: the user needs the right
-	 * to delete it, see {@link DeleteObject#checkDeletePermission(TLObject)}.
+	 * to delete it, see {@link DeleteRight#checkDeletePermission(TLObject)}.
 	 * </p>
 	 */
 	@Override
@@ -1132,7 +1132,7 @@ public class RowSetEditSession implements FormParticipant {
 		for (TLObject removed : _removedObjects) {
 			// A row deleted by someone else in the meantime is not deleted by the save.
 			if (removed.tValid() && !isPartOf(removed, _removedObjects, _removedNewObjects)) {
-				DeleteObject.checkDeletePermission(removed);
+				DeleteRight.checkDeletePermission(removed);
 			}
 		}
 	}

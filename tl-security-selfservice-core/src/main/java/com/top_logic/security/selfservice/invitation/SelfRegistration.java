@@ -24,9 +24,9 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.search.expr.DeleteObject;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.security.DeleteRight;
 import com.top_logic.security.captcha.CaptchaService;
 import com.top_logic.security.selfservice.I18NConstants;
 import com.top_logic.security.selfservice.model.Invitation;
@@ -564,16 +564,16 @@ public class SelfRegistration {
 	 * @throws TopLogicException
 	 *         With {@link I18NConstants#ERROR_REGISTRATION_NOT_PENDING} if the registration is not
 	 *         {@link #isPending(Registration) pending}, or with
-	 *         {@link com.top_logic.model.search.expr.I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}
+	 *         {@link com.top_logic.model.security.I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}
 	 *         if the current user may not delete the account (see
-	 *         {@link DeleteObject#checkDeletePermission(TLObject)}); nothing is deleted then.
+	 *         {@link DeleteRight#checkDeletePermission(TLObject)}); nothing is deleted then.
 	 */
 	public void reject(Registration registration) {
 		if (!isPending(registration)) {
 			throw new TopLogicException(I18NConstants.ERROR_REGISTRATION_NOT_PENDING);
 		}
 		Person account = registration.getAccount();
-		DeleteObject.checkDeletePermission(account);
+		DeleteRight.checkDeletePermission(account);
 
 		List<TLObject> deleted = new ArrayList<>(2);
 		if (account.getUser() instanceof TLObject user && user.tValid()) {

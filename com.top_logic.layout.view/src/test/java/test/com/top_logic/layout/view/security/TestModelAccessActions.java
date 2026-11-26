@@ -95,7 +95,7 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 		ViewAction delete = action("<delete-object/>");
 
 		becomeUser(_roleless);
-		assertRefused(com.top_logic.model.search.expr.I18NConstants.DELETE_PERMISSION_DENIED__OBJECT,
+		assertRefused(com.top_logic.model.security.I18NConstants.DELETE_PERMISSION_DENIED__OBJECT,
 			() -> delete.execute(_context, _project));
 		assertTrue(_project.tValid());
 	}
@@ -108,7 +108,7 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 		ViewAction transaction = action("<with-transaction><delete-object/></with-transaction>");
 
 		becomeUser(_roleless);
-		assertRefused(com.top_logic.model.search.expr.I18NConstants.DELETE_PERMISSION_DENIED__OBJECT,
+		assertRefused(com.top_logic.model.security.I18NConstants.DELETE_PERMISSION_DENIED__OBJECT,
 			() -> transaction.execute(_context, _task));
 		assertTrue(_task.tValid());
 

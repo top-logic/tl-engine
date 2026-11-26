@@ -15,6 +15,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.security.DeleteRight;
 import com.top_logic.model.security.DiscoverRight;
 
 /**
@@ -57,7 +58,7 @@ public class DynamicSet extends GenericMethodWithSecurity {
 		if (usesSecurity()) {
 			Update.checkWritePermission(obj, part);
 			DiscoverRight.checkNewTargets(obj, part, value);
-			DeleteObject.checkRemovedParts(obj, part, value);
+			DeleteRight.checkRemovedParts(obj, part, value);
 		}
 
 		obj.tUpdate(part, value);

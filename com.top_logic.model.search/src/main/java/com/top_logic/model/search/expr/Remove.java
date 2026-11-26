@@ -17,6 +17,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.security.DeleteRight;
 
 /**
  * {@link GenericMethod} to remove a value from a collection-valued property.
@@ -62,7 +63,7 @@ public class Remove extends GenericMethodWithSecurity {
 				}
 			}
 			if (usesSecurity()) {
-				DeleteObject.checkRemovedParts(obj, part, newValue);
+				DeleteRight.checkRemovedParts(obj, part, newValue);
 			}
 			obj.tUpdate(part, newValue);
 		}

@@ -386,7 +386,7 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 		reports.removeRow(single(reports.currentRows()));
 		press(dialogActions().get(1));
 
-		assertRefused(com.top_logic.model.search.expr.I18NConstants.DELETE_PERMISSION_DENIED__OBJECT,
+		assertRefused(com.top_logic.model.security.I18NConstants.DELETE_PERMISSION_DENIED__OBJECT,
 			_form::executeSave);
 		assertTrue(report.tValid());
 		assertEquals(List.of(report), _task.tValueByName(REPORTS));
@@ -411,7 +411,7 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 		press(dialogActions().get(1));
 		assertTrue(_dialogs._open.isEmpty());
 
-		assertRefused(com.top_logic.model.search.expr.I18NConstants.DELETE_PERMISSION_DENIED__OBJECT,
+		assertRefused(com.top_logic.model.security.I18NConstants.DELETE_PERMISSION_DENIED__OBJECT,
 			_form::executeSave);
 		assertTrue(report.tValid());
 		assertEquals(List.of(report), subtask.tValueByName(REPORTS));

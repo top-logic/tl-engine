@@ -279,7 +279,11 @@ public final class DiscoverRight {
 		}
 	}
 
-	private static Collection<?> asCollection(Object value) {
+	/**
+	 * The given value as collection: a collection itself, the elements of an array, a single
+	 * value, or nothing for <code>null</code>.
+	 */
+	static Collection<?> asCollection(Object value) {
 		if (value instanceof Collection<?> collection) {
 			return collection;
 		} else if (value instanceof Object[] array) {

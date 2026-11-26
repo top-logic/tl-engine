@@ -6,24 +6,17 @@
 package com.top_logic.model.search.expr;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Set;
 
-import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLReference;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.SingleArgMethodBuilder;
-import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.security.DeleteRight;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -86,8 +79,8 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 	 *        Whether the current user must hold the {@link SimpleBoundCommandGroup#DELETE delete}
 	 *        right on each deleted object. A refusal is reported before anything is deleted.
 	 * @throws TopLogicException
-	 *         With {@link I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}, when the user may not
-	 *         delete one of the objects.
+	 *         If the user may not delete one of the objects, see
+	 *         {@link DeleteRight#checkDeletePermission(TLObject)}.
 	 */
 	public static void delete(Object value, boolean withSecurity) {
 		if (value instanceof Collection<?> collection) {
@@ -99,7 +92,7 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 
 	private static void delete(TLObject obj, boolean withSecurity) {
 		if (withSecurity) {
-			checkDeletePermission(obj);
+			DeleteRight.checkDeletePermission(obj);
 		}
 		obj.tDelete();
 	}
@@ -110,75 +103,9 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 			.map(TLObject.class::cast)
 			.toList();
 		if (withSecurity) {
-			objects.forEach(DeleteObject::checkDeletePermission);
+			objects.forEach(DeleteRight::checkDeletePermission);
 		}
 		KBUtils.deleteAll(objects);
-	}
-
-	/**
-	 * Checks that the current user may delete the given object.
-	 *
-	 * @throws TopLogicException
-	 *         With {@link I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}, when the user may not
-	 *         delete it.
-	 */
-	public static void checkDeletePermission(TLObject obj) {
-		if (!mayDelete(obj)) {
-			throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(obj));
-		}
-	}
-
-	private static boolean mayDelete(TLObject obj) {
-		return ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), obj, SimpleBoundCommandGroup.DELETE);
-	}
-
-	/**
-	 * Checks that the current user may delete each part that the given new value takes out of the
-	 * given composition.
-	 *
-	 * <p>
-	 * A part taken out of a composition is lost to its container, so its remove needs the right to
-	 * delete the part, see {@link #checkDeletePermission(TLObject)}. A reference that is no
-	 * composition takes out no part. Each operation with security calls this before it changes the
-	 * composition.
-	 * </p>
-	 *
-	 * <p>
-	 * The new value may take out a part the user may not discover: a secured script and a dialog
-	 * see only the parts the user may discover. The refusal for such a part names the container and
-	 * the attribute only, so that it does not reveal the part.
-	 * </p>
-	 *
-	 * @param container
-	 *        The object whose attribute changes.
-	 * @param attribute
-	 *        The changed attribute of the container.
-	 * @param newValue
-	 *        The new value of the attribute: an object, a collection of objects, or {@code null}.
-	 *        An object stands for itself, it is compared by identity with the parts the container
-	 *        holds now.
-	 * @throws TopLogicException
-	 *         With {@link I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}, when the user may not
-	 *         delete one of the parts that the new value takes out, or with
-	 *         {@link I18NConstants#REMOVE_PERMISSION_DENIED__OBJECT_ATTRIBUTE}, when that part is
-	 *         one the user may not discover either.
-	 */
-	@FrameworkInternal
-	public static void checkRemovedParts(TLObject container, TLStructuredTypePart attribute, Object newValue) {
-		if (!(attribute instanceof TLReference reference) || !reference.isComposite()) {
-			return;
-		}
-		Set<Object> kept = Collections.newSetFromMap(new IdentityHashMap<>());
-		kept.addAll(asCollection(newValue));
-		for (Object part : asCollection(container.tValue(attribute))) {
-			if (part instanceof TLObject removed && !kept.contains(removed) && !mayDelete(removed)) {
-				if (ModelAccessRights.getInstance().isDiscoverAllowed(removed)) {
-					throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(removed));
-				}
-				throw new TopLogicException(
-					I18NConstants.REMOVE_PERMISSION_DENIED__OBJECT_ATTRIBUTE.fill(container, attribute));
-			}
-		}
 	}
 
 	/**

@@ -24,8 +24,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.provider.DefaultProvider;
-import com.top_logic.model.search.expr.DeleteObject;
 import com.top_logic.model.search.expr.Update;
+import com.top_logic.model.security.DeleteRight;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -91,7 +91,7 @@ import com.top_logic.model.util.TLModelPartRef;
  *           container is checked by
  *           {@link Update#checkWritePermission(TLObject, TLStructuredTypePart)}, the part a
  *           single-valued composition takes out by
- *           {@link DeleteObject#checkRemovedParts(TLObject, TLStructuredTypePart, Object)}.
+ *           {@link DeleteRight#checkRemovedParts(TLObject, TLStructuredTypePart, Object)}.
  */
 @InApp
 public class PersistTransientAction implements ViewAction {
@@ -178,7 +178,7 @@ public class PersistTransientAction implements ViewAction {
 		TLStructuredTypePart reference = reference(container);
 		if (reference != null && !reference.isMultiple()) {
 			// The created object takes the place of the part the composition holds.
-			DeleteObject.checkRemovedParts(container, reference, null);
+			DeleteRight.checkRemovedParts(container, reference, null);
 		}
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(_commitMessage.create(draft))) {
 			CopyOperation operation = CopyOperation.initial();

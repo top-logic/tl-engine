@@ -5,7 +5,8 @@
  */
 package test.com.top_logic.layout.view.security;
 
-import static com.top_logic.model.search.expr.I18NConstants.*;
+import static com.top_logic.model.security.I18NConstants.DELETE_PERMISSION_DENIED__OBJECT;
+import static com.top_logic.model.security.I18NConstants.REMOVE_PERMISSION_DENIED__OBJECT_ATTRIBUTE;
 
 import java.util.Collections;
 import java.util.List;

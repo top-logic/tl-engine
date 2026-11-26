@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { defaultExtensions, hostRailSections } from './extensions'
 import { citationMarkerIndexes } from './citations'
 import {
   draftIsEmpty,
@@ -9,14 +8,6 @@ import {
   serializeReference,
   withoutContextPrefix,
 } from './reference'
-
-describe('defaultExtensions', () => {
-  it('leaves App as the shipped chat when the host passes nothing', () => {
-    expect(defaultExtensions).toEqual({})
-    expect(hostRailSections(undefined)).toEqual([])
-    expect(hostRailSections({})).toEqual([])
-  })
-})
 
 describe('citationMarkerIndexes', () => {
   it('lists unique [n] markers in order of first appearance', () => {

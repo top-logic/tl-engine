@@ -8,7 +8,7 @@ import { SourcesSection, type CitedSource } from './sources'
 const { useCallback, useMemo } = React
 
 /**
- * `<chat-sources/>`: everything this conversation has cited, as a rail section of its own.
+ * `<chat-sources/>`: everything this conversation has cited, e.g. as a section of a `<side-rail>`.
  *
  * Session-wide, so a page cited in three answers is one row with three marker numbers. A marker
  * scrolls to its answer; a row with a URL opens it in a new tab.

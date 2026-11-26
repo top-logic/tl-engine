@@ -101,6 +101,7 @@
 &lt;/create-reference&gt;
 </code></pre>
 <p>Der Name der Referenz muß voll qualifiziert angegeben werden. In den Annotationen kann die selbe Syntax verwendet werden wie in den Modell-Dateien.</p>
+<p>Bei einer Komposition (<code class="hljs inlineCode">composite="true"</code>) verweist das Ende der angelegten Assoziation, das auf den Besitzer der Referenz zeigt, auf den einen Behälter eines Teils: Es ist einwertig und ein Aggregat, wie bei einer Komposition aus einer Modell-Datei.</p>
 <h2>Löschen einer Referenz</h2>
 <p>Soll eine <code class="hljs inlineCode">TLReference</code> gelöscht werden, kann dies mit <code class="hljs inlineCode">&lt;delete-reference .../&gt;</code> geschehen, z.B.:</p>
 <pre><code>&lt;delete-reference name="test.module:MyType#ref1"/&gt;
@@ -122,10 +123,15 @@
 &lt;/create-inverse-reference&gt;
 </code></pre>
 <p>Die Syntax ist im wedentlichen dieselbe wie bei einer <code class="hljs inlineCode">TLReference</code>, nur dass anstelle des qualifizierten Namen des Ziel-Typ's der qualifizierte Name der Referenz angegeben werden muß.</p>
+<p>Ist die Vorwärts-Referenz eine Komposition, liefert die Rückwärts-Referenz den einen Behälter eines Teils. Wie bei einer Rückwärts-Referenz einer Komposition in einer Modell-Datei wird aus der Konfiguration nur <code class="hljs inlineCode">navigate</code> übernommen; <code class="hljs inlineCode">mandatory</code>, <code class="hljs inlineCode">multiple</code>, <code class="hljs inlineCode">bag</code>, <code class="hljs inlineCode">ordered</code>, <code class="hljs inlineCode">aggregate</code> und <code class="hljs inlineCode">composite</code> werden ignoriert.</p>
 <h2>Löschen einer Rückwärts-Referenz</h2>
 <p>Soll eine Rückwärts-Referenz gelöscht werden, kann dies mit <code class="hljs inlineCode">&lt;delete-inverse-reference .../&gt;</code> geschehen, z.B.:</p>
 <pre><code>&lt;delete-inverse-reference name="test.module:MyType#invRef"/&gt;</code></pre>
 <p>Der Name der Referenz muß voll qualifiziert angegeben werden.</p>
+<h2>Reparieren der Behälter-Enden von Kompositionen</h2>
+<p>Das Ende der Assoziation einer Komposition, das auf den Behälter zeigt, muss einwertig und ein Aggregat sein, sonst liefert eine Rückwärts-Referenz der Komposition eine Menge statt des Behälters. <code class="hljs inlineCode">&lt;repair-composition-container-ends/&gt;</code> macht jedes solche Ende im gespeicherten Modell, das mehrwertig oder kein Aggregat ist, einwertig und zu einem Aggregat und protokolliert es mit seinem qualifizierten Namen. Ein Modell ohne solche Enden bleibt unverändert. Der Prozessor hat keine Attribute:</p>
+<pre><code>&lt;repair-composition-container-ends/&gt;</code></pre>
+<p>Die Migration <code class="hljs inlineCode">Ticket_30565_composition_container_ends</code> des Moduls <code class="hljs inlineCode">tl-element</code> führt ihn für jede Anwendung aus.</p>
 <h2>Markieren eines Attributes als Überschreibung</h2>
 <p>Soll eine Überschreibung eines Attributes oder einer Referenz angelegt werden, so kann dies <strong>nicht </strong>mit dem Schlüsselwort <code class="hljs inlineCode">override="true" </code>geschehen. Das neue Attribut oder die neue Referenz muß normal angelegt werden und daraufhin das neue Attribut als Überschreibung definiert werden.</p>
 <p>Dies kann mit&nbsp; <code class="hljs inlineCode">&lt;mark-override .../&gt;</code> geschehen, z.B.:</p>

@@ -26,7 +26,7 @@ order: 50
 
 - **A command with neither inputs nor a trigger value** has the single argument `input`, whose value is `null` (`CommandArguments.DEFAULT_ARGUMENT`).
 
-An action that has to wait — `<confirm>`, which opens a dialog — suspends the chain and resumes it from the dialog's answer, or aborts it on cancel. Its affirmative answer is drawn as destructive when what follows it in the chain is destructive — a `<delete-object/>`, also nested in a `<with-transaction>` or a branch — or when the command is in the clique `delete`: a command deleting by `<execute-script>` says so with `clique="delete"`. The dialog shows the message of a `<confirm>` with its line breaks, so a message is structured into lines with `\n` — the escape of a TL-Script string literal (`#('Delete milestone {0}?\nDue: {1}'@en)`), and equally a line break in a `ResKey` from Java; `<verify-identity>` (`VerifyIdentityAction`) is the same shape with the answer being the proof that the person at the keyboard still is the holder of the session's own account, given the way the session was established: a session established at an external identity provider re-authenticates there in a second browser window — the provider's answer returns to the authentication servlet, which completes the pending `IdentityVerifications` entry and resumes the chain in the window that asked (a failure of the resumed chain is shown in that window like any other command failure, through `CommandErrors`, and leaves the confirmed identity itself standing) — while every other session is asked for its password, which the account's `AuthenticationDevice` checks. `<identify-externally handler="..."/>` (`IdentifyExternallyAction`) waits the same way for a sign-in at the login method its input names (a `LoginMethod` ID whose method `canIdentify()`), whichever method established the session. It hands the identity the provider confirms to the configured `IdentityVerificationHandler` with the session's account, resumes the chain when the handler accepts it, and shows the handler's reason and aborts when it refuses or fails. Both actions answer in the window that ran the command, never in the window of the provider's sign-in: a sign-in as another account (`<verify-identity>`) or one that comes back after the token has expired (`IdentityVerificationHandler#expired`) also shows its reason there and aborts (`ChainAwaitingIdentity`). A result that reached that window is `VerificationResult#delivered()`, and the sign-in window closes itself. It fails closed: a cancelled prompt, an account that neither a provider nor a device can confirm, or a context without a dialog all abort; an abort skips the remaining actions and runs the compensations the executed actions registered, newest first, as does a failure.
+An action that has to wait — `<confirm>`, which opens a dialog — suspends the chain and resumes it from the dialog's answer, or aborts it on cancel. Its affirmative answer is drawn in the tone of the command (see [the tone of a command](#the-tone-of-a-command)): destructive when what follows it in the chain is destructive — a `<delete-object/>`, also nested in a `<with-transaction>` or a branch — or when the command is destructive by its configuration: a command deleting by `<execute-script>` says so with `tone="danger"`. The dialog shows the message of a `<confirm>` with its line breaks, so a message is structured into lines with `\n` — the escape of a TL-Script string literal (`#('Delete milestone {0}?\nDue: {1}'@en)`), and equally a line break in a `ResKey` from Java; `<verify-identity>` (`VerifyIdentityAction`) is the same shape with the answer being the proof that the person at the keyboard still is the holder of the session's own account, given the way the session was established: a session established at an external identity provider re-authenticates there in a second browser window — the provider's answer returns to the authentication servlet, which completes the pending `IdentityVerifications` entry and resumes the chain in the window that asked (a failure of the resumed chain is shown in that window like any other command failure, through `CommandErrors`, and leaves the confirmed identity itself standing) — while every other session is asked for its password, which the account's `AuthenticationDevice` checks. `<identify-externally handler="..."/>` (`IdentifyExternallyAction`) waits the same way for a sign-in at the login method its input names (a `LoginMethod` ID whose method `canIdentify()`), whichever method established the session. It hands the identity the provider confirms to the configured `IdentityVerificationHandler` with the session's account, resumes the chain when the handler accepts it, and shows the handler's reason and aborts when it refuses or fails. Both actions answer in the window that ran the command, never in the window of the provider's sign-in: a sign-in as another account (`<verify-identity>`) or one that comes back after the token has expired (`IdentityVerificationHandler#expired`) also shows its reason there and aborts (`ChainAwaitingIdentity`). A result that reached that window is `VerificationResult#delivered()`, and the sign-in window closes itself. It fails closed: a cancelled prompt, an account that neither a provider nor a device can confirm, or a context without a dialog all abort; an abort skips the remaining actions and runs the compensations the executed actions registered, newest first, as does a failure.
 
 ## Actions with a result: `<with-result>`
 
@@ -181,7 +181,7 @@ Two actions branch the chain by a script over its arguments. `<if>` decides betw
 
 ## Toolbar groups: command cliques
 
-A command names its clique (`clique="…"` on any view command, default `create`); the commands of one clique form one group of the toolbar (`ToolbarBuilder`). Which cliques exist, in which order their groups are displayed, and whether a group is shown inline or folded into a menu is application configuration of the `CommandCliqueService` — the standard cliques are configured in `tl-layout-view.conf.config.xml`: `create`, `edit`, `delete`, `commit`, `navigate` inline, then `view`, `export` and `more` as menus. A menu clique carries a `label` (a `ResKey`, resolved in the user's language when the toolbar is built) and optionally an `icon` (a `ThemeImage`); a menu with an icon shows the label as the trigger's accessible name, one without shows it as the trigger's text. A command in the clique `delete` is destructive whatever its actions are: its button and the affirmative answer of every `<confirm>` in its chain are drawn as destructive (`CommandCliques#tone`).
+A command names its clique (`clique="…"` on any view command, default `create`); the commands of one clique form one group of the toolbar (`ToolbarBuilder`). Which cliques exist, in which order their groups are displayed, and whether a group is shown inline or folded into a menu is application configuration of the `CommandCliqueService` — the standard cliques are configured in `tl-layout-view.conf.config.xml`: `create`, `edit`, `delete`, `commit`, `navigate` inline, then `view`, `export` and `more` as menus. A menu clique carries a `label` (a `ResKey`, resolved in the user's language when the toolbar is built) and optionally an `icon` (a `ThemeImage`); a menu with an icon shows the label as the trigger's accessible name, one without shows it as the trigger's text. The clique decides where a command is placed, not whether it is destructive. Its tone is a property of its own, see [the tone of a command](#the-tone-of-a-command).
 
 An application adds or relabels a clique in its own configuration; entries are keyed by `name`, so an entry with an existing name overrides that clique, and a new name is appended (or placed with `config:position`/`config:reference`):
 
@@ -204,6 +204,22 @@ An application adds or relabels a clique in its own configuration; entries are k
 
 A clique that is not configured is not an error: its commands form an inline group without label after the groups of all configured cliques.
 
+### The tone of a command
+
+Whether a command is destructive is its *tone* (`tone="…"` on any view command, `default` or `danger`, `ButtonTone`). The tone colours the command's button or menu entry and the affirmative answer of every `<confirm>` in its chain, so a command in the overflow menu can be destructive as well:
+
+```xml
+<generic-command name="closeWorkspace" clique="more" tone="danger">
+  <confirm expr="..."/>
+  <execute-script function="..."/>
+</generic-command>
+```
+
+- **A set `tone` always wins** — over the clique and over the actions: `tone="default"` draws also a command in the clique `delete`, or one with a `<delete-object>` in its chain, and its confirmations as ordinary.
+- **Without `tone`**, the tone follows what the command does: a command with a destructive action (`<delete-object>`, also nested) is destructive, and so is a command in the clique `delete` whatever its actions are.
+
+The tone a command takes from its configuration is resolved in one place, `CommandCliques#tone(ViewCommand.Config)`; without one, the tone of its actions applies (`ViewCommand#getTone()`).
+
 ## Icon, label or both: the display mode
 
 Whether a button shows the command's icon, its label or both is the command's `display="icon-only|icon-label|label-only"` (on any view command, `ViewCommand.Config#getDisplay`). An icon-only button shows its label as tooltip. `icon-only` on a command without an `image` is refused with a warning, and the button shows its label; a command with an image that requests nothing shows icon and label. A command scope sets the default for every button it renders whose command requests no mode: `command-display` on `<panel>`, `<window>` and `<full-page>` (`CommandScopeElement`) applies to the configured commands and to those contributed by child elements (e.g. a form's edit and save buttons), and `command-display` on `<accordion>` (default `icon-only`) to the buttons of its section headers; the command's own `display` always wins.
@@ -224,6 +240,21 @@ A `<button>` (`ButtonElement`) shows its one command the same way, so its mode i
 ## A badge at the button
 
 A command carries a badge - a count or a dot at its button, its menu entry and its `<command-item>` in the sidebar - through `badge`, `badge-role` and `badge-label` on its configuration (`ViewCommand.Config` mixes in `WithBadge`). The badge stands after the label, over the corner of the icon of an icon-only button, and is part of the button's accessible name. The value rules and how the badge follows the model are described in [Badges](doc:view-layer/badges).
+
+## A toggle: `active-expr`
+
+A command whose effect can be in force - a button that opens and closes a panel, a filter that is on or off - is a toggle: its `active-expr` is an expression over the command's arguments like `label-expr`, `image-expr` and `tooltip-expr`, evaluated whenever those are. While it yields a value TL-Script takes as true, the button is shown pressed; assistive technology reads the button of a toggle as pressed or not pressed (`aria-pressed`). A command without `active-expr` is no toggle.
+
+```xml
+<generic-command image="css:bi bi-layout-sidebar-reverse" inputs="railOpen" active-expr="$railOpen">
+	<label><en>Side rail</en></label>
+	<execute-script function="!$railOpen">
+		<with-result>
+			<write-channel name="railOpen"/>
+		</with-result>
+	</execute-script>
+</generic-command>
+```
 
 ## Floating actions: `<floating-action>`
 

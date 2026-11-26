@@ -6,18 +6,22 @@
 package test.com.top_logic.layout.react.control.layout;
 
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
@@ -25,9 +29,94 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
  * Tests that {@link ReactPanelControl} propagates {@link ReactControl#attach() attach} and
  * {@link ReactControl#detach() detach} to its content child (like the other composite controls do),
  * so content lifecycle hooks ({@code onAttach}/{@code onDetach}, e.g. form model-listener
- * registration) fire while the panel is displayed.
+ * registration) fire while the panel is displayed, and that it sends its toolbar and button bar
+ * only while they hold a command.
  */
 public class TestReactPanelControl extends TestCase {
+
+	private ReactContext _context;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+	}
+
+	/** A panel with an empty toolbar and an empty button bar sends neither. */
+	public void testEmptyBarsAreNotSent() {
+		ReactPanelControl panel = panel(new ReactToolbarControl(_context), new ReactToolbarControl(_context));
+
+		assertNull(state(panel).get(ReactPanelControl.TOOLBAR));
+		assertNull(state(panel).get(ReactPanelControl.BUTTON_BAR));
+	}
+
+	/** The toolbar is sent once it receives a command, and taken back when it loses it. */
+	public void testToolbarFollowsItsCommands() {
+		ReactToolbarControl toolbar = new ReactToolbarControl(_context);
+		ReactPanelControl panel = panel(toolbar, new ReactToolbarControl(_context));
+
+		toolbar.replaceGroups(withCommand());
+		assertNotNull("A toolbar with a command is sent.", state(panel).get(ReactPanelControl.TOOLBAR));
+		assertNull("The button bar stays empty.", state(panel).get(ReactPanelControl.BUTTON_BAR));
+
+		toolbar.replaceGroups(new ReactToolbarControl(_context));
+		assertNull("A toolbar without commands is taken back.", state(panel).get(ReactPanelControl.TOOLBAR));
+	}
+
+	/** The button bar is sent once it receives a command, and taken back when it loses it. */
+	public void testButtonBarFollowsItsCommands() {
+		ReactToolbarControl buttonBar = new ReactToolbarControl(_context);
+		ReactPanelControl panel = panel(new ReactToolbarControl(_context), buttonBar);
+
+		buttonBar.replaceGroups(withCommand());
+		assertNotNull("A button bar with a command is sent.", state(panel).get(ReactPanelControl.BUTTON_BAR));
+		assertNull("The toolbar stays empty.", state(panel).get(ReactPanelControl.TOOLBAR));
+
+		buttonBar.replaceGroups(new ReactToolbarControl(_context));
+		assertNull("A button bar without commands is taken back.",
+			state(panel).get(ReactPanelControl.BUTTON_BAR));
+	}
+
+	/** A toolbar holding a command from the start is sent right away. */
+	public void testToolbarWithCommandIsSentRightAway() {
+		ReactPanelControl panel = panel(withCommand(), new ReactToolbarControl(_context));
+
+		assertNotNull(state(panel).get(ReactPanelControl.TOOLBAR));
+	}
+
+	/** A bar the panel does not send still belongs to it and is disposed with it. */
+	public void testUnsentBarsAreDisposedWithThePanel() {
+		ReactToolbarControl toolbar = new ReactToolbarControl(_context);
+		ReactToolbarControl buttonBar = new ReactToolbarControl(_context);
+		ReactPanelControl panel = panel(toolbar, buttonBar);
+
+		panel.cleanupTree();
+
+		assertTrue(toolbar.isDisposed());
+		assertTrue(buttonBar.isDisposed());
+	}
+
+	private ReactPanelControl panel(ReactToolbarControl toolbar, ReactToolbarControl buttonBar) {
+		return new ReactPanelControl(_context, null, new ReactStackControl(_context, List.of()), toolbar,
+			buttonBar, false, false, false);
+	}
+
+	/** A toolbar holding a single command. */
+	private ReactToolbarControl withCommand() {
+		ReactToolbarControl toolbar = new ReactToolbarControl(_context);
+		toolbar.addGroup("edit", ToolbarGroupDisplay.INLINE, null, null,
+			List.of(new ReactControl(_context, null, "TLText")));
+		return toolbar;
+	}
+
+	/** The client state of the given panel. */
+	private static Map<?, ?> state(ReactPanelControl panel) {
+		try {
+			return (Map<?, ?>) JSON.fromString(panel.stateAsJSON());
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError("The state sent to the client is not JSON.", ex);
+		}
+	}
 
 	/**
 	 * The panel's content child is attached while the panel is attached, and detached again on

@@ -432,6 +432,15 @@
 							<de>Repeater</de>
 						</label>
 					</nav-item>
+					<nav-item id="openable-cards"
+						icon="css:bi bi-box-arrow-up-right"
+					>
+						<view-ref view="demo/openable-cards-demo.view.xml"/>
+						<label>
+							<en>Openable cards</en>
+							<de>Öffenbare Karten</de>
+						</label>
+					</nav-item>
 					<nav-item id="images"
 						icon="css:bi bi-image"
 					>
@@ -538,6 +547,24 @@
 						<label>
 							<en>List</en>
 							<de>Liste</de>
+						</label>
+					</nav-item>
+					<nav-item id="side-rail-demo"
+						icon="css:bi bi-layout-sidebar"
+					>
+						<view-ref view="demo/side-rail-demo.view.xml"/>
+						<label>
+							<en>Side rail</en>
+							<de>Seitenspalte</de>
+						</label>
+					</nav-item>
+					<nav-item id="data-list-status-demo"
+						icon="css:bi bi-card-checklist"
+					>
+						<view-ref view="demo/data-list-status-demo.view.xml"/>
+						<label>
+							<en>Status list</en>
+							<de>Statusliste</de>
 						</label>
 					</nav-item>
 					<nav-item id="sensor-locking"

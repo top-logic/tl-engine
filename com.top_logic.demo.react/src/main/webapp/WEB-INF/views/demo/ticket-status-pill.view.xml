@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The status of a ticket as a pill in the colour of the status, with a tooltip explaining the
+	status. The derived channel observes the ticket it is computed from, so an edit of the status -
+	in the form beside the list, in the generic instance editor or anywhere else - recolours the pill
+	and changes its tooltip.
+	
+	Used as the template after the lines of an entry of the status list (<trailing
+	element-channel="...">), and on its own above the form of the selected ticket.
+-->
+<view>
+	<channels>
+		<channel name="ticket"/>
+		<derived-channel name="status"
+			expr="if($ticket == null, null, $ticket.get(`demo.tickets:Ticket#status`))"
+			inputs="ticket"
+		/>
+	</channels>
+	<text
+		appearance="pill"
+		input="status as s"
+	>
+		<tooltip><![CDATA[if($s == `demo.tickets:TicketStatus#open`, #("Nobody works on the ticket yet."@en, "Noch arbeitet niemand an dem Ticket."@de),
+	if($s == `demo.tickets:TicketStatus#inProgress`, #("Somebody works on the ticket."@en, "Jemand arbeitet an dem Ticket."@de),
+	if($s == `demo.tickets:TicketStatus#closed`, #("The ticket is done."@en, "Das Ticket ist erledigt."@de),
+	null)))]]></tooltip>
+	</text>
+</view>

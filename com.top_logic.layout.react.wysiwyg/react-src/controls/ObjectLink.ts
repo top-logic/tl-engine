@@ -7,8 +7,12 @@
  * keeps the target and relation the link extension is configured with.
  *
  * In the edited text, a click with Ctrl (Cmd) held follows an object link, see FollowObjectLinks.
+ *
+ * A link to an object that the reader may not discover reaches the editor as a placeholder, see
+ * MaskedObjectLink.
  */
-import { Extension } from '@tiptap/react';
+import { Extension, Node } from '@tiptap/react';
+import type { Editor } from '@tiptap/react';
 import Link from '@tiptap/extension-link';
 import type { DOMOutputSpec } from '@tiptap/pm/model';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
@@ -38,6 +42,86 @@ export const ObjectLink = Link.extend({
       delete kept[name];
     }
     return [tag, kept, ...content] as DOMOutputSpec;
+  },
+});
+
+/**
+ * Attribute of the placeholder of a masked object link, holding the token by which the server finds
+ * the link again. Must match {@code TLObjectLinkUtil#DATA_MASKED}.
+ */
+export const DATA_MASKED = 'data-masked';
+
+/** Node of the placeholder of a masked object link. */
+export const MASKED_OBJECT_LINK = 'maskedObjectLink';
+
+/** Attribute of {@link MASKED_OBJECT_LINK} holding the text shown. */
+const MASKED_TEXT = 'text';
+
+/**
+ * Priority of the rule reading a placeholder: before the rule taking an inline element of unknown
+ * type as a mark on its text (see HtmlPassthrough), which would make the text of the placeholder
+ * editable.
+ */
+const MASKED_PRIORITY = 100;
+
+/**
+ * Deletes the node of the given type right before the empty selection of the given editor as a
+ * whole, whatever the browser would do with an uneditable element. Returns whether there was one.
+ */
+export function deleteNodeBefore(editor: Editor, type: string): boolean {
+  const { selection } = editor.state;
+  const before = selection.empty ? selection.$from.nodeBefore : null;
+  if (before === null || before.type.name !== type) {
+    return false;
+  }
+  return editor.commands.deleteRange({ from: selection.from - before.nodeSize, to: selection.from });
+}
+
+/**
+ * The placeholder of an object link whose object the reader may not discover, as the server sends
+ * it: `<span data-masked="token">*****</span>`, without label, link and identity of the object.
+ *
+ * It stands for the link as a whole: it is removed as a whole, its text is not editable, and it is
+ * never followed. It is written back unchanged, so that the server finds the link by its token;
+ * where the placeholder is gone, the link is gone.
+ */
+export const MaskedObjectLink = Node.create({
+  name: MASKED_OBJECT_LINK,
+  group: 'inline',
+  inline: true,
+  atom: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      [DATA_MASKED]: {
+        default: '',
+        parseHTML: (element: HTMLElement) => element.getAttribute(DATA_MASKED) || '',
+      },
+      [MASKED_TEXT]: {
+        default: '',
+        rendered: false,
+        parseHTML: (element: HTMLElement) => element.textContent || '',
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'span[' + DATA_MASKED + ']', priority: MASKED_PRIORITY }];
+  },
+
+  renderHTML({ node, HTMLAttributes }) {
+    return ['span', HTMLAttributes, String(node.attrs[MASKED_TEXT])];
+  },
+
+  renderText({ node }) {
+    return String(node.attrs[MASKED_TEXT]);
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      Backspace: ({ editor }) => deleteNodeBefore(editor, MASKED_OBJECT_LINK),
+    };
   },
 });
 

@@ -178,8 +178,8 @@ public class SplitSizePersonalization {
 		ChildConstraint constraint = constraint(index);
 		ChildConstraint configured = _configured.get(index);
 		if (isCollapsed(index)) {
-			// The pane expands to its configured size.
-			split.addChild(content, constraint, true, configured.getSize(), configured.getUnit());
+			// The pane expands to the size it had before it collapsed.
+			split.addChild(content, constraint, true, constraint.getSize(), constraint.getUnit());
 		} else {
 			split.addChild(content, constraint);
 		}

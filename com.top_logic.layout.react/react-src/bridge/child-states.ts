@@ -1,7 +1,8 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { acquireChildContext } from './TLChild';
 import type { ChildDescriptor } from './TLChild';
-import { getApiBase, TLControlContext, unmount } from './tl-react-bridge';
+import { getApiBase } from './page-context';
+import { TLControlContext, unmount } from './tl-react-bridge';
 import type { TLControlContextValue } from './tl-react-bridge';
 import { enqueueCommand, type CommandResponse } from './command-channel';
 import type { CommandOptions } from './command-channel';

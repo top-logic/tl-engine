@@ -14,8 +14,8 @@
 
 	Such a database has not always kept the column in its persistent schema: the schema stored in
 	the database is replaced by the application's own whenever any migration runs, and the
-	application's no longer declares `memory`. Consulting's database, which ran its own migrations
-	on 2.0.5, is in that state. drop-column, which finds the column through that schema, then skips
+	application's no longer declares `memory`. The database of an application that ran its own
+	migrations on 2.0.5 is in that state. drop-column, which finds the column through that schema, then skips
 	it, and drop-orphaned-column asks the database itself.
 
 	Every processor skips what is already gone, with a warning: on a database on which Issue_487 did

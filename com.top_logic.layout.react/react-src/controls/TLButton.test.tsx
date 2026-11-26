@@ -121,6 +121,23 @@ describe('TLButton', () => {
 /** The icon of the buttons carrying a badge. */
 const ICON = 'css:bi bi-inbox';
 
+describe('TLButton as a toggle', () => {
+  it('reports whether it is pressed, also while it is not', () => {
+    mountButton({ toggle: true });
+    expect(button().getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('reports pressed while active', () => {
+    mountButton({ toggle: true, active: true });
+    expect(button().getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('is no toggle without the flag: not pressed is not reported', () => {
+    mountButton({});
+    expect(button().getAttribute('aria-pressed')).toBeNull();
+  });
+});
+
 describe('TLButton with a badge', () => {
   function badge(): HTMLElement {
     return button().querySelector('.tl-badge') as HTMLElement;

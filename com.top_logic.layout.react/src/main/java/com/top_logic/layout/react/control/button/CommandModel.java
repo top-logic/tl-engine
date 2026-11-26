@@ -99,6 +99,18 @@ public interface CommandModel {
 	}
 
 	/**
+	 * Whether the command is a toggle, which is either {@link #isActive() active} or not.
+	 *
+	 * <p>
+	 * The button of a toggle reports whether it is pressed or not, e.g. a button opening and closing
+	 * a panel; the button of another command reports only while it is active.
+	 * </p>
+	 */
+	default boolean isToggle() {
+		return false;
+	}
+
+	/**
 	 * Whether the command button should be visible.
 	 *
 	 * <p>

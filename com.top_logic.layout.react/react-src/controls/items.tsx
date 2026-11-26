@@ -1,6 +1,8 @@
-import { React, TLChild, useTLCommand } from 'tl-react-bridge';
+import { React, TLChild, useTLCommand, activationProps, ActivationButton, ActivationOpenButton } from 'tl-react-bridge';
+import type { ActivationAction, ActivationProps } from 'tl-react-bridge';
 import { useRovingFocus } from './useRovingFocus';
 import { useOptionSelection } from './option-selection';
+import type { OptionProps } from './option-selection';
 
 /**
  * Rendering of the children of a container that repeats them, and the selection among them.
@@ -17,6 +19,13 @@ import { useOptionSelection } from './option-selection';
  * several items may be selected), or by Enter or Space on the focused item (see
  * {@link useOptionSelection}). The arrow keys move the focus between the items (see
  * {@link useRovingFocus}).
+ *
+ * A container whose items each display an object can make them activatable
+ * (ReactLayoutControl.setActivation): the user opens an item, and the server runs the activation
+ * with its object. In a container that is not selectable, a click on the item opens it, and so do
+ * Enter and Space on the item's hidden button; in a selectable one, a click selects the item, and a
+ * double-click, Enter or the item's open button open it (see activationProps of the bridge). An item
+ * without action cannot be opened.
  */
 
 /**
@@ -54,8 +63,23 @@ const STATE_SELECTED = 'selected';
 /** State key: whether several items may be selected (ReactLayoutControl.MULTI_SELECT). */
 const STATE_MULTI_SELECT = 'multiSelect';
 
+/**
+ * State key: the action of each item, aligned with the children, `null` for an item that cannot be
+ * opened (ReactLayoutControl.ITEM_ACTIONS).
+ */
+const STATE_ITEM_ACTIONS = 'itemActions';
+
+/** State key: whether each item of a selectable container shows an open button (ReactLayoutControl.ACTIVATION_BUTTON). */
+const STATE_ACTIVATION_BUTTON = 'activationButton';
+
+/** The command activating an item (ReactLayoutControl.CMD_ACTIVATE_ITEM). */
+const CMD_ACTIVATE_ITEM = 'activateItem';
+
 /** The command selecting an item (ReactLayoutControl.CMD_SELECT_ITEM). */
 const CMD_SELECT_ITEM = 'selectItem';
+
+/** The argument of {@link CMD_ACTIVATE_ITEM} naming the item (ActivateItemArguments.KEY). */
+const ARG_ACTIVATE_KEY = 'key';
 
 /** The argument of {@link CMD_SELECT_ITEM} naming the item (SelectItemArguments.KEY). */
 const ARG_KEY = 'key';
@@ -134,6 +158,34 @@ export function useItems(state: Record<string, unknown>, wrapper?: ItemWrapper):
 
   const selection = useOptionSelection(containerRef, select, selectable && multiSelect);
 
+  const itemActions = state[STATE_ITEM_ACTIONS] as (ActivationAction | null)[] | undefined;
+  const activationButton = state[STATE_ACTIVATION_BUTTON] !== false;
+  const activate = React.useCallback(
+    (key: string) => sendCommand(CMD_ACTIVATE_ITEM, { [ARG_ACTIVATE_KEY]: key }),
+    [sendCommand],
+  );
+
+  if (!selectable && itemActions) {
+    // Activatable: a click on an item opens it.
+    const content = children.map((child, i) => {
+      const key = itemKeys[i];
+      const action = key !== undefined ? itemActions[i] : null;
+      const activation = activationProps(action, () => activate(key), 'click');
+      return (
+        <div
+          key={i}
+          {...activation}
+          className={wrapperClass(wrapper, itemClass, activation.className ?? null)}
+          style={wrapperStyle(wrapper, i)}
+        >
+          {action && <ActivationButton action={action} activate={() => activate(key)} />}
+          <TLChild control={child} />
+        </div>
+      );
+    });
+    return { containerProps: { ref: containerRef }, content };
+  }
+
   if (!selectable) {
     const content = !itemClass && !wrapper
       ? children.map((child, i) => <TLChild key={i} control={child} />)
@@ -152,16 +204,23 @@ export function useItems(state: Record<string, unknown>, wrapper?: ItemWrapper):
   const content = children.map((child, i) => {
     const key = itemKeys[i];
     const isSelected = key !== undefined && selected.has(key);
+    const action = key !== undefined && itemActions ? itemActions[i] : null;
+    // Selectable and activatable: a click selects, a double-click and Enter open the item.
+    const activation = activationProps(action, () => activate(key), 'double');
+    const check = isSelected && <span className="tl-item__check" aria-hidden="true" />;
     return (
       <div
         key={i}
-        {...selection.optionProps(key, isSelected)}
+        {...combine(activation, selection.optionProps(key, isSelected))}
         tabIndex={roving.tabIndexOf(i)}
         className={wrapperClass(wrapper, itemClass)}
         style={wrapperStyle(wrapper, i)}
       >
         <TLChild control={child} />
-        {isSelected && <span className="tl-item__check" aria-hidden="true" />}
+        {action && activationButton
+          // The check stands beside the open button in the corner they share.
+          ? <ActivationOpenButton action={action} activate={() => activate(key)}>{check}</ActivationOpenButton>
+          : check}
       </div>
     );
   });
@@ -175,6 +234,27 @@ export function useItems(state: Record<string, unknown>, wrapper?: ItemWrapper):
       onFocus: roving.onFocus,
     },
     content,
+  };
+}
+
+/**
+ * The handlers of an activatable option and of its selection on one element: the activation sees a
+ * key first, and a key it handled (Enter opening the option) does not select.
+ */
+function combine(activation: ActivationProps, option: OptionProps): ActivationProps & OptionProps {
+  return {
+    ...activation,
+    ...option,
+    onMouseDown: event => {
+      activation.onMouseDown?.(event as React.MouseEvent<HTMLElement>);
+      option.onMouseDown(event);
+    },
+    onKeyDown: event => {
+      activation.onKeyDown?.(event as React.KeyboardEvent<HTMLElement>);
+      if (!event.defaultPrevented) {
+        option.onKeyDown(event);
+      }
+    },
   };
 }
 

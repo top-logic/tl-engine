@@ -84,8 +84,8 @@ public interface ColumnDeclaration {
 	 *
 	 * <p>
 	 * Every {@link #declaredNames() declared name} is resolved to a column. A column the access
-	 * rights of the current user may withhold (e.g. a column of an attribute the user may read on
-	 * no row) states so by its {@link ColumnSetup#released()} condition, so that it appears once
+	 * rights of the current user may withhold (a column of an attribute whose read grant of its own
+	 * lists no role the user holds; the read right on the row type never withholds a column) states so by its {@link ColumnSetup#released()} condition, so that it appears once
 	 * the user gains the right. A declaration may also leave out a name it does not resolve for the
 	 * current user at all; that column is withheld for good, see
 	 * {@link ColumnDeclarations#withheld(java.util.Collection, List)}.

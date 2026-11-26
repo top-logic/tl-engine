@@ -40,6 +40,7 @@ import com.top_logic.layout.view.element.TableElement;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.RowSetTableControl;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.table.AttributeColumn;
 import com.top_logic.layout.view.table.ColumnExistence;
 import com.top_logic.layout.view.table.ColumnProviderService;
@@ -48,18 +49,23 @@ import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.table.ColumnOption;
 import com.top_logic.table.NamedFilter;
+import com.top_logic.table.SortColumn;
 import com.top_logic.table.TableView;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * Tests that the column of an attribute follows the access rights of the user while the table is
- * displayed: a column whose attribute the user may read on no row is absent - neither sent nor
- * offered -, appears as soon as the user gains the right to read it and disappears when the user
- * loses it, without the table being built again and keeping the user's arrangement of it.
+ * displayed: a column whose attribute has a read grant of its own listing no role the user holds is
+ * absent - neither sent nor offered -, appears as soon as the user gains such a role and disappears
+ * when the user loses it, without the table being built again and keeping the user's arrangement
+ * of it. The read grant of the row type withholds no column: a user holding no role on any row
+ * sees all other columns, and no rows.
  *
  * <p>
  * The {@link #_roleless} user gains the role {@value #ROLE_RESPONSIBLE}, the only one granted to
- * read {@value #BUDGET}, by becoming the {@value #RESPONSIBLE} of the {@link #_project}. The change
- * is committed and delivered to the table as a browser window delivers it.
+ * read {@value #BUDGET} and, besides {@value #ROLE_VIEWER}, to read a project, by becoming the
+ * {@value #RESPONSIBLE} of the {@link #_project}. The change is committed and delivered to the
+ * table as a browser window delivers it.
  * </p>
  */
 @SuppressWarnings("javadoc")
@@ -90,6 +96,15 @@ public class TestAttributeColumnAccess extends AbstractModelAccessTest {
 		+ "<presets><preset name='" + BUDGETED + "'><criterion column='" + BUDGET + "' expr=\"'b'\"/></preset>"
 		+ "</presets></table>";
 
+	/**
+	 * A table of all projects showing their name, code and budget, initially sorted by the name in
+	 * descending order.
+	 */
+	private static final String SORTED_PROJECTS = "<table types='" + qualified(PROJECT) + "'"
+		+ " rows='all(`" + qualified(PROJECT) + "`)' observed-types='" + qualified(PROJECT) + "'>"
+		+ "<columns><column attribute='" + NAME + "' sort='DESC'/><column attribute='" + CODE + "'/>"
+		+ "<column attribute='" + BUDGET + "'/></columns></table>";
+
 	private GlobalModelEventForwarder _scope;
 
 	private DefaultViewContext _context;
@@ -114,8 +129,9 @@ public class TestAttributeColumnAccess extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * The column of an attribute the user may read on no row is neither sent nor offered, appears
-	 * when the user gains the right and disappears again when the user loses it.
+	 * The column of an attribute whose read grant lists no role the user holds is neither sent nor
+	 * offered, appears when the user gains such a role and disappears again when the user loses
+	 * it.
 	 */
 	public void testColumnFollowsReadRight() throws Exception {
 		becomeUser(_roleless);
@@ -129,6 +145,49 @@ public class TestAttributeColumnAccess extends AbstractModelAccessTest {
 
 		revoke();
 		assertAbsent(control, BUDGET);
+
+		control.cleanupTree();
+	}
+
+	/**
+	 * A user holding none of the roles granted to read the row type, on any object, sees the
+	 * columns of all attributes without a read grant of their own, and no rows. The declared
+	 * initial sort order on such a column applies.
+	 */
+	public void testTypeReadRightWithholdsNoColumn() throws Exception {
+		becomeUser(_roleless);
+		assertFalse("No role granted to read a project.",
+			ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.READ, type(PROJECT)));
+		TableViewControl<?> control = readOnly(SORTED_PROJECTS);
+		control.attach();
+
+		assertEquals(List.of(NAME, CODE), sentColumns(control));
+		assertPresent(control, NAME);
+		assertPresent(control, CODE);
+		assertAbsent(control, BUDGET);
+		assertEquals("No readable project.", 0, control.getView().rowCount());
+		assertEquals(List.of(new SortColumn(NAME, false)), control.getView().state().getSort());
+
+		control.cleanupTree();
+	}
+
+	/**
+	 * The column of an attribute with a read grant of its own appears, next to the others, with the
+	 * first row the user gains a role on that the grant lists, and disappears with it.
+	 */
+	public void testAttributeGrantColumnFollowsRole() throws Exception {
+		becomeUser(_roleless);
+		TableViewControl<?> control = readOnly(SORTED_PROJECTS);
+		control.attach();
+		assertEquals(List.of(NAME, CODE), sentColumns(control));
+
+		grant();
+		assertEquals(List.of(NAME, CODE, BUDGET), sentColumns(control));
+		assertEquals("The project the user is responsible for.", 1, control.getView().rowCount());
+
+		revoke();
+		assertEquals(List.of(NAME, CODE), sentColumns(control));
+		assertEquals(0, control.getView().rowCount());
 
 		control.cleanupTree();
 	}

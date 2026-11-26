@@ -15,7 +15,8 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 
 /**
  * Decides which conversations of the chat are answered by a {@link ConversationBackend} rather
@@ -100,29 +101,51 @@ public class ConversationBackendService extends ConfiguredManagedClass<Conversat
 	}
 
 	/**
-	 * The backend that answers the given conversation, or <code>null</code> when the framework's
-	 * own agent answers it.
+	 * The backend that answers a conversation about the given subject, or <code>null</code> when
+	 * the framework's own agent answers it.
 	 *
-	 * @param session
-	 *        The conversation; <code>null</code> (a run that is not recorded) is answered by the
-	 *        framework's own agent.
+	 * @param subject
+	 *        What the conversation is about; <code>null</code> (a conversation about nothing) is
+	 *        answered by the framework's own agent without asking a resolver.
+	 * @see ConversationBackendResolver#backendFor(TLObject)
 	 */
-	public static ConversationBackend backendFor(AgentSession session) {
+	public static ConversationBackend backendFor(TLObject subject) {
 		ConversationBackendService service = _instance;
-		if (service == null || session == null) {
+		if (service == null || subject == null) {
 			return null;
 		}
-		return service.resolve(session);
-	}
-
-	private ConversationBackend resolve(AgentSession session) {
-		for (ConversationBackendResolver resolver : _resolvers) {
-			ConversationBackend backend = resolver.backendFor(session);
+		for (ConversationBackendResolver resolver : service._resolvers) {
+			ConversationBackend backend = resolver.backendFor(subject);
 			if (backend != null) {
 				return backend;
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * What a conversation about a subject of the given type offers.
+	 *
+	 * @param subjectType
+	 *        The type of the subject; <code>null</code> (a conversation about nothing) is answered
+	 *        by the framework's own agent.
+	 * @return The features the first resolver answering subjects of this type names, or
+	 *         {@link BackendFeatures#INTERNAL} of the framework's own agent when no resolver answers
+	 *         them.
+	 * @see ConversationBackendResolver#featuresFor(TLStructuredType)
+	 */
+	public static BackendFeatures featuresFor(TLStructuredType subjectType) {
+		ConversationBackendService service = _instance;
+		if (service == null || subjectType == null) {
+			return BackendFeatures.INTERNAL;
+		}
+		for (ConversationBackendResolver resolver : service._resolvers) {
+			BackendFeatures features = resolver.featuresFor(subjectType);
+			if (features != null) {
+				return features;
+			}
+		}
+		return BackendFeatures.INTERNAL;
 	}
 
 	/**

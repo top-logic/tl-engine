@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.react.control.layout;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -87,6 +88,38 @@ public class TestReactToolbarControl extends TestCase {
 
 		assertEquals(List.of(), groupNames(toolbar));
 		assertTrue(toolbar.isEmpty());
+	}
+
+	/**
+	 * The {@link ReactToolbarControl#EMPTY_PROPERTY} listeners learn about a change between empty
+	 * and holding commands, not about a rebuild that keeps commands.
+	 */
+	public void testEmptyListenerSeesOnlyChangesOfEmptiness() {
+		ReactToolbarControl toolbar = new ReactToolbarControl(_context);
+		List<Boolean> events = new ArrayList<>();
+		toolbar.addListener(ReactToolbarControl.EMPTY_PROPERTY,
+			(sender, wasEmpty, empty) -> events.add(Boolean.valueOf(empty)));
+
+		toolbar.replaceGroups(withCommand());
+		assertEquals("Receiving a command is a change.", List.of(Boolean.FALSE), events);
+
+		toolbar.replaceGroups(withCommand());
+		toolbar.addGroup("more", ToolbarGroupDisplay.INLINE, null, null, List.of(item()));
+		toolbar.setPinnedGroup("pinned", ToolbarGroupDisplay.INLINE, List.of(item()));
+		assertEquals("Exchanging or adding commands is no change.", List.of(Boolean.FALSE), events);
+
+		toolbar.replaceGroups(new ReactToolbarControl(_context));
+		assertEquals("The pinned group keeps the toolbar holding commands.", List.of(Boolean.FALSE), events);
+
+		toolbar.setPinnedGroup("pinned", ToolbarGroupDisplay.INLINE, List.of());
+		assertEquals("Losing the last command is a change.", List.of(Boolean.FALSE, Boolean.TRUE), events);
+	}
+
+	/** A rebuilt toolbar holding a single command. */
+	private ReactToolbarControl withCommand() {
+		ReactToolbarControl rebuilt = new ReactToolbarControl(_context);
+		rebuilt.addGroup("edit", ToolbarGroupDisplay.INLINE, null, null, List.of(item()));
+		return rebuilt;
 	}
 
 	/** The clique names of the groups the given toolbar publishes, in display order. */

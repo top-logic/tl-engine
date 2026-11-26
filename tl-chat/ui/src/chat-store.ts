@@ -1,6 +1,11 @@
 import { isPageLeaving, React, useTLCommand, useTLDataUrl, useTLUpload } from 'tl-react-bridge'
-import { ALL_FEATURES, readFeatures, sameFeatures, type ConversationFeatures } from './features'
-import type { ReactNode } from 'react'
+import {
+  ALL_FEATURES,
+  readFeatures,
+  sameFeatures,
+  STATE_SUBJECT_FEATURES,
+  type ConversationFeatures,
+} from './features'
 import {
   autoTitle,
   cancelPromptImprovement,
@@ -56,26 +61,11 @@ import {
   type ChatStream,
   type StreamFrame,
 } from './chat-stream'
-import type { ComposerApi, PaneOpenOptions } from './extensions'
+import type { ComposerApi } from './extensions'
 import type { ReferenceToken } from './reference'
 import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
 import { effortLevelsOf, modelsFor } from './models'
-import {
-  collapsedSections,
-  configuredPaneWidth,
-  parsePreferences,
-  sameLayout,
-  savePreferences,
-  type ChatPreferences,
-} from './preferences'
 import { parseTasksJson, type AgentTask } from './progress-model'
-import {
-  NO_RAIL_BADGE,
-  sameRailBadge,
-  sameSeenCounts,
-  type RailBadge,
-  type SeenCounts,
-} from './rail-model'
 import { argsSummary } from './plain-text'
 import { chatReducer, type ChatAction } from './reducer'
 import { composeOutboundText } from './send-prefix'
@@ -327,8 +317,7 @@ function mergeSubagent(
 /**
  * What a control knows about the chat before the browser has asked the server anything.
  *
- * It travels with the control state (every chat control's `putState`), which is why there is no
- * `GET` for the preferences - see `preferences.ts`.
+ * It travels with the control state (every chat control's `putState`).
  */
 export interface ChatBootstrap {
   /** False in a window nobody is signed in to; the chat controls refuse every command it sends. */
@@ -338,27 +327,8 @@ export interface ChatBootstrap {
   language: Language
   /** The element's configured default; the user's own stored pick wins over it. */
   traceMode: TraceMode
-  /** The `chat-id` the layout is stored under, which is not the store's own key - see `layoutKey`. */
-  layoutKey: string
-  /** Whether the user decided the rail is open; `null` leaves {@link railOpenDefault} in force. */
-  railOpen: boolean | null
-  /** What the element configures, for a user who has never toggled the rail. */
-  railOpenDefault: boolean
-  /** The width the user dragged the pane to; 0 while they never did. */
-  paneWidth: number
-  /** The width the element configures, for a user who has never dragged the splitter. */
-  paneWidthDefault: number
-  /** What the user has seen of the badge of each rail section. */
-  badgeSeen: SeenCounts
-  /** Per section name, whether the user left it open. A section never toggled is absent. */
-  sectionChoices: Record<string, boolean>
   /** The person's last position of the auto-approve switch; a new chat starts with it. */
   autoApprove: boolean
-  /**
-   * Section ids that start collapsed. Omitted keeps today's App default ({@code context} closed).
-   * Set by {@code <chat-rail/>} from each section's {@code open} flag (D3).
-   */
-  collapsedSections?: string[]
   /**
    * The agents, models and MCP servers the account may choose from, as the element's control state
    * carries them (read with `readCapabilities`); absent from every element but a conversation.
@@ -368,11 +338,15 @@ export interface ChatBootstrap {
   sessions?: unknown
   /** The files attached per chat, as the control state carries them (`readAttachmentLists`). */
   draftAttachments?: unknown
+  /**
+   * What a new conversation offers, as a conversation's control state carries it under
+   * {@link STATE_SUBJECT_FEATURES} (read with `readFeatures`); absent from every other element.
+   */
+  subjectFeatures?: unknown
 }
 
 /** Reads the bootstrap a chat element pushed into its control state. */
 export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
-  const prefs = parsePreferences(state)
   return {
     authenticated: state.authenticated !== false,
     userName: (state.userName as string) || 'User',
@@ -380,22 +354,12 @@ export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
     // The chat speaks the language the rest of the application speaks: the user's own locale.
     language: toLanguage(state.language),
     traceMode: parseTraceMode(state.traceMode),
-    layoutKey: typeof state.layoutKey === 'string' ? state.layoutKey : '',
-    railOpen: prefs.railOpen,
-    // `<chat-rail open>`; every other element leaves the rail closed for a user who never opened it.
-    railOpenDefault: state.open === true,
-    paneWidth: prefs.paneWidth,
-    paneWidthDefault: configuredPaneWidth(state),
-    badgeSeen: prefs.badgeSeen,
-    sectionChoices: prefs.sections,
     autoApprove: state.approvalMode === 'AUTO_APPROVE',
-    collapsedSections: Array.isArray(state.collapsedSections)
-      ? state.collapsedSections.map((id) => String(id))
-      : undefined,
     // As the state holds them: the store reads them only when the server sent new ones.
     capabilities: state.capabilities,
     sessions: state.sessions,
     draftAttachments: state[STATE_DRAFT_ATTACHMENTS],
+    subjectFeatures: state[STATE_SUBJECT_FEATURES],
   }
 }
 
@@ -452,9 +416,9 @@ export function eventBelongsToChat(name: string, raw: unknown, sessionId: string
  * Which store a chat element joins.
  *
  * `chat-id` is what lets separate elements find each other. An element that hands down none falls
- * back to the control's own id, so two chats in one window stay two chats - `CopilotRegistry` in
- * Consulting keeps a *list* of live panels, and a fixed key would silently merge their
- * transcripts.
+ * back to the control's own id, so two chats in one window stay two chats - a host that keeps a
+ * *list* of live chat panels would otherwise see their transcripts silently merged under a fixed
+ * key.
  */
 export function chatIdOf(state: Record<string, unknown>, controlId: string): string {
   const configured = typeof state.chatId === 'string' ? state.chatId.trim() : ''
@@ -543,34 +507,12 @@ export interface ChatState {
   noticeTone: NoticeTone
 
   /**
-   * Whether a `<chat-rail/>` on this `chat-id` is mounted.
-   *
-   * The transcript's rail badge button is derived from this rather than configured: with no rail on
-   * the page the button toggles something nobody can see. The rail registers itself on mount, so a
-   * rail that mounts after the conversation makes the button appear then.
-   */
-  railMounted: boolean
-
-  /**
-   * Whether the mounted rail is a drawer: its host is too narrow for a column beside the
-   * conversation, so it keeps only its strip in the flow and opens over the conversation (#565).
-   *
-   * Published by the rail, which is the only element that measures its host. While it is set, the
-   * actions that open and close the rail open and close {@link railDrawerOpen} instead of
-   * {@link sideOpen}: the user's column choice is a statement about a wide page, and it is what the
-   * rail shows again once the host is wide again.
-   */
-  railDrawer: boolean
-  /** Whether the rail's drawer is open. Never stored: every narrow page load starts closed. */
-  railDrawerOpen: boolean
-
-  /**
    * How many `<chat-conversation/>` elements of this chat are mounted **outside** a
    * `<chat-dock/>`.
    *
    * What a dock asks before it shows itself. Not a transport question any more - a window carries
    * as many conversations as it shows - but a question about *this* one: two composers on one draft
-   * channel and two rails on one remembered layout are the same conversation shown twice. The
+   * channel are the same conversation shown twice. The
    * page's conversation wins; it is the one the user navigated to.
    */
   conversationsOutsideDock: number
@@ -587,36 +529,6 @@ export interface ChatState {
    * {@link attachmentLists} for {@link sessionId}. Derived.
    */
   draftAttachments: DraftAttachment[]
-
-  /**
-   * What the badges of the mounted rail's sections show.
-   *
-   * Published by the rail because the sections are its children and nothing else can see them. The
-   * transcript's toggle button shows what each section counts above {@link badgeSeen} and hands
-   * {@link seenCounts} of it back to {@link ChatActions.toggleSide}, so opening the rail records
-   * what the user has now seen.
-   */
-  railBadge: RailBadge
-
-  // Layout preferences.
-  sideOpen: boolean
-  /**
-   * Whether {@link sideOpen} is the user's own decision.
-   *
-   * While it is not, the rail follows what the element configured and nothing is stored for it - so
-   * a rail configured open still opens in a new tab, and one the user closed stays closed.
-   */
-  railDecided: boolean
-  /** The pane width in force: what the user dragged to, else what the element configured. */
-  paneWidth: number
-  /** Per section name, the count of its badge the user has seen; see {@link railBadge}. */
-  badgeSeen: SeenCounts
-  paneContent: ReactNode
-  paneOptions: PaneOpenOptions | null
-  /** The sections showing as collapsed: the configured defaults, overruled per name by the user. */
-  collapsedSections: string[]
-  /** Per section name, whether the user left it open. A section never toggled is absent. */
-  sectionChoices: Record<string, boolean>
 }
 
 /**
@@ -735,62 +647,12 @@ export interface ChatActions {
   /** Reads the subagents of the chat anew - their costs, and the budget they spend from. */
   refreshSubagents(): Promise<void>
   loadSubagentTranscript(id: string, runId?: string): Promise<ChatMessage[]>
-  openPane(content: ReactNode, options: PaneOpenOptions): void
-  closePane(): void
-  /** Closes whatever the side is showing - what a click beside a sheet means. */
-  closeSide(): void
-  /** Opens or closes the rail; opening it records the given counts as seen. */
-  toggleSide(seen: SeenCounts): void
-  /** Opens the rail on one section, as a click on its strip icon does. */
-  showSection(id: string, seen: SeenCounts): void
-  /**
-   * Publishes whether one mounted rail is a drawer; see {@link ChatState.railDrawer}.
-   *
-   * Per rail, because a rail that mounts and leaves again - a dock's, for one commit, on a page that
-   * shows the conversation itself - must not take the page rail's answer with it.
-   */
-  setRailDrawer(rail: object, drawer: boolean): void
-  setPaneWidth(width: number): void
-  toggleSection(id: string): void
-  /**
-   * States which sections the rail element configures as collapsed.
-   *
-   * Applied per section name and only where the user has decided nothing, so it is idempotent: a
-   * remount re-states the same defaults and leaves every section the user toggled alone.
-   */
-  applyCollapsedDefaults(ids: string[]): void
-  /**
-   * States the rail element's configured {@code open} flag.
-   *
-   * A user who has never toggled the rail gets it; one who has keeps their own choice, in this tab
-   * and in the next one. Idempotent, for the same reason as {@link applyCollapsedDefaults}.
-   */
-  applyRailDefault(open: boolean): void
-  /** Publishes what the rail's section badges add up to; see {@link ChatState.railBadge}. */
-  publishRailBadge(rail: RailBadge): void
-  /**
-   * Records that the user has now looked at this conversation.
-   *
-   * The same watermark {@link toggleSide} moves when the rail is opened: what is counted as new is
-   * what each section of {@link ChatState.railBadge} counts above {@link ChatState.badgeSeen}, so
-   * "seen" is each count as it stands, never zero - a section that reports nothing must not turn
-   * into news the next time one does. This is the half of `toggleSide` that a `<chat-dock/>` needs:
-   * opening the dock is the user looking, but it is not the user opening the rail.
-   */
-  markBadgesSeen(seen: SeenCounts): void
-  /**
-   * Announces a mounted rail; the returned function unregisters it again.
-   *
-   * Counted rather than flagged, because React remounts an effect on the same component in
-   * development and two rails on one `chat-id` are not forbidden.
-   */
-  registerRail(): () => void
   /**
    * Announces a mounted `<chat-conversation/>`; the returned function unregisters it again.
    *
    * `insideDock` is what the element's control read from its view context, so a dock's own
-   * conversation does not count against the dock itself. Counted rather than flagged, for the same
-   * reason {@link registerRail} counts.
+   * conversation does not count against the dock itself. Counted rather than flagged, because React
+   * remounts an effect on the same component in development.
    */
   registerConversation(insideDock: boolean): () => void
   bindComposer(api: ComposerApi | null): void
@@ -877,10 +739,9 @@ interface ElementLink {
 /**
  * The state of one chat, and the only thing that changes it.
  *
- * Lifted out of `App` so that several view elements can show one conversation: the chat bundle is
- * a single ES module instance in the browser, so a module-scoped store keyed by `chat-id` is one
- * object for every element on the page. Nothing here renders; `paneContent` is the host's node,
- * carried rather than read.
+ * A store of its own, outside the components, so that several view elements can show one
+ * conversation: the chat bundle is a single ES module instance in the browser, so a module-scoped
+ * store keyed by `chat-id` is one object for every element on the page. Nothing here renders.
  */
 export class ChatStore {
   private listeners = new Set<() => void>()
@@ -912,6 +773,12 @@ export class ChatStore {
 
   /** Whether the server's capabilities have arrived, which is when the first agent is chosen. */
   private capsTaken = false
+
+  /**
+   * What a conversation not yet created offers: what the element states about its subject
+   * ({@link STATE_SUBJECT_FEATURES}), everything while no element states it.
+   */
+  private newFeatures: ConversationFeatures = ALL_FEATURES
 
   /** Whether any element is watching. The effects run only while one is. */
   private live = false
@@ -997,28 +864,8 @@ export class ChatStore {
    */
   readonly runs: RunStore = createRunStore()
 
-  /** The width the element configures, kept apart from the width the user dragged to. */
-  private readonly paneWidthDefault: number
-
-  /** The `chat-id` the layout is stored under; the store's own key may be a control id. */
-  private readonly layoutKey: string
-
-  /** How many {@code <chat-rail/>} elements on this `chat-id` are mounted. */
-  private rails = 0
-
-  /** The mounted rails that are drawers; {@link ChatState.railDrawer} is whether there is one. */
-  private readonly drawerRails = new Set<object>()
-
   /** How many `<chat-conversation/>` elements on this `chat-id` are mounted outside a dock. */
   private conversations = 0
-
-  /**
-   * The layout the server holds, so an unchanged layout is not written back.
-   *
-   * The bootstrap is the stored layout; a `PUT` of it would be a no-op at best and, when the page
-   * booted from a stale control state, would overwrite the user's real choice.
-   */
-  private storedLayout: ChatPreferences
 
   /**
    * Writes this chat's run snapshot, and mirrors it onto the module-level {@link runStore}.
@@ -1031,38 +878,6 @@ export class ChatStore {
     this.runs.set(next)
     runStore.set(this.runs.get())
   }
-
-  /** The patch that opens the rail: its drawer while it is one, else the stored column choice. */
-  private opened(): Partial<ChatState> {
-    return this.state.railDrawer ? { railDrawerOpen: true } : { sideOpen: true, railDecided: true }
-  }
-
-  /** The patch that closes the rail; see {@link opened}. */
-  private closed(): Partial<ChatState> {
-    return this.state.railDrawer ? { railDrawerOpen: false } : { sideOpen: false, railDecided: true }
-  }
-
-  /**
-   * The counts to record as seen: the given ones, or the current ones where they say the same, so an
-   * unchanged watermark keeps its identity and stores nothing.
-   */
-  private seen(seen: SeenCounts): SeenCounts {
-    return sameSeenCounts(seen, this.state.badgeSeen) ? this.state.badgeSeen : seen
-  }
-
-  /** What the user decided per fact, which is what is stored - never what the page happens to show. */
-  private get layout(): ChatPreferences {
-    const { railDecided, sideOpen, badgeSeen, sectionChoices } = this.state
-    return {
-      railOpen: railDecided ? sideOpen : null,
-      paneWidth: this.paneWidthStored,
-      badgeSeen,
-      sections: sectionChoices,
-    }
-  }
-
-  /** The width the user dragged the pane to; 0 while they never did. */
-  private paneWidthStored: number
 
   private composerApi: ComposerApi | null = null
 
@@ -1114,16 +929,8 @@ export class ChatStore {
 
   constructor(chatId: string, boot: ChatBootstrap) {
     this.chatId = chatId
+    if (boot.subjectFeatures != null) this.newFeatures = readFeatures(boot.subjectFeatures)
     this.approvalChoice = boot.autoApprove
-    this.layoutKey = boot.layoutKey
-    this.paneWidthDefault = boot.paneWidthDefault
-    this.paneWidthStored = boot.paneWidth
-    this.storedLayout = {
-      railOpen: boot.railOpen,
-      paneWidth: boot.paneWidth,
-      badgeSeen: boot.badgeSeen,
-      sections: boot.sectionChoices,
-    }
     this.snapshot = this.derive({
       authenticated: boot.authenticated,
       userName: boot.userName,
@@ -1151,27 +958,11 @@ export class ChatStore {
       latestSources: [],
       busy: false,
       regenerating: false,
-      ...EMPTY_CONVERSATION,
+      ...this.emptyConversation(),
       connection: 'connecting',
-      // The user's own decision, else what the element configured. The one is stored, the other is
-      // not - which is the whole of the precedence rule (#423).
-      sideOpen: boot.railOpen ?? boot.railOpenDefault,
-      railDecided: boot.railOpen !== null,
-      paneWidth: boot.paneWidth > 0 ? boot.paneWidth : boot.paneWidthDefault,
-      badgeSeen: boot.badgeSeen,
-      paneContent: null,
-      paneOptions: null,
-      // `App`'s own default is Kontext collapsed; a `<chat-rail/>` states its sections' own flags
-      // through `applyCollapsedDefaults` as soon as it mounts.
-      collapsedSections: collapsedSections(boot.collapsedSections ?? ['context'], boot.sectionChoices),
-      sectionChoices: boot.sectionChoices,
-      railMounted: false,
-      railDrawer: false,
-      railDrawerOpen: false,
       conversationsOutsideDock: 0,
       attachmentLists: {},
       draftAttachments: NO_ATTACHMENTS,
-      railBadge: NO_RAIL_BADGE,
     })
     this.effects = this.declareEffects()
     this.actions = this.declareActions()
@@ -1265,6 +1056,26 @@ export class ChatStore {
     }
     const list = readSessions(sessions)
     if (list) this.patch({ sessions: list, sessionsLoading: false })
+  }
+
+  /**
+   * Takes what a new conversation offers, when an element's control state states it - the
+   * `<chat-conversation>`, for the subject now in its channel. A chat that shows no conversation
+   * offers it at once; an open one keeps what its own conversation offers.
+   */
+  takeSubjectFeatures = (raw: unknown): void => {
+    if (raw == null) return
+    const features = readFeatures(raw)
+    if (sameFeatures(features, this.newFeatures)) return
+    this.newFeatures = features
+    if (this.state.sessionId === null && this.opening === null && !sameFeatures(features, this.state.features)) {
+      this.patch({ features })
+    }
+  }
+
+  /** The state of a conversation with nothing in it yet, offering what a new conversation offers. */
+  private emptyConversation(): typeof EMPTY_CONVERSATION {
+    return { ...EMPTY_CONVERSATION, features: this.newFeatures }
   }
 
   /** Takes the files attached per chat, when an element's control state brings new ones. */
@@ -1367,9 +1178,8 @@ export class ChatStore {
   /**
    * Runs the effects once the synchronous work is over.
    *
-   * A microtask rather than a call per setter, because a handler that changes three things - open
-   * the rail, mark the badges seen, close the pane - must produce the one `saveLayout` command
-   * React's batching produced, not three.
+   * A microtask rather than a call per setter, because a handler that changes several things must
+   * run an effect once, as React's batching did, not once per change.
    */
   private schedule(): void {
     if (this.flushing || !this.live) return
@@ -1415,28 +1225,6 @@ export class ChatStore {
 
   private declareEffects(): StoreEffect[] {
     return [
-      // The layout preferences, written by the store and by nothing else: one writer per chat, so
-      // several elements showing one chat cannot race on the PersonalConfiguration key.
-      {
-        deps: (s) => [
-          s.authenticated,
-          s.railDecided,
-          s.sideOpen,
-          s.paneWidth,
-          s.badgeSeen,
-          s.sectionChoices,
-        ],
-        run: () => {
-          if (!this.state.authenticated) return
-          const next = this.layout
-          // What the page booted with is what the server already holds. Writing it back would make
-          // every reload store the layout the page happened to start with, which is how the stored
-          // choice used to be lost (#423).
-          if (sameLayout(next, this.storedLayout)) return
-          this.storedLayout = next
-          void savePreferences(this.command, this.layoutKey, next)
-        },
-      },
       {
         deps: (s) => [s.authenticated],
         run: () => this.connect(),
@@ -2263,11 +2051,9 @@ export class ChatStore {
     if (!edit) await this.uploads
     this.showNotice('')
     // Composed before the dispatch below, because the host's prefix describes the conversation
-    // this message is being added to, not the one it is already in. `App` got that for free: it
-    // read a ref assigned during render, which a `useReducer` dispatch in the same handler
-    // cannot have updated. This store's dispatch does update its state at once, so reading it
-    // afterwards would hand the host the outgoing message - and a host that counts turns would
-    // put the wrong number into every prompt.
+    // this message is being added to, not the one it is already in. This store's dispatch updates
+    // its state at once, so reading it afterwards would hand the host the outgoing message - and a
+    // host that counts turns would put the wrong number into every prompt.
     const outbound = composeOutboundText(text, options.contextTag?.({ messages: this.state.messages }))
     const sent = edit ? [] : this.state.draftAttachments
     // What an edit takes away, to put back when the server refuses it; and whether a run was
@@ -2382,7 +2168,7 @@ export class ChatStore {
         this.runId = null
         this.streamMark = null
         this.watching = false
-        this.patch({ busy: false, ...EMPTY_CONVERSATION })
+        this.patch({ busy: false, ...this.emptyConversation() })
         this.noticeSticky = false
         // The model does not change when the chat does, so its window survives the reset; only what
         // the previous conversation measured is dropped.
@@ -2431,7 +2217,7 @@ export class ChatStore {
        * Starts a new chat.
        *
        * Nothing is created here. A chat with no message in it has no title anyone could give it and
-       * nothing to show in the rail, so the session is created by the first send, which is also the
+       * nothing to show in the chat list, so the session is created by the first send, which is also the
        * first moment a title is knowable. That makes "new chat" while an empty one is already open a
        * no-op for free, and leaves no empty rows behind.
        */
@@ -2446,7 +2232,7 @@ export class ChatStore {
           // A new chat starts with the person's last choice, never with a reset: a person who has
           // switched auto-approve on is not asked again because they started another chat.
           autoApprove: this.approvalChoice,
-          ...EMPTY_CONVERSATION,
+          ...this.emptyConversation(),
           messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           busy: false,
         })
@@ -2455,14 +2241,14 @@ export class ChatStore {
 
       deleteSession: async (id: string) => {
         await deleteSession(this.command, id)
-        // The server sends the list without it; until then the rail must not show it either.
+        // The server sends the list without it; until then the list must not show it either.
         this.patch({ sessions: withoutSession(this.state.sessions, id) })
         if (this.state.sessionId === id) {
           this.noticeSticky = false
           this.patch({
             sessionId: null,
             autoApprove: this.approvalChoice,
-            ...EMPTY_CONVERSATION,
+            ...this.emptyConversation(),
             messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           })
           this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
@@ -2683,100 +2469,6 @@ export class ChatStore {
 
       loadSubagentTranscript: (id: string, runId?: string) => loadSubagentTranscript(this.dataUrl(), id, runId),
 
-      openPane: (content: ReactNode, options: PaneOpenOptions) => {
-        // Opening a pane opens the side, and that is the user opening it: a reload shows what they
-        // were looking at rather than the element's default.
-        this.patch({ paneContent: content, paneOptions: options, ...this.opened() })
-      },
-
-      closePane: () => this.patch({ paneContent: null, paneOptions: null }),
-
-      closeSide: () => this.patch({ paneContent: null, paneOptions: null, ...this.closed() }),
-
-      toggleSide: (seen: SeenCounts) => {
-        const open = this.state.railDrawer ? this.state.railDrawerOpen : this.state.sideOpen
-        if (open) {
-          this.patch({ paneContent: null, paneOptions: null, ...this.closed() })
-          return
-        }
-        this.patch({ ...this.opened(), badgeSeen: this.seen(seen) })
-      },
-
-      showSection: (id: string, seen: SeenCounts) => {
-        this.patch({
-          paneContent: null,
-          paneOptions: null,
-          ...this.opened(),
-          badgeSeen: this.seen(seen),
-          collapsedSections: this.state.collapsedSections.filter((item) => item !== id),
-          sectionChoices: { ...this.state.sectionChoices, [id]: true },
-        })
-      },
-
-      setRailDrawer: (rail: object, drawer: boolean) => {
-        if (drawer) this.drawerRails.add(rail)
-        else this.drawerRails.delete(rail)
-        const next = this.drawerRails.size > 0
-        if (next === this.state.railDrawer) return
-        // Either way the drawer starts closed: a host that grows wide again takes the rail back as
-        // the column the user chose, and one that narrows does not open over the conversation on
-        // its own.
-        this.patch({ railDrawer: next, railDrawerOpen: false })
-      },
-
-      setPaneWidth: (requested: number) => {
-        // Whole pixels, because that is what the preference stores and the server accepts (#588).
-        const width = Math.round(requested)
-        // Dragging back to nothing is not a width the user chose: the configured one applies again.
-        this.paneWidthStored = width > 0 ? width : 0
-        this.patch({ paneWidth: width > 0 ? width : this.paneWidthDefault })
-      },
-
-      toggleSection: (id: string) => {
-        const collapsed = this.state.collapsedSections
-        const open = collapsed.includes(id)
-        this.patch({
-          collapsedSections: open ? collapsed.filter((item) => item !== id) : [...collapsed, id],
-          sectionChoices: { ...this.state.sectionChoices, [id]: open },
-        })
-      },
-
-      applyCollapsedDefaults: (ids: string[]) => {
-        this.patch({ collapsedSections: collapsedSections(ids, this.state.sectionChoices) })
-      },
-
-      applyRailDefault: (open: boolean) => {
-        if (this.state.railDecided) return
-        this.patch({ sideOpen: open })
-      },
-
-      publishRailBadge: (rail: RailBadge) => {
-        if (sameRailBadge(rail, this.state.railBadge)) return
-        this.patch({ railBadge: rail })
-      },
-
-      markBadgesSeen: (seen: SeenCounts) => {
-        // Guarded rather than patched blindly: the layout is persisted from a state change, and an
-        // unchanged watermark would put a `saveLayout` on every open of the dock.
-        if (sameSeenCounts(seen, this.state.badgeSeen)) return
-        this.patch({ badgeSeen: seen })
-      },
-
-      registerRail: () => {
-        this.rails += 1
-        this.patch({ railMounted: true })
-        let released = false
-        return () => {
-          if (released) return
-          released = true
-          this.rails = Math.max(0, this.rails - 1)
-          const mounted = this.rails > 0
-          // The badge belongs to the rail that reported it: with none left there is nothing to
-          // count, and a stale total would keep a number on a button that opens nothing.
-          this.patch({ railMounted: mounted, railBadge: mounted ? this.state.railBadge : NO_RAIL_BADGE })
-        }
-      },
-
       registerConversation: (insideDock: boolean) => {
         if (insideDock) return () => undefined
         this.conversations += 1
@@ -2906,5 +2598,6 @@ export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
   // The state's own values: they change only when the server sends new ones.
   useEffect(() => store.takeLists(boot.capabilities, boot.sessions), [store, boot.capabilities, boot.sessions])
   useEffect(() => store.takeAttachments(boot.draftAttachments), [store, boot.draftAttachments])
+  useEffect(() => store.takeSubjectFeatures(boot.subjectFeatures), [store, boot.subjectFeatures])
   return { chat, actions: store.actions, runs: store.runs }
 }

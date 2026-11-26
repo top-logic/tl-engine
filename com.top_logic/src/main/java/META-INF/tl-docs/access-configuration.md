@@ -336,10 +336,12 @@ the one mark when the other is set, and the access rights dialog refuses to save
 
 The engine sets these marks for its own types in `com.top_logic.element/…/ElementConf.config.xml`:
 the modules `tl.changelog` and `tl.imagegallery` are `internal` (maintained by the engine's own
-code; `tl.changelog` additionally grants `Read` to the role `PersonalProfile`, which every user holds
-on the own account, so that a table offers the columns of its transient change sets, see the
-section "Access rights" of the article `change-log` of `com.top_logic.element`), the class `tl.core:Revision` is `without-security` (commit metadata readable by everyone; a
-revision cannot hold roles).
+code; for the change log see the section "Access rights" of the article `change-log` of
+`com.top_logic.element`), the class `tl.core:Revision` is `without-security` (commit metadata readable by everyone; a
+revision cannot hold roles). The attribute `author` of a revision is the exception: the authors of
+all commits would form an activity profile of every person, so that only an administrator reads the
+author of every revision, every other person only the own one. The engine decides this rule itself; an application
+cannot change it by grants.
 
 ### Access parent: delegating the decision
 

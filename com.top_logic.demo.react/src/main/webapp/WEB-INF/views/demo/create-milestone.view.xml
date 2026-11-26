@@ -32,6 +32,7 @@
 			<field attribute="name"/>
 			<field attribute="dueDate"/>
 			<field attribute="approved"/>
+			<field attribute="tileSize"/>
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"

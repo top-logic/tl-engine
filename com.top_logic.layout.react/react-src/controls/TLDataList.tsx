@@ -1,11 +1,11 @@
 import {
-  React, useTLState, useTLCommand, useI18N, usePart, useFocusTrap, useStandaloneKeyboardScope, TLChild, rootClassName,
-  stateAttr, ThemeIcon, ICON_ROW_MENU,
+  React, useTLState, useTLCommand, useI18N, usePart, TLChild, rootClassName, ThemeIcon, ICON_ROW_MENU,
+  isInteractiveTarget,
 } from 'tl-react-bridge';
 import type { TLCellProps, DataListStateJson, ChildControlJson } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 
-const { useEffect, useLayoutEffect, useMemo, useRef, useState } = React;
+const { useEffect, useMemo, useRef, useState } = React;
 
 /** The command selecting a row, see DataListStateJson. */
 export const CMD_SELECT = 'select';
@@ -23,8 +23,6 @@ export const ARG_X = 'x';
 export const ARG_Y = 'y';
 
 const I18N_KEYS = {
-  'js.dataList.collapse': 'Collapse list',
-  'js.dataList.expand': 'Expand list',
   'js.dataList.search': 'Search',
   'js.dataList.empty': 'Nothing to show.',
   'js.dataList.noMatch': 'No matching entries.',
@@ -70,33 +68,18 @@ function firstText(row: Row): string {
  */
 const FOCUS_VISIBLE = { focusVisible: true } as FocusOptions;
 
-/** The root font size in px, which is what the `drawerBelow` rem value is measured in. */
-function remInPx(): number {
-  return parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-}
-
 /** The ID of the heading of a group, unique in the page for the given prefix. */
 function groupId(prefix: string, label: string): string {
   return `${prefix}-group-${label}`;
 }
 
-/** What one rendering of the list (the column, the strip, the list in the open drawer) needs. */
+/** What the parts of the list need. */
 interface ListPartsProps {
-  /** Prefix of the IDs inside, unique per rendering. */
+  /** Prefix of the IDs inside, unique per list. */
   idPrefix: string;
   labels: Labels;
   title: string;
-  collapsible: boolean;
-  /** Whether the toggle says the list is shown. */
-  expanded: boolean;
-  onToggle: () => void;
-  toggleRef?: React.Ref<HTMLButtonElement>;
-  /** Whether to render the commands of the list here. */
-  showButtons: boolean;
   buttons: ChildControlJson[];
-  onCommand: () => void;
-  /** Whether to render search and rows; the strip of a drawer has neither. */
-  showContent: boolean;
   search: boolean;
   query: string;
   onQuery: (query: string) => void;
@@ -115,7 +98,6 @@ interface ListPartsProps {
 
 /** Header, commands, search and body of the list (design system: tl-list). */
 function ListParts(props: ListPartsProps) {
-  const DisclosureToggle = usePart('DisclosureToggle');
   const MenuTrigger = usePart('MenuTrigger');
   const Avatar = usePart('Avatar');
   const Badge = usePart('Badge');
@@ -123,33 +105,24 @@ function ListParts(props: ListPartsProps) {
 
   return (
     <>
-      {/* A header with neither a title nor a toggle is an empty bar; leave it out. */}
-      <div className="tl-list__header" hidden={!title && !props.collapsible}>
+      {/* A header without a title is an empty bar; leave it out. */}
+      <div className="tl-list__header" hidden={!title}>
         {title ? <span className="tl-list__title tl-type-heading-sm">{title}</span> : null}
-        {props.collapsible ? (
-          <DisclosureToggle
-            ref={props.toggleRef}
-            expanded={props.expanded}
-            opens="end"
-            label={props.expanded ? labels['js.dataList.collapse'] : labels['js.dataList.expand']}
-            onClick={props.onToggle}
-          />
-        ) : null}
       </div>
 
       {/*
         * A command is the engine's command button: it shows its command's state - hidden, disabled
-        * with the reason as tooltip - and runs the command itself. A click on it closes an open drawer.
+        * with the reason as tooltip - and runs the command itself.
         */}
-      {props.showButtons && props.buttons.length > 0 ? (
-        <div className="tl-list__commands" onClick={props.onCommand}>
+      {props.buttons.length > 0 ? (
+        <div className="tl-list__commands">
           {props.buttons.map((button) => (
             <TLChild key={button.controlId} control={button} />
           ))}
         </div>
       ) : null}
 
-      {props.showContent && props.search ? (
+      {props.search ? (
         <SearchField
           className="tl-list__search"
           value={query}
@@ -159,7 +132,7 @@ function ListParts(props: ListPartsProps) {
         />
       ) : null}
 
-      {props.showContent ? (
+      {
         <div className="tl-list__body" aria-live="polite" tabIndex={-1} ref={props.bodyRef}>
           {props.groups.length === 0 ? (
             <p className="tl-list__message tl-type-label">
@@ -215,7 +188,7 @@ function ListParts(props: ListPartsProps) {
                           );
                         })}
                       </span>
-                      {row.trailing ? (
+                      {row.trailing && !row.trailing.control ? (
                         row.trailing.badge ? (
                           <span className="tl-list__trailing"><Badge content={row.trailing.text} /></span>
                         ) : (
@@ -223,6 +196,20 @@ function ListParts(props: ListPartsProps) {
                         )
                       ) : null}
                     </button>
+                    {row.trailing?.control ? (
+                      // Content of the application's template: beside the button of the entry, not
+                      // in it, since it may hold interactive elements of its own. A click on such an
+                      // element is left to it; a click on anything else selects the entry, like a
+                      // click on the button.
+                      <span
+                        className="tl-list__trailing"
+                        onClick={(event) => {
+                          if (!isInteractiveTarget(event.target)) props.onSelect(row);
+                        }}
+                      >
+                        <TLChild control={row.trailing.control} />
+                      </span>
+                    ) : null}
                     {props.showRowMenu ? (
                       <MenuTrigger
                         appearance="ghost"
@@ -241,7 +228,7 @@ function ListParts(props: ListPartsProps) {
             </section>
           ))}
         </div>
-      ) : null}
+      }
     </>
   );
 }
@@ -250,16 +237,12 @@ function ListParts(props: ListPartsProps) {
  * A selectable, groupable, searchable list of objects in the style of a contact or message list
  * (design system: tl-list), the client of the element `<data-list>`.
  *
- * The state is described by DataListStateJson. The rows come from the server; search and collapse
- * are client-side, a row click sends {@link CMD_SELECT}, the trigger of a row {@link CMD_ROW_MENU}.
- * In front of the lines a row shows an icon or an avatar (part `Avatar`), after them metadata text or
- * a badge (part `Badge`). A right click on a row outside the selection selects it and lets the event
+ * The state is described by DataListStateJson. The rows come from the server; search is
+ * client-side, a row click sends {@link CMD_SELECT}, the trigger of a row {@link CMD_ROW_MENU}.
+ * In front of the lines a row shows an icon or an avatar (part `Avatar`), after them metadata text, a
+ * badge (part `Badge`), or the control of the application's template for the row, beside the button of
+ * the entry. A right click on a row outside the selection selects it and lets the event
  * go on to a context menu region (`<context-menu>`) around the list.
- *
- * Below `drawerBelow` rem of width of its host, a collapsible list keeps only its strip in the flow,
- * and its toggle opens the list as a modal drawer over its neighbours (tl-drawer--container with
- * tl-drawer__scrim): focus moves to the selected row and stays in the drawer; Escape, the scrim, the
- * toggle, a row and a command close it and hand the focus back to the toggle of the strip.
  */
 const TLDataList: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<DataListStateJson>>();
@@ -270,7 +253,6 @@ const TLDataList: React.FC<TLCellProps> = ({ controlId }) => {
   const buttons = useMemo(() => (Array.isArray(state.buttons) ? state.buttons : []), [state.buttons]);
   const selectedId = state.selectedId ?? '';
   const search = state.search === true;
-  const collapsible = state.collapsible === true;
   const title = state.title ?? '';
   const emptyText = state.emptyText || labels['js.dataList.empty'];
   /*
@@ -283,63 +265,6 @@ const TLDataList: React.FC<TLCellProps> = ({ controlId }) => {
   const showRowMenu = state.hasRowMenu === true && rowActions !== 'none';
 
   const [query, setQuery] = useState('');
-  // The first-load state. Not remembered: a `<data-list>` has no stored layout of its own.
-  const [collapsed, setCollapsed] = useState(state.collapsed === true);
-
-  /*
-   * The drawer, where the host has no room for a column of this list. `collapsed` - the user's
-   * choice for the column - is neither read nor written while the list is a drawer, so it is what the
-   * list shows again once the host is wide enough. A list that cannot collapse has no strip to fall
-   * back to and is never a drawer. Measured before paint, so a narrow host does not first lay out
-   * the column it cannot hold.
-   */
-  const drawerBelow = typeof state.drawerBelow === 'number' ? state.drawerBelow : 0;
-  const root = useRef<HTMLDivElement | null>(null);
-  const stripToggle = useRef<HTMLButtonElement | null>(null);
-  const aside = useRef<HTMLElement | null>(null);
-  const [drawer, setDrawer] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  useLayoutEffect(() => {
-    const host = root.current?.parentElement;
-    if (!collapsible || drawerBelow <= 0 || !host) {
-      setDrawer(false);
-      return;
-    }
-    const measure = () => setDrawer(host.clientWidth < drawerBelow * remInPx());
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(host);
-    return () => observer.disconnect();
-  }, [collapsible, drawerBelow]);
-
-  // A host that grows wide again takes the list back as a column; nothing is left open behind it.
-  useEffect(() => {
-    if (!drawer) setDrawerOpen(false);
-  }, [drawer]);
-
-  const open = drawer && drawerOpen;
-
-  // Opening moves the focus to the selected row, else the first one, and keeps it in the drawer;
-  // closing gives it back to the toggle of the strip.
-  useFocusTrap(open, aside, (container) =>
-    container.querySelector<HTMLElement>('.tl-list__main[aria-current="true"]')
-    ?? container.querySelector<HTMLElement>('.tl-list__main'),
-  { restoreTo: () => stripToggle.current });
-
-  // Escape closes the drawer - unless it is clearing a search field that has text in it, which is
-  // what Escape does there first.
-  useStandaloneKeyboardScope(open, {
-    ESCAPE: () => {
-      const active = document.activeElement as HTMLInputElement | null;
-      if (active?.type === 'search' && active.value) return false;
-      setDrawerOpen(false);
-      return true;
-    },
-  });
-
-  const closeDrawer = () => setDrawerOpen(false);
-
   const groups = useMemo(() => {
     const normalized = search ? query.trim().toLocaleLowerCase() : '';
     const visible = normalized
@@ -381,9 +306,7 @@ const TLDataList: React.FC<TLCellProps> = ({ controlId }) => {
   const shared = {
     labels,
     title,
-    collapsible,
     buttons,
-    onCommand: closeDrawer,
     search,
     query,
     onQuery: setQuery,
@@ -391,7 +314,6 @@ const TLDataList: React.FC<TLCellProps> = ({ controlId }) => {
     emptyText,
     selectedId,
     onSelect: (row: Row) => {
-      closeDrawer();
       void command(CMD_SELECT, { [ARG_ID]: row.id });
     },
     /*
@@ -421,52 +343,13 @@ const TLDataList: React.FC<TLCellProps> = ({ controlId }) => {
     },
   };
 
-  const isCollapsed = collapsible && (drawer || collapsed);
   return (
     <div
       id={controlId}
-      ref={root}
       className={rootClassName(state, 'tl-list')}
-      data-tl-state={stateAttr(isCollapsed && 'collapsed')}
       aria-label={title || undefined}
     >
-      <ListParts
-        {...shared}
-        idPrefix={controlId}
-        expanded={!isCollapsed}
-        onToggle={() => (drawer ? setDrawerOpen(true) : setCollapsed((value) => !value))}
-        toggleRef={stripToggle}
-        showButtons={!open}
-        showContent={!drawer}
-        bodyRef={drawer ? undefined : body}
-      />
-      {open ? (
-        <>
-          {/* A pointer's way out. Keyboard and screen reader users have the toggle and Escape. */}
-          <div className="tl-drawer__scrim" aria-hidden="true" onClick={closeDrawer} />
-          <aside
-            ref={aside}
-            className="tl-drawer tl-drawer--start tl-drawer--narrow tl-drawer--container"
-            data-tl-state="open"
-            role="dialog"
-            aria-modal="true"
-            aria-label={title || undefined}
-            tabIndex={-1}
-          >
-            <div className="tl-list">
-              <ListParts
-                {...shared}
-                idPrefix={`${controlId}-drawer`}
-                expanded
-                onToggle={closeDrawer}
-                showButtons
-                showContent
-                bodyRef={body}
-              />
-            </div>
-          </aside>
-        </>
-      ) : null}
+      <ListParts {...shared} idPrefix={controlId} bodyRef={body} />
     </div>
   );
 };

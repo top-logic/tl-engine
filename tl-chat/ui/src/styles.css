@@ -14,39 +14,34 @@
 /*
  * Every chat element is a root of its own.
  *
- * A host composing the whole chat renders inside `.tl-cockpit`, but `<chat-conversation/>`,
- * `<chat-dock/>`, `<chat-rail/>` and the rail-section elements are placed by a view wherever it
- * likes - outside that root, where neither the component tokens below nor the base CSS after them
- * would be in scope. Their buttons would
- * fall back to browser chrome (grey, square, bordered) and every `var(--r-1)` to nothing. One rule
- * for all of them rather than a copy per root, so a token added here reaches every element.
+ * `<chat-conversation/>`, `<chat-dock/>`, `<presentation-pane/>` and the section elements are
+ * placed by a view wherever it likes, with no common root around them, so the component tokens
+ * below and the base CSS after them are scoped to each of them. Their buttons would otherwise fall
+ * back to browser chrome (grey, square, bordered) and every `var(--r-1)` to nothing. One rule for
+ * all of them rather than a copy per root, so a token added here reaches every element.
  */
-.tl-cockpit,
 .tl-chat-conversation,
 .tl-chat-dock,
-.tl-chat-rail,
+.tl-chat-presentation,
 .tl-chat-section,
-.tl-cockpit *,
 .tl-chat-conversation *,
 .tl-chat-dock *,
-.tl-chat-rail *,
-.tl-chat-section * {
+.tl-chat-presentation *,
+.tl-chat-section *{
   box-sizing: border-box;
 }
 
-.tl-cockpit,
 .tl-chat-conversation,
 .tl-chat-dock,
-.tl-chat-rail,
-.tl-chat-section {
+.tl-chat-presentation,
+.tl-chat-section{
   /* Geometry of the chat itself. */
   --chat-column: 49rem;
-  --chat-sidebar: 16.5rem;
-  --chat-rail-narrow: 3.25rem;
   --chat-conversation-min-width: 20rem;
   /*
-   * What stands beside the conversation once a session list beside it is a drawer (#548): the
-   * list's strip, the rail's strip and the host row's two gaps. The floor gives way by this much.
+   * What stands beside the conversation once the side rails beside it are strips (#548): the strip
+   * of the session list's rail, the strip of the other rail and the host row's two gaps. The floor
+   * gives way by this much.
    */
   --chat-conversation-floor-reserve: 10rem;
   /* The box a picture of an answer is drawn in as a thumbnail; a click opens it in full size. */
@@ -74,46 +69,6 @@
   --chat-heading-line: var(--heading-04-line-height, 2rem);
   --chat-shadow: var(--shadow-menu, 0 2px 6px 0 rgba(0, 0, 0, 0.32));
   --chat-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-}
-
-/*
- * The chat measures itself, not the window (Issue #427).
- *
- * The chat is placed by an application and almost never owns the window: a shell's navigation
- * and the page gutters take their share first. A viewport media query therefore asks the wrong box
- * - it is still wide while the chat is not - and the narrow layout arrived hundreds of pixels too
- * late, or never. Two containers carry every rule that is about how much room the chat has:
- *
- *   chat-shell  - this element: whether the session rail is a column or a drawer over the thread,
- *                 and whether the artefact pane is a column or a sheet.
- *   chat-stage  - `.stage` below: the transcript and the composer, which narrow again when the rail
- *                 and the pane have taken their columns. It exists in a composed
- *                 `<chat-conversation/>` too, so the same rules reach both.
- *
- * What stays a media query is what is genuinely about the screen rather than the chat: the pointer
- * (`hover: none`), the motion preference, and the popover that goes full-bleed on a phone.
- */
-.tl-cockpit {
-  container-type: inline-size;
-  container-name: chat-shell;
-  display: flex;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  position: relative;
-  color: var(--text-primary);
-  background: var(--background);
-  font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
-  font-size: var(--body-02-font-size, 0.875rem);
-  line-height: var(--body-02-line-height, 1.25rem);
-}
-
-/* The chat in a session that is not signed in: one sentence instead of an unusable chat. */
-.tl-cockpit.is-signed-out {
-  display: grid;
-  place-items: center;
-  padding: 2rem;
 }
 
 .signed-out {
@@ -148,44 +103,10 @@
   border: 0;
 }
 
-/* --- Buttons ------------------------------------------------------------ */
-
-/*
- * Zero specificity on purpose: this only strips the browser's button chrome, and every rule that
- * gives a button back a background or a border is a plain class selector. Written as
- * `.tl-cockpit button` it would out-rank all of them and flatten the send button, the primary
- * actions and the plus trigger.
- */
-:where(
-    .tl-cockpit button,
-    .tl-chat-conversation button,
-    .tl-chat-dock button,
-    .tl-chat-rail button,
-    .tl-chat-section button
-  ) {
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-}
-
-:where(
-    .tl-cockpit button:disabled,
-    .tl-chat-conversation button:disabled,
-    .tl-chat-dock button:disabled,
-    .tl-chat-rail button:disabled,
-    .tl-chat-section button:disabled
-  ) {
-  cursor: default;
-}
-
-.tl-cockpit :focus-visible,
 .tl-chat-conversation :focus-visible,
 .tl-chat-dock :focus-visible,
-.tl-chat-rail :focus-visible,
-.tl-chat-section :focus-visible {
+.tl-chat-presentation :focus-visible,
+.tl-chat-section :focus-visible{
   outline: 2px solid var(--focus, var(--button-primary));
   outline-offset: 2px;
   border-radius: var(--r-1);
@@ -248,83 +169,23 @@
   background: var(--chat-danger-soft);
 }
 
-/* --- Session rail ------------------------------------------------------- */
-
-.rail-scrim {
-  display: none;
-}
-
-.rail {
-  width: var(--chat-sidebar);
-  flex: 0 0 var(--chat-sidebar);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: var(--layer);
-  border-right: 1px solid var(--border-subtle);
-  transition: width 160ms ease, flex-basis 160ms ease;
-}
-
-.rail-header {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem 0.75rem 0.25rem;
-}
-
-.rail-header[hidden] {
-  display: none;
-}
-
-.rail-header strong {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--heading-compact-02-font-size, 0.875rem);
-  font-weight: 600;
-}
-
-.rail-close {
-  display: none;
-}
-
 /* --- Session list ------------------------------------------------------ */
 
 /*
  * The session list is the engine's <data-list> (design system: tl-list), marked `tl-chat-sessions`
- * by the view. It stands as a column of the chat row with the session rail's width and surface;
- * collapsed, and below its `drawer-below` as the strip of a drawer, it keeps the rail's narrow
- * width. The rows, the search, the selection and the drawer are the engine's.
+ * by the view. It stands in a <side-rail> of one section beside the conversation: the rail gives it
+ * its width, its strip and, where the chat is narrow, its drawer. The rows, the search and the
+ * selection are the list's.
  */
-.tl-chat-sessions {
-  --chat-sidebar: 16.5rem;
-  --chat-rail-narrow: 3.25rem;
-
-  flex: 0 0 auto;
-  width: var(--chat-sidebar);
-  background: var(--layer);
-  border-right: 1px solid var(--border-subtle);
-}
-
-.tl-chat-sessions[data-tl-state~="collapsed"] {
-  width: var(--chat-rail-narrow);
-}
 
 /*
  * Pointing at a row. The list stands on the rail's surface `--layer`, which is as light as the
  * design system's `--tl-surface-interactive-hover` - a hovered row would not stand out. On this
- * surface the rail's own hover step shows it, as in the App's session rail. A selected row keeps
+ * surface the chat's own hover step shows it. A selected row keeps
  * the selection surfaces of the list, which rank above this rule.
  */
 .tl-chat-sessions .tl-list__item:hover {
   background: var(--layer-hover);
-}
-
-/*
- * A list in a rail section is content of the section's card: it is flush with the card, which
- * already has its inset, rather than adding the list's own.
- */
-.tl-chat-rail .tl-list__body {
-  padding-inline: 0;
 }
 
 /*
@@ -398,16 +259,15 @@
 /* --- Composed conversation --------------------------------------------- */
 
 /*
- * It reuses the App's own .stage (normal and .is-empty), so the conversation element only has to be
- * the fill box that lets .stage take the height its panel gives it - and carry the typography that
- * .tl-cockpit would otherwise provide. Its tokens, box-sizing, button reset and focus ring come
- * from the shared rule at the top of this file.
+ * It holds the .stage (normal and .is-empty), so the conversation element only has to be the fill
+ * box that lets .stage take the height its panel gives it - and carry the typography. Its tokens,
+ * box-sizing, button reset and focus ring come from the shared rule at the top of this file.
  */
 .tl-chat-conversation {
   /*
    * No `container-type` here on purpose: `.stage`, its only child, is the box the transcript and the
-   * composer actually get, and it is a container in both App and this element - so one set of rules
-   * serves both. A second container around it would only add a second answer to the same question.
+   * composer actually get, and it is the container. A second container around it would only add a
+   * second answer to the same question.
    */
   display: flex;
   flex-direction: column;
@@ -415,7 +275,7 @@
    * A floor, but never wider than the window.
    *
    * `min-width: 0` alone let a host squeeze the element to the width of its own scrollbar - 22 px,
-   * a slit with a composer in it (Consulting #234). Measured in the demo at a 320 px window, the
+   * a slit with a composer in it. Measured in the demo at a 320 px window, the
    * conversation was 32 px while the page beside it had room to spare.
    *
    * The second measure is `100vw` and deliberately **not** `100%`: the box this element is placed
@@ -429,9 +289,9 @@
    * floor redeclares the token.
    *
    * That measure alone still overflowed a phone: beside a 16.5 rem session list, the rail's strip
-   * and two gaps, a 20 rem floor made the row 688 px wide at any window below it (#548). A list that
-   * is a strip leaves only its strip, and then the floor gives way by what is left beside the
-   * conversation - the rule after this one. Beside a list that is a column the floor holds as it is.
+   * and two gaps, a 20 rem floor made the row 688 px wide at any window below it (#548). A side rail
+   * that is a strip leaves only its strip, and then the floor gives way by what is left beside the
+   * conversation - the rule after this one. Beside a rail that is a column the floor holds as it is.
    */
   min-width: min(var(--chat-conversation-min-width), 100vw);
   height: 100%;
@@ -443,10 +303,14 @@
 }
 
 /*
- * The floor beside a session list that is a strip - collapsed, or the strip of its drawer: the window
- * less the strips and gaps still beside it.
+ * The floor beside a side rail that is a strip - closed, or the strip of its drawer: the window less
+ * the strips and gaps still beside it. The rail stands beside the conversation either directly or in
+ * a pane of the split panel the conversation has a pane in.
  */
-:has(> .tl-chat-sessions[data-tl-state~="collapsed"]) .tl-chat-conversation {
+:has(
+  > .tl-side-rail:is([data-tl-state~="drawer"], :not([data-tl-state~="open"])),
+  > .tl-split__pane > .tl-side-rail:is([data-tl-state~="drawer"], :not([data-tl-state~="open"]))
+) .tl-chat-conversation {
   min-width: min(var(--chat-conversation-min-width), 100vw - var(--chat-conversation-floor-reserve));
 }
 
@@ -455,7 +319,10 @@
  * a floor measured on the window overflowed the panel of a phone by those 3 rem (#565). The dock's
  * own width is the measure there, and nothing in the dock can shrink that either.
  */
-.tl-chat-dock :has(> .tl-chat-sessions[data-tl-state~="collapsed"]) .tl-chat-conversation {
+.tl-chat-dock :has(
+  > .tl-side-rail:is([data-tl-state~="drawer"], :not([data-tl-state~="open"])),
+  > .tl-split__pane > .tl-side-rail:is([data-tl-state~="drawer"], :not([data-tl-state~="open"]))
+) .tl-chat-conversation {
   min-width: min(
     var(--chat-conversation-min-width),
     var(--chat-dock-width) - var(--chat-conversation-floor-reserve)
@@ -537,7 +404,12 @@
   display: none;
 }
 
+/*
+ * Positioned and clipping: the anchor of a drawer opened inside, e.g. the drawer of a side rail, which
+ * then stays within the panel instead of covering the launcher below it.
+ */
 .tl-chat-dock__panel {
+  position: relative;
   display: flex;
   width: var(--chat-dock-width);
   height: var(--chat-dock-height);
@@ -581,10 +453,12 @@
  *
  * The engine's fill contract gives a control the class `tlFill` only while it or a child reports
  * filling, and the dock body ends that chain (a `FillBarrier`): it is laid out apart from the page,
- * which must not react to what fills inside. A `<chat>` (a `tl-stack`), a stack combining several
- * children or a `<panel>` placed here therefore takes the body's height by this rule rather than by
- * its own report, and the conversation scrolls inside it instead of growing with its transcript.
+ * which must not react to what fills inside. A `<split-panel>` (the content of a `<chat>`, which has no
+ * element of its own), a `<stack>`, a stack combining several children or a `<panel>` placed here
+ * therefore takes the body's height by this rule rather than by its own report, and the conversation
+ * scrolls inside it instead of growing with its transcript.
  */
+.tl-chat-dock__body > .tl-split,
 .tl-chat-dock__body > .tl-stack,
 .tl-chat-dock__body > .tl-panel {
   flex: 1;
@@ -676,48 +550,55 @@
 }
 
 /*
- * The composed rail is a column beside the conversation, not a region of App's workspace grid.
- *
- * `.side-strip` and `.side-pane` are App's classes, which place themselves with `grid-column` and
- * turn into an overlay below 1280 px. Inside this element there is no grid to place into and
- * nothing to overlay, so their geometry is re-stated here: laid out in flow, sized by themselves,
- * and a column at every width the host has room for (`placement="rail"` in side-pane.tsx); in a
- * narrower host the rail is a drawer, see below.
- *
- * Not a container either: `flex: 0 0 auto` makes this element as wide as the strip plus the column
- * it shows, so its width comes from its own contents. `container-type: inline-size` applies
- * inline-size containment, those contents would then contribute nothing, and the rail would
- * collapse to 0 px. A pair of fixed-width columns has no width question to ask in any case.
- */
-.tl-chat-rail {
-  display: flex;
-  flex: 0 0 auto;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
-  background: var(--background);
-}
-
-.tl-chat-rail .side-strip,
-.tl-chat-rail .side-pane {
-  position: relative;
-  grid-column: auto;
-}
-
-/*
  * The pane's history (#616): every step stays mounted, one above the other, and only the top one
  * is shown. Each step is its own scroller and the ones below are hidden with `visibility`, not
  * `display: none`, so a step keeps its layout - and with it its scroll position - while another is
  * on top, and "back" shows it exactly as it was left. `inert` keeps them out of the tab order.
  */
-.tl-chat-rail .side-pane-body.has-steps {
+/*
+ * `<presentation-pane>`: a bar with the way back, the title and the close button, and below it the
+ * history, filling what the pane is given.
+ */
+.tl-chat-presentation {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.tl-chat-presentation[hidden] {
+  display: none;
+}
+
+.tl-chat-presentation__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tl-chat-presentation__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: inherit;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-chat-presentation__body {
   position: relative;
-  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
 }
 
-.tl-chat-rail .pane-step {
+.tl-chat-presentation .pane-step {
   position: absolute;
   inset: 0;
   display: flex;
@@ -726,24 +607,24 @@
   padding: 0.75rem;
 }
 
-.tl-chat-rail .pane-step.is-stashed {
+.tl-chat-presentation .pane-step.is-stashed {
   visibility: hidden;
   pointer-events: none;
 }
 
 /* A table scrolls itself, with its header in place; the step only gives it the height. */
-.tl-chat-rail .pane-step.is-table {
+.tl-chat-presentation .pane-step.is-table {
   overflow: hidden;
   padding: 0;
 }
 
-.tl-chat-rail .pane-step.is-table > *,
-.tl-chat-rail .pane-step.is-chart > * {
+.tl-chat-presentation .pane-step.is-table > *,
+.tl-chat-presentation .pane-step.is-chart > * {
   flex: 1 1 auto;
   min-height: 0;
 }
 
-.tl-chat-rail .pane-step.is-chart {
+.tl-chat-presentation .pane-step.is-chart {
   padding: 1rem;
 }
 
@@ -751,7 +632,7 @@
  * A chart is read at a glance: as high as it needs to be for its bars to compare, not as high as the
  * pane happens to be - a 900 px bar says no more than a 400 px one, and the eye has to travel it.
  */
-.tl-chat-rail .pane-step.is-chart > * {
+.tl-chat-presentation .pane-step.is-chart > * {
   flex: 0 0 auto;
   height: clamp(16rem, 60%, 26rem);
 }
@@ -765,124 +646,9 @@
  * so that ordinary words keep their shape. `break-word` stays the fallback for what has no syllables,
  * such as an address.
  */
-.tl-chat-rail .pane-step .tlHtml {
+.tl-chat-presentation .pane-step .tlHtml {
   hyphens: auto;
   hyphenate-limit-chars: 10 4 4;
-}
-
-/* The folded pane's way back: the strip's first icon, set apart from the sections below it. */
-.tl-chat-rail .side-strip-item.is-pane {
-  color: var(--button-primary);
-}
-
-.tl-chat-rail .side-strip-item.is-pane + .side-strip-item {
-  margin-top: 0.5rem;
-}
-
-/*
- * A section is a card of its own.
- *
- * App's `.side-section` is borderless, and tells its own sections from a host's with a dashed
- * outline. The shell has no such distinction - every section is configured, none is more the
- * framework's than another - so they are plain cards on the column's own background.
- */
-.tl-chat-rail .side-section {
-  border: 1px solid var(--border-subtle);
-  background: var(--background);
-}
-
-/* The sections' own column. Named apart from App's `.side-column`, which is a grid child. */
-.tl-chat-rail .rail-column {
-  flex: 0 0 auto;
-  width: 18.75rem;
-  min-width: 0;
-  border-inline-start: 1px solid var(--border-subtle);
-  background: var(--layer);
-  overflow: auto;
-}
-
-/*
- * Hidden, not unmounted.
- *
- * A collapsed section keeps reporting its badge, and a closed rail keeps the sections that feed the
- * number on the conversation's button - both of which stop the moment the browser drops the child.
- */
-.tl-chat-rail .is-hidden {
-  display: none;
-}
-
-/*
- * A rail in a narrow host (#565).
- *
- * Below its `drawer-below` width the rail keeps only its strip in the flow, and its section column
- * or its pane opens over the conversation. chat-rail.tsx measures the host, sets `.is-drawer` and
- * says in `--rail-drawer-end` how far from the host's inline end the strip begins; everything here
- * is geometry. The same construction as a `<data-list>` drawer (#548): the host is the containing
- * block, so the scrim covers exactly the row the rail stands in, and `isolation` keeps the
- * z-indexes local to it.
- *
- * The strip stays above the scrim, so another section is still one click away while one is open.
- */
-:has(> .tl-chat-rail.is-drawer) {
-  position: relative;
-  isolation: isolate;
-}
-
-.tl-chat-rail.is-drawer .rail-column,
-.tl-chat-rail.is-drawer .side-pane {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  inset-inline-end: var(--rail-drawer-end, 0px);
-  z-index: 31;
-  box-shadow: var(--chat-shadow);
-}
-
-/*
- * Never the whole row: a strip's width of scrim stays uncovered beside it, so a pointer always has
- * somewhere to tap its way out, as beside the list's drawer.
- */
-.tl-chat-rail.is-drawer {
-  --rail-drawer-room: calc(100% - var(--rail-drawer-end, 0px) - 3.5rem);
-}
-
-.tl-chat-rail.is-drawer .rail-column {
-  width: min(18.75rem, var(--rail-drawer-room));
-}
-
-.tl-chat-rail.is-drawer .side-pane {
-  max-width: var(--rail-drawer-room);
-}
-
-/* A drawer at a phone's width has no 6 rem to promise the title beside "back" and the close cross. */
-.tl-chat-rail.is-drawer .side-pane-title {
-  min-width: 0;
-}
-
-.tl-chat-rail.is-drawer-open .side-strip {
-  z-index: 32;
-}
-
-.tl-chat-rail .rail-drawer-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-  /* The engine's own drawer backdrop, as for the list's drawer. */
-  background: var(--overlay, rgb(0 0 0 / 40%));
-}
-
-.tl-chat-rail .side-strip-item {
-  position: relative;
-}
-
-/* An icon-font glyph on the strip, beside the SVG ones the chat draws itself. */
-.tl-chat-rail .side-strip-item i {
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.side-pane[hidden] {
-  display: none;
 }
 
 .tl-chat-conversation.is-signed-out {
@@ -891,232 +657,13 @@
   padding: 2rem;
 }
 
-/*
- * A rail in a session that is not signed in: nothing, not even the row's gap beside it. The
- * conversation says why the chat is empty, and a second note in a column of its own read as a
- * layout error (#643). Signing in reloads the page, so there is no transition to keep a strip for.
- */
-.tl-chat-rail.is-stood-down {
-  display: none;
-}
-
-.rail-new {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0.25rem 0.75rem 0;
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-2);
-  background: var(--layer-01);
-  color: var(--text-primary);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.rail-new svg {
-  width: 1rem;
-  height: 1rem;
-  flex: 0 0 1rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-}
-
-.rail-new:hover {
-  background: var(--layer-hover);
-}
-
-/*
- * A command its rules disable (#30106). The button stays in reach of the pointer, because its
- * tooltip names the reason; pointing at it changes nothing.
- */
-.rail-new:disabled,
-.rail-new:disabled:hover {
-  background: var(--tl-surface-disabled, var(--layer-01));
-  border-color: var(--tl-border-disabled, var(--border-subtle));
-  color: var(--tl-text-disabled, var(--text-secondary));
-  cursor: default;
-}
-
-.rail-search {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin: 0.5rem 0.75rem;
-  padding: 0.375rem 0.5rem;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-2);
-  background: var(--layer-01);
-  color: var(--text-secondary);
-}
-
-.rail-search svg {
-  width: 0.875rem;
-  height: 0.875rem;
-  flex: 0 0 0.875rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-}
-
-.rail-search input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text-primary);
-  font: inherit;
-  outline: none;
-}
-
-.rail-search input::placeholder {
-  color: var(--text-placeholder, var(--text-secondary));
-}
-
-.rail-list {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding: 0 0.5rem 1rem;
-}
-
-.rail-group {
-  margin-top: 0.75rem;
-}
-
-.rail-group h2 {
-  margin: 0 0.5rem 0.25rem;
-  font-size: var(--chat-small);
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.rail-item {
-  display: flex;
-  align-items: center;
-  border-radius: var(--r-2);
-}
-
-.rail-item:hover {
-  background: var(--layer-hover);
-}
-
-.rail-item.is-active {
-  background: var(--layer-selected);
-}
-
-.rail-item.is-active .rail-item-mark {
-  background: var(--button-primary);
-}
-
-.rail-open {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4375rem 0.375rem;
-  text-align: left;
-  color: var(--text-primary);
-}
-
-.rail-open span:last-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rail-item-mark {
-  width: 0.1875rem;
-  height: 1rem;
-  border-radius: var(--r-pill);
-  background: transparent;
-  flex: 0 0 auto;
-}
-
-.rail-delete {
-  margin-right: 0.25rem;
-  opacity: 0;
-}
-
-.rail-item:hover .rail-delete,
-.rail-item:focus-within .rail-delete {
-  opacity: 1;
-}
-
-.rail-delete:hover {
-  color: var(--chat-danger);
-  background: var(--chat-danger-soft);
-}
-
-.rail-message {
-  margin: 0.75rem 0.5rem;
-  color: var(--text-secondary);
-}
-
-.rail-message.is-error {
-  color: var(--chat-danger);
-}
-
-.rail-loading {
-  display: flex;
-  gap: 0.375rem;
-  padding: 0.75rem 0.625rem;
-}
-
-.rail-loading span {
-  width: 0.375rem;
-  height: 0.375rem;
-  border-radius: 50%;
-  background: var(--text-secondary);
-  animation: chat-pulse 1s ease-in-out infinite;
-}
-
-.rail-loading span:nth-child(2) {
-  animation-delay: 0.15s;
-}
-
-.rail-loading span:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
-.rail.is-collapsed {
-  width: var(--chat-rail-narrow);
-  flex-basis: var(--chat-rail-narrow);
-  overflow: hidden;
-}
-
-.rail.is-collapsed .rail-header strong,
-.rail.is-collapsed .rail-close,
-.rail.is-collapsed .rail-new span,
-.rail.is-collapsed .rail-search,
-.rail.is-collapsed .rail-list {
-  display: none;
-}
-
-.rail.is-collapsed .rail-header {
-  justify-content: center;
-  padding-inline: 0.25rem;
-}
-
-.rail.is-collapsed .rail-new {
-  justify-content: center;
-  margin-inline: 0.5rem;
-  padding-inline: 0;
-}
-
 /* --- Stage -------------------------------------------------------------- */
 
 /*
  * The transcript's and the composer's own box, and the container everything inside them measures.
  *
- * It is what the rail, the artefact pane and - in a composed `<chat-conversation/>` - the host's
- * panel have left over, which is the only honest answer to "how wide is the prompt field". The
- * cockpit is not: it stays as wide as ever while a pane takes half of it, which is why App used to
- * carry a `.has-pane` class that guessed at the same thing from a state.
+ * It is what the host's panel leaves over for a composed `<chat-conversation/>`, which is the only
+ * honest answer to "how wide is the prompt field".
  *
  * Inline-size containment also makes this the containing block of a `position: fixed` descendant,
  * which is what the composer's full-bleed popovers now pin themselves to - the chat rather than the
@@ -1564,32 +1111,6 @@
 
 .feedback-note input::placeholder {
   color: var(--text-placeholder, var(--text-secondary));
-}
-
-/* --- Delete confirmation in the rail ------------------------------------ */
-
-/*
- * The question stands on its own line above its answers: on one line with them it was the part
- * that got the ellipsis, and a confirmation that cannot be read is not one.
- */
-.rail-item.is-confirming {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.25rem;
-  padding: 0.375rem 0.5rem;
-  border: 1px solid var(--chat-danger);
-  background: var(--chat-danger-soft);
-}
-
-.rail-confirm-text {
-  min-width: 0;
-  font-size: var(--chat-small);
-}
-
-.rail-confirm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.25rem;
 }
 
 /* --- Effort in the trace header ----------------------------------------- */
@@ -3494,8 +3015,8 @@
 /* --- Responsive --------------------------------------------------------- */
 
 /*
- * Every query below names a container rather than the viewport - see the note on `.tl-cockpit`.
- * The numbers are the ones the viewport queries carried; what changed is the box they measure.
+ * Every query below names a container rather than the viewport: a chat element is placed by a view
+ * in a box of any width, and the window says nothing about it.
  */
 
 /*
@@ -3515,85 +3036,11 @@
 }
 
 /*
- * The session rail as a drawer over the transcript, because a column beside it would leave the
- * thread less than it needs. `chat-shell` is App's own root, so none of this reaches the session list
- * of a composed chat, which is the engine's `<data-list>`.
- */
-@container chat-shell (max-width: 1100px) {
-  .rail-scrim {
-    display: block;
-    position: absolute;
-    inset: 0;
-    z-index: 20;
-    border: 0;
-    background: color-mix(in srgb, var(--background-inverse, #000) 35%, transparent);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 160ms ease;
-  }
-
-  .rail-scrim.is-open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .rail {
-    position: absolute;
-    inset: 0 auto 0 0;
-    z-index: 21;
-    width: min(20rem, 88cqi);
-    flex-basis: auto;
-    transform: translateX(-105%);
-    transition: transform 180ms ease;
-    box-shadow: var(--chat-shadow);
-  }
-
-  .rail.is-open {
-    transform: none;
-  }
-
-  .rail.is-collapsed {
-    width: min(20rem, 88cqi);
-    flex-basis: auto;
-    overflow: visible;
-  }
-
-  .rail.is-collapsed .rail-header strong,
-  .rail.is-collapsed .rail-new span,
-  .rail.is-collapsed .rail-search,
-  .rail.is-collapsed .rail-list {
-    display: revert;
-  }
-
-  .rail.is-collapsed .rail-list {
-    display: block;
-  }
-
-  .rail.is-collapsed .rail-header,
-  .rail.is-collapsed .rail-new {
-    justify-content: flex-start;
-    padding-inline: 0.75rem;
-  }
-
-  .rail-close {
-    display: inline-grid;
-  }
-
-  .rail-collapse {
-    display: none;
-  }
-
-}
-
-/*
  * What the composer gives up, in the order it gives it up.
  *
  * Measured on the stage, because that is the box the prompt field is in: the window says nothing
- * about it once a rail, an artefact pane or a host's panel has taken its share. These steps - with
- * the Enter hint's, which measures its own box instead (see `.composer-hint`) - replace the
- * viewport query that used to switch the Enter hint and the `.tl-cockpit.has-pane` /
- * `.has-document` class hacks, which read a state and guessed a width from it - and which a
- * composed `<chat-conversation/>`, having neither class, never got at all.
+ * about it once a side rail or a host's panel has taken its share. These steps go together with the
+ * Enter hint's, which measures its own box instead (see `.composer-hint`).
  *
  * The widths are where the German wording stops fitting, that being the longest the product ships.
  */
@@ -3658,20 +3105,16 @@
 
 /*
  * Every chat element is a root of its own, so this list is the same one the top of this file
- * carries: a composed `<chat-conversation/>`, `<chat-rail/>` or rail section is placed by a view
- * outside the cockpit, where a rule naming only `.tl-cockpit` reaches nothing and the person who
- * asked for less motion still gets it.
+ * carries: a composed `<chat-conversation/>`, `<presentation-pane/>` or section is placed by a view
+ * wherever it likes, and the person who asked for less motion still gets it everywhere.
  */
 @media (prefers-reduced-motion: reduce) {
-  .tl-cockpit *,
-  .tl-cockpit *::before,
-  .tl-cockpit *::after,
   .tl-chat-conversation *,
   .tl-chat-conversation *::before,
   .tl-chat-conversation *::after,
-  .tl-chat-rail *,
-  .tl-chat-rail *::before,
-  .tl-chat-rail *::after,
+  .tl-chat-presentation *,
+  .tl-chat-presentation *::before,
+  .tl-chat-presentation *::after,
   .tl-chat-section *,
   .tl-chat-section *::before,
   .tl-chat-section *::after,
@@ -3680,7 +3123,7 @@
   .tl-list__item *::after,
   .tl-chat-dock *,
   .tl-chat-dock *::before,
-  .tl-chat-dock *::after {
+  .tl-chat-dock *::after{
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -3718,34 +3161,6 @@
   }
 }
 
-/* --- Right rail / side pane (Issue #401) -------------------------------- */
-
-/*
- * Grid, not flex: the thread and the pane are columns of one track list, so opening the pane
- * NARROWS the thread instead of being laid over it. `minmax(0, 1fr)` is what lets the thread column
- * give way - a plain `1fr` refuses to shrink below its content's minimum, which is how the composer
- * ended up under the icon strip with its send button and Enter hint covered.
- */
-.workspace {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  position: relative;
-  overflow: hidden;
-}
-
-.workspace .stage {
-  min-width: 0;
-  overflow: hidden;
-}
-
-/* Never wider than its column, whatever the column has shrunk to. */
-.workspace .composer {
-  max-width: 100%;
-}
-
 .thread-bar-end {
   margin-inline-start: auto;
   display: flex;
@@ -3762,325 +3177,10 @@
   white-space: nowrap;
 }
 
-.side-toggle {
-  position: relative;
-}
-
-.side-column {
-  grid-column: 3;
-  width: 18.75rem;
-  min-width: 18.75rem;
-  border-inline-start: 1px solid var(--border-subtle);
-  background: var(--layer);
-  overflow: auto;
-}
-
-.side-rail {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem;
-}
-
-.side-section {
-  border-radius: var(--r-1);
-  overflow: hidden;
-}
-
-.side-section.is-framework {
-  border: 1px dashed var(--border-subtle);
-}
-
-.side-section.is-accent {
-  border: 1px solid var(--button-primary);
-  background: color-mix(in srgb, var(--button-primary) 10%, var(--layer));
-}
-
-.side-section-head {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  width: 100%;
-  padding: 0.45rem 0.6rem;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  text-align: start;
-}
-
-.side-caret {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-inline-end: 2px solid var(--text-secondary);
-  border-bottom: 2px solid var(--text-secondary);
-  transform: rotate(-45deg);
-}
-
-.side-caret.is-open {
-  transform: rotate(45deg);
-}
-
-.side-section-title {
-  font-weight: 600;
-}
-
-.side-section-by {
-  margin-inline-start: auto;
-  font-size: var(--chat-small);
-  color: var(--text-secondary);
-}
-
-.side-section-body {
-  padding: 0 0.6rem 0.6rem;
-}
-
 .side-empty {
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--chat-small);
-}
-
-/*
- * In a rail section the empty text stands where the empty text of a list in the next section
- * stands (the message of tl-list, inset as far as the text of a row), so the sections line up.
- */
-.tl-chat-rail .side-empty {
-  padding: var(--tl-space-xs) var(--tl-space-control-x);
-}
-
-.progress-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.progress-step {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8125rem;
-}
-
-.progress-step.is-done .progress-label {
-  color: var(--text-secondary);
-  text-decoration: line-through;
-}
-
-.progress-marker {
-  width: 1rem;
-  height: 1rem;
-  flex: none;
-}
-
-.progress-marker svg {
-  width: 1rem;
-  height: 1rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-}
-
-.progress-step.is-running .progress-marker svg circle:last-child {
-  fill: var(--button-primary);
-  stroke: none;
-}
-
-.progress-step.is-approval .progress-marker {
-  color: var(--chat-warn);
-}
-
-.progress-step.is-approval .progress-label {
-  font-weight: 600;
-}
-
-.progress-step.is-approval .progress-caption {
-  color: var(--chat-warn);
-  white-space: nowrap;
-}
-
-.progress-caption {
-  margin-inline-start: auto;
-  color: var(--text-secondary);
-  font-size: var(--chat-small);
-}
-
-.context-list {
-  margin: 0;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.15rem 0.5rem;
-  font-size: 0.8125rem;
-}
-
-.context-row {
-  display: contents;
-}
-
-.context-list dt {
-  color: var(--text-secondary);
-}
-
-.context-list dd {
-  margin: 0;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.side-strip {
-  grid-column: 2;
-  width: 3.5rem;
-  min-width: 3.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 0.5rem;
-  border-inline-start: 1px solid var(--border-subtle);
-  background: var(--layer);
-}
-
-/*
- * The strip's 56 px go to the thread once the chat is as short of room as the session rail is.
- *
- * This used to go with the sheet, at 1280. Measured on the chat rather than on the window that is
- * too early: at 1183 px the stage still holds the transcript's 49 rem with room to spare, and the
- * strip is the only one-click way into a rail section. It belongs with the rail becoming a drawer.
- * The rail is then reached through the toggle in the thread's header, as it is on a phone.
- *
- * Here rather than beside the drawer rules because `.side-strip` above out-ranks nothing and is
- * beaten by nothing: same specificity, so the later declaration is the one that counts.
- *
- * The composed `<chat-rail/>` keeps its own strip at every width and needed a counter-rule for this
- * one; it does not any more, because it is not inside a `chat-shell` container.
- */
-@container chat-shell (max-width: 1100px) {
-  .side-strip {
-    display: none;
-  }
-}
-
-.side-strip-item {
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-1);
-  background: var(--background);
-  color: inherit;
-  cursor: pointer;
-}
-
-.side-strip-item {
-  display: inline-grid;
-  place-items: center;
-}
-
-.side-strip-item svg {
-  width: 1rem;
-  height: 1rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.side-strip-item.is-active {
-  border-color: var(--button-primary);
-  background: color-mix(in srgb, var(--button-primary) 12%, var(--background));
-  color: var(--button-primary);
-}
-
-.side-pane {
-  position: relative;
-  grid-column: 3;
-  display: flex;
-  flex-direction: column;
-  min-width: 360px;
-  min-height: 0;
-  border-inline-start: 1px solid var(--border-subtle);
-  background: var(--layer);
-}
-
-.side-splitter {
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: -3px;
-  width: 6px;
-  cursor: col-resize;
-  z-index: 2;
-}
-
-.side-splitter:focus-visible {
-  background: var(--button-primary);
-  outline: none;
-}
-
-.side-pane-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 2.75rem;
-  padding: 0.25rem 0.75rem;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.side-back {
-  /*
-   * One unit: squeezed by a long title, the chevron and the word used to land on two lines, the
-   * word over the title's baseline (#552). The title is the one that gives way - it has the
-   * ellipsis.
-   */
-  flex: none;
-  white-space: nowrap;
-  border: 0;
-  background: transparent;
-  color: var(--button-primary);
-  cursor: pointer;
-  font: inherit;
-}
-
-.side-pane-title {
-  margin: 0;
-  flex: 1 1 auto;
-  min-width: 6rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.side-pane-tabs {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.side-pane-tab {
-  border: 0;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: var(--chat-small);
-  padding: 0.2rem 0.4rem;
-}
-
-.side-pane-tab.is-active {
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.side-pane-body {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding: 0.75rem;
 }
 
 /*
@@ -4132,83 +3232,6 @@
 
 .md-wrap {
   position: relative;
-}
-
-/*
- * What the footer gives up when a document-mode pane leaves it about 210 px, and what the composer
- * gives up beside an open pane, are both decided by the `chat-stage` ladder in the responsive
- * section above: a width, asked for directly, rather than `.has-document` / `.has-pane` standing in
- * for one. `has-pane` is gone with its rules - a composed conversation never had it, which is why
- * it kept the long hint in a 234 px column (Issue #427).
- */
-
-/*
- * Below 1280, not at it: 1280 itself still fits a column beside the thread. Measured on the chat,
- * not on the window - a chat in an application shell owns neither the window's width nor the room
- * the number is about.
- */
-@container chat-shell (max-width: 1279.98px) {
-  /*
-   * A sheet spans the whole grid, not its own column.
-   *
-   * An absolutely positioned grid item with a definite grid position takes that *track* as its
-   * containing block. The pane's column holds nothing else once the pane is out of flow, so the
-   * track was 0 px wide, `min(100%, 28rem)` resolved to 0, and the artefact the user clicked was a
-   * 1 px sliver. Spanning every column gives the sheet the workspace as its containing block again.
-   */
-  /*
-   * A sheet covers the thread and stops at the composer: the model picker, the send button and the
-   * Enter hint stay where they are and stay usable while an artefact is open.
-   */
-  .side-column,
-  .side-pane.is-sheet {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    position: absolute;
-    inset: 0 0 var(--composer-height, 0px) auto;
-    z-index: 4;
-    width: min(100%, 28rem);
-    box-shadow: var(--chat-shadow);
-  }
-
-  .side-pane.is-sheet,
-  .side-column {
-    min-width: 0;
-  }
-
-  /*
-   * An empty chat centres its greeting and its composer in the page. With a sheet open that puts
-   * the composer in the middle of what the sheet covers, so for as long as one is open the stage
-   * falls back to the ordinary layout and the composer sits at the bottom, below the sheet's edge.
-   */
-  .tl-cockpit.has-side .stage.is-empty {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-  }
-
-  .tl-cockpit.has-side .stage.is-empty .thread-shell {
-    flex: 1;
-  }
-
-  /* What a sheet covers is dimmed and clickable: that is how it says it is an overlay. */
-  .side-scrim {
-    position: absolute;
-    inset: 0 0 var(--composer-height, 0px) 0;
-    z-index: 3;
-    background: color-mix(in srgb, var(--text-primary) 28%, transparent);
-  }
-}
-
-/* Above the breakpoint the side is a column, so there is nothing to dim. */
-.side-scrim {
-  display: none;
-}
-
-@container chat-shell (max-width: 1279.98px) {
-  .side-scrim {
-    display: block;
-  }
 }
 
 /* --- Composer: inline reference tokens (Issue #407) ---------------------- */
@@ -4563,7 +3586,6 @@
   text-decoration: underline;
 }
 
-
 /* The collapsed pill under an answer: how much of it rests on sources. */
 .answer-sources {
   margin: 0.5rem 0 0.25rem;
@@ -4602,32 +3624,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-}
-
-.sources-tabs {
-  display: flex;
-  gap: 0.15rem;
-  padding: 0.15rem;
-  border-radius: var(--r-1);
-  background: var(--layer-hover, color-mix(in srgb, var(--text-primary) 5%, transparent));
-}
-
-.sources-tab {
-  flex: 1;
-  padding: 0.25rem 0.5rem;
-  border: 0;
-  border-radius: calc(var(--r-1) - 1px);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: var(--chat-small);
-}
-
-.sources-tab.is-active {
-  background: var(--layer-01, var(--background));
-  color: var(--text-primary);
-  font-weight: 600;
 }
 
 .sources-filter {
@@ -4797,89 +3793,6 @@
   margin-top: 0.35rem;
   padding-inline-start: 0.5rem;
   border-inline-start: 1px solid var(--border-subtle);
-}
-
-/* --- Side pane: document mode (Issue #408) ------------------------------ */
-
-/* The name is the half worth reading; when the header is tight the metadata gives way first. */
-.side-pane-version {
-  min-width: 0;
-  flex: 0 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--text-secondary);
-  font-size: var(--chat-small);
-  white-space: nowrap;
-}
-
-.side-pane-actions {
-  display: flex;
-  gap: 0.25rem;
-  margin-inline-start: auto;
-}
-
-.side-pane-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.2rem 0.5rem;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-1);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  font-size: var(--chat-small);
-}
-
-.side-pane-action svg {
-  width: 0.9rem;
-  height: 0.9rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.4;
-}
-
-.side-pane-close,
-.side-pane-collapse {
-  display: inline-grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  flex: none;
-  border: 0;
-  border-radius: var(--r-1);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.side-pane-close svg,
-.side-pane-collapse svg {
-  width: 0.85rem;
-  height: 0.85rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-}
-
-.side-pane-close:hover,
-.side-pane-collapse:hover {
-  color: var(--text-primary);
-}
-
-/* A document is read, not skimmed: its own body gets the room, the header stays one slim row. */
-.side-pane.is-document .side-pane-body {
-  padding: 1rem 1.25rem;
-}
-
-.side-pane-bar.is-document {
-  min-height: 2.5rem;
-}
-
-/* The title row of a document names it; the session chip beside "Albert" would only crowd it. */
-.tl-cockpit.has-document .thread-bar-caption {
-  display: none;
 }
 
 /*

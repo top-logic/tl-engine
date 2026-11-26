@@ -36,13 +36,15 @@ Genuine framework-internal bypasses - the security storage rebuild, migrations -
 
 ## Test seams
 
-Three permissive constructs exist, all of them test seams that no production path reaches:
+Three permissive constructs exist. They are test seams in the first place, and no run of an account carries one:
 
 | Construct | Why it exists |
 |---|---|
 | `SecurityContext.UNRESTRICTED` | a context with no principal, for unit tests of anything that merely needs *a* context |
 | `ToolContext.EMPTY` | the same, wrapped with `AUTO_APPROVE` and a no-op transaction scope |
 | `ModelSecurity.UNCHECKED`, `ToolAuthorization.UNCHECKED` | the engine's model rights need a booted `SecurityConfigurationService` and the tool policy a booted `AiToolAccessService`; a unit test about how a context *behaves* has neither |
+
+Outside the tests, `ModelSecurity.UNCHECKED` is the model security of the trusted internal calls that act for no account, for example a check of the configuration that looks up every agent and skill with `AgentDefinitionQuery`. Such a call passes it explicitly, so that it shows where it happens.
 
 `AiToolAccessService.authorizationFor` and `ModelAccessRightsSecurity` both throw when their service is down, rather than granting everything - both services are registered active by default, so absence is a deliberate deactivation and not a state to be permissive about.
 

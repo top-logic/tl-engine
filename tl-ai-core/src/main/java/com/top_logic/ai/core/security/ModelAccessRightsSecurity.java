@@ -37,8 +37,10 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * </p>
  *
  * <p>
- * Constructed for every run. {@link ModelSecurity#UNCHECKED} is a test seam and no production path
- * uses it.
+ * Every run of an account carries one, built by {@link ModelSecurity#forAccount(Person)}. A run of an
+ * account never carries {@link ModelSecurity#UNCHECKED}: that is a test seam in the first place, and
+ * outside the tests the model security of the trusted internal calls that act for no account, for
+ * example a check of the configuration.
  * </p>
  */
 public class ModelAccessRightsSecurity implements ModelSecurity {

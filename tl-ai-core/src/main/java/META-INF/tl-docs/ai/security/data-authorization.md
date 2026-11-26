@@ -49,7 +49,7 @@ public interface ModelSecurity {
 | `accessibleTypes(group)` | `getAccessibleTypes(person, group)` |
 | `filterReadable(coll)` | `isReadAllowed(person, obj)` per element |
 
-`filterReadable` iterates rather than calling `SearchExpression.filterSecurity(person, coll)`: that helper is `Object`-typed and shape-preserving, so a `Collection<T>` routed through it would need an unchecked cast, for no gain. There is no mode in which the facade answers `true` everywhere; `ModelSecurity.UNCHECKED` does, but it is a test seam.
+`filterReadable` iterates rather than calling `SearchExpression.filterSecurity(person, coll)`: that helper is `Object`-typed and shape-preserving, so a `Collection<T>` routed through it would need an unchecked cast, for no gain. There is no mode in which the facade answers `true` everywhere; `ModelSecurity.UNCHECKED` does, but no run of an account carries it: it is a test seam in the first place, and outside the tests the model security of the trusted internal calls that act for no account, for example a check of the configuration.
 
 ## The `ReadFilter` chokepoint
 

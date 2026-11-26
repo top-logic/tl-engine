@@ -9,12 +9,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.ai.core.agent.SecurityContext;
+import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -54,16 +58,18 @@ public interface ModelSecurity {
 	 *
 	 * <p>
 	 * A test seam in the first place: the engine's rights need a booted
-	 * {@code SecurityConfigurationService}, which a unit test about how a context behaves does not
-	 * have. A run of an account never carries it: {@code TopLogicSecurityContext.forRun(Person, boolean)}
-	 * always constructs a {@link ModelAccessRightsSecurity}.
+	 * {@link SecurityConfigurationService}, which a unit test about how a context behaves does not
+	 * have. A run of an account never carries it:
+	 * {@link TopLogicSecurityContext#forRun(Person, boolean)} always builds a
+	 * {@link ModelAccessRightsSecurity} with {@link #forAccount(Person)}.
 	 * </p>
 	 *
 	 * <p>
 	 * Outside the tests, it is the model security of the trusted internal calls that act for no
-	 * account: {@code SecurityContext.UNRESTRICTED} and therefore {@code ToolContext.unrestricted()},
+	 * account: {@link SecurityContext#UNRESTRICTED} and therefore {@link ToolContext#unrestricted()},
 	 * the graders of the evaluation harness when they resolve the objects an evaluation names, and the
-	 * lookups of {@code AgentDefinitionQuery} that check the configuration.
+	 * checks of the configuration that look up every agent and skill with
+	 * {@link AgentDefinitionQuery}.
 	 * </p>
 	 */
 	ModelSecurity UNCHECKED = new ModelSecurity() {

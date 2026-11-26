@@ -39,7 +39,11 @@
 				<security-config>
 					<class name="tl.security.passkey:Passkey">
 						<access-parent>
-							<container reference="tl.accounts:Person#passkeys"/>
+							<any-of>
+								<!-- Grants of the application for the type (e.g. inherited from tl.model:TLObject) decide as well. -->
+								<self/>
+								<container reference="tl.accounts:Person#passkeys"/>
+							</any-of>
 						</access-parent>
 					</class>
 				</security-config>

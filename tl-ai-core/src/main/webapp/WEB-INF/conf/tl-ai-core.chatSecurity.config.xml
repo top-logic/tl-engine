@@ -117,17 +117,29 @@
 					</class>
 					<class name="tl.ai.execution:AgentExecution">
 						<access-parent>
-							<target reference="tl.ai.execution:AgentExecution#session"/>
+							<any-of>
+								<!-- Grants of the application for the type (e.g. inherited from tl.model:TLObject) decide as well. -->
+								<self/>
+								<target reference="tl.ai.execution:AgentExecution#session"/>
+							</any-of>
 						</access-parent>
 					</class>
 					<class name="tl.ai.execution:AgentTask">
 						<access-parent>
-							<target reference="tl.ai.execution:AgentTask#session"/>
+							<any-of>
+								<!-- Grants of the application for the type (e.g. inherited from tl.model:TLObject) decide as well. -->
+								<self/>
+								<target reference="tl.ai.execution:AgentTask#session"/>
+							</any-of>
 						</access-parent>
 					</class>
 					<class name="tl.ai.execution:InteractionRequest">
 						<access-parent>
-							<target reference="tl.ai.execution:InteractionRequest#execution"/>
+							<any-of>
+								<!-- Grants of the application for the type (e.g. inherited from tl.model:TLObject) decide as well. -->
+								<self/>
+								<target reference="tl.ai.execution:InteractionRequest#execution"/>
+							</any-of>
 						</access-parent>
 					</class>
 				</security-config>

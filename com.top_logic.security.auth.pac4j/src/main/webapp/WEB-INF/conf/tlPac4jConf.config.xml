@@ -34,7 +34,11 @@
 				<security-config>
 					<class name="tl.security.pac4j:OidcIdentity">
 						<access-parent>
-							<container reference="tl.accounts:Person#oidcIdentities"/>
+							<any-of>
+								<!-- Grants of the application for the type (e.g. inherited from tl.model:TLObject) decide as well. -->
+								<self/>
+								<container reference="tl.accounts:Person#oidcIdentities"/>
+							</any-of>
 						</access-parent>
 					</class>
 				</security-config>

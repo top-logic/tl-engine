@@ -23,7 +23,8 @@ tokens" below). The design system declares its roles in the same layer
 `tl`, after the theme blocks, with selectors such as `[data-tl-mode="dark"]`. The selector of a theme
 block has a higher specificity, so the value of the theme wins in the light and in the dark mode.
 This is also true for the React content of a classic page.
-A theme that sets a role of the density (for example `tl-size-control`) sets it for both densities.
+Do not set a role of the density (for example `tl-size-control`) in a theme: the value of the theme
+wins in both densities, so the density switch has no effect on this role.
 
 A theme `extends` another one and overrides only the tokens that differ; the emitted block carries
 the inherited tokens as well, so every theme declares the full set.

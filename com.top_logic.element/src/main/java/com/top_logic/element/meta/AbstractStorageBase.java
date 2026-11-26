@@ -97,7 +97,11 @@ public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?
 		// No check by default.
 	}
 
-	private static Object toPersistentValue(Object values) {
+	/**
+	 * The value that {@link #setAttributeValue(TLObject, TLStructuredTypePart, Object)} stores for
+	 * the given value of a form: a {@link TLFormObject} stands for the object it edits.
+	 */
+	static Object toPersistentValue(Object values) {
 		if (values instanceof Collection<?>) {
 			ArrayList<Object> result = new ArrayList<>();
 			for (Object value : (Collection<?>) values) {

@@ -22,10 +22,13 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.element.meta.AttributeUpdate;
+import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -57,8 +60,8 @@ import com.top_logic.util.error.TopLogicException;
  * The paths: the TL-Script functions <code>set</code> (with a constant and with a computed
  * attribute) and <code>remove</code>, the save of a composition table, of a row-editing table and of
  * a row-editing tree table that delete removed rows, the save of a form with a changed composition,
- * and the persist of a new part into a single-valued composition, which removes the part it
- * replaces.
+ * the persist of a new part into a single-valued composition, which removes the part it replaces,
+ * and the save of a form of the classic layout UI.
  * </p>
  *
  * <p>
@@ -329,6 +332,52 @@ public class TestCompositionRemoveDeleteRight extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertRemoveRefused(_mainReport, () -> persist.execute(_context, draft));
 		assertSame(_mainReport, _project.tValueByName(MAIN_REPORT));
+	}
+
+	/**
+	 * The save of a form of the classic layout UI whose composition lost a part the user may not
+	 * delete is refused before anything is stored.
+	 */
+	public void testClassicFormRefused() {
+		becomeUser(_responsible);
+		AttributeFormContext form = new AttributeFormContext(ResPrefix.NONE);
+		AttributeUpdate reports = form.editObject(_project).newEditUpdateDefault(part(PROJECT, REPORTS), false);
+		reports.updateValue(List.of());
+
+		assertRemoveRefused(_report, reports::checkUpdate);
+		assertRemoveRefused(_report, () -> {
+			try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+				form.getAttributeUpdateContainer().store();
+				tx.commit();
+			}
+		});
+		assertEquals(List.of(_report), _project.tValueByName(REPORTS));
+	}
+
+	/**
+	 * The classic layout UI edits the rows of a composition in form objects, which stand for the
+	 * parts they edit: a kept row takes out no part, only the removed one is refused. A part the
+	 * user may delete is taken out.
+	 */
+	public void testClassicFormRowsAndDeleteRight() {
+		TLObject other;
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			other = newNamed(REPORT, "other report");
+			_project.tUpdateByName(REPORTS, List.of(_report, other));
+			tx.commit();
+		}
+		becomeUser(_responsible);
+		AttributeFormContext form = new AttributeFormContext(ResPrefix.NONE);
+		AttributeUpdate reports = form.editObject(_project).newEditUpdateDefault(part(PROJECT, REPORTS), false);
+		reports.updateValue(List.of(form.editObject(_report)));
+
+		TopLogicException refusal = refusal(other, reports::checkUpdate);
+		assertEquals(DELETE_PERMISSION_DENIED__OBJECT.getKey(), refusal.getErrorKey().getKey());
+		assertEquals("The kept row is no removed part.", List.of(other), List.of(refusal.getErrorKey().arguments()));
+
+		AttributeUpdate tasks = form.editObject(_project).newEditUpdateDefault(part(PROJECT, TASKS), false);
+		tasks.updateValue(List.of());
+		tasks.checkUpdate();
 	}
 
 	/**

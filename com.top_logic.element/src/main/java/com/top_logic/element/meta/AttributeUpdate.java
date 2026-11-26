@@ -39,6 +39,7 @@ import com.top_logic.model.annotate.AnnotationContainer;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.security.DeleteRight;
 import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Utils;
@@ -678,7 +679,8 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 *
 	 * <p>
 	 * Independent of the configured {@link UpdateCheck}, a reference must not get a new target the
-	 * current user may not discover, see {@link #checkNewTargets()}.
+	 * current user may not discover, see {@link #checkNewTargets()}, and a composition must not lose
+	 * a part the current user may not delete, see {@link #checkRemovedParts()}.
 	 * </p>
 	 */
 	@FrameworkInternal
@@ -692,6 +694,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 		}
 
 		checkNewTargets();
+		checkRemovedParts();
 		_updateCheck.checkUpdate(this);
 	}
 
@@ -714,6 +717,26 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 		} else {
 			DiscoverRight.checkNewTargets(object, attribute, getCorrectValues());
 		}
+	}
+
+	/**
+	 * Checks that the value of this update takes no part out of a composition that the current user
+	 * may not delete.
+	 *
+	 * <p>
+	 * A form stores only a changed value, and an object that is not yet created holds no part. A row
+	 * of a composition is edited in a {@link TLFormObject}, which stands for the part it edits.
+	 * </p>
+	 *
+	 * @see DeleteRight#checkRemovedParts(TLObject, TLStructuredTypePart, Object)
+	 */
+	private void checkRemovedParts() {
+		TLObject object = getObject();
+		if (object == null || !isChanged()) {
+			return;
+		}
+		DeleteRight.checkRemovedParts(object, getAttribute(),
+			AbstractStorageBase.toPersistentValue(getCorrectValues()));
 	}
 
 	/**

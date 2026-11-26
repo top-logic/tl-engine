@@ -191,10 +191,21 @@ public interface SecurityContext {
 	 * additionally bounded by the policy's {@code <background-allowlist>}.
 	 *
 	 * <p>
-	 * Read by the parts that have to <em>explain</em> the ceiling rather than apply it - the
-	 * capability notice in the system prompt - so that a run which lost a capability to the allowlist
-	 * does not report it as a right the user lacks. The default is {@code false}: a context that says
-	 * nothing about this is an attended one.
+	 * Must agree with the ceiling: a context that applies the allowlist answers {@code true}, also a
+	 * context that became a background run after it was built ({@link #withBackgroundCeiling()}).
+	 * </p>
+	 *
+	 * <p>
+	 * Two kinds of code read it. The parts that <em>explain</em> the ceiling - the capability notice
+	 * in the system prompt - so that a run which lost a capability to the allowlist does not report it
+	 * as a right the user lacks. And code that would start a run which the allowlist cannot bound:
+	 * {@code chatStart} refuses in a background run ({@link RunSecurityBinding#executesBackgroundRun()}),
+	 * because the chat run would be attended and therefore wider than the run that starts it. A wrong
+	 * {@code false} therefore opens a way past the allowlist.
+	 * </p>
+	 *
+	 * <p>
+	 * The default is {@code false}: a context that says nothing about this is an attended one.
 	 * </p>
 	 */
 	default boolean isBackgroundRun() {

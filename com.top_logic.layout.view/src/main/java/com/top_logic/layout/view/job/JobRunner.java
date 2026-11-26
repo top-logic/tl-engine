@@ -16,11 +16,14 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.view.channel.ChannelPublisher;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.util.ActingPerson;
 import com.top_logic.util.error.ErrorHandlingHelper;
 import com.top_logic.util.error.TopLogicException;
 
@@ -41,6 +44,11 @@ import com.top_logic.util.error.TopLogicException;
  * of the window the job belongs to. Writing the channel, the controls that update from it and the
  * updates delivered to the browser are thus serialized against the requests of the same session
  * exactly like a command is, and the body never waits for the display.
+ * </p>
+ *
+ * <p>
+ * The job acts for the {@link ActingPerson} of the request that started it, until it ends: its body,
+ * and the snapshots with the work that follows the job, also when the window is gone meanwhile.
  * </p>
  *
  * <p>
@@ -114,6 +122,11 @@ public class JobRunner implements JobControl, JobMonitor {
 	 */
 	private final SubSessionContext _subSession;
 
+	/**
+	 * The {@link ActingPerson} of the request that started the job, <code>null</code> for none.
+	 */
+	private final Person _actingPerson;
+
 	/** Guards everything the snapshot is built from. */
 	private final Object _lock = new Object();
 
@@ -152,7 +165,7 @@ public class JobRunner implements JobControl, JobMonitor {
 	 *
 	 * <p>
 	 * Called from the request that starts the job, whose sub-session the job publishes in and runs
-	 * in a sub-session derived from.
+	 * in a sub-session derived from, and whose {@link ActingPerson} the job acts for.
 	 * </p>
 	 *
 	 * @param context
@@ -180,6 +193,7 @@ public class JobRunner implements JobControl, JobMonitor {
 		_cancelable = cancelable;
 		_onFinished = onFinished;
 		_subSession = ThreadContextManager.getSubSession();
+		_actingPerson = ActingPerson.handOver();
 		_publisher = new ChannelPublisher(context, updateInterval, value -> apply((JobState) value), true);
 	}
 
@@ -207,7 +221,7 @@ public class JobRunner implements JobControl, JobMonitor {
 	}
 
 	private void work(JobBody body, List<Object> arguments) {
-		try {
+		try (ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(_actingPerson)) {
 			SubSessionContext subSession = _subSession;
 			if (subSession == null) {
 				run(body, arguments);
@@ -491,16 +505,18 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * </p>
 	 */
 	private void apply(JobState state) {
-		try {
-			_target.set(state);
-		} finally {
-			if (state.isFinished()) {
-				try {
-					if (_onFinished != null) {
-						_onFinished.accept(state);
+		try (ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(_actingPerson)) {
+			try {
+				_target.set(state);
+			} finally {
+				if (state.isFinished()) {
+					try {
+						if (_onFinished != null) {
+							_onFinished.accept(state);
+						}
+					} finally {
+						_publisher.close();
 					}
-				} finally {
-					_publisher.close();
 				}
 			}
 		}

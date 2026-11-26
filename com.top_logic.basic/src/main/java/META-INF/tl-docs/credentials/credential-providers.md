@@ -207,13 +207,13 @@ The providers above send credentials of the application: all persons use the sam
 A personal provider asks `ActingPerson.require()` (package `com.top_logic.util` of `tl-core`) for the acting person. The engine names an acting person in two cases only:
 
 1. The person is present: a request from the browser window of a signed-in person. This is a command, the load of a view and the change of a field, in the React and in the classic user interface. A script that runs within such a request belongs to it, for example `aiAgentChat`.
-2. A present person started the run: a chat run with a message of the person, an `aiAgentChatAsync` run and an `aiResearch` run started in a request of the person, a detached subagent of such a run, and the turn that a finished subagent starts for its lead. This turn acts for the person of the last message in the window only if each subagent whose news it reads was started for this person.
+2. A present person started the run: a chat run with a message of the person, an `aiAgentChatAsync` run and an `aiResearch` run started in a request of the person, a background job that a request of the person starts in its window (a job of a view with the work that follows it, the task of the progress dialog of the classic user interface), a detached subagent of such a run, and the turn that a finished subagent starts for its lead. This turn acts for the person of the last message in the window only if each subagent whose news it reads was started for this person.
 
 A run takes over the acting person of the place that starts it. If that place has no acting person, the run has none.
 
 The second case ends:
 
-- with the end of the run. The run acts for the person also in the background: after the window is closed, after a sign-out and after the session timed out. The person stops the run with the stop button of the chat or with `aiAgentRunCancel`.
+- with the end of the run. The run acts for the person also in the background: after the window is closed, after a sign-out and after the session timed out. The person stops the run with the stop button of the chat, with `aiAgentRunCancel`, or with the cancel button of a job.
 - when the account of the person is locked or deleted. `require()` reads the newest committed version of the account at each call, so the next call of the run has no acting person. On another node of a cluster, a lock or delete takes effect after the next refetch of that node.
 
 No acting person exists:
@@ -222,7 +222,6 @@ No acting person exists:
 - in a scheduled task, also with `approval-mode="MANUAL"`,
 - in a request to the MCP, A2A or OpenAPI endpoint of the application,
 - in each run that one of these starts, for example an `aiResearch` run of a scheduled script task or a subagent of a scheduled run,
-- in a background job of a window: a job of a view and the progress dialog of the classic user interface,
 - for the anonymous account, because all visitors share it.
 
 A call in which another account acts than the acting person gets no credentials of the person, for example a step of a command in a system context or in `TLContextManager.inPersonContext`. Without an acting person, `require()` throws a `TopLogicException` with one of three reasons: no account acts; no present person started the run, or the account is locked or deleted; another account acts than the acting person.

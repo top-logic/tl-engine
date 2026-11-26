@@ -21,8 +21,10 @@ import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.WindowScope;
@@ -39,6 +41,7 @@ import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.ActingPerson;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -129,7 +132,8 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 	 * interface in any way. The method is executed in a sub-session derived from the sub-session of
 	 * the thread that opened the dialog (see
 	 * {@link ThreadContextManager#inDerivedContext(SubSessionContext, InContext)}).
-	 * All actions are performed on behalf of the user owning that thread.
+	 * All actions are performed on behalf of the user owning that thread. The task acts for the
+	 * {@link ActingPerson} of that thread until it ends, also when the window is closed meanwhile.
 	 * </p>
 	 * 
 	 * <p>
@@ -214,11 +218,20 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 		}
 		_state = State.RUNNING;
 		_active = true;
-		SubSessionContext subSession = ThreadContextManager.getSubSession();
-		SchedulerService.getInstance().execute(() -> runTask(subSession));
+		startTask();
 		scheduleUpdate();
 	
 		return result;
+	}
+
+	/**
+	 * Starts {@link #run(I18NLog)} on a worker thread, in a sub-session derived from the current
+	 * one and for the {@link ActingPerson} of the current thread.
+	 */
+	final void startTask() {
+		SubSessionContext subSession = ThreadContextManager.getSubSession();
+		Person actingPerson = ActingPerson.handOver();
+		SchedulerService.getInstance().execute(() -> runTask(subSession, actingPerson));
 	}
 
 	private boolean isAutoProgress() {
@@ -270,9 +283,11 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 		return _state;
 	}
 
-	private void runTask(SubSessionContext subSession) {
+	private void runTask(SubSessionContext subSession, Person actingPerson) {
 		try {
-			ThreadContextManager.inDerivedContext(subSession, this::runTaskInContext);
+			try (ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(actingPerson)) {
+				ThreadContextManager.inDerivedContext(subSession, this::runTaskInContext);
+			}
 
 			// Task may have been canceled but it was not detected.
 			if (_state == State.RUNNING) {

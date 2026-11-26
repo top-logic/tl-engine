@@ -28,8 +28,10 @@ import com.top_logic.util.error.TopLogicException;
  * interface. A script that runs within such a request belongs to it.</li>
  * <li>A present person started the run: a chat run with a message of the person, an
  * <code>aiAgentChatAsync</code> run and an <code>aiResearch</code> run started in a request of the
- * person, a detached subagent of such a run, and the turn that a finished subagent starts for its
- * lead if each subagent whose news it reads was started for the person.</li>
+ * person, a background job that a request of the person starts in its window (a job of a view, the
+ * task of the progress dialog of the classic user interface), a detached subagent of such a run,
+ * and the turn that a finished subagent starts for its lead if each subagent whose news it reads was
+ * started for the person.</li>
  * </ul>
  *
  * <p>
@@ -41,9 +43,7 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * No acting person exists in a system context, in a scheduled task, in a request to an endpoint of
  * the application for MCP, A2A or the <code>OpenAPI</code> server, and in each run that one of these
- * starts. The anonymous account is never an acting person, because all visitors share it. A
- * background job of a window (a job of a view, the progress dialog of the classic user interface)
- * has no acting person either.
+ * starts. The anonymous account is never an acting person, because all visitors share it.
  * </p>
  *
  * <p>

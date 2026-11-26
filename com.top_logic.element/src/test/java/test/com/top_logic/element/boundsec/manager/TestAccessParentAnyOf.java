@@ -108,6 +108,8 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 
 	private static final String SESSION = MODULE + ":Session";
 
+	private static final String BARE_PART = MODULE + ":BarePart";
+
 	private static final String ROLE_SESSION_OWNER = MODULE + ".SessionOwner";
 
 	private static final String ROLE_DOC_READER = MODULE + ".DocReader";
@@ -176,6 +178,8 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 
 	private TLObject _direct;
 
+	private TLObject _barePart;
+
 	private final List<TLObject> _created = new ArrayList<>();
 
 	@Override
@@ -216,6 +220,8 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 			_folder.tUpdateByName("singles", List.of(_single));
 			_direct = create(DIRECT);
 			_folder.tUpdateByName("directs", List.of(_direct));
+			_barePart = create(BARE_PART);
+			_folder.tUpdateByName("bareParts", List.of(_barePart));
 
 			_document = create(DOCUMENT);
 			_document.tUpdateByName("reader", _docReader);
@@ -847,6 +853,31 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		assertTrue(rights().getAccessibleTypes(_rootDocReader, SimpleBoundCommandGroup.READ).contains(type(SESSION)));
 		assertFalse("Write is not delegated, and the own grants are not held on the security root.",
 			rights().getAccessibleTypes(_rootDocReader, SimpleBoundCommandGroup.WRITE).contains(type(SESSION)));
+	}
+
+	/**
+	 * The object itself as candidate admits nobody when its type has no grants: the access parent
+	 * decides as if it were the only candidate.
+	 */
+	public void testSelfCandidateWithoutGrantsEqualsDirect() {
+		for (BoundCommandGroup operation : rights().getObjectOperations(_direct).getOperations()) {
+			for (Person person : persons()) {
+				assertEquals(operation.getID() + " for " + person.getName(),
+					allowed(person, _direct, operation), allowed(person, _barePart, operation));
+			}
+		}
+		for (Person person : persons()) {
+			assertEquals(person.getName(),
+				rights().isAllowedCreate(person, _folder, type(FOLDER).getPart("directs"), type(DIRECT)),
+				rights().isAllowedCreate(person, _folder, type(FOLDER).getPart("bareParts"), type(BARE_PART)));
+			assertEquals(person.getName(),
+				rights().isAllowedCreate(person, type(DIRECT), _folder),
+				rights().isAllowedCreate(person, type(BARE_PART), _folder));
+		}
+		assertTrue(allowed(_folderOwner, _barePart, SimpleBoundCommandGroup.WRITE));
+		assertTrue(allowed(_folderReader, _barePart, SimpleBoundCommandGroup.READ));
+		assertFalse(allowed(_folderReader, _barePart, SimpleBoundCommandGroup.WRITE));
+		assertFalse(allowed(_other, _barePart, SimpleBoundCommandGroup.READ));
 	}
 
 	private TLObject createSession(TLObject subject) {

@@ -928,6 +928,15 @@
 							roles="TestAccessParentAnyOf.DocReader"
 						/>
 					</class>
+					<!-- Without grants, the object itself admits nobody: the folder decides as for Direct. -->
+					<class name="TestAccessParentAnyOf:BarePart">
+						<access-parent>
+							<any-of>
+								<self/>
+								<container/>
+							</any-of>
+						</access-parent>
+					</class>
 					<!-- The own grants decide together with the subject, which decides Read only. -->
 					<class name="TestAccessParentAnyOf:Session">
 						<access-parent>

@@ -44,6 +44,11 @@
 							multiple="true"
 							type="SelfPart"
 						/>
+						<reference name="bareParts"
+							composite="true"
+							multiple="true"
+							type="BarePart"
+						/>
 					</attributes>
 				</class>
 
@@ -221,6 +226,9 @@
 
 				<!-- Decides itself beside its folder, with a grant but without a role rule. -->
 				<class name="SelfPart"/>
+
+				<!-- Names itself as candidate beside its folder, without any grant. -->
+				<class name="BarePart"/>
 
 				<!-- Role rule and grants: the owner may read and write it; delegates Read to its subject in addition. -->
 				<class name="Session">

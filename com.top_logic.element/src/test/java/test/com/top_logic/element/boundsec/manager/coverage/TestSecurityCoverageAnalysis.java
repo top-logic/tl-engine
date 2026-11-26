@@ -622,6 +622,18 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		assertEquals(SimpleBoundCommandGroup.READ, finding.getOperation());
 	}
 
+	/**
+	 * A type naming itself as candidate of an access parent without having any grant is delegated
+	 * completely, as if the access parent were its only candidate.
+	 */
+	public void testSelfCandidateWithoutGrants() {
+		TypeCoverage bare = coverage("TestAccessParentAnyOf:BarePart");
+		TypeCoverage direct = coverage("TestAccessParentAnyOf:Direct");
+		assertEquals(bare.toString(), direct.status(), bare.status());
+		assertEquals(bare.toString(), CoverageStatus.DELEGATED, bare.status());
+		assertTrue("No finding: " + bare, bare.findings().isEmpty());
+	}
+
 	private TypeCoverage coverage(String qualifiedTypeName) {
 		TypeCoverage result = _coverage.get(qualifiedTypeName);
 		assertNotNull("No coverage computed for '" + qualifiedTypeName + "'.", result);

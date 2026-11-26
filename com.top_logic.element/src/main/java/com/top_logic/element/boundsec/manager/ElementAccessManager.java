@@ -8,6 +8,7 @@ package com.top_logic.element.boundsec.manager;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +22,19 @@ import java.util.stream.Collectors;
 import javax.xml.stream.XMLStreamException;
 
 import com.top_logic.base.services.InitialRolesManager;
+import com.top_logic.basic.TLID;
+import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.element.boundsec.manager.rule.PathNavigation;
+import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.model.export.PreloadContext;
+import com.top_logic.element.boundsec.manager.rule.RuleHistory;
+import com.top_logic.element.boundsec.manager.rule.config.HistoryMode;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLType;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import java.util.function.Predicate;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
@@ -166,6 +180,18 @@ public class ElementAccessManager extends AccessManager {
 	/** Key to store the current version of the role rule definition in the database. */
 	private static final String ROLE_RULES_CONFIG_VERSION_PROPERTY = "roleRules.version";
 
+	/**
+	 * Suffix of the stored version of the rule definitions that identifies which entries the rules
+	 * produce in a security storage.
+	 *
+	 * <p>
+	 * Whenever a change of the engine lets unchanged rules produce other entries, this value is
+	 * changed. The stored version then differs from the computed one at the first startup with the
+	 * new engine, which lets a security storage be rebuilt once.
+	 * </p>
+	 */
+	private static final String STORAGE_CONTENT_VERSION = ":2";
+
 	/** Key to store the current version of the role parents definition in the database. */
 	private static final String SECURITY_PARENTS_CONFIG_VERSION_PROPERTY = "security-parents.version";
 
@@ -262,6 +288,12 @@ public class ElementAccessManager extends AccessManager {
 	private Map<TLClass, Collection<NavigationRule>> _resolvedSecurityParents = Collections.emptyMap();
 
 	private Map<TLClass, TLModule> _securityModuleByClass;
+
+	/** Properties derived from the loaded rules. */
+	private volatile RuleAnalysis _analysis = RuleAnalysis.EMPTY;
+
+	/** The roles granted by some role rule. */
+	private Set<BoundRole> _ruleRoles = Collections.emptySet();
 
     /** Flag indicating that storage/cache based subclasses should refresh their storage/cache. */
     protected boolean dirty = false;
@@ -382,6 +414,7 @@ public class ElementAccessManager extends AccessManager {
 	private boolean loadInitialRules() {
 		boolean securityParentsresult = loadSecurityParentRules();
 		boolean roleRuleResult = loadInitialRoleRules();
+		_analysis = new RuleAnalysis(_resolvedMERules, _resolvedSecurityParents);
 		return roleRuleResult && securityParentsresult;
 	}
 
@@ -463,7 +496,7 @@ public class ElementAccessManager extends AccessManager {
 			try (ConfigurationWriter w = new ConfigurationWriter(out)) {
 				w.write(rootTag, staticType, item);
 			}
-			configVersion = String.valueOf(out.toString().hashCode());
+			configVersion = out.toString().hashCode() + STORAGE_CONTENT_VERSION;
 		} catch (XMLStreamException ex) {
 			configVersion = String.valueOf(System.currentTimeMillis());
 		}
@@ -512,8 +545,10 @@ public class ElementAccessManager extends AccessManager {
         this.rules            = theRules;
         this.ruleIds          = new HashMap<>();
         this.ruleNumbers      = new BidiHashMap();
+		Set<BoundRole> ruleRoles = new HashSet<>();
 		for (Collection<RoleProvider> theRuleColl : theRules.values()) {
 			for (RoleProvider theRule : theRuleColl) {
+				ruleRoles.add(theRule.getRole());
                 String   theId   = theRule.getId();
                 if (this.ruleIds.containsKey(theId)) {
 					throw new TopLogicException(I18NConstants.ERROR_DUPLICATE_RULE_ID__ID.fill(theId));
@@ -528,7 +563,16 @@ public class ElementAccessManager extends AccessManager {
             String theRuleId = theIds.get(i);
 			this.ruleNumbers.put(theRuleId, i);
         }
+		_ruleRoles = ruleRoles;
     }
+
+	/**
+	 * Properties derived from the loaded rules: which rules are not stored, and which roles may be
+	 * held beyond the entries of a security storage.
+	 */
+	public RuleAnalysis getRuleAnalysis() {
+		return _analysis;
+	}
 
 	/**
 	 * The number under which the given rule is stored in the security storage.
@@ -695,12 +739,98 @@ public class ElementAccessManager extends AccessManager {
 		}
 		Set<TLObject> out = new HashSet<>();
 		if (object.tType() instanceof TLClass type) {
-			getRoleParentRules(type).forEach(rule -> rule.getContent(object, out));
+			for (NavigationRule rule : getRoleParentRules(type)) {
+				if (rule.getHistory().getMode() == HistoryMode.ANCHORED) {
+					// The parents of such a rule give their roles only to the groups the object is
+					// anchored for, see getEffectiveGroups(BoundObject, BoundRole).
+					continue;
+				}
+				rule.getRoleParents(object, out);
+			}
 		}
 		return out.stream()
 			.filter(BoundObject.class::isInstance)
 			.map(BoundObject.class::cast)
 			.toList();
+	}
+
+	/**
+	 * Loads the values the rules navigate first when the given objects are checked, with one
+	 * request per reference instead of one request per object.
+	 *
+	 * <p>
+	 * For a historic version, these are the first steps of the role parent rules and role rules
+	 * navigated in the version. For a current object, these are the first steps of the role parent
+	 * rules.
+	 * </p>
+	 *
+	 * @param context
+	 *        Keeps the loaded values. It must stay open until the objects are checked.
+	 * @param objects
+	 *        The objects that are checked next.
+	 * @param currentObjects
+	 *        Whether to load the values for the current objects among the given objects, too.
+	 */
+	protected final void preloadRuleNavigation(PreloadContext context, Collection<? extends BoundObject> objects,
+			boolean currentObjects) {
+		Map<TLClass, List<TLObject>> versions = new HashMap<>();
+		Map<TLClass, List<TLObject>> current = new HashMap<>();
+		for (BoundObject object : objects) {
+			if (!object.tValid() || !(object.tType() instanceof TLClass type)) {
+				continue;
+			}
+			if (RuleHistory.isHistoric(object)) {
+				versions.computeIfAbsent(type, x -> new ArrayList<>()).add(object);
+			} else if (currentObjects) {
+				current.computeIfAbsent(type, x -> new ArrayList<>()).add(object);
+			}
+		}
+		for (Map.Entry<TLClass, List<TLObject>> entry : versions.entrySet()) {
+			preloadFirstSteps(context, entry.getKey(), entry.getValue(), true);
+		}
+		for (Map.Entry<TLClass, List<TLObject>> entry : current.entrySet()) {
+			preloadFirstSteps(context, entry.getKey(), entry.getValue(), false);
+		}
+	}
+
+	private void preloadFirstSteps(PreloadContext context, TLClass type, List<TLObject> objects, boolean historic) {
+		if (objects.size() < 2) {
+			return;
+		}
+		Set<Object> loaded = new HashSet<>();
+		for (NavigationRule rule : getRoleParentRules(type)) {
+			HistoryMode mode = rule.getHistory().getMode();
+			if (mode == HistoryMode.ANCHORED || (historic && mode == HistoryMode.CURRENT)) {
+				// Navigated only for an open gate, or in the current data.
+				continue;
+			}
+			preloadFirstStep(context, objects, rule.getPath(), loaded);
+		}
+		if (historic) {
+			for (RoleProvider provider : getRules(type)) {
+				if (provider instanceof RoleRule rule && rule.getHistory().getMode() == HistoryMode.HISTORIC) {
+					preloadFirstStep(context, objects, rule.getPath(), loaded);
+				}
+			}
+		}
+	}
+
+	private static void preloadFirstStep(PreloadContext context, List<TLObject> objects, List<PathElement> path,
+			Set<Object> loaded) {
+		if (path.isEmpty() || !(path.get(0) instanceof PathNavigation step)) {
+			return;
+		}
+		TLReference reference = step.getReference();
+		if (!loaded.add(Arrays.asList(reference, Boolean.valueOf(step.isInverse())))) {
+			return;
+		}
+		if (step.isInverse()) {
+			if (step.isBackwardsNavigable()) {
+				MetaElementUtil.reversePreloadAttribute(context, objects, reference);
+			}
+		} else {
+			MetaElementUtil.preloadAttribute(context, objects, reference);
+		}
 	}
 
     /**
@@ -713,65 +843,305 @@ public class ElementAccessManager extends AccessManager {
     @Override
 	public Set<? extends BoundRole> getRoles(Person aPerson, BoundObject context) {
 		Set<BoundRole> result = new HashSet<>(super.getRoles(aPerson, context));
-        Collection<Group> theGroups = getGroups(aPerson);
 		if (context != null) {
-			addRoleProviderRoles(theGroups, context, result);
-			BoundHelper.collectAllSecurityParents(context,
-				secParent -> addRoleProviderRoles(theGroups, secParent, result));
+			Collection<Group> theGroups = getGroups(aPerson);
+			for (BoundRole role : _ruleRoles) {
+				if (!result.contains(role) && CollectionUtil.containsAny(theGroups, getEffectiveGroups(context, role))) {
+					result.add(role);
+				}
+			}
 		}
 		return result;
     }
 
-	private void addRoleProviderRoles(Collection<Group> groups, BoundObject context, Set<BoundRole> result) {
-		addRoleProviderRoles(getRules((TLClass) context.tType()), groups, context, result);
+	/**
+	 * The groups that have the given role on the given object, either through role rules or through
+	 * direct role assignments.
+	 *
+	 * <p>
+	 * The object may be a historic version. Roles inherited from role parents are not included, see
+	 * {@link #getEffectiveGroups(BoundObject, BoundRole)}.
+	 * </p>
+	 *
+	 * @return The groups. Must not be modified.
+	 */
+	public Collection<Group> getGroups(BoundObject aBO, BoundRole aRole) {
+		if (!(aBO instanceof Wrapper wrapper) || aRole == null) {
+			return Collections.emptySet();
+		}
+		return RoleQuestions.ask(wrapper.tKnowledgeBase(), useRoleMemo(),
+			new RoleQuestion(false, wrapper.tId(), aRole.getID()), Collections.<Group> emptySet(),
+			() -> computeGroups(wrapper, aRole));
 	}
 
-    /**
-     * The groups that have the given role on the given object, either through role rules or
-     * through direct role assignments.
-     */
-    public Collection<Group> getGroups(BoundObject aBO, BoundRole aRole) {
-		Object getGroupCacheKey;
-        if (isInCacheMode()) {
-			getGroupCacheKey = new TupleFactory.Pair<>(aBO.getID(), aRole.getID());
-			Collection<Group> theResult = getGroupsCache.get(getGroupCacheKey);
-            if (theResult != null) return theResult;
+	/**
+	 * The groups that have the given role on the given object: through role rules, through direct
+	 * role assignments, or by inheriting the role from a role parent of the object.
+	 *
+	 * <p>
+	 * The object may be a historic version. For each rule, its history mode selects the data it is
+	 * evaluated on. A role parent passes on the roles it holds and the roles it inherits itself.
+	 * </p>
+	 *
+	 * @return The groups. Must not be modified.
+	 */
+	public Set<Group> getEffectiveGroups(BoundObject object, BoundRole role) {
+		if (!(object instanceof Wrapper wrapper) || role == null) {
+			return Collections.emptySet();
+		}
+		return RoleQuestions.ask(wrapper.tKnowledgeBase(), useRoleMemo(),
+			new RoleQuestion(true, wrapper.tId(), role.getID()), Collections.<Group> emptySet(),
+			() -> computeEffectiveGroups(wrapper, (BoundObject) wrapper, role));
+	}
+
+	private Set<Group> computeEffectiveGroups(Wrapper wrapper, BoundObject object, BoundRole role) {
+		Set<Group> result = new HashSet<>(getGroups(object, role));
+		for (BoundObject parent : object.getSecurityParents()) {
+			result.addAll(getEffectiveGroups(parent, role));
+		}
+		if (wrapper.tValid() && RuleHistory.isHistoric(wrapper) && wrapper.tType() instanceof TLClass type
+			&& _analysis.hasAnchoredRoleParents(type)) {
+			for (NavigationRule rule : getRoleParentRules(type)) {
+				if (rule.getHistory().getMode() != HistoryMode.ANCHORED) {
+					continue;
+				}
+				Set<TLObject> parents = new HashSet<>();
+				rule.getRoleParents(wrapper, parents);
+				Set<Group> pathGroups = new HashSet<>();
+				for (TLObject parent : parents) {
+					if (parent instanceof BoundObject roleParent) {
+						pathGroups.addAll(getEffectiveGroups(roleParent, role));
+					}
+				}
+				result.addAll(anchoredGroups(wrapper, pathGroups, rule.getHistory().getAnchors()));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Whether answers about roles may be kept for the current interaction.
+	 */
+	protected boolean useRoleMemo() {
+		return !isInCacheMode();
+	}
+
+	/**
+	 * Computes {@link #getGroups(BoundObject, BoundRole)} by evaluating the rules.
+	 */
+	protected Set<Group> computeGroups(Wrapper wrapper, BoundRole role) {
+		boolean useCache = isInCacheMode() && !RuleHistory.isHistoric(wrapper);
+		Object cacheKey = null;
+		if (useCache) {
+			cacheKey = new TupleFactory.Pair<>(((BoundObject) wrapper).getID(), role.getID());
+			Collection<Group> cached = getGroupsCache.get(cacheKey);
+			if (cached != null) {
+				return cached instanceof Set ? (Set<Group>) cached : new HashSet<>(cached);
+			}
+		}
+		Set<Group> result = new HashSet<>();
+		addRuleGroups(result, wrapper, role, rule -> true);
+		addDirectGroups(result, wrapper, role);
+		if (useCache) {
+			getGroupsCache.put(cacheKey, ElementAccessHelper.shrink(result));
+		}
+		return result;
+	}
+
+	/**
+	 * Adds the groups the role rules accepted by the given filter grant the given role to on the
+	 * given object.
+	 */
+	protected final void addRuleGroups(Set<Group> result, Wrapper wrapper, BoundRole role,
+			Predicate<? super RoleRule> filter) {
+		for (Collection<RoleProvider> theRules : this.rules.values()) {
+			for (RoleProvider provider : theRules) {
+				RoleRule rule = (RoleRule) provider;
+				if (!rule.getRole().equals(role) || !filter.test(rule)) {
+					continue;
+				}
+				result.addAll(rule.getGroupsFor(wrapper));
+			}
+		}
+	}
+
+	/**
+	 * Adds the groups the given role is directly assigned to on the given object.
+	 */
+	protected final void addDirectGroups(Set<Group> result, Wrapper wrapper, BoundRole role) {
+		try {
+			handleDirectHasRole(role, result, wrapper);
+		} catch (Exception e) {
+			Logger.error("Failed to get direct hasRole associations.", e, this);
+		}
+	}
+
+	/**
+	 * The groups that receive a role from a rule with mode {@link HistoryMode#ANCHORED} on the given
+	 * historic version.
+	 *
+	 * @param version
+	 *        The historic version the rule is evaluated for.
+	 * @param pathGroups
+	 *        The groups the path of the rule leads to.
+	 * @param anchors
+	 *        The anchor references of the rule.
+	 * @return The path groups and gate groups for which path and gate agree, see
+	 *         {@link GateGroups#restrict(Collection)}.
+	 */
+	public Set<Group> anchoredGroups(TLObject version, Collection<Group> pathGroups, List<TLReference> anchors) {
+		if (pathGroups.isEmpty() || !RuleHistory.isHistoric(version)) {
+			return Collections.emptySet();
+		}
+		return getGate(version, anchors).restrict(pathGroups);
+	}
+
+	/**
+	 * The groups the given historic version is anchored for through the given anchor references.
+	 *
+	 * <p>
+	 * A version is covered by a current object referring to exactly this version, or to the version
+	 * of one of its containers in the same revision. The search therefore walks up the containers
+	 * of the version.
+	 * </p>
+	 */
+	public GateGroups getGate(TLObject version, List<TLReference> anchors) {
+		GateGroups gate = GateGroups.NONE;
+		Set<TLObject> seen = new HashSet<>();
+		TLObject element = version;
+		while (element != null && seen.add(element)) {
+			for (TLReference anchor : anchors) {
+				if (canReferTo(anchor, element)) {
+					gate = gate.union(getGate(element, anchor));
+				}
+			}
+			element = element.tContainer();
+		}
+		return gate;
+	}
+
+	private static boolean canReferTo(TLReference anchor, TLObject target) {
+		TLType targetType = anchor.getType();
+		return !(targetType instanceof TLClass) || TLModelUtil.isCompatibleInstance(targetType, target);
+	}
+
+	private GateGroups getGate(TLObject element, TLReference anchor) {
+		return RoleQuestions.ask(element.tKnowledgeBase(), useRoleMemo(),
+			new GateQuestion(element.tId(), anchor.tId()), GateGroups.NONE, () -> computeGate(element, anchor));
+	}
+
+	private GateGroups computeGate(TLObject element, TLReference anchor) {
+		if (!PathNavigation.isBackwardsNavigable(anchor)) {
+			return GateGroups.NONE;
+		}
+		GateGroups gate = GateGroups.NONE;
+		for (TLObject owner : element.tReferers(anchor)) {
+			if (RuleHistory.isHistoric(owner) || !owner.tValid()) {
+				continue;
+			}
+			gate = gate.union(readersOf(owner, anchor));
+		}
+		return gate;
+	}
+
+	/**
+	 * The groups that may read the value of the given reference on the given current object.
+	 */
+	private GateGroups readersOf(TLObject owner, TLReference reference) {
+		if (!(owner.tType() instanceof TLClass type)) {
+			return GateGroups.NONE;
+		}
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		if (rights.isWithoutSecurity(type)) {
+			return GateGroups.EVERYBODY;
+		}
+		Set<BoundedRole> roles;
+		if (rights.hasGrant(type, reference, SimpleBoundCommandGroup.READ)) {
+			// The grants of the attribute replace the grants of the type for this attribute.
+			roles = rights.getAllowedRoles(type, reference, SimpleBoundCommandGroup.READ);
 		} else {
-			getGroupCacheKey = null;
-        }
-        Set<Group> theResult = new HashSet<>();
-        if (aBO instanceof Wrapper) {
-        	Wrapper theWrapper = (Wrapper) aBO;
-        	// first handle rules
-			for (Collection<RoleProvider> theRules : this.rules.values()) {
-				for (Iterator<RoleProvider> theRuleIt = theRules.iterator(); theRuleIt.hasNext();) {
-	                RoleRule theRule = (RoleRule) theRuleIt.next();
-	                if ( ! theRule.getRole().equals(aRole)) { // had handling of "any role"
-	                    continue;
-	                }
-					theResult.addAll(theRule.getGroupsFor(theWrapper));
-	            }
-	        }
-	        
-	        // handle hasRole association
-	        try {
-	            handleDirectHasRole(aRole, theResult, theWrapper);
-	        }
-	        catch (Exception e) {
-	            Logger.error("Failed to get direct hasRole associations.", e, this);
-	        }
-        }
-        if (isInCacheMode()) {
-			getGroupsCache.put(getGroupCacheKey, ElementAccessHelper.shrink(theResult));
-        }
-        return theResult;
-    }
+			roles = rights.getAdmittingRoles(owner, SimpleBoundCommandGroup.READ);
+		}
+		if (roles.isEmpty()) {
+			return GateGroups.NONE;
+		}
+		// An access parent may lead to several objects: a role on any of them admits the reader.
+		Set<Group> groups = new HashSet<>();
+		for (TLObject roleHolder : rights.getRoleHolders(owner, SimpleBoundCommandGroup.READ)) {
+			if (!(roleHolder instanceof BoundObject holder)) {
+				continue;
+			}
+			for (BoundedRole role : roles) {
+				groups.addAll(getEffectiveGroups(holder, role));
+			}
+		}
+		return GateGroups.of(groups);
+	}
+
+	/**
+	 * Decides like {@link #hasRole(Person, BoundObject, Collection)} was decided before roles could
+	 * depend on the version of an object: The role parents are those of the given version, but each
+	 * object is asked for the roles of its identity, i.e. of its current object.
+	 */
+	@Override
+	protected boolean internalHasRoleOfIdentity(Person person, BoundObject object,
+			Collection<? extends BoundRole> roles) {
+		List<BoundObject> holders = new ArrayList<>();
+		holders.add(object);
+		BoundHelper.collectAllSecurityParents(object, holders::add);
+		Collection<Group> personGroups = getGroups(person);
+		for (BoundObject holder : holders) {
+			BoundObject current =
+				holder instanceof Wrapper version ? (BoundObject) WrapperHistoryUtils.getCurrent(version) : holder;
+			if (current == null) {
+				continue;
+			}
+			for (BoundRole role : roles) {
+				if (CollectionUtil.containsAny(personGroups, getGroups(current, role))) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Key of the question which groups hold a role on an object.
+	 *
+	 * @param inherited
+	 *        Whether the roles inherited from role parents are included.
+	 * @param object
+	 *        The object, including its revision.
+	 * @param role
+	 *        The identifier of the role.
+	 */
+	private record RoleQuestion(boolean inherited, ObjectKey object, TLID role) {
+		// Pure value.
+	}
+
+	/**
+	 * Key of the question for which groups a current object referring to exactly the given version
+	 * through the given reference opens the gate.
+	 *
+	 * @param element
+	 *        The historic version, including its revision.
+	 * @param anchor
+	 *        The anchor reference.
+	 */
+	private record GateQuestion(ObjectKey element, ObjectKey anchor) {
+		// Pure value.
+	}
 
 	/**
 	 * Checks the direct has role associations.
 	 */
 	protected void handleDirectHasRole(BoundRole role, Set<Group> result, Wrapper wrapper) throws Exception {
-		try (CloseableIterator<KnowledgeObject> theIt = BoundedRole.roleAssignmentsForContext(wrapper.tHandle())) {
+		// A role assignment holds for each version of the object, it is found at the current object.
+		Wrapper holder = RuleHistory.isHistoric(wrapper) ? WrapperHistoryUtils.getCurrent(wrapper) : wrapper;
+		if (holder == null) {
+			return;
+		}
+		try (CloseableIterator<KnowledgeObject> theIt = BoundedRole.roleAssignmentsForContext(holder.tHandle())) {
 			while (theIt.hasNext()) {
 				KnowledgeObject theKA = theIt.next();
 				Wrapper theDestination =

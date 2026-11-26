@@ -7,6 +7,8 @@ package com.top_logic.ai.chat.view;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Proxy;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +18,9 @@ import jakarta.servlet.http.Part;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -40,9 +44,10 @@ import de.haumacher.msgbuf.data.ReflectiveDataObject;
  * within an interaction of that window.
  *
  * <p>
- * For the tests that pin what a chat command answers - ownership, refusals, what a run is started
+ * For the tests that pin what a chat command answers - access, refusals, what a run is started
  * with - without a browser. The services a chat control reads (the view's column and field
- * services, the session service) have to be in the suite.
+ * services, the session service, and the model-based security that decides the access to a chat:
+ * {@code AccessManager} and {@code SecurityConfigurationService}) have to be in the suite.
  * </p>
  */
 public final class ChatCommandDriver {
@@ -59,9 +64,12 @@ public final class ChatCommandDriver {
 			return getState(key);
 		}
 
-		/** Writes the state again as a render does - what a browser reload of the window causes. */
+		/**
+		 * Writes the state again as a render does - what a browser reload of the window causes -,
+		 * with the security checks on, as a request of a browser window runs.
+		 */
 		public void render() {
-			onBeforeWrite();
+			ThreadContext.withSecurityChecks(true, this::onBeforeWrite);
 		}
 	}
 
@@ -130,16 +138,19 @@ public final class ChatCommandDriver {
 	}
 
 	/**
-	 * Runs the given computation in the driver's window. A window of its own sees what is committed
-	 * now, as the next request of a browser window does.
+	 * Runs the given computation in the driver's window, with the security checks on, as a request
+	 * of a browser window runs. A window of its own sees what is committed now, as the next request
+	 * of a browser window does.
 	 */
 	private <T> T inWindow(ComputationEx2<T, Exception, RuntimeException> job) throws Exception {
+		ComputationEx2<T, Exception, RuntimeException> checked =
+			() -> ThreadContext.<T, Exception, RuntimeException> withSecurityChecks(true, job);
 		if (_subSession == TLContextManager.getSubSession()) {
-			return job.run();
+			return checked.run();
 		}
 		return ThreadContextManager.inContext(_subSession, () -> {
 			HistoryUtils.updateSessionRevision();
-			return job.run();
+			return checked.run();
 		});
 	}
 
@@ -241,9 +252,12 @@ public final class ChatCommandDriver {
 		return control.binding().tracker();
 	}
 
-	/** The files attached to the message being written in the conversation. */
-	public static ChatAttachments attachments(ChatControl control) {
-		return control.binding().attachments();
+	/**
+	 * The files attached to the message being written in the given chat session of the
+	 * conversation; <code>null</code> for the conversation the next send creates.
+	 */
+	public static ChatAttachments attachments(ChatControl control, String sessionId) {
+		return control.binding().attachments(sessionId);
 	}
 
 	/**
@@ -258,12 +272,40 @@ public final class ChatCommandDriver {
 		}));
 	}
 
-	/** Uploads one file to the conversation, as the bridge's upload does, and answers with the reply. */
+	/**
+	 * Reads what the data route of the conversation answers for the given key, as the browser reads
+	 * a transcript; <code>null</code> for a key that names nothing the account may read.
+	 */
+	public BinaryData data(ChatControl control, String key) {
+		return inWindowUnchecked(() -> control.getDownloadData(key));
+	}
+
+	/**
+	 * Uploads one file to the conversation the next send creates, as the bridge's upload does, and
+	 * answers with the reply.
+	 */
 	public Map<String, Object> upload(ChatControl control, String fileName, String contentType, byte[] content) {
-		Part part = filePart(fileName, contentType, content);
+		return upload(control, null, fileName, contentType, content);
+	}
+
+	/**
+	 * Uploads one file to the given chat session of the conversation, as the bridge's upload does,
+	 * and answers with the reply.
+	 *
+	 * @param sessionId
+	 *        The chat the file is attached in; <code>null</code> sends no
+	 *        {@link ChatControl#UPLOAD_SESSION_PART}, which is the conversation the next send creates.
+	 */
+	public Map<String, Object> upload(ChatControl control, String sessionId, String fileName, String contentType,
+			byte[] content) {
+		List<Part> parts = new ArrayList<>();
+		if (sessionId != null) {
+			parts.add(textPart(ChatControl.UPLOAD_SESSION_PART, sessionId));
+		}
+		parts.add(filePart(fileName, contentType, content));
 		return fields(inWindowUnchecked(() -> {
 			try (Interaction interaction = _registry.beginInteraction()) {
-				return control.handleUpload(null, List.of(part));
+				return control.handleUpload(null, parts);
 			}
 		}));
 	}
@@ -284,6 +326,18 @@ public final class ChatCommandDriver {
 			}
 		}
 		return result;
+	}
+
+	/** A multipart part of a form field, as the servlet container hands it to an upload. */
+	private static Part textPart(String name, String value) {
+		byte[] content = value.getBytes(StandardCharsets.UTF_8);
+		return (Part) Proxy.newProxyInstance(Part.class.getClassLoader(), new Class<?>[] { Part.class },
+			(proxy, method, args) -> switch (method.getName()) {
+				case "getName" -> name;
+				case "getSize" -> Long.valueOf(content.length);
+				case "getInputStream" -> new ByteArrayInputStream(content);
+				default -> null;
+			});
 	}
 
 	/** A multipart part of a file, as the servlet container hands it to an upload. */

@@ -11,6 +11,16 @@
 	may create there (canCreate): a project administrator creates every kind, a project member
 	specifications only.
 	
+	"Create baseline" records the deliverables of the project in their current versions: it creates a
+	baseline of the project whose historic reference Baseline#deliverables refers to them. Once the
+	baseline is committed, the command says so and offers to show it: "Show baseline" leads to
+	baselines.view.xml, the display target of a baseline, with the new baseline selected. There the
+	baselines are listed and their reviewers are entered.
+	
+	The deliverable selected in the table is edited in the last pane: its estimate, the readers of
+	its estimate and its sections. What a baseline shows of them to its reviewers is described in
+	baselines.view.xml.
+	
 	Below, the deliverables are edited in place in a composition table of the project. Its Add button
 	stands for the concrete kinds of the abstract Deliverable the user may create in the project: with
 	several of them it opens a menu to choose the kind from, with a single one it adds a row of that
@@ -20,6 +30,7 @@
 	<channels>
 		<channel name="project"/>
 		<channel name="kind"/>
+		<channel name="deliverable"/>
 	</channels>
 
 	<split-panel orientation="vertical">
@@ -63,6 +74,45 @@
 								</with-result>
 							</execute-script>
 						</generic-command>
+						<generic-command
+							image="css:bi bi-bookmark-check"
+							inputs="project"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Create baseline</en>
+								<de>Abnahmestand anlegen</de>
+							</label>
+							<access>
+								<create
+									in="$project"
+									reference="tl.demo.projectManagement:ProjectScope#baselines"
+								/>
+							</access>
+							<executability>
+								<disabled-if expr="if($project == null || $project.get(`tl.demo.projectManagement:ProjectScope#deliverables`).isEmpty(), #('The project has no deliverables.'@en, 'Das Projekt hat keine Liefergegenstände.'@de))"/>
+							</executability>
+							<with-transaction>
+								<execute-script function="{ baseline = new(`tl.demo.projectManagement:Baseline`, $project, transient: false); $baseline.set(`tl.demo.projectManagement:Baseline#name`, 'Baseline ' + dateFormat('yyyy-MM-dd HH:mm').format(now())); $baseline.set(`tl.demo.projectManagement:Baseline#deliverables`, $project.get(`tl.demo.projectManagement:ProjectScope#deliverables`)); $project.add(`tl.demo.projectManagement:ProjectScope#baselines`, $baseline); $baseline; }"/>
+								<with-result as="baseline">
+									<confirm expr="#('The baseline &quot;{0}&quot; was created.'@en, 'Der Abnahmestand „{0}“ wurde angelegt.'@de).fill($baseline.get(`tl.demo.projectManagement:Baseline#name`))">
+										<title>
+											<en>Baseline created</en>
+											<de>Abnahmestand angelegt</de>
+										</title>
+										<confirm-label>
+											<en>Show baseline</en>
+											<de>Abnahmestand anzeigen</de>
+										</confirm-label>
+										<cancel-label>
+											<en>Close</en>
+											<de>Schließen</de>
+										</cancel-label>
+									</confirm>
+									<show-object value="baseline"/>
+								</with-result>
+							</with-transaction>
+						</generic-command>
 					</commands>
 					<fields>
 						<value-input
@@ -79,6 +129,7 @@
 					</fields>
 					<table
 						observed-types="tl.demo.projectManagement:Deliverable"
+						selection="deliverable"
 						types="tl.demo.projectManagement:Deliverable"
 					>
 						<columns>
@@ -122,6 +173,28 @@
 									</label>
 									<value>$row.type().label()</value>
 								</computed-column>
+							</columns>
+						</composition-table>
+					</form>
+				</panel>
+			</pane>
+			<pane>
+				<panel>
+					<title>
+						<en>Selected deliverable</en>
+						<de>Gewählter Liefergegenstand</de>
+					</title>
+					<form
+						input="deliverable"
+						with-inset="true"
+					>
+						<field attribute="name"/>
+						<field attribute="estimate"/>
+						<field attribute="estimateReaders"/>
+						<composition-table attribute="sections">
+							<columns>
+								<column attribute="name"/>
+								<column attribute="text"/>
 							</columns>
 						</composition-table>
 					</form>

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.Log;
@@ -126,6 +127,14 @@ public class ModelDataCleanup {
 	 * {@link AbstractFlexDataManager#FLEX_DATA flex attributes} and all links from or to these
 	 * objects.
 	 *
+	 * <p>
+	 * If the {@link MigrationContext#getPersistentRepository() stored schema} has no table with the
+	 * given name, no object of this table exists. Then all
+	 * {@link AbstractFlexDataManager#FLEX_DATA flex attributes} stored for this table and all links
+	 * whose polymorphic end points to this table are deleted, because they belong to no existing
+	 * object.
+	 * </p>
+	 *
 	 * @param branch
 	 *        The branch in which the objects are deleted.
 	 * @param typeTableName
@@ -140,38 +149,21 @@ public class ModelDataCleanup {
 		}
 		MetaObject type = repository().getTypeOrNull(typeTableName);
 		if (!(type instanceof MOClass)) {
-			throw new IllegalArgumentException("No table '" + typeTableName + "' in the stored schema.");
+			deleteDataOfMissingTable(branch, typeTableName);
+			return 0;
 		}
 		MOClass typeTable = (MOClass) type;
 		MOReference typeRef = (MOReference) typeTable.getAttribute(PersistentObject.TYPE_REF);
 		String typeColumn = typeRef.getColumn(ReferencePart.name).getDBName();
 		String typeTableDBName = typeTable.getDBMapping().getDBName();
+		Function<String, SQLExpression> objectMatch = idColumn -> inSetSelect(
+			column(idColumn),
+			selectInstances(branch, typeTableDBName, typeColumn, types));
 
 		// Flex attributes and links must be deleted before the objects, because the objects to
 		// delete are selected through the table of the objects.
-		CompiledStatement deleteFlexData = query(
-			delete(
-				table(AbstractFlexDataManager.FLEX_DATA_DB_NAME),
-				and(
-					eqBranch(AbstractFlexDataManager.BRANCH_DBNAME, branch),
-					eqSQL(
-						column(AbstractFlexDataManager.TYPE_DBNAME),
-						literal(DBType.STRING, typeTableName)),
-					inSetSelect(
-						column(AbstractFlexDataManager.IDENTIFIER_DBNAME),
-						selectInstances(branch, typeTableDBName, typeColumn, types)))))
-							.toSql(_connection.getSQLDialect());
-		int deletedFlexData = deleteFlexData.executeUpdate(_connection);
-		_log.info("Deleted " + deletedFlexData + " flex attribute values of objects in table '" + typeTableName
-			+ "'.");
-
-		for (MOClass linkTable : linkTables()) {
-			for (String end : new String[] { DBKnowledgeAssociation.REFERENCE_SOURCE_NAME,
-				DBKnowledgeAssociation.REFERENCE_DEST_NAME }) {
-				deleteLinks(branch, linkTable, (MOReference) linkTable.getAttribute(end), typeTable, typeTableDBName,
-					typeColumn, types);
-			}
-		}
+		deleteFlexData(branch, typeTableName, objectMatch);
+		deleteLinks(branch, typeTable, typeTableName, objectMatch);
 
 		CompiledStatement deleteObjects = query(
 			delete(
@@ -188,21 +180,83 @@ public class ModelDataCleanup {
 		return deletedObjects;
 	}
 
-	private void deleteLinks(long branch, MOClass linkTable, MOReference end, MOClass typeTable,
-			String typeTableDBName, String typeColumn, Collection<TLID> types) throws SQLException {
+	/**
+	 * Deletes the {@link AbstractFlexDataManager#FLEX_DATA flex attributes} and links left behind
+	 * by the objects of a table that is not part of the stored schema.
+	 */
+	private void deleteDataOfMissingTable(long branch, String typeTableName) throws SQLException {
+		Function<String, SQLExpression> anyObject = idColumn -> literalTrueLogical();
+		int deletedFlexData = deleteFlexData(branch, typeTableName, anyObject);
+		int deletedLinks = deleteLinks(branch, null, typeTableName, anyObject);
+		_log.info("No table '" + typeTableName + "' in the stored schema, deleted " + deletedFlexData
+			+ " flex attribute values and " + deletedLinks + " links of its objects.");
+	}
+
+	/**
+	 * Deletes the {@link AbstractFlexDataManager#FLEX_DATA flex attributes} of objects in the given
+	 * table.
+	 *
+	 * @param objectMatch
+	 *        Function creating the condition selecting the objects whose values are deleted, given
+	 *        the name of the identifier column.
+	 * @return The number of deleted rows.
+	 */
+	private int deleteFlexData(long branch, String typeTableName, Function<String, SQLExpression> objectMatch)
+			throws SQLException {
+		CompiledStatement deleteFlexData = query(
+			delete(
+				table(AbstractFlexDataManager.FLEX_DATA_DB_NAME),
+				and(
+					eqBranch(AbstractFlexDataManager.BRANCH_DBNAME, branch),
+					eqSQL(
+						column(AbstractFlexDataManager.TYPE_DBNAME),
+						literal(DBType.STRING, typeTableName)),
+					objectMatch.apply(AbstractFlexDataManager.IDENTIFIER_DBNAME))))
+						.toSql(_connection.getSQLDialect());
+		int deletedFlexData = deleteFlexData.executeUpdate(_connection);
+		_log.info("Deleted " + deletedFlexData + " flex attribute values of objects in table '" + typeTableName
+			+ "'.");
+		return deletedFlexData;
+	}
+
+	/**
+	 * Deletes all links from or to objects in the given table.
+	 *
+	 * @param typeTable
+	 *        The table of the objects, <code>null</code> if the stored schema has no such table.
+	 * @param objectMatch
+	 *        Function creating the condition selecting the objects whose links are deleted, given
+	 *        the name of the column referencing the object.
+	 * @return The number of deleted rows.
+	 */
+	private int deleteLinks(long branch, MOClass typeTable, String typeTableName,
+			Function<String, SQLExpression> objectMatch) throws SQLException {
+		int result = 0;
+		for (MOClass linkTable : linkTables()) {
+			for (String end : new String[] { DBKnowledgeAssociation.REFERENCE_SOURCE_NAME,
+				DBKnowledgeAssociation.REFERENCE_DEST_NAME }) {
+				result += deleteLinks(branch, linkTable, (MOReference) linkTable.getAttribute(end), typeTable,
+					typeTableName, objectMatch);
+			}
+		}
+		return result;
+	}
+
+	private int deleteLinks(long branch, MOClass linkTable, MOReference end, MOClass typeTable,
+			String typeTableName, Function<String, SQLExpression> objectMatch) throws SQLException {
 		DBAttribute endTypeColumn = end.getColumn(ReferencePart.type);
 		SQLExpression typeMatch;
 		if (endTypeColumn == null) {
 			// Monomorphic end.
-			if (!typeTable.isSubtypeOf(end.getMetaObject())) {
+			if (typeTable == null || !typeTable.isSubtypeOf(end.getMetaObject())) {
 				// End can not point to the objects to delete.
-				return;
+				return 0;
 			}
 			typeMatch = literalTrueLogical();
 		} else {
 			typeMatch = eqSQL(
 				column(endTypeColumn.getDBName()),
-				literal(DBType.STRING, typeTable.getName()));
+				literal(DBType.STRING, typeTableName));
 		}
 
 		CompiledStatement delete = query(
@@ -211,16 +265,15 @@ public class ModelDataCleanup {
 				and(
 					eqBranch(branch),
 					typeMatch,
-					inSetSelect(
-						column(end.getColumn(ReferencePart.name).getDBName()),
-						selectInstances(branch, typeTableDBName, typeColumn, types)))))
-							.toSql(_connection.getSQLDialect());
+					objectMatch.apply(end.getColumn(ReferencePart.name).getDBName()))))
+						.toSql(_connection.getSQLDialect());
 		int deletedRows = delete.executeUpdate(_connection);
 		if (deletedRows > 0) {
 			_context.invalidateXRef(linkTable);
 			_log.info("Deleted " + deletedRows + " links in table '" + linkTable.getName() + "' whose '"
-				+ end.getName() + "' is a deleted object of table '" + typeTable.getName() + "'.");
+				+ end.getName() + "' is a deleted object of table '" + typeTableName + "'.");
 		}
+		return deletedRows;
 	}
 
 	private SQLSelect selectInstances(long branch, String typeTableDBName, String typeColumn,

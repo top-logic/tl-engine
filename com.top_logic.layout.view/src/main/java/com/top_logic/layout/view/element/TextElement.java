@@ -29,11 +29,17 @@ import com.top_logic.layout.react.control.common.TextTone;
 import com.top_logic.layout.react.control.common.TextVariant;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputRefFormat;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.SingleInput;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
+import com.top_logic.layout.view.table.AbstractColumnDeclaration;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.util.Resources;
 
 /**
@@ -62,6 +68,11 @@ import com.top_logic.util.Resources;
  * label and the color are recomputed together, so the pill of an object whose state was edited
  * follows that edit without the object being selected anew.
  * </p>
+ *
+ * <p>
+ * A {@link Config#getTooltip() tooltip} explains the text to the user pointing at it. Over an input
+ * channel it is computed from the channel value and follows it as the label does.
+ * </p>
  */
 @InApp
 public class TextElement implements UIElement {
@@ -71,7 +82,7 @@ public class TextElement implements UIElement {
 	 */
 	@TagName("text")
 	@TypeIcon("css:bi bi-file-text")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, SingleInput {
 
 		@Override
 		@ClassDefault(TextElement.class)
@@ -79,9 +90,6 @@ public class TextElement implements UIElement {
 
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
-
-		/** Configuration name for {@link #getInput()}. */
-		String INPUT = "input";
 
 		/** Configuration name for {@link #getOverflow()}. */
 		String OVERFLOW = "overflow";
@@ -95,6 +103,9 @@ public class TextElement implements UIElement {
 		/** Configuration name for {@link #getAppearance()}. */
 		String APPEARANCE = "appearance";
 
+		/** Configuration name for {@link #getTooltip()}. */
+		String TOOLTIP = "tooltip";
+
 		/**
 		 * Static text to display. Ignored when an {@link #getInput() input channel} is set.
 		 */
@@ -104,11 +115,17 @@ public class TextElement implements UIElement {
 
 		/**
 		 * Channel whose value is displayed (rendered via {@link MetaLabelProvider}).
+		 *
+		 * <p>
+		 * The {@link #getTooltip() tooltip} sees the value as a variable named after the channel, or
+		 * by the name given with {@code as}: {@code state as s} names it {@code s}.
+		 * </p>
 		 */
+		@Override
 		@Name(INPUT)
 		@Nullable
-		@Format(ChannelRefFormat.class)
-		ChannelRef getInput();
+		@Format(InputRefFormat.class)
+		InputRef getInput();
 
 		/**
 		 * How text longer than the available width is handled: {@link TextOverflow#WRAP wrapped}
@@ -159,11 +176,34 @@ public class TextElement implements UIElement {
 		 */
 		@Name(APPEARANCE)
 		TextAppearance getAppearance();
+
+		/**
+		 * The tooltip of the text: a TL-Script expression computing what the user reads when
+		 * pointing at it.
+		 *
+		 * <p>
+		 * With an {@link #getInput() input channel}, the expression sees the channel value as a
+		 * variable and is recomputed together with the displayed text, whenever the channel takes
+		 * another value or the object it holds changes. Without one, the expression is a constant,
+		 * e.g. a text in the languages of the application:
+		 * <code>#("Explanation"@en, "Erklärung"@de)</code>.
+		 * </p>
+		 *
+		 * <p>
+		 * The result is a text, an internationalized text, or any other value shown by its label;
+		 * an empty text or nothing at all leaves the text without a tooltip. Unset, the text has
+		 * none.
+		 * </p>
+		 */
+		@Name(TOOLTIP)
+		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getTooltip();
 	}
 
 	private final ResKey _label;
 
-	private final ChannelRef _inputRef;
+	private final InputRef _inputRef;
 
 	private final String _cssClass;
 
@@ -174,6 +214,8 @@ public class TextElement implements UIElement {
 	private final TextTone _tone;
 
 	private final TextAppearance _appearance;
+
+	private final QueryExecutor _tooltip;
 
 	/**
 	 * Creates a new {@link TextElement} from configuration.
@@ -187,19 +229,22 @@ public class TextElement implements UIElement {
 		_variant = config.getVariant();
 		_tone = config.getTone();
 		_appearance = config.getAppearance();
+		_tooltip = InputScript.compile(config, Config.TOOLTIP);
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		if (_inputRef != null) {
-			ViewChannel channel = context.resolveChannel(_inputRef);
+			ViewChannel channel = context.resolveChannel(_inputRef.getChannel());
 			Object value = channel.get();
 			ReactTextControl control = text(context, label(value));
 			control.setColorRole(ReactValueColor.roleOf(value));
+			setTooltip(control, value);
 
 			Runnable update = () -> {
 				Object current = channel.get();
 				control.setText(label(current), ReactValueColor.roleOf(current));
+				setTooltip(control, current);
 			};
 
 			ChannelListener listener = (sender, oldValue, newValue) -> update.run();
@@ -212,7 +257,26 @@ public class TextElement implements UIElement {
 
 			return control;
 		}
-		return text(context, _label != null ? Resources.getInstance().getString(_label) : "");
+		ReactTextControl control = text(context, _label != null ? Resources.getInstance().getString(_label) : "");
+		if (_tooltip != null) {
+			setTooltipHtml(control, AbstractColumnDeclaration.tooltipHtml(_tooltip.execute()));
+		}
+		return control;
+	}
+
+	/**
+	 * Sets the tooltip the {@link Config#getTooltip() tooltip expression} computes from the given
+	 * input value.
+	 */
+	private void setTooltip(ReactTextControl control, Object value) {
+		if (_tooltip == null) {
+			return;
+		}
+		setTooltipHtml(control, AbstractColumnDeclaration.tooltipHtml(_tooltip.execute(value)));
+	}
+
+	private static void setTooltipHtml(ReactTextControl control, String html) {
+		control.setTooltip(html, null, false);
 	}
 
 	/**

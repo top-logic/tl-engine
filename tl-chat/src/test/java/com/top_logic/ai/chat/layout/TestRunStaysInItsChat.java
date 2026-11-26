@@ -231,8 +231,7 @@ public class TestRunStaysInItsChat extends BasicTestCase {
 	}
 
 	private static String storedMetadata(String chat) {
-		String json = ChatHistoryService.getMetadataJson(ChatHistoryService.findOwnedSessionById(chat,
-			PersonManager.getManager().getRoot()));
+		String json = ChatHistoryService.getMetadataJson(ChatHistoryService.findAnySessionById(chat));
 		return json == null ? "" : json;
 	}
 

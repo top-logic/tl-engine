@@ -21,7 +21,7 @@ import { Extension, Node, mergeAttributes } from '@tiptap/react';
 import type { Editor, Range } from '@tiptap/react';
 import { PluginKey } from '@tiptap/pm/state';
 import { Suggestion, exitSuggestion } from '@tiptap/suggestion';
-import { TL_OBJECT } from './ObjectLink';
+import { TL_OBJECT, deleteNodeBefore } from './ObjectLink';
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React;
 
@@ -205,15 +205,8 @@ export const ObjectMention = Node.create({
 
   addKeyboardShortcuts() {
     return {
-      // The chip goes as a whole, whatever the browser would do with the uneditable element.
-      Backspace: ({ editor }) => {
-        const { selection } = editor.state;
-        const before = selection.empty ? selection.$from.nodeBefore : null;
-        if (before === null || before.type.name !== OBJECT_MENTION) {
-          return false;
-        }
-        return editor.commands.deleteRange({ from: selection.from - before.nodeSize, to: selection.from });
-      },
+      // The chip goes as a whole.
+      Backspace: ({ editor }) => deleteNodeBefore(editor, OBJECT_MENTION),
     };
   },
 });

@@ -5,6 +5,36 @@
 		<annotations>
 			<display-group value="demo"/>
 		</annotations>
+		<enum name="TileSize">
+			<classifier name="quarter"/>
+			<classifier name="third"/>
+			<classifier name="half"/>
+			<classifier name="full"/>
+		</enum>
+		<class name="Baseline">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="css:bi bi-bookmark-check"/>
+				<main-properties properties="name, reviewers"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="deliverables"
+					history-type="historic"
+					multiple="true"
+					type="Deliverable"
+				/>
+				<reference name="reviewers"
+					multiple="true"
+					type="tl.accounts:Person"
+				/>
+			</attributes>
+		</class>
 		<class name="Deliverable"
 			abstract="true"
 		>
@@ -18,6 +48,20 @@
 				<property name="name"
 					mandatory="true"
 					type="tl.core:String"
+				/>
+				<property name="estimate"
+					type="tl.core:Double"
+				/>
+				<reference name="estimateReaders"
+					multiple="true"
+					type="tl.accounts:Person"
+				/>
+				<reference name="sections"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="Section"
 				/>
 			</attributes>
 		</class>
@@ -46,6 +90,11 @@
 							type="tl.core:Boolean"
 						/>
 						<field
+							attribute="tileSize"
+							fullQualifiedName="tl.demo.projectManagement:Milestone#tileSize"
+							type="tl.demo.projectManagement:TileSize"
+						/>
+						<field
 							attribute="tickets"
 							fullQualifiedName="tl.demo.projectManagement:Milestone#tickets"
 							type="tl.demo.projectManagement:Ticket"
@@ -67,6 +116,10 @@
 				/>
 				<property name="approved"
 					type="tl.core:Boolean"
+				/>
+				<reference name="tileSize"
+					kind="forwards"
+					type="TileSize"
 				/>
 				<reference name="tickets"
 					inverse-reference="milestone"
@@ -163,6 +216,19 @@
 					ordered="true"
 					type="Deliverable"
 				/>
+				<reference name="baselines"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="Baseline"
+				/>
+				<property name="cockpitOrder"
+					type="tl.core:String"
+				/>
+				<property name="cockpitHidden"
+					type="tl.core:String"
+				/>
 			</attributes>
 		</class>
 		<class name="Prototype">
@@ -174,6 +240,23 @@
 			<generalizations>
 				<generalization type="Deliverable"/>
 			</generalizations>
+		</class>
+		<class name="Section">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="css:bi bi-text-paragraph"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="text"
+					type="tl.core:String"
+				/>
+			</attributes>
 		</class>
 		<class name="Specification">
 			<generalizations>

@@ -55,6 +55,7 @@ import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -1569,7 +1570,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		// Create the dialog control tree from the view definition.
-		ReactControl dialogControl = (ReactControl) dialogView.createControl(dialogContext);
+		ReactControl dialogControl = ViewUnitControl.forView(dialogContext, viewPath, dialogView);
 		ObservingChannels.observeWhileDisplayed(dialogControl, dialogChannels, dialogContext);
 
 		// Open the dialog.

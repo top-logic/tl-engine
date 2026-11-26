@@ -30,6 +30,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.ai.core.cost.CostConversion;
@@ -115,11 +116,11 @@ public final class ChatTranscripts {
 	 *        The acting account.
 	 * @param sessionId
 	 *        The chat.
-	 * @return The chat, or <code>null</code> when the account owns no chat of that id.
+	 * @return The chat, or <code>null</code> when there is no chat of that id the account may read.
 	 */
 	public static ChatSessionDetailResponse sessionDetail(TaskProgressTracker tracker, Person person,
 			String sessionId) throws IOException {
-		TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
+		TLObject session = ChatHistoryService.findAccessibleSession(sessionId, person, SimpleBoundCommandGroup.READ);
 		if (session == null) {
 			return null;
 		}
@@ -131,7 +132,7 @@ public final class ChatTranscripts {
 			.setFeatures(featuresDto(backend));
 		boolean open = tracker != null && sessionId.equals(tracker.getActiveSessionId());
 
-		ChatProcessor.AIProcessingState running = RunStateFrame.runInFlight(person, sessionId);
+		ChatProcessor.AIProcessingState running = RunStateFrame.runInFlight(sessionId);
 		String messagesJson = null;
 		if (running != null) {
 			ConversationLog runLog = running.getConversationLog();
@@ -200,8 +201,8 @@ public final class ChatTranscripts {
 	 *        The subagent.
 	 * @param runId
 	 *        The child run its recorded part names, <code>null</code> when the card names none.
-	 * @return The transcript, or <code>null</code> when there is no such subagent or run of the
-	 *         account.
+	 * @return The transcript, or <code>null</code> when there is no such subagent, or no such run in a
+	 *         chat the account may read.
 	 */
 	public static ChatSessionDetailResponse subagentTranscript(TaskProgressTracker tracker, Person person,
 			String subagentId, String runId) throws IOException {
@@ -224,7 +225,7 @@ public final class ChatTranscripts {
 		} else {
 			AgentExecution execution = AgentExecutionStore.getInstance().findExecutionByRunId(childRun);
 			AgentSession session = execution == null ? null : execution.getSession();
-			if (execution == null || session == null || !ChatHistoryService.isOwnedBy(session, person)) {
+			if (execution == null || session == null || !ChatHistoryService.isAllowed(person, session, SimpleBoundCommandGroup.READ)) {
 				return null;
 			}
 			transcript = execution.getTranscript();
@@ -428,7 +429,7 @@ public final class ChatTranscripts {
 			return null;
 		}
 		try {
-			return ConversationBackendService.backendFor(agentSession);
+			return ConversationBackendService.backendFor(agentSession.getSubject());
 		} catch (RuntimeException ex) {
 			// The run asks again and fails there, where the user is told; a request that only reads
 			// the conversation must not break on it.
@@ -443,7 +444,11 @@ public final class ChatTranscripts {
 	 * own agent for <code>null</code>.
 	 */
 	public static ConversationFeaturesDto featuresDto(ConversationBackend backend) {
-		BackendFeatures features = backend == null ? BackendFeatures.INTERNAL : backend.features();
+		return featuresDto(backend == null ? BackendFeatures.INTERNAL : backend.features());
+	}
+
+	/** What the chat offers in a conversation with the given features. */
+	public static ConversationFeaturesDto featuresDto(BackendFeatures features) {
 		return ConversationFeaturesDto.create()
 			.setRegenerate(features.regenerate())
 			.setEditMessages(features.editMessages())

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<dashboard id="cockpit">
+		<tile id="placeholder"
+			width="half"
+		>
+			<access-control
+				denied="placeholder"
+				inputs="object"
+				object="$object"
+				operation="Finish"
+				type="TestViewModelAccess:Project"
+			/>
+			<panel/>
+		</tile>
+		<tile id="guarded"
+			width="half"
+		>
+			<access-control
+				inputs="object"
+				object="$object"
+				operation="Finish"
+				type="TestViewModelAccess:Project"
+			/>
+			<panel/>
+		</tile>
+		<tile id="open"
+			width="half"
+		>
+			<panel/>
+		</tile>
+	</dashboard>
+</view>

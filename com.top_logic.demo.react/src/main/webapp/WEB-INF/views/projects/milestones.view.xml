@@ -19,9 +19,16 @@
 	
 	The Planning tile lists the due dates and approvals of the milestones. It is guarded by the
 	operation "ShowPlanning" on the project, which only the administrators of the project hold, so
-	a member of the project sees the "no access" placeholder in its place (denied="placeholder").
-	The Approvals tile is guarded the same way, but with the default denied="hide": a member of
-	the project does not see it at all, and the grid closes the gap.
+	a member of the project who administers another project sees the "no access" placeholder in its
+	place (denied="placeholder"). The Approvals tile is guarded the same way, but with the default
+	denied="hide": such a member does not see it at all, and the grid closes the gap. A member who
+	administers no project at all can hold "ShowPlanning" on no project, so neither tile is offered
+	to him.
+	
+	The milestones of the project are tiles of their own, between the fixed tiles: each as wide as
+	the tile size of the milestone says, opening the milestone when it is pressed. The arrangement of
+	the tiles is stored at the project and applies to all its users; only an administrator of the
+	project (operation "ArrangeCockpit") is offered to edit it.
 	
 	The milestone channel carries what the create dialog reports back: the milestone it created,
 	which the milestone list picks up when the Milestones tile is pressed.
@@ -49,7 +56,17 @@
 			<en>Cockpit</en>
 			<de>Cockpit</de>
 		</title>
-		<dashboard id="project-cockpit">
+		<dashboard id="project-cockpit"
+			arrangement="if($project == null || $project.get(`tl.demo.projectManagement:ProjectScope#cockpitOrder`) == null, null, {'order': $project.get(`tl.demo.projectManagement:ProjectScope#cockpitOrder`).split(','), 'hidden': if($project.get(`tl.demo.projectManagement:ProjectScope#cockpitHidden`) == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#cockpitHidden`).split(','))})"
+			inputs="project"
+			store-arrangement="{$project.set(`tl.demo.projectManagement:ProjectScope#cockpitOrder`, $order.join(',')); $project.set(`tl.demo.projectManagement:ProjectScope#cockpitHidden`, $hidden.join(','));}"
+		>
+			<arrangement-access>
+				<operation name="ArrangeCockpit"
+					object="$project"
+					type="tl.demo.projectManagement:ProjectScope"
+				/>
+			</arrangement-access>
 			<tile id="project"
 				row-span="2"
 				width="half"
@@ -210,6 +227,29 @@
 				</action>
 			</tile>
 			<!--
+				One tile per milestone of the project, between the fixed tiles. The width of a tile is
+				the tile size of its milestone, a click on it opens the milestone. A milestone created
+				with the "New Milestone" button of the Milestones tile appears as a tile right away, one
+				deleted with the button of its tile disappears.
+			-->
+			<tiles id="milestone"
+				inputs="project"
+				items="if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#milestones`))"
+				label="$element.get(`tl.demo.projectManagement:Milestone#name`)"
+				observed-types="tl.demo.projectManagement:Milestone, tl.demo.projectManagement:ProjectScope"
+				width="if($element.get(`tl.demo.projectManagement:Milestone#tileSize`) == null, 'quarter', $element.get(`tl.demo.projectManagement:Milestone#tileSize`))"
+			>
+				<view-ref view="projects/milestone-tile.view.xml">
+					<bind
+						channel="element"
+						to="element"
+					/>
+				</view-ref>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand">
+					<show-object/>
+				</action>
+			</tiles>
+			<!--
 				The progress of the approvals is part of the planning as well. The tile demonstrates
 				the default denied="hide": a member of the project does not see the tile at all, and the
 				Planning tile takes its place next to the Project tile.
@@ -240,7 +280,8 @@
 			<!--
 				The planning of the project is shown to the administrators of the project alone, who
 				hold the operation "ShowPlanning" on it. The tile demonstrates the placeholder: a
-				member of the project sees a "no access" placeholder in place of the tile's content.
+				member of the project who administers another project sees a "no access" placeholder in
+				place of the tile's content.
 			-->
 			<tile id="planning"
 				width="half"

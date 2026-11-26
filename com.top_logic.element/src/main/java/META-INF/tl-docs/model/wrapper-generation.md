@@ -1,5 +1,5 @@
 ---
-description: Read before generating or regenerating the Java binding of model types (goal generate-java of tl-maven-plugin, WrapperGenerator) - the generated interface, the Base interface and Impl class, the module factory, the annotations package-binding and implementation-binding - or when the generated code does not compile because an access method clashes with an inherited method (getLastModified, getTypes), which the annotation <java-name> (JavaName) resolves.
+description: Read before generating or regenerating the Java binding of model types (goal generate-java of tl-maven-plugin, WrapperGenerator) - the generated interface, the Base interface and Impl class, the module factory, the annotations package-binding and implementation-binding - or when the generated code does not compile because an access method clashes with an inherited method (getLastModified, getTypes), which the annotation <java-name> (JavaName) resolves - or when using the generated interface on a form buffer or transient object (TLObjectOverlay, ObjectEditing, ObjectCreation, TransientObjectFactory, TypedObjectClasses), e.g. what tHandle, getValue/setValue, the TLScope methods and compareTo return there.
 order: 40
 ---
 
@@ -132,3 +132,50 @@ Generated method 'java.util.Date getLastModified()' for attribute 'lastModified'
 
 Annotate the attribute with `<java-name>` and generate again; renaming the attribute in the model
 is not necessary.
+
+## Form buffers and transient objects
+
+The objects a form edits are not the persistent objects themselves but buffers: a
+`TLObjectOverlay` in the React UI, an `ObjectEditing` (existing object) or `ObjectCreation` (new
+object) in the classic UI. Transient drafts are created by the `TransientObjectFactory`. All of them
+implement the generated interfaces of their type and its generalizations as well, so that
+application code - e.g. an `AttributeValueListener` or a constraint check receiving the buffer -
+uses the same typed access as on a persistent object. For a buffer of the demo class
+`DemoPlain:B`:
+
+```java
+B b = (B) buffer;
+String value = b.getStringInBAndC();
+b.setStringInBAndC("changed");
+```
+
+The getter reads the buffered value (the edited value, if the user changed it), and the setter
+writes to the buffer; the persistent object keeps its value until the form is saved. There is
+exactly one object per buffer: the buffer is still an instance of its base class
+(`instanceof TLObjectOverlay`), keeps its identity and `equals`, and every place the buffer passes
+itself on receives the typed object. The classes are created at runtime by `TypedObjectClasses` as
+subclasses of the buffer classes and cached per base class and set of interfaces.
+
+The generated interface of a type below `tl.element:StructuredElement` extends `StructuredElement`
+and thereby `Wrapper` and `TLScope`. On a buffer or transient object their methods behave as
+follows:
+
+| Method | Result |
+|--------|--------|
+| `tHandle()` | The handle of the persistent counterpart (the edited object, or the object created from an `ObjectCreation`); an `UnsupportedOperationException` for an object without one, as for every transient `TLObject`. |
+| `getValue(String)`, `setValue(String, Object)` | Read and write the value of the buffer, like `tValueByName` and `tUpdateByName`. |
+| `getTypes()`, `getType(String)`, `getClasses()`, ... (`TLScope`) | The types of the persistent counterpart; empty collections and `null` for a new object. |
+| `getCreator()`, `getCreated()`, `getModifier()`, `getModified()`, `getLastModified()` (`tCreator()`, `tCreationDate()`, `tLastModifier()`, ...) | The creation and last modification of the persistent counterpart; `null` (`0` for a time stamp) for a new object, which has not been stored yet. A derived attribute computed from them (e.g. `<method-call method="com.top_logic.knowledge.wrap.Wrapper#getCreator()"/>`) is empty in a create form. |
+| `compareTo(Wrapper)` | Orders by name. Objects with the same name: two persistent objects by their object keys, a persistent object before a transient one, two transient objects by their identity hash codes (stable while the objects live). The buffer of a persistent object shares its identity and is ordered like it. |
+| `getName()`, `generateFullText(...)` | Read the buffered name. |
+
+A transient object answers the single-valued backwards reference `parent` with the object that
+refers to it in its `children`, so `getParent()` works on a draft below a transient container.
+
+A generated interface with an abstract method that neither the buffer class, nor a default method,
+nor one of the rules above implements is not added; the buffer then lacks only this interface and
+keeps the others of its type. This applies to the framework interfaces of the `tl.model` types
+(`TLClass`, `TLModule`, ...), and to a hand-written interface extending one with abstract methods
+of its own: the demo interface `A` extends `WebFolderAware` and `MailFolderAware`, so a buffer of
+`DemoTypes:A` implements `DemoTypesA` and the other generated interfaces of its generalizations, but
+not `A`. To make an interface available on buffers, implement such methods as default methods.

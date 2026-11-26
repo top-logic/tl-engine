@@ -15,16 +15,16 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 
 /**
- * Base of the chat's own small view elements, each of which hosts a rail section.
+ * Base of the chat's own small view elements, each of which fills a section of a side rail.
  *
  * <p>
- * A {@code <chat-rail/>} section holds one view element, and which one is the application's
+ * A {@code <side-rail>} section holds view elements, and which ones is the application's
  * decision - a list of its own objects, a document view, a live view of what the agent is doing.
  * The chat contributes the pieces only it can know: what the run has cited
  * ({@link ChatSourcesElement}). Anything the agent writes to the model - its task plan, say - is a
  * plain {@code <data-list>} instead. Each of these joins the conversation through {@code chat-id}
- * and may report a number on an optional {@code badge} channel, which is what the rail sums and
- * shows.
+ * and may report a number on an optional {@code badge} channel, which the section shows as its
+ * badge.
  * </p>
  *
  * <p>
@@ -85,9 +85,9 @@ public abstract class ChatSectionElement implements UIElement {
 		 * Optional channel this section writes its count to - how many of the things it shows there
 		 * are right now.
 		 *
-		 * The rail reads the same channel to put the number beside the section's title and on its
-		 * strip icon, and sums the sections to the total the conversation's rail button shows. Leave
-		 * it empty for a section that has nothing to count.
+		 * Name the same channel as the {@code badge} of the {@code <side-rail>} section, which puts
+		 * the number beside the section's title and on its strip icon, and counts it into the
+		 * rail's {@code badge-channel}. Leave it empty for a section that has nothing to count.
 		 */
 		@Name(BADGE)
 		@Label("Badge")

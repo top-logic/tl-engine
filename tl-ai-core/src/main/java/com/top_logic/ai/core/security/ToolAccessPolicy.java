@@ -544,7 +544,7 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 *
 	 *     <agent-access default="all">
 	 *         <role name="SalesUser">
-	 *             <grants><grant agents="sales-assistant, pietro"/></grants>
+	 *             <grants><grant agents="sales-assistant, planner"/></grants>
 	 *             <denies><deny agents="framework-wiring-agent"/></denies>
 	 *         </role>
 	 *     </agent-access>

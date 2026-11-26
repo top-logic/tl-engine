@@ -27,6 +27,15 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	String CATEGORY_ATTR = "category";
 
 	/**
+	 * Part <code>channel</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String CHANNEL_ATTR = "channel";
+
+	/**
 	 * Part <code>comments</code> of <code>Ticket</code>
 	 * 
 	 * <p>
@@ -34,6 +43,24 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	 * </p>
 	 */
 	String COMMENTS_ATTR = "comments";
+
+	/**
+	 * Part <code>customKey</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String CUSTOM_KEY_ATTR = "customKey";
+
+	/**
+	 * Part <code>customPublicStatus</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>demo.tickets:TicketStatus</code> in configuration.
+	 * </p>
+	 */
+	String CUSTOM_PUBLIC_STATUS_ATTR = "customPublicStatus";
 
 	/**
 	 * Part <code>estimate</code> of <code>Ticket</code>
@@ -54,6 +81,15 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	String HEADLINE_ATTR = "headline";
 
 	/**
+	 * Part <code>key</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String KEY_ATTR = "key";
+
+	/**
 	 * Part <code>keywords</code> of <code>Ticket</code>
 	 * 
 	 * <p>
@@ -72,6 +108,15 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	String NAME_ATTR = "name";
 
 	/**
+	 * Part <code>number</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Long</code> in configuration.
+	 * </p>
+	 */
+	String NUMBER_ATTR = "number";
+
+	/**
 	 * Part <code>order</code> of <code>Ticket</code>
 	 * 
 	 * <p>
@@ -79,6 +124,15 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	 * </p>
 	 */
 	String ORDER_ATTR = "order";
+
+	/**
+	 * Part <code>publicStatus</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>demo.tickets:TicketStatus</code> in configuration.
+	 * </p>
+	 */
+	String PUBLIC_STATUS_ATTR = "publicStatus";
 
 	/**
 	 * Part <code>resolution</code> of <code>Ticket</code>
@@ -108,6 +162,15 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	String STATUS_LABEL_ATTR = "statusLabel";
 
 	/**
+	 * Part <code>suggestedKey</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String SUGGESTED_KEY_ATTR = "suggestedKey";
+
+	/**
 	 * Part <code>tags</code> of <code>Ticket</code>
 	 * 
 	 * <p>
@@ -133,6 +196,20 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	 */
 	default void setCategory(String newValue) {
 		tUpdateByName(CATEGORY_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #CHANNEL_ATTR}.
+	 */
+	default String getChannel() {
+		return (String) tValueByName(CHANNEL_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CHANNEL_ATTR}.
+	 */
+	default void setChannel(String newValue) {
+		tUpdateByName(CHANNEL_ATTR, newValue);
 	}
 
 	/**
@@ -179,6 +256,34 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	}
 
 	/**
+	 * Getter for part {@link #CUSTOM_KEY_ATTR}.
+	 */
+	default String getCustomKey() {
+		return (String) tValueByName(CUSTOM_KEY_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CUSTOM_KEY_ATTR}.
+	 */
+	default void setCustomKey(String newValue) {
+		tUpdateByName(CUSTOM_KEY_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #CUSTOM_PUBLIC_STATUS_ATTR}.
+	 */
+	default com.top_logic.model.TLClassifier getCustomPublicStatus() {
+		return (com.top_logic.model.TLClassifier) tValueByName(CUSTOM_PUBLIC_STATUS_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CUSTOM_PUBLIC_STATUS_ATTR}.
+	 */
+	default void setCustomPublicStatus(com.top_logic.model.TLClassifier newValue) {
+		tUpdateByName(CUSTOM_PUBLIC_STATUS_ATTR, newValue);
+	}
+
+	/**
 	 * Getter for part {@link #ESTIMATE_ATTR}.
 	 */
 	default Long getEstimate() {
@@ -197,6 +302,20 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	 */
 	default String getHeadline() {
 		return (String) tValueByName(HEADLINE_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #KEY_ATTR}.
+	 */
+	default String getKey() {
+		return (String) tValueByName(KEY_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #KEY_ATTR}.
+	 */
+	default void setKey(String newValue) {
+		tUpdateByName(KEY_ATTR, newValue);
 	}
 
 	/**
@@ -243,6 +362,20 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	}
 
 	/**
+	 * Getter for part {@link #NUMBER_ATTR}.
+	 */
+	default Long getNumber() {
+		return (Long) tValueByName(NUMBER_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #NUMBER_ATTR}.
+	 */
+	default void setNumber(Long newValue) {
+		tUpdateByName(NUMBER_ATTR, newValue);
+	}
+
+	/**
 	 * Getter for part {@link #ORDER_ATTR}.
 	 */
 	default Integer getOrder() {
@@ -254,6 +387,20 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	 */
 	default void setOrder(Integer newValue) {
 		tUpdateByName(ORDER_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #PUBLIC_STATUS_ATTR}.
+	 */
+	default com.top_logic.model.TLClassifier getPublicStatus() {
+		return (com.top_logic.model.TLClassifier) tValueByName(PUBLIC_STATUS_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #PUBLIC_STATUS_ATTR}.
+	 */
+	default void setPublicStatus(com.top_logic.model.TLClassifier newValue) {
+		tUpdateByName(PUBLIC_STATUS_ATTR, newValue);
 	}
 
 	/**
@@ -289,6 +436,13 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	 */
 	default String getStatusLabel() {
 		return (String) tValueByName(STATUS_LABEL_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #SUGGESTED_KEY_ATTR}.
+	 */
+	default String getSuggestedKey() {
+		return (String) tValueByName(SUGGESTED_KEY_ATTR);
 	}
 
 	/**

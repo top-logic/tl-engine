@@ -85,7 +85,7 @@ public class GenericViewCommand implements ViewCommand {
 
 	private final ResKey _label;
 
-	private final ButtonTone _after;
+	private final ButtonTone _tone;
 
 	/**
 	 * Creates a new {@link GenericViewCommand}.
@@ -95,7 +95,7 @@ public class GenericViewCommand implements ViewCommand {
 		_arguments = CommandArguments.of(config, ActionScope.of(context));
 		_actions = ViewActions.instantiate(context, config.getActions(), _arguments.scope());
 		_label = config.getLabel();
-		_after = CommandCliques.tone(config.getClique());
+		_tone = CommandCliques.tone(config);
 	}
 
 	/**
@@ -122,7 +122,7 @@ public class GenericViewCommand implements ViewCommand {
 		_arguments = new CommandArguments(List.of(), argumentName);
 		_actions = List.copyOf(actions);
 		_label = null;
-		_after = ButtonTone.DEFAULT;
+		_tone = null;
 	}
 
 
@@ -158,9 +158,10 @@ public class GenericViewCommand implements ViewCommand {
 	 * chain (see {@link ViewActionChain.HoldObserver}).
 	 *
 	 * <p>
-	 * A command destructive by its {@link Config#getClique() clique} runs the chain as followed by a
-	 * destructive step (see {@link CommandCliques#tone(String)}), so that a confirmation in it draws
-	 * its affirmative answer destructive also before a deleting script.
+	 * A command taking its tone from its configuration (see
+	 * {@link CommandCliques#tone(ViewCommand.Config)}) runs the chain in this tone: a confirmation in
+	 * it draws its affirmative answer destructive also before a deleting script, and ordinary also
+	 * before a deleting action of a command configured as ordinary.
 	 * </p>
 	 */
 	@Override
@@ -170,7 +171,7 @@ public class GenericViewCommand implements ViewCommand {
 			return;
 		}
 		SuspendedCommands region = region(context);
-		ViewActionChain.run(context, _actions, arguments, _after, null,
+		ViewActionChain.run(context, _actions, arguments, _tone, null,
 			region == null ? null : new Suspension(region));
 	}
 

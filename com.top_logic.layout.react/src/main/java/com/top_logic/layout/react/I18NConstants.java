@@ -225,6 +225,20 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.drawer.close")
 	public static ResKey JS_DRAWER_CLOSE;
 
+	// -- Side rail client-side i18n keys --
+
+	/**
+	 * @en Sections
+	 */
+	@CustomKey("js.sideRail.strip")
+	public static ResKey JS_SIDE_RAIL_STRIP;
+
+	/**
+	 * @en Width of the side column
+	 */
+	@CustomKey("js.sideRail.resize")
+	public static ResKey JS_SIDE_RAIL_RESIZE;
+
 	// -- Client-side i18n keys (js.* prefix, names match keys used by React controls) --
 
 	/**
@@ -262,6 +276,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.connection.reconnecting")
 	public static ResKey JS_CONNECTION_RECONNECTING;
+
+	/**
+	 * @en This part of the view could not be displayed.
+	 */
+	@CustomKey("js.child.renderError")
+	public static ResKey JS_CHILD_RENDER_ERROR;
 
 	/**
 	 * @en Record audio
@@ -520,18 +540,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_BREADCRUMB_LABEL;
 
 	// -- Data list client-side i18n keys --
-
-	/**
-	 * @en Collapse list
-	 */
-	@CustomKey("js.dataList.collapse")
-	public static ResKey JS_DATA_LIST_COLLAPSE;
-
-	/**
-	 * @en Expand list
-	 */
-	@CustomKey("js.dataList.expand")
-	public static ResKey JS_DATA_LIST_EXPAND;
 
 	/**
 	 * @en Search
@@ -939,58 +947,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLUMNS;
 
 	/**
-	 * @en View
+	 * @en Reset columns
 	 */
-	@CustomKey("js.table.view")
-	public static ResKey JS_TABLE_VIEW;
-
-	/**
-	 * @en Density
-	 */
-	@CustomKey("js.table.viewDensity")
-	public static ResKey JS_TABLE_VIEW_DENSITY;
-
-	/**
-	 * @en As everywhere
-	 */
-	@CustomKey("js.table.viewDensityDefault")
-	public static ResKey JS_TABLE_VIEW_DENSITY_DEFAULT;
-
-	/**
-	 * @en Normal
-	 */
-	@CustomKey("js.table.viewDensityNormal")
-	public static ResKey JS_TABLE_VIEW_DENSITY_NORMAL;
-
-	/**
-	 * @en Compact
-	 */
-	@CustomKey("js.table.viewDensityCompact")
-	public static ResKey JS_TABLE_VIEW_DENSITY_COMPACT;
-
-	/**
-	 * @en Stripes
-	 */
-	@CustomKey("js.table.viewStripes")
-	public static ResKey JS_TABLE_VIEW_STRIPES;
-
-	/**
-	 * @en Column lines
-	 */
-	@CustomKey("js.table.viewColumnLines")
-	public static ResKey JS_TABLE_VIEW_COLUMN_LINES;
-
-	/**
-	 * @en Back
-	 */
-	@CustomKey("js.table.viewBack")
-	public static ResKey JS_TABLE_VIEW_BACK;
-
-	/**
-	 * @en Reset
-	 */
-	@CustomKey("js.table.viewReset")
-	public static ResKey JS_TABLE_VIEW_RESET;
+	@CustomKey("js.table.columnsReset")
+	public static ResKey JS_TABLE_COLUMNS_RESET;
 
 	/**
 	 * @en Find column

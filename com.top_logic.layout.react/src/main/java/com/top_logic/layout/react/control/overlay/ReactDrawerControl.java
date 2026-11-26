@@ -15,9 +15,14 @@ import com.top_logic.layout.react.control.ReactControl;
  * Slide-in panel from the edge of the viewport or of an enclosing container.
  *
  * <p>
- * Slides in via CSS transform. No backdrop, the content it overlays stays interactive. Optional
- * title bar with close button. Escape sends the {@link #CMD_CLOSE close} command, which runs the
- * close handler the drawer was created with.
+ * Slides in via CSS transform. Optional title bar with close button. Escape sends the
+ * {@link #CMD_CLOSE close} command, which runs the close handler the drawer was created with.
+ * </p>
+ *
+ * <p>
+ * By default the drawer has no backdrop, and the content it overlays stays interactive. A
+ * {@link #setModal(boolean) modal} drawer covers the area it is anchored in with a scrim, keeps the
+ * keyboard focus inside while it is open, and closes on a click on the scrim.
  * </p>
  *
  * <p>
@@ -50,6 +55,11 @@ public class ReactDrawerControl extends ReactControl {
 	private static final String OPEN = "open";
 
 	private static final String CHILD = "child";
+
+	private static final String MODAL = "modal";
+
+	/** State: the accessible name of a drawer without title, see {@link #setLabel(String)}. */
+	public static final String LABEL = "label";
 
 	/**
 	 * The edge the drawer slides in from.
@@ -254,6 +264,35 @@ public class ReactDrawerControl extends ReactControl {
 	 */
 	public void setWidth(int width) {
 		putState(WIDTH, width > 0 ? Integer.valueOf(width) : null);
+	}
+
+	/**
+	 * Sets the accessible name of a drawer without {@link #setTitle(String) title}.
+	 *
+	 * @param label
+	 *        The name assistive technology reads for the drawer, {@code null} for none. A drawer with
+	 *        a title is named by its title.
+	 */
+	public void setLabel(String label) {
+		putState(LABEL, label);
+	}
+
+	/**
+	 * Makes the drawer modal or not.
+	 *
+	 * <p>
+	 * While a modal drawer is open, a scrim covers the area the drawer is anchored in (the viewport
+	 * or the container, see {@link Anchor}), the keyboard focus stays inside the drawer, and a click
+	 * on the scrim closes it like its close button. Closing gives the focus back to the element that
+	 * had it before the drawer opened.
+	 * </p>
+	 *
+	 * @param modal
+	 *        Whether the drawer is modal; {@code false} (the default) leaves the content it overlays
+	 *        interactive.
+	 */
+	public void setModal(boolean modal) {
+		putState(MODAL, modal ? Boolean.TRUE : null);
 	}
 
 	/**

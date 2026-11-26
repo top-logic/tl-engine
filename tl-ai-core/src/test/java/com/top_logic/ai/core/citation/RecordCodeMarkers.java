@@ -15,7 +15,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 
 /**
  * An application's own citation syntax, as a test writes one: record codes in parentheses,
- * {@code (FACT-001, DEC-002)}, the way a consulting application cites its records.
+ * {@code (FACT-001, DEC-002)}, the way an application with records of its own cites them.
  */
 public class RecordCodeMarkers implements CitationMarkerSyntax {
 

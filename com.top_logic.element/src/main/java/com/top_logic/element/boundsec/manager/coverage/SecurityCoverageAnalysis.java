@@ -117,6 +117,8 @@ public class SecurityCoverageAnalysis {
 	 */
 	private final Map<TLClass, Set<TLClass>> _containerTypes;
 
+	private final HistoryRuleCheck _historyRuleCheck;
+
 	private final Map<TLClass, Set<BoundedRole>> _directlyAssignedRoles;
 
 	private final List<OperationUse> _uses;
@@ -178,6 +180,7 @@ public class SecurityCoverageAnalysis {
 
 		_compositeReferences = compositeReferences(model);
 		_containerTypes = containerTypes(model);
+		_historyRuleCheck = new HistoryRuleCheck(accessManager, accessRights, _containerTypes);
 
 		_directlyAssignedRoles = directlyAssignedRoles();
 
@@ -453,7 +456,7 @@ public class SecurityCoverageAnalysis {
 		List<CoverageFinding> findings = new ArrayList<>();
 		if (withoutSecurity != null || internal != null) {
 			// An exempt type needs no definition.
-		} else if (accessParent != null && accessParent.getOperations() == null) {
+		} else if (AccessParentFunction.delegatesAll(accessParent)) {
 			List<String> shadowed = shadowedRules(roleRules, parentRules);
 			if (!shadowed.isEmpty()) {
 				findings.add(CoverageFinding.shadowedRules(type, shadowed));
@@ -478,6 +481,7 @@ public class SecurityCoverageAnalysis {
 			addDeadGrantFindings(type, accessParent, findings);
 			addUngrantedOperationFindings(type, accessParent, findings);
 			addUncheckedGrantFindings(type, accessParent, findings);
+			_historyRuleCheck.addFindings(type, findings);
 		}
 		if (withoutSecurity == null && internal == null) {
 			findings.addAll(_useFindings.getOrDefault(type, Collections.emptyList()));

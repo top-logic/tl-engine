@@ -27,6 +27,7 @@ import com.top_logic.layout.responsive.DisplayClassModel.DisplayClassListener;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.AdaptiveDetailElement.Config;
@@ -386,11 +387,11 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 	}
 
 	private ReactControl buildSelector() {
-		return ContentControls.toControl(_selector, _selectorContext);
+		return ViewUnitControl.create(_selectorContext, ctx -> ContentControls.toControl(_selector, ctx));
 	}
 
 	private ReactControl buildDetail() {
-		return ContentControls.toControl(_detail, _detailContext);
+		return ViewUnitControl.create(_detailContext, ctx -> ContentControls.toControl(_detail, ctx));
 	}
 
 	/**

@@ -95,24 +95,26 @@ public class ToolContext implements ToolExecutionContext {
 	 * </p>
 	 *
 	 * <p>
-	 * The exception is a script that a tool of a {@link SecurityContext#isBackgroundRun() background
-	 * run} executes, for example through {@code changeData}: nobody watches that script either. Its
-	 * nested run is a background run of the same account, bounded by the same
-	 * {@code <background-allowlist>}, so that a nested run is never wider than the run that executes
-	 * it. The tool dispatch tells which run that is through {@link RunSecurityBinding}.
+	 * The exception is a script that a tool of a run executes, for example through {@code changeData}:
+	 * the account that started the run does not watch that script. The context then has the
+	 * {@link #security() security context} of that run, which {@link RunSecurityBinding} names, with
+	 * every limit of it: the {@code <background-allowlist>} of a background run, and each narrowing that
+	 * the entry point of the run added. A nested run is therefore never wider than the run that
+	 * executes it. A new context for the account instead would have the limits of the account only,
+	 * not the limits of the run.
 	 * </p>
 	 *
 	 * @throws IllegalStateException
-	 *         If no user is bound to the calling thread. A run that cannot name its principal cannot
-	 *         be authorized, and there is no unchecked mode to fall back to.
+	 *         If no run is bound and no user is bound to the calling thread. A run that cannot name
+	 *         its principal cannot be authorized, and there is no unchecked mode to fall back to.
 	 */
 	public static ToolContext forCurrentUser() {
 		CancellationToken cancellationToken = new CancellationToken();
-		return new ToolContext(
-			RunSecurity.contextFor(
-				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT,
-					RunSecurityBinding.executesBackgroundRun())),
-			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
+		SecurityContext outer = RunSecurityBinding.current();
+		SecurityContext security = outer != null ? outer
+			: RunSecurity.contextFor(new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, false));
+		return new ToolContext(security, ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken),
+			cancellationToken);
 	}
 
 	/**

@@ -15,18 +15,14 @@ import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.tools.ExposedTool;
 import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
-import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.ai.core.agent.SecurityContext;
 import com.top_logic.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.ai.core.scripting.AIScriptFunctions;
-import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.ai.core.security.RunEntryPoint;
 import com.top_logic.ai.core.security.RunPrincipal;
 import com.top_logic.ai.core.security.RunSecurity;
-import com.top_logic.ai.core.security.ToolAccessPolicy;
 
 import io.modelcontextprotocol.spec.McpSchema;
 
@@ -139,25 +135,6 @@ public class SecDemoNestedRunCeilingTest extends SecDemoPersonaTest {
 		assertTrue("changeData must run the script, and the nested call must be refused: " + result,
 			result.contains(NESTED_REFUSAL));
 		assertTrue("The refusal must name the allowlist: " + result, result.contains(ALLOWLIST));
-	}
-
-	/**
-	 * Runs the given test with {@code data.write} on the background allowlist, so that a background
-	 * run may execute a script with {@code changeData}.
-	 */
-	private static void withDataWriteOnTheAllowlist(Runnable test) throws Exception {
-		ToolAccessPolicy.Grant dataWrite = TypedConfiguration.newConfigItem(ToolAccessPolicy.Grant.class);
-		dataWrite.setGroup(ToolGroups.DATA_WRITE);
-		// The saved policy, not the running one: a restart reads the saved one.
-		List<ToolAccessPolicy.Grant> allowlist = AiToolAccessService.savedPolicy().getBackgroundAllowlist().getGrants();
-		allowlist.add(dataWrite);
-		ModuleUtil.INSTANCE.restart(AiToolAccessService.Module.INSTANCE, null);
-		try {
-			test.run();
-		} finally {
-			allowlist.remove(dataWrite);
-			ModuleUtil.INSTANCE.restart(AiToolAccessService.Module.INSTANCE, null);
-		}
 	}
 
 	/**

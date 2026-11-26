@@ -224,8 +224,8 @@ public class McpToolAdapter {
 			scope.begin();
 		}
 		// What ToolExecutions binds for a tool call of an agent loop, also around the commit message,
-		// whose expression is a script, too: a script of this call starts its nested run as a
-		// background run, as this request is one.
+		// whose expression is a script, too: a run that a script of this call starts has the limits of
+		// this request, which is a background run.
 		try (ToolExecutions.RunBinding run = ToolExecutions.bindRun(context)) {
 			if (writes) {
 				// Before the call, in its transaction: what it is about to delete can still be read.

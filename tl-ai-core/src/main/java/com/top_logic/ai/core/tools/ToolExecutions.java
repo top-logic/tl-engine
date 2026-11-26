@@ -54,8 +54,8 @@ import com.top_logic.ai.core.execution.RunInfoBinding;
  * which agent run it is serving. The binding is removed when the call returns. The run's
  * {@link ReadingListBinding reading list} is bound the same way, so that the code which renders what
  * a tool read - the read filter, the page renderer - can register it as a source. And so is the run's
- * {@link RunSecurityBinding security context}, so that a script the tool executes starts a nested run
- * of a background run as a background run.
+ * {@link RunSecurityBinding security context}, so that a run that a script of the tool starts has
+ * every limit of the run that executes the script.
  * </p>
  *
  * @see ThreadContext#inSystemContext(Class, ComputationEx2)

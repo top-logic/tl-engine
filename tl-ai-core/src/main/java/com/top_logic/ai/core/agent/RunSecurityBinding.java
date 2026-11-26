@@ -15,9 +15,10 @@ import com.top_logic.basic.thread.ThreadLocalBinding;
  * <p>
  * A tool can execute TL-Script, and the script can start a nested run with {@code aiCallTool},
  * {@code aiAgentChat} or {@code aiChat}. These functions get no context from their caller and build
- * one with {@link ToolContext#forCurrentUser()}. This binding tells them which run executes the
- * script, so that a nested run of a background run is a background run, too, and is bounded by the
- * same {@code <background-allowlist>}.
+ * one with {@link ToolContext#forCurrentUser()}. This binding gives them the context of the run that
+ * executes the script, so that the nested run has every limit of that run: the
+ * {@code <background-allowlist>} of a background run, and each narrowing that the entry point of the
+ * run added. A nested run is therefore never wider than the run that executes it.
  * </p>
  *
  * <p>
@@ -55,6 +56,14 @@ public final class RunSecurityBinding {
 	}
 
 	/**
+	 * The security context of the run whose tool executes on the current thread, or
+	 * <code>null</code> outside a tool call.
+	 */
+	public static SecurityContext current() {
+		return SECURITY.get();
+	}
+
+	/**
 	 * Whether the current thread executes a tool of a {@link SecurityContext#isBackgroundRun()
 	 * background run}.
 	 *
@@ -65,8 +74,8 @@ public final class RunSecurityBinding {
 	 * </p>
 	 *
 	 * <p>
-	 * Code that a script can call and that starts a run of its own asks here, so that the run it
-	 * starts is not wider than the run that executes the script.
+	 * Code that a script can call and that starts a run which the {@code <background-allowlist>}
+	 * cannot bound asks here, and refuses in a background run.
 	 * </p>
 	 *
 	 * @return <code>false</code> outside a tool call, and in a tool call of a run that a person can

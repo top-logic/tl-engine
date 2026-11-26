@@ -23,6 +23,7 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.ai.demo.secdemo.SecDemoSetup;
 import com.top_logic.ai.demo.secdemo.SecDemoSetup.PersonaConfig;
 import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialGroupManager;
@@ -30,8 +31,10 @@ import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.module.BasicRuntimeModule;
+import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -48,6 +51,7 @@ import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.ToolAccessPolicy;
 import com.top_logic.ai.core.tools.ToolExecutions;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -295,6 +299,25 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 
 		ToolContext context = new ToolContext(security, ApprovalCallback.AUTO_APPROVE);
 		return ToolExecutions.execute(tool(SCRIPT_TOOL), args, context).text();
+	}
+
+	/**
+	 * Runs the given test with {@code data.write} on the background allowlist, so that a background
+	 * run may execute a script with {@code changeData}.
+	 */
+	protected static void withDataWriteOnTheAllowlist(Runnable test) throws Exception {
+		ToolAccessPolicy.Grant dataWrite = TypedConfiguration.newConfigItem(ToolAccessPolicy.Grant.class);
+		dataWrite.setGroup(ToolGroups.DATA_WRITE);
+		// The saved policy, not the running one: a restart reads the saved one.
+		List<ToolAccessPolicy.Grant> allowlist = AiToolAccessService.savedPolicy().getBackgroundAllowlist().getGrants();
+		allowlist.add(dataWrite);
+		ModuleUtil.INSTANCE.restart(AiToolAccessService.Module.INSTANCE, null);
+		try {
+			test.run();
+		} finally {
+			allowlist.remove(dataWrite);
+			ModuleUtil.INSTANCE.restart(AiToolAccessService.Module.INSTANCE, null);
+		}
 	}
 
 	/**

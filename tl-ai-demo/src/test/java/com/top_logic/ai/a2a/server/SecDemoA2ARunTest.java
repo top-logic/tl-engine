@@ -23,14 +23,20 @@ import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.ai.core.execution.AgentEnvironment;
 import com.top_logic.ai.core.session.ConversationLog;
 import com.top_logic.ai.core.session.ConversationLogListener;
 import com.top_logic.ai.core.tools.ToolExecutions;
+import com.top_logic.ai.core.tools.registry.ScriptToolFactory;
+import com.top_logic.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
 import com.top_logic.ai.core.tools.task.TaskStore;
 import com.top_logic.util.TLContextManager;
 
@@ -198,6 +204,50 @@ public class SecDemoA2ARunTest extends SecDemoPersonaTest {
 				assertRefusedByTheAllowlist(a2aRun(administrator, allowWrites), toolName);
 			}
 		}
+	}
+
+	/**
+	 * A tool of a served agent with allow-writes="false" cannot change the application through a
+	 * nested run either: the nested run has the rights of the A2A run.
+	 *
+	 * <p>
+	 * The tool is a script tool that only reads, which the guard admits, and its script calls
+	 * {@code changeData} with {@code aiCallTool}. For the test, {@code data.write} is on the
+	 * allowlist and the account is an administrator, whom the roles bound in nothing: only the guard
+	 * can refuse the nested call.
+	 * </p>
+	 */
+	public void testANestedRunKeepsTheLimitOfAllowWrites() throws Exception {
+		Person administrator = administrator();
+		Tool reading = readingScriptTool("aiCallTool(\"" + SCRIPT_TOOL + "\", {\"script\": \""
+			+ CREATE_TICKET.replace("\"", "\\\"") + "\"})");
+		withDataWriteOnTheAllowlist(() -> {
+			ToolContext readOnly = a2aRun(administrator, false);
+			List<TLObject> seeded = tickets();
+			try {
+				String result = ToolExecutions.execute(reading, Map.of(), readOnly).text();
+
+				assertTrue("The nested changeData must be refused for the switch of the served agent: "
+					+ result, result.contains("asked by another agent"));
+				assertEquals("Nothing may have been written.", seeded.size(), tickets().size());
+			} finally {
+				deleteTicketsBeyond(seeded);
+			}
+		});
+	}
+
+	/**
+	 * A script tool that only reads, as an application configures one, with the given script.
+	 */
+	private static Tool readingScriptTool(String script) throws ConfigurationException {
+		ScriptToolConfig tool = TypedConfiguration.newConfigItem(ScriptToolConfig.class);
+		tool.setName("nestedChange");
+		tool.setImplementation(ExprFormat.INSTANCE.getValue(ScriptToolConfig.IMPLEMENTATION, script));
+		tool.update(tool.descriptor().getProperty(ScriptToolConfig.MODE), ToolMode.READ);
+		ScriptToolFactory.Config factory = TypedConfiguration.newConfigItem(ScriptToolFactory.Config.class);
+		factory.getTools().put(tool.getName(), tool);
+		return new ScriptToolFactory(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, factory)
+			.createTools().get(0);
 	}
 
 	/**

@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -57,6 +58,7 @@ import com.top_logic.ai.core.tools.model.messages.ModelPartResponse;
 import com.top_logic.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.ai.core.tools.util.ToolI18NUtil;
 import com.top_logic.ai.core.tools.util.ToolI18NUtil.LocalizedTexts;
+import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -607,9 +609,11 @@ public class ModelEditorTool {
 			property = (TLClassProperty) existingPart;
 		} else {
 			TLType resolvedType = resolvePrimitiveType(model, propertyType);
-			if (PrimitiveStorage.systemColumnError(tlClass, propertyName, resolvedType, multipleFlag, null) != null) {
-				throw new IllegalArgumentException("Property name '" + propertyName
-					+ "' is the name of a system column of each object; choose another name.");
+			ResKey systemColumnError =
+				PrimitiveStorage.systemColumnError(tlClass, propertyName, resolvedType, multipleFlag, null);
+			if (systemColumnError != null) {
+				// The tool answers a language model: all its messages are English.
+				throw new IllegalArgumentException(Resources.getInstance(Locale.ENGLISH).getString(systemColumnError));
 			}
 
 			try (Transaction tx =

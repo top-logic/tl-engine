@@ -19,6 +19,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor.ChatRunOptions;
 import com.top_logic.ai.core.agent.AgentApplicationService;
+import com.top_logic.ai.core.agent.AgentFactory;
 import com.top_logic.ai.core.agent.AgentPolicyService;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
@@ -84,7 +85,7 @@ public class TestChatRunSubject extends BasicTestCase {
 		send(subject);
 
 		assertTrue("The environment block names the subject: " + _systemPrompts.get(0),
-			_systemPrompts.get(0).contains("- Subject: " + ReadFilter.identityJson(subject)));
+			_systemPrompts.get(0).contains("- " + AgentFactory.SUBJECT_FACT + ": " + ReadFilter.identityJson(subject)));
 	}
 
 	/** A chat about an object the user may not read - an old link, say - tells the model nothing of it. */
@@ -92,7 +93,7 @@ public class TestChatRunSubject extends BasicTestCase {
 		send(conversation(other));
 
 		assertFalse("The environment block names a subject the user may not read: " + _systemPrompts.get(0),
-			_systemPrompts.get(0).contains("- Subject:"));
+			_systemPrompts.get(0).contains("- " + AgentFactory.SUBJECT_FACT + ":"));
 	}
 
 	/** Sends one message, as the chat of a window does, into a new chat about the given subject. */

@@ -36,6 +36,13 @@ public final class A2AJson {
 	 */
 	public static final String CALLER_METADATA = "tlAi";
 
+	/**
+	 * Metadata entry that names the subject of a conversation by its label: in the
+	 * {@link #CALLER_METADATA} of a message that a tl-ai caller sends, and in the metadata of a task
+	 * that this application answers. Only a subject that the account of the run may read is named.
+	 */
+	public static final String SUBJECT_METADATA = "subject";
+
 	private A2AJson() {
 		// Static utility.
 	}

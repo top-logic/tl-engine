@@ -232,7 +232,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 				ExecutionRecorder.conversationIdOf(session), context._subject, token);
 			TLObject subject = toolContext.security().principal().subject();
 			if (subject != null) {
-				task.putMetadata("subject", label(subject));
+				task.putMetadata(A2AJson.SUBJECT_METADATA, label(subject));
 			}
 			_service.contexts().rememberSubject(context._contextId, subject);
 			run[0] = toolContext;

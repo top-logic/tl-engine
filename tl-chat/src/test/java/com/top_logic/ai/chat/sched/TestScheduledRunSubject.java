@@ -20,6 +20,7 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ScriptedModel;
 import com.top_logic.ai.chat.sched.TestScheduledAgentRun.ProbeTask;
 import com.top_logic.ai.core.agent.AgentApplicationService;
+import com.top_logic.ai.core.agent.AgentFactory;
 import com.top_logic.ai.core.agent.AgentPolicyService;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
@@ -91,7 +92,7 @@ public class TestScheduledRunSubject extends BasicTestCase {
 
 		assertFalse("The model was not asked.", _systemPrompts.isEmpty());
 		assertTrue("The environment block names the subject: " + _systemPrompts.get(0),
-			_systemPrompts.get(0).contains("- Subject: " + ReadFilter.identityJson(subject)));
+			_systemPrompts.get(0).contains("- " + AgentFactory.SUBJECT_FACT + ": " + ReadFilter.identityJson(subject)));
 		assertNull("The session of a scheduled run is about the subject of the run.",
 			recordedSession().getSubject());
 	}
@@ -105,7 +106,7 @@ public class TestScheduledRunSubject extends BasicTestCase {
 
 		assertFalse("The model was not asked.", _systemPrompts.isEmpty());
 		assertFalse("The environment block names a subject the account may not read: " + _systemPrompts.get(0),
-			_systemPrompts.get(0).contains("- Subject:"));
+			_systemPrompts.get(0).contains("- " + AgentFactory.SUBJECT_FACT + ":"));
 		assertNull("The session is about a subject the account may not read.", recordedSession().getSubject());
 	}
 

@@ -254,7 +254,7 @@ public final class RemoteExchange {
 	private Outcome exchange(RemoteAgent agent, Map<String, Object> message, Outcome outcome)
 			throws IOException, InterruptedException {
 		message.put("metadata", Json.map(A2AJson.CALLER_METADATA, Json.map("app", _caller.app(), "agent", _caller.agent(),
-			"conversationId", _caller.conversationId(), "subject", _caller.subjectLabel())));
+			"conversationId", _caller.conversationId(), A2AJson.SUBJECT_METADATA, _caller.subjectLabel())));
 		outcome._agent = agent.name();
 		outcome._contextId = Json.str(message, "contextId");
 		outcome._taskId = Json.str(message, "taskId");

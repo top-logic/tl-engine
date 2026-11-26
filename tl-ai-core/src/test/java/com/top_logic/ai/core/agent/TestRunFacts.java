@@ -115,7 +115,7 @@ public class TestRunFacts extends BasicTestCase {
 		List<String> factLines =
 			Stream.of(block.split("\\R", -1)).filter(line -> line.startsWith("- ")).toList();
 		assertEquals(block, List.of(
-			"- Subject: " + ReadFilter.identityJson(subject),
+			"- " + AgentFactory.SUBJECT_FACT + ": " + ReadFilter.identityJson(subject),
 			"- Tenant: ACME",
 			"- Project: Airport"), factLines);
 		assertTrue("The identity names the object by its identifier: " + block,
@@ -140,7 +140,7 @@ public class TestRunFacts extends BasicTestCase {
 		EnvironmentFact project = new EnvironmentFact("Project", "Airport", true);
 
 		assertEquals(block(agent(), project), blockAbout(null, agent(), project));
-		assertFalse(blockAbout(null, agent(), project).contains("Subject"));
+		assertFalse(blockAbout(null, agent(), project).contains(AgentFactory.SUBJECT_FACT));
 	}
 
 	/** The environment block of a run of the given agent, from a page that states the given facts. */

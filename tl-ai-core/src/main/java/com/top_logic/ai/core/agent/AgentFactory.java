@@ -105,7 +105,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * {@code tl.ai.execution:AgentSession#subject}, and the model reads it in every language.
 	 * </p>
 	 */
-	static final String SUBJECT_FACT = "Subject";
+	public static final String SUBJECT_FACT = "Subject";
 
 	/** Singleton accessor. */
 	public static AgentFactory getInstance() {

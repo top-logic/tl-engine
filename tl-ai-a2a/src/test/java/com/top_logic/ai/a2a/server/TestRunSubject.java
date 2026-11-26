@@ -86,7 +86,8 @@ public class TestRunSubject extends BasicTestCase {
 	public void testReadableSubjectIsKept() throws Exception {
 		A2ATask task = runTask(owner, "ctx-readable").task();
 
-		assertNotNull("The answer names the subject: " + metadata(task), metadata(task).get("subject"));
+		assertNotNull("The answer names the subject: " + metadata(task),
+			metadata(task).get(A2AJson.SUBJECT_METADATA));
 		assertNull("The session of an A2A run is about the subject of the run.",
 			sessionOf(owner, "ctx-readable").getSubject());
 	}
@@ -103,7 +104,7 @@ public class TestRunSubject extends BasicTestCase {
 		A2ATask task = run.task();
 
 		assertNull("The answer to the calling application names a subject its account may not read: "
-			+ metadata(task), metadata(task).get("subject"));
+			+ metadata(task), metadata(task).get(A2AJson.SUBJECT_METADATA));
 		assertNull("The session is about a subject its owner may not read.",
 			sessionOf(stranger, "ctx-unreadable").getSubject());
 		String told = userText(run.backend().conversationLog("ctx-unreadable"));

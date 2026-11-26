@@ -117,7 +117,7 @@ public class TestCallerSubject extends BasicTestCase {
 		askAlpha(owner);
 
 		assertNotNull("The caller names the subject of its conversation: " + _received,
-			Json.str(_received.get(0), "subject"));
+			Json.str(_received.get(0), A2AJson.SUBJECT_METADATA));
 	}
 
 	/** A run whose account may not read the subject does not name it to the remote agent. */
@@ -128,7 +128,7 @@ public class TestCallerSubject extends BasicTestCase {
 		askAlpha(stranger);
 
 		assertNull("The caller sent the subject of its conversation, which its account may not read: "
-			+ _received, Json.str(_received.get(0), "subject"));
+			+ _received, Json.str(_received.get(0), A2AJson.SUBJECT_METADATA));
 	}
 
 	/**

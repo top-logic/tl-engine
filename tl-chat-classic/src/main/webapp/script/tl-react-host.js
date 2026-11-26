@@ -25,8 +25,8 @@
  *    Inside the scope ":root" means the scope root and "html"/"body" mean the host, which
  *    is where the React page's document-level rules belong when the document is not theirs. Both are
  *    written with ":scope", and a rule keyed on a theme attribute ("[data-theme=dark]") gets a
- *    ":scope" variant: the host carries those attributes, and a selector without ":scope" never
- *    matches the scope root.
+ *    ":where(:scope)" variant: the host carries those attributes, and a selector without ":scope"
+ *    never matches the scope root.
  *    @font-face, @keyframes, the page's layer order statement and the like cannot stand in @scope
  *    and are kept beside it.
  * 3. Adds one unlayered reset that reverts, inside the scope, every declaration of the unlayered
@@ -80,6 +80,11 @@
 	 * classic page they stand on the host, the scoping root - and a selector inside @scope that names
 	 * no :scope matches descendants of the root only, never the root itself. Without a :scope variant
 	 * the dark theme's tokens ("[data-theme=dark] {...}") would never reach the host (#649).
+	 *
+	 * The variant names :scope in :where(), which adds no specificity: the specificity at the host must
+	 * be the one at <html>. The theme blocks (":root[data-theme=x]") rank above the roles of the
+	 * design system ("[data-tl-mode=dark]") in the same layer by one attribute only; a plain :scope
+	 * would raise the design system to the theme block, and the later design system would win.
 	 */
 	var THEME_SELECTOR = /^\[data-(theme|tl-mode|tl-density)\b/;
 
@@ -120,7 +125,7 @@
 			return scoped;
 		}
 		return items.map(function(item) {
-			return THEME_SELECTOR.test(item) ? ':scope' + item + ', ' + item : item;
+			return THEME_SELECTOR.test(item) ? ':where(:scope)' + item + ', ' + item : item;
 		}).join(', ');
 	}
 
@@ -363,6 +368,9 @@
 					_state = null;
 					console.error('[TLReactHost] Failed to boot the React view layer.', error);
 				});
-		}
+		},
+
+		/** The selector rewrite, for the tests of this script (src/test/js). */
+		scopedSelector: scopedSelector
 	};
 })();

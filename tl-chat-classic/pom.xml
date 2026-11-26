@@ -67,4 +67,38 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <!--
+    The Node tests of the plain scripts (src/test/js, `npm test`) run in the `test` phase, after surefire, as in
+    tl-design-system: skipped by default, run with `-DskipTests=false`. There are no npm dependencies, hence no
+    `npm install`.
+  -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>install-node</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>npm-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>test</arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

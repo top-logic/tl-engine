@@ -1,0 +1,12 @@
+{
+  "name": "@toplogic/tl-chat-classic",
+  "version": "0.1.0",
+  "description": "Tests of the plain scripts of tl-chat-classic (src/main/webapp/script) with the test runner of Node.",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "scripts": {
+    "test": "node --test \"src/test/js/*.test.mjs\""
+  },
+  "engines": { "node": ">=22.15" }
+}

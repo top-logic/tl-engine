@@ -1,195 +1,136 @@
-import { React, useI18N, usePart, pressClosedSurface, ThemeIcon, ICON_COLUMNS, ICON_CHOOSE_COLUMNS, ICON_RESET } from 'tl-react-bridge';
+import { React, useI18N, usePart, usePopupTrigger, TLChild, ThemeIcon, ICON_COLUMNS, ICON_RESET } from 'tl-react-bridge';
 import { PickerPopover } from '../picker/PickerPopover';
-import { radioArrowTarget } from '../radioGroupKey';
 
-const { useState, useEffect, useRef, useCallback, useId } = React;
+const { useState, useEffect, useLayoutEffect, useRef, useCallback } = React;
 
 const I18N_KEYS = {
-  'js.table.view': 'View',
-  'js.table.viewDensity': 'Density',
-  'js.table.viewDensityDefault': 'As everywhere',
-  'js.table.viewDensityNormal': 'Normal',
-  'js.table.viewDensityCompact': 'Compact',
-  'js.table.viewStripes': 'Stripes',
-  'js.table.viewColumnLines': 'Column lines',
-  'js.table.viewChooseColumns': 'Choose and order columns …',
-  'js.table.viewReset': 'Reset',
+  // The entry resetting the arrangement of the columns of this table: columns, order, widths, frozen, sorting, grouping.
+  'js.table.columnsReset': 'Reset columns',
+  // The title of the popover, and the name of the gear opening it.
+  'js.table.columns': 'Columns',
 };
 
-/** The density of a table: the empty word follows the density of the page, the others hold the table to theirs. */
-export type TableDensity = '' | 'normal' | 'compact';
-
-/** What the view of a table consists of: the entries that take effect at once. */
-export interface TableViewValues {
-  density: TableDensity;
-  striped: boolean;
-  columnLines: boolean;
-}
-
-/** The densities in the order of their segments, each with the key of its label. */
-const DENSITIES: ReadonlyArray<{ value: TableDensity; key: keyof typeof I18N_KEYS }> = [
-  { value: '', key: 'js.table.viewDensityDefault' },
-  { value: 'normal', key: 'js.table.viewDensityNormal' },
-  { value: 'compact', key: 'js.table.viewDensityCompact' },
-];
-
-export interface TableViewOptionsProps extends TableViewValues {
-  /**
-   * Whether the table keeps the view of the user: the density and the two switches are offered only then, since a
-   * choice that is lost at once is none.
-   */
-  viewOptions: boolean;
-
-  /** Whether the table offers the column selection: the entry opening it is there only then. */
-  columnSelect: boolean;
-
-  /** Called at once with all three values whenever one of them is changed. */
-  onChange(values: TableViewValues): void;
-
-  /** Called when the entry for the column selection is pressed. */
-  onColumns(): void;
-
-  /** Called when the entry resetting the view is pressed. */
-  onReset(): void;
-}
-
-/**
- * The content of the popover "View" of a table: first the entry opening the column selection (where the table
- * offers it), the setting a table is adjusted by most; then the density as three segments and stripes and column
- * lines as switches (where the table keeps the view, see `viewOptions`); last the reset.
- *
- * <p>A change takes effect at once and is sent with the other two values. The values shown are held here until
- * the server echoes others, so that a second change, made before the echo of the first has arrived, is sent with
- * the first one and not against the old state.</p>
- *
- * <p>The segments are a radio group as in the segmented choice: one of them is the tab stop, the arrows move the
- * selection (and with it the focus) and wrap around at the ends.</p>
- */
-export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
-  density, striped, columnLines, viewOptions, columnSelect, onChange, onColumns, onReset,
-}) => {
-  const i18n = useI18N(I18N_KEYS);
-  const Checkbox = usePart('Checkbox');
-  const headingId = useId();
-  const segmentRefs = useRef<Array<HTMLButtonElement | null>>([]);
-
-  const [shown, setShown] = useState<TableViewValues>({ density, striped, columnLines });
-  // The server wins: what it sends replaces what was shown.
-  useEffect(() => {
-    setShown({ density, striped, columnLines });
-  }, [density, striped, columnLines]);
-  // The values last chosen, which the next change builds on even before the render of the first one.
-  const latest = useRef(shown);
-  latest.current = shown;
-
-  const change = useCallback((patch: Partial<TableViewValues>) => {
-    const next = { ...latest.current, ...patch };
-    latest.current = next;
-    setShown(next);
-    onChange(next);
-  }, [onChange]);
-
-  const selectedIndex = Math.max(0, DENSITIES.findIndex((entry) => entry.value === shown.density));
-
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    const next = radioArrowTarget(event, selectedIndex, DENSITIES.length);
-    if (next === null) {
-      return;
-    }
-    segmentRefs.current[next]?.focus();
-    change({ density: DENSITIES[next].value });
-  };
-
-  return (
-    <>
-      <div className="tl-table-view-options__title tl-type-label-strong">{i18n['js.table.view']}</div>
-      {columnSelect && (
-        <button type="button" className="tl-menu__item tl-type-body" onClick={onColumns}>
-          <ThemeIcon encoded={ICON_CHOOSE_COLUMNS} className="tl-menu__icon tl-icon-sm" />
-          <span className="tl-menu__label">{i18n['js.table.viewChooseColumns']}</span>
-        </button>
-      )}
-      {viewOptions && (
-        <>
-          {columnSelect && <hr className="tl-divider" />}
-          <div id={headingId} className="tl-menu__header tl-type-label">{i18n['js.table.viewDensity']}</div>
-          <div
-            role="radiogroup"
-            aria-labelledby={headingId}
-            className="tl-segmented tl-table-view-options__segments"
-            onKeyDown={handleKeyDown}
-          >
-            {DENSITIES.map((entry, index) => (
-              <button
-                key={entry.value}
-                ref={(element) => {
-                  segmentRefs.current[index] = element;
-                }}
-                type="button"
-                role="radio"
-                aria-checked={index === selectedIndex}
-                // One segment is the tab stop; within the group the arrows move on.
-                tabIndex={index === selectedIndex ? 0 : -1}
-                className="tl-segmented__segment tl-type-label"
-                onClick={() => change({ density: entry.value })}
-              >
-                <span className="tl-segmented__label">{i18n[entry.key]}</span>
-              </button>
-            ))}
-          </div>
-          <Checkbox
-            display="switch"
-            className="tl-table-view-options__switch"
-            label={i18n['js.table.viewStripes']}
-            checked={shown.striped}
-            onChange={(checked) => change({ striped: checked })}
-          />
-          <Checkbox
-            display="switch"
-            className="tl-table-view-options__switch"
-            label={i18n['js.table.viewColumnLines']}
-            checked={shown.columnLines}
-            onChange={(checked) => change({ columnLines: checked })}
-          />
-        </>
-      )}
-      <hr className="tl-divider" />
-      <button type="button" className="tl-menu__item tl-type-body" onClick={onReset}>
-        <ThemeIcon encoded={ICON_RESET} className="tl-menu__icon tl-icon-sm" />
-        <span className="tl-menu__label">{i18n['js.table.viewReset']}</span>
-      </button>
-    </>
-  );
-};
-
-/** The focus starts on the first entry: the column selection where the table offers it, else the density in force. */
-function firstEntry(root: HTMLElement): HTMLElement | null {
-  return root.querySelector<HTMLElement>('button:not([role="radio"]), [role="radio"][tabindex="0"]');
-}
-
-export interface TableViewButtonProps extends TableViewValues {
+export interface TableViewButtonProps {
   /** Whether the button sits in a column heading, drawn small there. */
   inCell?: boolean;
-  viewOptions: boolean;
+
+  /** Whether the table keeps its state: the arrangement of its columns can then be reset. */
+  canReset: boolean;
   columnSelect: boolean;
-  onChange(values: TableViewValues): void;
-  /** Called when the column selection is chosen; the popover closes on its own. */
+
+  /**
+   * The column selection the server holds, a child control; `null` while it holds none. It arrives after `onColumns`,
+   * and it is released after `onColumnsClose`.
+   */
+  columnSelection: unknown;
+
+  /** Called when the popover opens where the table offers the column selection: the server builds it. */
   onColumns(): void;
+
+  /**
+   * Called when the popover closes after `onColumns` - on Escape, on a press outside, on a second press of the gear,
+   * after the reset, or with the button going away -, so that the server releases the column selection.
+   */
+  onColumnsClose(): void;
+
+  /** Called when the entry resetting the columns is pressed. */
   onReset(): void;
+}
+
+/** The ID of the child control the server holds, `null` for none. */
+function controlIdOf(child: unknown): string | null {
+  return (child as { controlId?: string } | null)?.controlId ?? null;
 }
 
 /**
  * The gear of the table: the strip that places it (`tl-table__columns`), the trigger of the part `MenuTrigger`
- * announcing a dialog, and the popover {@link TableViewOptions} it opens under itself. Escape and a press outside
- * close the popover, and the focus returns to the gear; so does a second press of the gear
- * (its press is a press outside, so the click that follows must not open the popover again).
+ * announcing a dialog (usePopupTrigger), and the popover it opens under itself: the column selection the server holds
+ * as a child control, and below it, where the table keeps its state, the reset of the columns. The gear is there where
+ * the table has either, and is named after the columns whichever it opens. How tables look - density, stripes, column
+ * lines - is not set here but in the user menu, for all tables of the page at once. Every gesture takes effect at once,
+ * and there is no dialog.
+ *
+ * <p>The column selection lives while the popover is open: the server is asked for it when the popover opens and told
+ * to release it when the popover closes. Escape and a press outside close the popover, and the focus returns to the
+ * gear; so does a second press of the gear (its press is a press outside, so the click that follows does not open the
+ * popover again).</p>
+ *
+ * <p>The focus waits on the popover itself, never on the reset below the selection. The selection arrives a round trip
+ * after the opening; it takes the focus from the popover into its search, if it has one.</p>
  */
-export const TableViewButton: React.FC<TableViewButtonProps> = ({ inCell, columnSelect, onColumns, ...view }) => {
+export const TableViewButton: React.FC<TableViewButtonProps> = ({
+  inCell, canReset, columnSelect, columnSelection, onColumns, onColumnsClose, onReset,
+}) => {
   const i18n = useI18N(I18N_KEYS);
   const MenuTrigger = usePart('MenuTrigger');
   const anchorRef = useRef<HTMLButtonElement | null>(null);
+  // The column page inside the popover, which leads to the popover (its surface) for the focus.
+  const pageRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
-  const close = useCallback(() => setOpen(false), []);
+
+  // Whether the server was asked for the column selection and not yet told to release it. Refs: read by the closing
+  // handlers, which a surface keeps from the render that opened it, and by the cleanup.
+  const columnsAsked = useRef(false);
+  const onColumnsCloseRef = useRef(onColumnsClose);
+  onColumnsCloseRef.current = onColumnsClose;
+
+  // The selections of the server are told apart by their ID. When the popover opens again within one round trip of
+  // its closing (a second press of the gear), the server may still hold the selection of the earlier opening: that one
+  // was released - the client said so - and is not drawn; the popover waits for the new one.
+  const released = useRef(new Set<string>());
+  const currentId = controlIdOf(columnSelection);
+  const currentIdRef = useRef(currentId);
+  currentIdRef.current = currentId;
+  const selectionId = currentId !== null && !released.current.has(currentId) ? currentId : null;
+
+  const close = useCallback(() => {
+    if (columnsAsked.current) {
+      columnsAsked.current = false;
+      if (currentIdRef.current !== null) {
+        released.current.add(currentIdRef.current);
+      }
+      onColumnsCloseRef.current();
+    }
+    setOpen(false);
+  }, []);
+  const show = () => {
+    if (columnSelect) {
+      columnsAsked.current = true;
+      onColumns();
+    }
+    setOpen(true);
+  };
+  const trigger = usePopupTrigger(open, (next) => (next ? show() : close()), 'dialog');
+
+  // Like every menu entry, the reset closes the popover after it has acted.
+  const reset = () => {
+    onReset();
+    close();
+  };
+
+  // The button goes away - the table redraws its heading, the table is closed - while the popover is open: the server
+  // releases the selection nobody shows any more.
+  useEffect(() => () => {
+    if (columnsAsked.current) {
+      onColumnsCloseRef.current();
+    }
+  }, []);
+
+  // The focus follows the selection, once per selection. A selection arriving while the focus waits on the popover
+  // takes it into its search - and has none for it without a search (ten columns or fewer). A selection going away
+  // with the focus leaves it on the popover.
+  useLayoutEffect(() => {
+    const popover = pageRef.current?.closest<HTMLElement>('.tl-table-view-options');
+    if (!open || !popover) {
+      return;
+    }
+    if (document.activeElement === null || document.activeElement === document.body) {
+      popover.focus();
+    }
+    if (selectionId !== null && document.activeElement === popover) {
+      document.getElementById(selectionId)?.querySelector<HTMLElement>('input')?.focus();
+    }
+  }, [selectionId]);
 
   return (
     <div className="tl-table__columns">
@@ -197,37 +138,48 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({ inCell, column
         ref={anchorRef}
         appearance="ghost"
         icon={ICON_COLUMNS}
-        label={i18n['js.table.view']}
+        label={i18n['js.table.columns']}
         small={inCell}
-        haspopup="dialog"
-        expanded={open}
+        haspopup={trigger.haspopup}
+        expanded={trigger.expanded}
         // In a heading, the gestures of the heading itself (sorting, dragging) are none of the button's business.
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
-          // The press of this click has closed the popover this gear opens: leave it closed.
-          if (!pressClosedSurface()) {
-            setOpen(true);
-          }
+          trigger.onClick();
         }}
       />
       {open && (
         <PickerPopover
           anchorRef={anchorRef}
-          label={i18n['js.table.view']}
+          label={i18n['js.table.columns']}
           className="tl-menu tl-table-view-options"
-          initialFocus={firstEntry}
+          // No entry takes the focus on opening: the popover does, and the selection moves it on when it arrives.
+          initialFocus={() => null}
           onClose={close}
+          // The selection fills the popover when it arrives: it is placed anew, on the side with room for it; the side
+          // stays while the search narrows the list.
+          layoutKey={selectionId ?? ''}
         >
-          <TableViewOptions
-            {...view}
-            columnSelect={columnSelect}
-            onColumns={() => {
-              setOpen(false);
-              onColumns();
-            }}
-          />
+          <div ref={pageRef} className="tl-table-view-options__page">
+            {columnSelect && (
+              <>
+                <div className="tl-table-view-options__title tl-type-label-strong">{i18n['js.table.columns']}</div>
+                {selectionId !== null && <TLChild control={columnSelection} />}
+              </>
+            )}
+            {canReset && (
+              <>
+                {columnSelect && <hr className="tl-divider" />}
+                {/* The popover is no menu: a plain button, no menu item. */}
+                <button type="button" className="tl-menu__item tl-type-body" onClick={reset}>
+                  <ThemeIcon encoded={ICON_RESET} className="tl-menu__icon tl-icon-sm" />
+                  <span className="tl-menu__label">{i18n['js.table.columnsReset']}</span>
+                </button>
+              </>
+            )}
+          </div>
         </PickerPopover>
       )}
     </div>

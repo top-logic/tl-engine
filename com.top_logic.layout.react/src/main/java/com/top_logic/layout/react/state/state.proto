@@ -29,6 +29,8 @@
  *   TLSlider          - SliderState
  *   TLFloatingAction  - FloatingActionState
  *   TLDataList        - DataListState
+ *   TLSideRail        - SideRailState
+ *   TLSideRailSections - SideRailSectionsState
  *
  * The message of an atomic control, which draws its look through the parts of 'tl-react-bridge'
  * (see "replacePart" and the developer article view-layer/parts). A component library replaces
@@ -244,6 +246,13 @@ message ButtonState extends ControlState {
 	 * a pressed toggle. Absent when not.
 	 */
 	bool active;
+
+	/**
+	 * Whether the button is a toggle: it reports to assistive technology whether it is pressed -
+	 * {@link #active} - or not, e.g. a button opening and closing a panel. Absent for a button that
+	 * is no toggle, which reports pressed only while it is {@link #active}.
+	 */
+	bool toggle;
 
 	/**
 	 * The icon of the button, the encoded form of a theme image (e.g. {@code css:fas fa-edit} for
@@ -1330,6 +1339,12 @@ message MenuState extends ControlState {
 		bool disabled;
 
 		/**
+		 * The text explaining the item: for a disabled item the reason it cannot be chosen,
+		 * otherwise the description of its command. Absent where there is nothing to explain.
+		 */
+		string tooltip;
+
+		/**
 		 * Whether the effect of the item's command is currently in force, marking the item as the
 		 * chosen one among its alternatives.
 		 */
@@ -2395,11 +2410,12 @@ message DataListState extends ControlState {
 	}
 
 	/**
-	 * What stands after the lines of a {@link Row}: metadata text, or a badge.
+	 * What stands after the lines of a {@link Row}: metadata text, a badge, or the content of a
+	 * template.
 	 */
 	message Trailing {
 		/**
-		 * The text, plain text.
+		 * The text, plain text. Ignored with a {@link #control}.
 		 */
 		string text;
 
@@ -2408,6 +2424,12 @@ message DataListState extends ControlState {
 		 * metadata text.
 		 */
 		bool badge;
+
+		/**
+		 * The content of the template the application configured for the row, drawn instead of the
+		 * {@link #text}. Absent: the {@link #text} is drawn.
+		 */
+		ChildControl control;
 	}
 
 	/**
@@ -2473,23 +2495,6 @@ message DataListState extends ControlState {
 	bool search;
 
 	/**
-	 * Whether the header carries the toggle collapsing the list to a narrow strip.
-	 */
-	bool collapsible;
-
-	/**
-	 * Whether the list starts collapsed; needs {@link #collapsible}.
-	 */
-	bool collapsed;
-
-	/**
-	 * The width of the element containing the list, in rem, below which a {@link #collapsible} list
-	 * keeps only its strip and its toggle opens the list as a drawer over its neighbours. Zero: the
-	 * list never becomes a drawer.
-	 */
-	int32 drawerBelow;
-
-	/**
 	 * The command buttons of the list, in display order. Absent: none.
 	 */
 	repeated ChildControl buttons;
@@ -2503,4 +2508,155 @@ message DataListState extends ControlState {
 	 * When the trigger of the row commands is shown. Absent means {@link RowActions#HOVER}.
 	 */
 	RowActions rowActions;
+}
+
+/**
+ * State of a side rail: a collapsible column beside another element, with sections, the component
+ * {@code TLSideRail}.
+ *
+ * The rail shows a strip with the icon of every {@link Section} and, while it is {@link #open}, a
+ * column with the sections stacked ({@link #body}). A click on an icon of the strip sends the command
+ * {@code showSection} with the argument {@code name} (the {@link Section#name}): it opens the rail
+ * with the section expanded, or closes the rail when that section is already shown in it.
+ *
+ * Where the area the rail measures itself against (its nearest positioned ancestor) is narrower than
+ * {@link #drawerBelow} rem, the rail shows only its strip and renders the {@link #drawer} in place of
+ * the column; it reports this with the command {@code setDrawer} and the argument {@code drawer}
+ * (boolean). While it is a drawer, {@link #open} says whether the drawer is open.
+ *
+ * Dragging the inner edge of a {@link #resizable} column sends the command {@code setWidth} with the
+ * argument {@code width}, the new width in pixels.
+ */
+message SideRailState extends ControlState {
+
+	/**
+	 * The side of its neighbour the rail stands on.
+	 */
+	enum Side {
+		/** The rail stands at the start (left in a left-to-right page); its column opens towards the end. */
+		@Name("left")
+		LEFT;
+
+		/** The rail stands at the end; its column opens towards the start. */
+		@Name("right")
+		RIGHT;
+	}
+
+	/**
+	 * A section of the rail, as the strip and the column show it.
+	 */
+	message Section {
+		/**
+		 * The name of the section, unique within the rail.
+		 */
+		string name;
+
+		/**
+		 * The label of the section, in its header and as the name of its strip icon.
+		 */
+		string label;
+
+		/**
+		 * The icon on the strip, the encoded form of a theme image. Absent: a generic glyph.
+		 */
+		string icon;
+
+		/**
+		 * Whether the body of the section is expanded in the column.
+		 */
+		bool expanded;
+
+		/**
+		 * Whether the section is left out of the rail, strip icon and header included.
+		 */
+		bool hidden;
+
+		/**
+		 * The badge of the section, on its strip icon and in its header. Absent: none.
+		 */
+		Badge badge;
+
+		/**
+		 * Whether the section has no header: it is always expanded, for content that brings a title
+		 * bar of its own.
+		 */
+		bool headless;
+
+		/**
+		 * The content of the section. Present in {@link SideRailSectionsState#sections} only.
+		 */
+		ChildControl content;
+	}
+
+	/**
+	 * The side of its neighbour the rail stands on. Absent means {@link Side#LEFT}.
+	 */
+	Side side;
+
+	/**
+	 * Whether the strip of section icons is shown. A rail without strip shows nothing while it is
+	 * closed.
+	 */
+	bool strip;
+
+	/**
+	 * Whether the rail is open: its column, or - while it is a drawer - its drawer.
+	 */
+	bool open;
+
+	/**
+	 * The width of the area the rail stands in, in rem, below which it is a drawer. Zero: never.
+	 */
+	int32 drawerBelow;
+
+	/**
+	 * The sections, top to bottom, without their content.
+	 */
+	repeated Section sections;
+
+	/**
+	 * The column with the sections and their content, rendered while the rail is open and not a
+	 * drawer.
+	 */
+	ChildControl body;
+
+	/**
+	 * The drawer showing the {@link #body}, rendered in place of the column while the rail is a
+	 * drawer.
+	 */
+	ChildControl drawer;
+
+	/**
+	 * Whether the column has a width of its own, which the user changes by dragging its inner edge.
+	 * Otherwise the column fills the area of the rail, e.g. the pane of a split panel, whose size the
+	 * split panel decides.
+	 */
+	bool resizable;
+
+	/**
+	 * The width of a {@link #resizable} column in pixels.
+	 */
+	int32 width;
+
+	/**
+	 * The width in pixels an expanded section asks for while it is shown, taking precedence over
+	 * {@link #width}. Zero: none.
+	 */
+	int32 sectionWidth;
+}
+
+/**
+ * State of the column of a side rail: the sections stacked, each with a header and its content, the
+ * component {@code TLSideRailSections}.
+ *
+ * A click on the header of a section sends the command {@code toggleSection} with the argument
+ * {@code name} (the name of the {@link SideRailState.Section}). The content of a collapsed section stays
+ * mounted and hidden, so that it keeps what the user did there and keeps reporting its badge.
+ */
+message SideRailSectionsState extends ControlState {
+
+	/**
+	 * The sections, top to bottom, with their content.
+	 */
+	repeated SideRailState.Section sections;
 }

@@ -12,6 +12,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.approval.ApprovalMode;
 
 /**
@@ -21,9 +22,7 @@ import com.top_logic.ai.core.agent.approval.ApprovalMode;
  * <p>
  * The switch belongs to the person: a new chat starts with the position the person chose last, in
  * whichever chat and window. A chat that exists keeps the mode stored with it (#658). The choice is
- * one for the whole account, not one per {@code chat-id} like the layout in
- * {@link ChatPreferencesStore}: it says how much the person wants to be asked, not how a place
- * looks.
+ * one for the whole account: it says how much the person wants to be asked.
  * </p>
  */
 public final class ApprovalChoice {
@@ -88,7 +87,8 @@ public final class ApprovalChoice {
 		}
 		// Written on its own rather than with the tracker's whole bag: a persisted bag keeps the
 		// stored mode, so that no window writes back the one it opened the chat with.
-		ChatHistoryService.updateMetadata(ChatHistoryService.findOwnedSessionById(sessionId, person),
+		ChatHistoryService.updateMetadata(
+			ChatHistoryService.findAccessibleSession(sessionId, person, SimpleBoundCommandGroup.WRITE),
 			stored -> DtoMapper.withApprovalMode(stored, approvalMode));
 		for (ChatEventHandler other : ChatEventHandlerRegistry.findForSession(person, sessionId)) {
 			TaskProgressTracker window = other.getTracker();

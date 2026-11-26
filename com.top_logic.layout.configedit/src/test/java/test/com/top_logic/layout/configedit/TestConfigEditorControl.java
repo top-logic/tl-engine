@@ -1015,8 +1015,7 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * Finds the header action button carrying the given label (the move-up "\u25B2", move-down
-	 * "\u25BC", or remove "\u2715" icon) inside the given element group, or {@code null} if no
+	 * Finds the header action button carrying the given label (move up, move down, remove, or take over) inside the given element group, or {@code null} if no
 	 * such button is rendered - a miss is a legitimate outcome for a collection that offers no
 	 * such action, so this does not fail on it, the way {@link #findKeyFieldModel(ReactControl)}
 	 * deliberately does not either.
@@ -1029,7 +1028,8 @@ public class TestConfigEditorControl extends TestCase {
 	 * is outside this module and already exposes exactly this.
 	 * </p>
 	 */
-	private ReactButtonControl findHeaderButton(ReactControl elementGroup, String label) {
+	private ReactButtonControl findHeaderButton(ReactControl elementGroup, ResKey key) {
+		String label = Resources.getInstance().getString(key);
 		for (ReactControl child : elementGroup.displayedChildren()) {
 			if (child instanceof ReactButtonControl button
 				&& label.equals(button.scriptingScalarState().get("label"))) {
@@ -1355,7 +1355,7 @@ public class TestConfigEditorControl extends TestCase {
 	 * button - the only thing that moves a pending entry into the collection.
 	 */
 	private void confirmPending(TestableConfigListEditorControl editor, int groupIndex) {
-		ReactButtonControl confirm = findHeaderButton(elementGroups(editor).get(groupIndex), "\u2713");
+		ReactButtonControl confirm = findHeaderButton(elementGroups(editor).get(groupIndex), I18NConstants.CONFIRM_ENTRY);
 		assertNotNull("A pending entry must offer a Confirm button.", confirm);
 		click(confirm);
 	}
@@ -1574,7 +1574,7 @@ public class TestConfigEditorControl extends TestCase {
 		clickAddButton(editor);
 		clickAddButton(editor);
 
-		click(findHeaderButton(elementGroups(editor).get(0), "\u2715"));
+		click(findHeaderButton(elementGroups(editor).get(0), I18NConstants.REMOVE_ENTRY));
 
 		assertEquals("Discarding one pending entry must leave exactly the other one pending.", 1,
 			elementGroups(editor).size());
@@ -1821,7 +1821,7 @@ public class TestConfigEditorControl extends TestCase {
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 		clickAddButton(editor);
 
-		TopLogicException result = click(findHeaderButton(elementGroups(editor).get(1), "\u2713"));
+		TopLogicException result = click(findHeaderButton(elementGroups(editor).get(1), I18NConstants.CONFIRM_ENTRY));
 
 		assertNotNull("Taking a second entry of the same type must be refused.", result);
 		assertEquals("...and the collection must not have grown.", 1, config.getByType().size());
@@ -2337,7 +2337,7 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 
-		click(findHeaderButton(elementGroups(editor).get(1), "\u2715"));
+		click(findHeaderButton(elementGroups(editor).get(1), I18NConstants.REMOVE_ENTRY));
 
 		Object value = config.value(property);
 		assertTrue("An array property must still hold an array after removal.", value.getClass().isArray());
@@ -2358,7 +2358,7 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 
-		click(findHeaderButton(elementGroups(editor).get(1), "\u25B2"));
+		click(findHeaderButton(elementGroups(editor).get(1), I18NConstants.MOVE_ENTRY_UP));
 
 		Object value = config.value(property);
 		assertTrue("An array property must still hold an array after reordering.", value.getClass().isArray());
@@ -2380,7 +2380,7 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 
-		click(findHeaderButton(elementGroups(editor).get(1), "\u25BC"));
+		click(findHeaderButton(elementGroups(editor).get(1), I18NConstants.MOVE_ENTRY_DOWN));
 
 		Object value = config.value(property);
 		assertTrue("An array property must still hold an array after reordering.", value.getClass().isArray());
@@ -2486,7 +2486,7 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 
-		ReactButtonControl moveUp = findHeaderButton(elementGroups(editor).get(1), "▲");
+		ReactButtonControl moveUp = findHeaderButton(elementGroups(editor).get(1), I18NConstants.MOVE_ENTRY_UP);
 		assertNotNull("A map's iteration order is stable, so its entries can be reordered.", moveUp);
 		click(moveUp);
 
@@ -2506,7 +2506,7 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 
-		ReactButtonControl moveUp = findHeaderButton(elementGroups(editor).get(0), "▲");
+		ReactButtonControl moveUp = findHeaderButton(elementGroups(editor).get(0), I18NConstants.MOVE_ENTRY_UP);
 		assertNotNull("A map entry must offer the button at all.", moveUp);
 		assertEquals("The first entry has nowhere to move up to.",
 			Boolean.TRUE, moveUp.scriptingScalarState().get("disabled"));
@@ -2582,7 +2582,7 @@ public class TestConfigEditorControl extends TestCase {
 			value.label(), findHeaderText(elementGroups(editor).get(0)));
 		assertFalse("A second item cannot be added.", hasAddButton(editor));
 
-		ReactButtonControl remove = findHeaderButton(elementGroups(editor).get(0), "\u2715");
+		ReactButtonControl remove = findHeaderButton(elementGroups(editor).get(0), I18NConstants.REMOVE_ENTRY);
 		assertNotNull("The entry can be removed from its header.", remove);
 		click(remove);
 
@@ -2603,7 +2603,7 @@ public class TestConfigEditorControl extends TestCase {
 			new TestableConfigListEditorControl(createTestContext(), value, PolymorphicOptions.Choices.NONE, null, true);
 
 		assertEquals(1, elementGroups(editor).size());
-		assertNull(findHeaderButton(elementGroups(editor).get(0), "\u2715"));
+		assertNull(findHeaderButton(elementGroups(editor).get(0), I18NConstants.REMOVE_ENTRY));
 	}
 
 	/**
@@ -2618,7 +2618,7 @@ public class TestConfigEditorControl extends TestCase {
 			new TestableConfigListEditorControl(createTestContext(), value, PolymorphicOptions.Choices.NONE, null, true);
 
 		assertEquals(1, elementGroups(editor).size());
-		assertNull(findHeaderButton(elementGroups(editor).get(0), "\u2715"));
+		assertNull(findHeaderButton(elementGroups(editor).get(0), I18NConstants.REMOVE_ENTRY));
 	}
 
 	private static boolean hasAddButton(TestableConfigListEditorControl editor) {

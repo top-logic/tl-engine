@@ -11,11 +11,8 @@
 /** The handle an entry is dragged and moved by (select chip, column selection, value list). */
 export const ICON_HANDLE = 'css:fa-solid fa-grip-vertical';
 
-/** Shows a hidden entry (column selection: the eye of a hidden column). */
-export const ICON_HIDDEN = 'css:fa-solid fa-eye-slash';
-
-/** Hides a shown entry (column selection: the eye of a shown column). */
-export const ICON_VISIBLE = 'css:fa-solid fa-eye';
+/** Hides a shown entry, removes it from what is shown (column selection: the minus of a shown column). */
+export const ICON_MINUS = 'css:fa-solid fa-minus';
 
 /** Releases a frozen entry (column selection: the lock of a frozen column). */
 export const ICON_LOCK = 'css:fa-solid fa-lock';
@@ -50,6 +47,9 @@ export const ICON_ADD = 'css:fa-solid fa-plus';
 /** The toggle of an expandable row; pointing right while closed, turned down by the stylesheet. */
 export const ICON_EXPAND = 'css:fa-solid fa-chevron-right';
 
+/** Opens an element: the open button of an item of a selectable list. */
+export const ICON_OPEN = 'css:fa-solid fa-chevron-right';
+
 /** The arrow of a closed list that opens downwards. */
 export const ICON_LIST_CLOSED = 'css:fa-solid fa-chevron-down';
 
@@ -73,9 +73,6 @@ export const ICON_FILTER = 'css:fa-solid fa-filter';
 
 /** The gear of a table, opening its view and column selection. */
 export const ICON_COLUMNS = 'css:fa-solid fa-gear';
-
-/** The entry choosing and ordering the columns of a table. */
-export const ICON_CHOOSE_COLUMNS = 'css:fa-solid fa-table-columns';
 
 /** An entry resetting something to how it is defined (the view of a table). */
 export const ICON_RESET = 'css:fa-solid fa-arrow-rotate-left';

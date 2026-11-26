@@ -33,7 +33,7 @@ import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResultHandler;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.view.DefaultViewContext;
-import com.top_logic.layout.view.ReloadableControl;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
@@ -315,8 +315,7 @@ public class OpenDialogAction extends InterruptibleViewAction {
 			parameterChannels.add(channel);
 		}
 
-		ReactControl dialogControl = new ReloadableControl(dialogViewPath, dialogContext,
-			(ReactControl) dialogView.createControl(dialogContext));
+		ReactControl dialogControl = ViewUnitControl.forView(dialogContext, dialogViewPath, dialogView);
 
 		// The parameters are the dialog's own channels and outlive a reload of its view; the bound
 		// channels of the opener are observed while the opener is displayed.

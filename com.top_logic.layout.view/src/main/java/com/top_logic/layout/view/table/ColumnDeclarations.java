@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.Log;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.layout.view.channel.InputRef;
@@ -22,6 +23,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.table.Column;
+import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
 import com.top_logic.tool.export.ExcelCellRenderer;
@@ -158,8 +160,10 @@ public class ColumnDeclarations {
 	/**
 	 * The names of the declared columns the current user is not offered: those the declarations
 	 * announce (see {@link ColumnDeclaration#declaredNames()}) but did not resolve to a column,
-	 * since the user's access rights withhold them. A column resolved for the user but withheld
-	 * for the time being is told by {@link ColumnExistence#withheldColumns()}.
+	 * since the user's access rights withhold them: only security at attribute level does so, a
+	 * read grant of the attribute itself listing no role the user holds; the read right on the type
+	 * of the rows never does. A column resolved for the user but withheld for the time being is
+	 * told by {@link ColumnExistence#withheldColumns()}.
 	 *
 	 * <p>
 	 * A configuration referring to such a column (e.g. a declared filter) is no configuration
@@ -177,6 +181,50 @@ public class ColumnDeclarations {
 			result.remove(column.name());
 		}
 		return result;
+	}
+
+	/**
+	 * The part of a table's declared grouping that takes effect for the current user: the grouping
+	 * columns that were built for the user, in the declared order.
+	 *
+	 * <p>
+	 * A grouping column {@link #withheld(Collection, List) withheld} from the user is left out
+	 * silently, so that the table is displayed as if it were not grouped by it. A grouping column
+	 * the table does not declare at all is a configuration error: it is reported and left out as
+	 * well, so that the table is still displayed.
+	 * </p>
+	 *
+	 * @param log
+	 *        Where a grouping column the table does not declare is reported.
+	 * @param table
+	 *        How the table is named in an error message, so that a developer finds the declaration.
+	 * @param grouping
+	 *        The declared grouping.
+	 * @param declaredNames
+	 *        The names the declarations of the table announce.
+	 * @param columns
+	 *        The columns built for the current user.
+	 */
+	public static GroupSpec grouping(Log log, String table, GroupSpec grouping, Collection<String> declaredNames,
+			List<? extends Column<?, ?>> columns) {
+		if (grouping.columns().isEmpty()) {
+			return grouping;
+		}
+		Set<String> withheld = withheld(declaredNames, columns);
+		Set<String> built = new LinkedHashSet<>();
+		for (Column<?, ?> column : columns) {
+			built.add(column.name());
+		}
+		List<String> result = new ArrayList<>(grouping.columns().size());
+		for (String name : grouping.columns()) {
+			if (built.contains(name)) {
+				result.add(name);
+			} else if (!withheld.contains(name)) {
+				log.error("Table '" + table + "' is grouped by the column '" + name
+					+ "', which it does not declare. Its columns are: " + built + ".");
+			}
+		}
+		return result.size() == grouping.columns().size() ? grouping : new GroupSpec(result);
 	}
 
 	/**

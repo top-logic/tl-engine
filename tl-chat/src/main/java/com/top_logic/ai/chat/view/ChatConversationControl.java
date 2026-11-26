@@ -18,6 +18,8 @@ import java.util.function.Supplier;
 
 import com.top_logic.ai.chat.api.ChatCapabilities;
 import com.top_logic.ai.chat.api.ChatTranscripts;
+import com.top_logic.ai.chat.backend.BackendFeatures;
+import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.api.messages.ChatCapabilitiesResponse;
 import com.top_logic.ai.chat.view.ChatConversationElement.Actions;
@@ -26,6 +28,7 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Config;
 import com.top_logic.ai.chat.view.ChatConversationElement.Context;
 import com.top_logic.ai.chat.view.ChatConversationElement.Controls;
 import com.top_logic.ai.chat.view.ChatConversationElement.Fact;
+import com.top_logic.ai.chat.view.ChatConversationElement.HeaderCommands;
 import com.top_logic.ai.chat.view.ChatConversationElement.Mention;
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompt;
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompts;
@@ -37,18 +40,28 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CommandCliqueService;
+import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.ai.core.security.ReadFilter;
@@ -103,6 +116,32 @@ public class ChatConversationControl extends ChatControl {
 	public static final String STATE_CAPABILITIES = "capabilities";
 
 	/**
+	 * State key: whether the conversation shown may only be read - the acting account may not write
+	 * it, or the element's {@link ChatConversationElement.Config#getWritable() writable} function
+	 * refuses it. The browser then shows no input line and no action that changes the conversation.
+	 * A new conversation, which has no session yet, is never read-only.
+	 */
+	public static final String STATE_READ_ONLY = "readOnly";
+
+	/**
+	 * State key: what a conversation about the subject of the element offers
+	 * ({@link ConversationBackendService#featuresFor(TLStructuredType)} for the type of the object
+	 * in the {@link ChatConversationElement.Config#getSubject() subject} channel), written when the
+	 * control is built and whenever the channel changes. The browser offers these controls in a chat
+	 * that shows no conversation yet; without a subject, the ones of the framework's own agent.
+	 */
+	public static final String STATE_SUBJECT_FEATURES = "subjectFeatures";
+
+	/**
+	 * Command by which the browser reports the conversation it shows, see
+	 * {@link #publishSession(Map)}. Takes {@link #ARG_PUBLISHED_ID}.
+	 */
+	public static final String CMD_PUBLISH_SESSION = "publishSession";
+
+	/** Argument of {@link #CMD_PUBLISH_SESSION}: the id of the conversation, empty for a fresh one. */
+	public static final String ARG_PUBLISHED_ID = "id";
+
+	/**
 	 * Name of the channel that holds the open conversation of an element that wires no
 	 * {@code input}.
 	 */
@@ -124,6 +163,9 @@ public class ChatConversationControl extends ChatControl {
 	private String _activeWhenHidden;
 
 	private final ViewChannel _busyChannel;
+
+	/** The compiled {@link ChatConversationElement.Config#getWritable()}, <code>null</code> for none. */
+	private final QueryExecutor _writable;
 
 	/** The account's chat list, as the browser is told it. */
 	private final SessionListWatch _sessions;
@@ -215,6 +257,12 @@ public class ChatConversationControl extends ChatControl {
 	/** Whether {@link #_offers} are offered now. */
 	private boolean _offering;
 
+	/**
+	 * State: the toolbar of the {@link Config#getCommands() commands} at the end of the head of the
+	 * transcript; absent without commands.
+	 */
+	public static final String HEADER_COMMANDS = "headerCommands";
+
 	/** The dock this conversation is in, <code>null</code> outside a dock. */
 	private ChatDockScope _dock;
 
@@ -223,8 +271,10 @@ public class ChatConversationControl extends ChatControl {
 	 * {@link Config#getAgentCommands() agent commands} on its own.
 	 */
 	public ChatConversationControl(ViewContext context, Config config) {
-		this(context, config, ChatConversationElement.instantiateAgentCommands(
-			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config));
+		this(context, config,
+			ChatConversationElement.instantiateAgentCommands(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+				config),
+			HeaderCommands.instantiate(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config));
 	}
 
 	/**
@@ -232,8 +282,11 @@ public class ChatConversationControl extends ChatControl {
 	 *
 	 * @param agentCommands
 	 *        The commands instantiated from {@link Config#getAgentCommands()}, in their order.
+	 * @param headerCommands
+	 *        The commands instantiated from {@link Config#getCommands()}, in their order.
 	 */
-	public ChatConversationControl(ViewContext context, Config config, List<ViewCommand> agentCommands) {
+	public ChatConversationControl(ViewContext context, Config config, List<ViewCommand> agentCommands,
+			HeaderCommands headerCommands) {
 		// The element's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
 		// "default".
 		super(context, blankToDefault(config.getReactElement(), "TLChatConversation"),
@@ -270,6 +323,7 @@ public class ChatConversationControl extends ChatControl {
 		putState("timestamp", Boolean.valueOf(actions.getTimestamp()));
 		List<String> host = actions.getHost();
 		putState("hostActions", host == null ? List.of() : List.copyOf(host));
+		writeHeaderCommands(context, headerCommands);
 
 		// Composer.
 		putState("promptImprovementEnabled", Boolean.valueOf(configuredImprover != null));
@@ -311,7 +365,10 @@ public class ChatConversationControl extends ChatControl {
 		ChannelRef inputRef = config.getInput();
 		ViewChannel input =
 			inputRef == null ? new DefaultViewChannel(INTERNAL_INPUT) : context.resolveChannel(inputRef);
-		_selection = new SessionSelection(input, this::putState, ChatConversationControl::currentPerson);
+		Expr writable = config.getWritable();
+		_writable = writable == null ? null : QueryExecutor.compile(writable);
+		_selection = new SessionSelection(input, this::putState, ChatConversationControl::currentPerson,
+			this::writeReadOnly);
 		ViewChannel.ChannelListener listener = _selection.listener();
 		input.addListener(listener);
 		addCleanupAction(() -> input.removeListener(listener));
@@ -331,10 +388,18 @@ public class ChatConversationControl extends ChatControl {
 		// What a conversation started here is about: offered to the chat while this control offers
 		// the agent anything (offersToAgent), and read by the request that creates the conversation,
 		// before its first message is sent.
+		// What a conversation about it offers is what an empty chat offers, and follows the channel.
 		ChannelRef subjectRef = config.getSubject();
 		if (subjectRef != null) {
 			ViewChannel subject = context.resolveChannel(subjectRef);
 			offerToAgent(() -> binding().offerSubject(subject), () -> binding().withdrawSubject(subject));
+			ViewChannel.ChannelListener featuresListener =
+				(sender, oldValue, newValue) -> writeSubjectFeatures(newValue);
+			subject.addListener(featuresListener);
+			addCleanupAction(() -> subject.removeListener(featuresListener));
+			writeSubjectFeatures(subject.get());
+		} else {
+			writeSubjectFeatures(null);
 		}
 
 		ChannelRef busyRef = config.getBusy();
@@ -443,9 +508,52 @@ public class ChatConversationControl extends ChatControl {
 	protected void onBeforeWrite() {
 		super.onBeforeWrite();
 		_sessions.write();
+		writeReadOnly(_selection.selected());
 		Person person = signedInPerson();
 		putState(STATE_CAPABILITIES, person == null ? ChatCapabilitiesResponse.create()
 			: ChatCapabilities.build(person, binding().tracker().getPromptImproverAgentName()));
+	}
+
+	/**
+	 * Writes {@link #STATE_SUBJECT_FEATURES} for the given value of the subject channel.
+	 *
+	 * @param subjectValue
+	 *        The channel's value; no single object (see {@link ChatViewBinding#singleObject(Object)})
+	 *        is no subject.
+	 */
+	private void writeSubjectFeatures(Object subjectValue) {
+		TLObject subject = ChatViewBinding.singleObject(subjectValue);
+		putState(STATE_SUBJECT_FEATURES, ChatTranscripts.featuresDto(subjectFeatures(subject)));
+	}
+
+	private static BackendFeatures subjectFeatures(TLObject subject) {
+		if (subject == null) {
+			return BackendFeatures.INTERNAL;
+		}
+		try {
+			return ConversationBackendService.featuresFor(subject.tType());
+		} catch (RuntimeException ex) {
+			// The send asks the resolvers again and fails there, where the user is told; showing the
+			// chat must not break on it.
+			Logger.warn("Could not ask what a conversation about " + subject.tHandle().getObjectName().toExternalForm()
+				+ " offers.", ex, ChatConversationControl.class);
+			return BackendFeatures.INTERNAL;
+		}
+	}
+
+	/**
+	 * Writes {@link #STATE_READ_ONLY} for the given session, the one the conversation shows.
+	 *
+	 * @param session
+	 *        The session shown, <code>null</code> for a new conversation.
+	 */
+	private void writeReadOnly(TLObject session) {
+		putState(STATE_READ_ONLY, Boolean.valueOf(session != null && !mayWrite(currentPerson(), session)));
+	}
+
+	@Override
+	protected boolean isWritable(TLObject session) {
+		return _writable == null || SearchExpression.isTrue(_writable.execute(session));
 	}
 
 	/**
@@ -531,14 +639,15 @@ public class ChatConversationControl extends ChatControl {
 	 * </p>
 	 *
 	 * @param args
-	 *        {@code id} is the owned chat session id, or empty to clear.
+	 *        {@link #ARG_PUBLISHED_ID} is the id of a chat the account may read, or empty to clear.
 	 */
-	@ReactCommandHandler(value = "publishSession", params = {
-		@ReactParam(name = "id", type = "string", description = "Owned chat session id, or empty to clear.")
+	@ReactCommandHandler(value = CMD_PUBLISH_SESSION, params = {
+		@ReactParam(name = ARG_PUBLISHED_ID, type = "string", description = "Id of a readable chat session, or empty to clear.")
 	})
 	public void publishSession(Map<String, Object> args) {
-		String id = args == null ? "" : String.valueOf(args.getOrDefault("id", "")).trim();
-		TLObject session = id.isEmpty() ? null : ChatSessionIds.ownedSession(id, currentPerson());
+		String id = args == null ? "" : String.valueOf(args.getOrDefault(ARG_PUBLISHED_ID, "")).trim();
+		TLObject session =
+			id.isEmpty() ? null : ChatSessionIds.accessibleSession(id, currentPerson(), SimpleBoundCommandGroup.READ);
 		_selection.publish(id, session);
 	}
 
@@ -851,8 +960,8 @@ public class ChatConversationControl extends ChatControl {
 	 * {@code <chat-dock>} only while that dock is open.
 	 *
 	 * <p>
-	 * A closed dock keeps its content displayed - hidden, so that the rail's badges and the browser
-	 * store follow the conversation - but nobody sees it. One conversation has one set of
+	 * A closed dock keeps its content displayed - hidden, so that the browser store follows the
+	 * conversation - but nobody sees it. One conversation has one set of
 	 * registrations on its {@link ChatViewBinding}, and the allow list of {@code present} is the
 	 * union of the window's displayed channels, so a closed dock that offered its pane would take the
 	 * tables of a page showing the same conversation, the last one attached winning.
@@ -1234,5 +1343,21 @@ public class ChatConversationControl extends ChatControl {
 			return flag.booleanValue();
 		}
 		return value != null && Boolean.parseBoolean(String.valueOf(value));
+	}
+
+	/**
+	 * Puts the {@link Config#getCommands() commands} as a toolbar into the head of the transcript.
+	 */
+	private void writeHeaderCommands(ViewContext context, HeaderCommands headerCommands) {
+		if (headerCommands.commands().isEmpty()) {
+			return;
+		}
+		List<ViewCommandModel> models =
+			ViewCommands.buildCommandModels(context, headerCommands.commands(), headerCommands.configs());
+		ViewCommands.registerLifecycle(context, models, this);
+		ReactToolbarControl toolbar = ToolbarBuilder.buildLive(context, new CommandScope(models),
+			List.of(CommandPlacement.TOOLBAR, CommandPlacement.BUTTON_BAR), CommandCliqueService.getInstance(),
+			ButtonDisplayMode.ICON_ONLY);
+		putState(HEADER_COMMANDS, toolbar);
 	}
 }

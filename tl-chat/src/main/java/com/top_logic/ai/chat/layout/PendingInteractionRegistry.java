@@ -6,6 +6,7 @@
 package com.top_logic.ai.chat.layout;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -449,8 +450,38 @@ public final class PendingInteractionRegistry {
 		if (owner == null || sessionId == null) {
 			return null;
 		}
+		return runOf(runsOf(owner), sessionId);
+	}
+
+	/**
+	 * The run of the given chat, whichever account it belongs to.
+	 *
+	 * <p>
+	 * What a window shows of a run that is still being worked on - whether the chat is busy, the
+	 * open turn - when the run was started by another account: a reader of the chat, who may see the
+	 * run but neither answer nor stop it. The caller makes sure the acting account may read the
+	 * chat; what may only be done by the run's account is found with
+	 * {@link #findBySession(Person, String)}.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The id of the chat the run belongs to; may be <code>null</code>, which finds nothing.
+	 * @return The run of that chat, or <code>null</code> when it has none.
+	 */
+	public static PendingRun findRunOf(String sessionId) {
+		if (sessionId == null) {
+			return null;
+		}
+		return runOf(RUNS.values(), sessionId);
+	}
+
+	/**
+	 * The run of the given chat among the given runs: a live one before one that has stopped
+	 * processing but is not yet unregistered.
+	 */
+	private static PendingRun runOf(Collection<PendingRun> runs, String sessionId) {
 		PendingRun ending = null;
-		for (PendingRun run : runsOf(owner)) {
+		for (PendingRun run : runs) {
 			if (!sessionId.equals(run.state().getSessionId())) {
 				continue;
 			}

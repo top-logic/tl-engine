@@ -3,9 +3,9 @@
 <!--
 	Panels in the content region of a tab.
 	
-	The tab "Stacked panels" holds a column <stack> of two panels: the summary panel A is as high as
-	its text, the object panel B fills the rest of the tab, and its table scrolls the rows that do not
-	fit.
+	The tab "Stacked panels" holds a column <stack> of three panels: the summary panel A is as high as
+	its text, the panel without title and commands below it draws no title bar, and the object panel B
+	fills the rest of the tab, and its table scrolls the rows that do not fit.
 	
 	The tab "Single panel" holds one panel with a form of its own size; it spans the whole tab region.
 	The form shows the object selected in the table of the first tab.
@@ -39,6 +39,14 @@
 							</label>
 						</text>
 					</inset>
+				</panel>
+				<panel with-inset="true">
+					<text>
+						<label>
+							<en>This panel has neither a title nor commands, so it draws no title bar.</en>
+							<de>Dieses Panel hat weder einen Titel noch Befehle, daher zeichnet es keine Titelleiste.</de>
+						</label>
+					</text>
 				</panel>
 				<panel>
 					<title>

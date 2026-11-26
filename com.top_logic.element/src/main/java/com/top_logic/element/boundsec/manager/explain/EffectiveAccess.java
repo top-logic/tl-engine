@@ -33,6 +33,8 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -101,26 +103,25 @@ public class EffectiveAccess {
 	 * @param object
 	 *        The object to explain the access to.
 	 * @return The decision for every operation that applies to the object, and the roles the
-	 *         account holds on the object deciding with their sources.
+	 *         account holds on the object deciding on reading with their sources. Each decision
+	 *         names the object deciding its operation.
 	 */
 	public AccessExplanation explain(Person person, TLObject object) {
 		TLClass type = object.tType() instanceof TLClass clazz ? clazz : null;
 		boolean withoutSecurity = type != null && _rights.isWithoutSecurity(type);
 		boolean internal = type != null && _rights.isInternal(type);
 
-		TLObject decidingObject = _rights.getRoleHolder(object);
+		TLObject decidingObject = firstRoleHolder(object, SimpleBoundCommandGroup.READ);
 		List<BoundObject> roleParents = new ArrayList<>();
-		Set<BoundedRole> held = new HashSet<>();
 		if (decidingObject instanceof BoundObject holder) {
 			BoundHelper.collectAllSecurityParents(holder, roleParents::add);
-			for (BoundRole role : _accessManager.getRoles(person, holder)) {
-				if (role instanceof BoundedRole bounded) {
-					held.add(bounded);
-				}
-			}
 		}
+		Map<TLObject, Set<BoundedRole>> heldByHolder = new HashMap<>();
+		Set<BoundedRole> held = held(heldByHolder, person, decidingObject);
 
-		List<OperationDecision> operations = decide(person, object, held);
+		Collection<BoundCommandGroup> applicable = _rights.getObjectOperations(object).getOperations();
+		List<OperationDecision> operations = decide(person, object, applicable, heldByHolder);
+		AccessParentFunction combiningParent = combiningParent(object, applicable);
 
 		SecurityStorage storage = storage();
 		List<HeldRole> heldRoles;
@@ -132,7 +133,8 @@ public class EffectiveAccess {
 
 		boolean restrictedUser = person != null && person.isRestrictedUser().booleanValue();
 		return new AccessExplanation(person, object, Person.isAdmin(person), restrictedUser, withoutSecurity, internal,
-			decidingObject, Collections.unmodifiableList(roleParents), operations, heldRoles, storage != null);
+			decidingObject, combiningParent, Collections.unmodifiableList(roleParents), operations, heldRoles,
+			storage != null);
 	}
 
 	/**
@@ -170,9 +172,45 @@ public class EffectiveAccess {
 		return result;
 	}
 
-	private List<OperationDecision> decide(Person person, TLObject object, Set<BoundedRole> held) {
-		Collection<BoundCommandGroup> applicable = _rights.getObjectOperations(object).getOperations();
+	/**
+	 * The first of the {@link ModelAccessRights#getRoleHolders(TLObject, BoundCommandGroup) role
+	 * holders} of the given operation on the given object.
+	 *
+	 * @return <code>null</code> when nobody decides for the object.
+	 */
+	private TLObject firstRoleHolder(TLObject object, BoundCommandGroup operation) {
+		Set<TLObject> holders = _rights.getRoleHolders(object, operation);
+		return holders.isEmpty() ? null : holders.iterator().next();
+	}
 
+	/**
+	 * The roles the given account holds on the given role holder, looked up once per role holder.
+	 */
+	private Set<BoundedRole> held(Map<TLObject, Set<BoundedRole>> heldByHolder, Person person, TLObject roleHolder) {
+		if (!(roleHolder instanceof BoundObject holder)) {
+			return Collections.emptySet();
+		}
+		return heldByHolder.computeIfAbsent(roleHolder, x -> {
+			Set<BoundedRole> result = new HashSet<>();
+			for (BoundRole role : _accessManager.getRoles(person, holder)) {
+				if (role instanceof BoundedRole bounded) {
+					result.add(bounded);
+				}
+			}
+			return result;
+		});
+	}
+
+	/**
+	 * Decides the given operations on the given object for the given account.
+	 *
+	 * <p>
+	 * The granting roles are collected per object admitting them: a role counts only when the
+	 * account holds it on an object on which it admits the operation.
+	 * </p>
+	 */
+	private List<OperationDecision> decide(Person person, TLObject object, Collection<BoundCommandGroup> applicable,
+			Map<TLObject, Set<BoundedRole>> heldByHolder) {
 		Map<BoundCommandGroup, Boolean> allowed = new HashMap<>();
 		Set<BoundCommandGroup> restricted = new HashSet<>();
 		for (BoundCommandGroup operation : applicable) {
@@ -184,15 +222,119 @@ public class EffectiveAccess {
 
 		List<OperationDecision> result = new ArrayList<>(applicable.size());
 		for (BoundCommandGroup operation : applicable) {
-			Set<BoundedRole> admitting = _rights.getAdmittingRoles(object, operation);
-			Set<BoundedRole> granting = new HashSet<>(admitting);
-			granting.retainAll(held);
+			List<TLObject> roleHolders = List.copyOf(_rights.getRoleHolders(object, operation));
+			Set<BoundedRole> admitting = new HashSet<>();
+			Set<BoundedRole> granting = new HashSet<>();
+			Set<BoundedRole> ownGranting = new HashSet<>();
+			for (Map.Entry<TLObject, Set<BoundedRole>> entry : _rights.getAdmittingRolesByHolder(object, operation)
+				.entrySet()) {
+				TLObject holder = entry.getKey();
+				admitting.addAll(entry.getValue());
+				Set<BoundedRole> grantingOnHolder = new HashSet<>(entry.getValue());
+				grantingOnHolder.retainAll(held(heldByHolder, person, holder));
+				granting.addAll(grantingOnHolder);
+				if (holder.equals(object) && !roleHolders.contains(object)) {
+					ownGranting.addAll(grantingOnHolder);
+				}
+			}
 			result.add(new OperationDecision(operation, _rights.getOperationOnRoleHolder(object, operation),
-				allowed.get(operation).booleanValue(),
+				roleHolders, allowed.get(operation).booleanValue(),
 				Collections.unmodifiableSet(admitting), Collections.unmodifiableSet(granting),
-				restricted.contains(operation)));
+				Collections.unmodifiableSet(ownGranting), restricted.contains(operation)));
 		}
 		return Collections.unmodifiableList(result);
+	}
+
+	/**
+	 * The first access parent on the chains of access parents deciding one of the given operations
+	 * on the given object that does not {@link AccessParentFunction#isDisjunctive() combine its
+	 * candidates by OR}.
+	 *
+	 * @return <code>null</code> when every access parent on these chains combines its candidates by
+	 *         OR.
+	 */
+	private AccessParentFunction combiningParent(TLObject object, Collection<BoundCommandGroup> operations) {
+		for (BoundCommandGroup operation : operations) {
+			AccessParentFunction result = combiningParent(object, operation);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The first access parent on the chains of access parents deciding the given operation on the
+	 * given object that does not {@link AccessParentFunction#isDisjunctive() combine its candidates
+	 * by OR}, also as a candidate of an access parent with several candidates.
+	 *
+	 * @param object
+	 *        The object whose access parents are followed.
+	 * @param operation
+	 *        The operation whose deciding access parents are followed.
+	 * @return <code>null</code> when every access parent on these chains combines its candidates by
+	 *         OR, or the object decides the operation itself.
+	 *
+	 * @see AccessExplanation#combiningParent()
+	 */
+	public AccessParentFunction combiningParent(TLObject object, BoundCommandGroup operation) {
+		return combiningParent(object, operation, new HashSet<>());
+	}
+
+	/**
+	 * Follows the chains of access parents deciding the given operation as
+	 * {@link ModelAccessRights#getRoleHolders(TLObject, BoundCommandGroup)} does, up to the first
+	 * access parent not combining its candidates by OR.
+	 *
+	 * @param visiting
+	 *        All objects already visited on any of the chains followed so far. Objects are never
+	 *        removed, so an object reached again, be it on a cycle or over a second path, is not
+	 *        followed a second time.
+	 */
+	private AccessParentFunction combiningParent(TLObject object, BoundCommandGroup operation,
+			Set<TLObject> visiting) {
+		AccessParentFunction parent = object.tType() instanceof TLClass type ? _rights.getAccessParent(type) : null;
+		if (!AccessParentFunction.isDelegated(parent, operation)) {
+			return null;
+		}
+		AccessParentFunction combining = combining(parent, operation);
+		if (combining != null) {
+			return combining;
+		}
+		if (!visiting.add(object)) {
+			return null;
+		}
+		BoundCommandGroup operationOnParent = _rights.getOperationOnRoleHolder(object, operation);
+		for (TLObject parentObject : parent.resolveAll(object, operation)) {
+			AccessParentFunction result = combiningParent(parentObject, operationOnParent, visiting);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The given relation, or the candidate of it deciding the given operation, that does not
+	 * {@link AccessParentFunction#isDisjunctive() combine its access parents by OR}.
+	 *
+	 * @return <code>null</code> when the relation combines its access parents by OR, or every
+	 *         candidate of it deciding the operation does.
+	 */
+	private static AccessParentFunction combining(AccessParentFunction relation, BoundCommandGroup operation) {
+		if (relation.isDisjunctive()) {
+			return null;
+		}
+		if (relation instanceof AnyOfRelation anyOf) {
+			// Only a candidate deciding the operation combines anything for it.
+			for (AccessParentFunction candidate : anyOf.candidates()) {
+				if (candidate.delegates(operation) && !candidate.isDisjunctive()) {
+					return candidate;
+				}
+			}
+			return null;
+		}
+		return relation;
 	}
 
 	private static List<HeldRole> heldRoles(Set<BoundedRole> held, Map<BoundedRole, List<RoleAssignment>> sources) {

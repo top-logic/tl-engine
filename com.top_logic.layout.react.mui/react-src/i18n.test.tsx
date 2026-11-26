@@ -46,10 +46,16 @@ function requestsOf(fetch: ReturnType<typeof vi.fn>, key: string): number {
   }).length;
 }
 
-/** The bridge, loaded afresh for each test: the translations are cached for the page. */
+/**
+ * The bridge, loaded afresh for each test: the translations are cached for the page. It knows the
+ * context path, as after the first mount() of a page (see test-setup.ts).
+ */
 async function load() {
   vi.resetModules();
-  return await import('tl-react-bridge');
+  const bridge = await import('tl-react-bridge');
+  const { setMountContext } = await import('../../com.top_logic.layout.react/react-src/bridge/page-context');
+  setMountContext('', '');
+  return bridge;
 }
 
 /** Lets the scheduled request go out and the answers be processed. */

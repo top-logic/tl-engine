@@ -9,16 +9,19 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
-import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.view.SecurityCheckedTestCase;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionManager;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -39,7 +42,7 @@ import com.top_logic.util.model.ModelService;
  * that forgets to ask gets nothing from either.
  * </p>
  */
-public class TestChatSessionOwnership extends BasicTestCase {
+public class TestChatSessionOwnership extends SecurityCheckedTestCase {
 
 	/**
 	 * Two accounts and one chat, made once for the whole suite.
@@ -69,7 +72,7 @@ public class TestChatSessionOwnership extends BasicTestCase {
 
 	/** The owner finds their own chat. */
 	public void testOwnerFindsTheirChat() {
-		assertEquals(annasChat, ChatHistoryService.findOwnedSessionById(id(annasChat), anna));
+		assertEquals(annasChat, ChatHistoryService.findAccessibleSession(id(annasChat), anna, SimpleBoundCommandGroup.READ));
 	}
 
 	/**
@@ -83,16 +86,16 @@ public class TestChatSessionOwnership extends BasicTestCase {
 	 */
 	public void testAnotherUserFindsNothing() {
 		assertNull("Ben must not reach Anna's chat.",
-			ChatHistoryService.findOwnedSessionById(id(annasChat), ben));
+			ChatHistoryService.findAccessibleSession(id(annasChat), ben, SimpleBoundCommandGroup.READ));
 		assertNull("An unknown ID answers exactly the same way.",
-			ChatHistoryService.findOwnedSessionById("999999999", ben));
+			ChatHistoryService.findAccessibleSession("999999999", ben, SimpleBoundCommandGroup.READ));
 	}
 
 	/** Nobody is not a user: an unauthenticated request owns nothing. */
 	public void testNobodyOwnsNothing() {
-		assertNull(ChatHistoryService.findOwnedSessionById(id(annasChat), null));
-		assertNull(ChatHistoryService.findOwnedSessionById(null, anna));
-		assertNull(ChatHistoryService.findOwnedSessionById("", anna));
+		assertNull(ChatHistoryService.findAccessibleSession(id(annasChat), null, SimpleBoundCommandGroup.READ));
+		assertNull(ChatHistoryService.findAccessibleSession(null, anna, SimpleBoundCommandGroup.READ));
+		assertNull(ChatHistoryService.findAccessibleSession("", anna, SimpleBoundCommandGroup.READ));
 	}
 
 	/**
@@ -154,6 +157,8 @@ public class TestChatSessionOwnership extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestChatSessionOwnership.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE));
 	}
 }

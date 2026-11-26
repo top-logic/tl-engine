@@ -7,9 +7,12 @@ package com.top_logic.layout.view.admin;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.ConfigurationException;
@@ -30,8 +33,10 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ApplicableOperations;
 import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
@@ -107,12 +112,15 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Why the given type has no grants of its own, as a paragraph of HTML.
+	 * Why the given type has no grants of its own, or none for some operations, as a paragraph of
+	 * HTML.
 	 *
 	 * @param grants
 	 *        The grants, see {@link #of(TLClass)}.
-	 * @return The explanation in the language of the user, <code>null</code> for a type with
-	 *         grants of its own.
+	 * @return The explanation in the language of the user, <code>null</code> for a type deciding
+	 *         all operations by grants of its own.
+	 *
+	 * @see #hasOwn(TypeGrants)
 	 */
 	@Label("Explanation of a type without grants")
 	@SideEffectFree
@@ -123,7 +131,7 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 		ResKey explanation;
 		AccessParentFunction parent = grants.getAccessParent();
 		if (parent != null) {
-			explanation = I18NConstants.GRANTS_DELEGATED__PARENT.fill(parent.getLabel());
+			explanation = delegation(parent);
 		} else if (grants.isExempt()) {
 			explanation = I18NConstants.GRANTS_EXEMPT;
 		} else {
@@ -131,6 +139,63 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 		}
 		return HTML_PARAGRAPH_START + TagUtil.encodeXML(Resources.getInstance().getString(explanation))
 			+ HTML_PARAGRAPH_END;
+	}
+
+	/**
+	 * Whether the given type has grants of its own, for all operations or for the operations its
+	 * access parent does not decide.
+	 *
+	 * @param grants
+	 *        The grants, see {@link #of(TLClass)}.
+	 * @return Whether there are {@link #operations(TypeGrants) operations} to grant on the type,
+	 *         <code>false</code> for no grants.
+	 */
+	@Label("Whether a type has grants of its own")
+	@SideEffectFree
+	public static boolean hasOwn(TypeGrants grants) {
+		return grants != null && !grants.getOperations().isEmpty();
+	}
+
+	/**
+	 * What the given access parent decides, for the explanation of the grants of the type
+	 * delegating to it.
+	 *
+	 * <p>
+	 * An {@link AnyOfRelation} is told as several access parents, its label naming the candidates
+	 * with the operations each of them is restricted to. An access parent not restricted to some
+	 * operations that does not {@link AccessParentFunction#delegatesCreation() decide Create}, like
+	 * a {@link RefererRelation}, is told as several access parents leaving Create to the type.
+	 * </p>
+	 */
+	static ResKey delegation(AccessParentFunction parent) {
+		Set<BoundCommandGroup> operations = parent.getOperations();
+		if (operations == null && !parent.delegatesCreation()) {
+			return I18NConstants.GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.fill(parent.getLabel());
+		}
+		if (parent instanceof AnyOfRelation) {
+			if (operations == null) {
+				return I18NConstants.GRANTS_DELEGATED_ANY_OF__CANDIDATES.fill(parent.getLabel());
+			}
+			return I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.fill(parent.getLabel(),
+				operationLabels(operations));
+		}
+		if (operations == null) {
+			return I18NConstants.GRANTS_DELEGATED__PARENT.fill(parent.getLabel());
+		}
+		return I18NConstants.GRANTS_DELEGATED_RESTRICTED__PARENT_OPERATIONS.fill(parent.getRelation().getLabel(),
+			operationLabels(operations));
+	}
+
+	/**
+	 * The labels of the given operations in the language of the user, ordered by the names of the
+	 * operations, as a text listing them.
+	 */
+	static String operationLabels(Collection<BoundCommandGroup> operations) {
+		Resources resources = Resources.getInstance();
+		return operations.stream()
+			.sorted(Comparator.comparing(BoundCommandGroup::getID))
+			.map(operation -> resources.getString(labelKey(operation)))
+			.collect(Collectors.joining(SEPARATOR));
 	}
 
 	/**

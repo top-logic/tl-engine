@@ -116,6 +116,8 @@
 					<role name="demo.react.ChartReader"/>
 					<role name="demo.react.TicketWatcher"/>
 					<role name="demo.react.ProjectPathViewer"/>
+					<role name="demo.react.BaselineReviewer"/>
+					<role name="demo.react.EstimateReader"/>
 				</roles>
 			</instance>
 		</config>
@@ -123,6 +125,7 @@
 			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
 				<group name="Approve" type="write"/>
 				<group name="ShowPlanning" type="read"/>
+				<group name="ArrangeCockpit" type="write"/>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
@@ -373,9 +376,15 @@
 						and P2 disables it for an account that is a member of P1 only.
 
 						The "Planning" tile of the project cockpit needs the operation "ShowPlanning" on
-						the project, which only its administrators hold: a member of the project sees
-						the "no access" placeholder in its place. The "Approvals" tile needs the same
+						the project, which only its administrators hold: a member of the project who
+						administers another project sees the "no access" placeholder in its place; a
+						member who administers no project is not offered the tile at all. The "Approvals" tile needs the same
 						operation, and is not displayed at all to a member.
+
+						The arrangement of the tiles of the project cockpit is stored at the project, the
+						same for all its users. Changing it needs the operation "ArrangeCockpit" on the
+						project, which only its administrators hold, and only they write the attributes
+						holding it: a member of the project is offered no editing of the cockpit layout.
 					-->
 					<module name="tl.demo.projectManagement">
 						<grant
@@ -405,6 +414,7 @@
 						<operations>
 							<operation name="Approve"/>
 							<operation name="ShowPlanning"/>
+							<operation name="ArrangeCockpit"/>
 						</operations>
 						<grant
 							inherit="true"
@@ -417,6 +427,10 @@
 						/>
 						<grant
 							operation="ShowPlanning"
+							roles="demo.react.ProjectAdmin"
+						/>
+						<grant
+							operation="ArrangeCockpit"
 							roles="demo.react.ProjectAdmin"
 						/>
 						<!--
@@ -460,10 +474,70 @@
 							roles="demo.react.ProjectAdmin"
 						/>
 					</part>
+					<part name="tl.demo.projectManagement:ProjectScope#cockpitOrder">
+						<grant
+							operation="Write"
+							roles="demo.react.ProjectAdmin"
+						/>
+					</part>
+					<part name="tl.demo.projectManagement:ProjectScope#cockpitHidden">
+						<grant
+							operation="Write"
+							roles="demo.react.ProjectAdmin"
+						/>
+					</part>
 					<part name="tl.demo.projectManagement:ProjectScope#budget">
 						<grant
 							operation="Read"
 							roles="demo.react.ProjectAdmin"
+						/>
+						<grant
+							operation="Write"
+							roles="demo.react.ProjectAdmin"
+						/>
+					</part>
+					<!--
+						The baseline scenario, showing the access to historic versions: a baseline of a
+						project refers to its deliverables in the versions they had when the baseline was
+						created (Baseline#deliverables is a historic reference), and names reviewers. A
+						reviewer of a baseline - a baseline reviewer, by the role rules below - reads the
+						baseline and exactly the versions of the deliverables the baseline refers to: not
+						the current deliverables, not their other versions, and nothing else of the
+						project. A member of the project reads every version of a deliverable, since its
+						role is computed on the current data.
+
+						The sections of a deliverable follow it: a baseline reviewer reads the sections
+						the approved version of the deliverable had.
+
+						The estimate of a deliverable is read by the project and by the estimate readers
+						only. A deliverable names the readers of its estimate, but they become estimate
+						readers on the versions approved by a baseline only, and only as far as they read
+						that baseline: a reviewer of a baseline reads the estimate of an approved version,
+						if that version names the reviewer as reader of the estimate.
+					-->
+					<class name="tl.demo.projectManagement:Baseline">
+						<grant
+							operation="Read"
+							roles="demo.react.BaselineReviewer"
+						/>
+					</class>
+					<class name="tl.demo.projectManagement:Deliverable">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.BaselineReviewer"
+						/>
+					</class>
+					<class name="tl.demo.projectManagement:Section">
+						<grant
+							operation="Read"
+							roles="demo.react.BaselineReviewer"
+						/>
+					</class>
+					<part name="tl.demo.projectManagement:Deliverable#estimate">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.EstimateReader"
 						/>
 						<grant
 							operation="Write"
@@ -737,6 +811,123 @@
 							</path>
 						</inheritance-rule>
 						<!--
+							The baseline scenario, see the grants above. The baselines of a project take the
+							project roles like its deliverables. An account listed in the reviewers of a
+							baseline is a baseline reviewer on that baseline. The last rule navigates the
+							historic reference Baseline#deliverables backwards: from a version of a
+							deliverable it leads to the baselines referring to exactly this version, whose
+							reviewers become baseline reviewers on the version. From a current deliverable
+							it leads nowhere.
+						-->
+						<inheritance-rule id="MembersOnBaselines"
+							meta-element="tl.demo.projectManagement:Baseline"
+							role="demo.react.ProjectMember"
+							source-role="demo.react.ProjectMember"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:ProjectScope#baselines"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule id="AdminsOnBaselines"
+							meta-element="tl.demo.projectManagement:Baseline"
+							role="demo.react.ProjectAdmin"
+							source-role="demo.react.ProjectAdmin"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:ProjectScope#baselines"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<rule id="ReviewersOfBaselines"
+							meta-element="tl.demo.projectManagement:Baseline"
+							role="demo.react.BaselineReviewer"
+						>
+							<path>
+								<step attribute="tl.demo.projectManagement:Baseline#reviewers"/>
+							</path>
+						</rule>
+						<inheritance-rule id="ReviewersOnBaselinedDeliverables"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Deliverable"
+							role="demo.react.BaselineReviewer"
+							source-role="demo.react.BaselineReviewer"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:Baseline#deliverables"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<!--
+							The sections of a deliverable take the project roles from the current
+							deliverable. The baseline reviewer is inherited with history="historic": the path
+							is navigated in the checked version of the section, so it leads to the version of
+							the deliverable the section belonged to at that time, on which the reviewers of
+							the baselines of exactly that version are baseline reviewers. Moving or deleting
+							the section later on does not change that.
+						-->
+						<inheritance-rule id="MembersOnSections"
+							meta-element="tl.demo.projectManagement:Section"
+							role="demo.react.ProjectMember"
+							source-role="demo.react.ProjectMember"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:Deliverable#sections"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule id="AdminsOnSections"
+							meta-element="tl.demo.projectManagement:Section"
+							role="demo.react.ProjectAdmin"
+							source-role="demo.react.ProjectAdmin"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:Deliverable#sections"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule id="ReviewersOnBaselinedSections"
+							history="historic"
+							meta-element="tl.demo.projectManagement:Section"
+							role="demo.react.BaselineReviewer"
+							source-role="demo.react.BaselineReviewer"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:Deliverable#sections"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<!--
+							The readers of the estimate, with history="anchored": the rule grants nothing on
+							a current deliverable. On a version a baseline refers to (anchors), the path is
+							navigated in that version, and the readers found become estimate readers as far
+							as they read the reference of the baseline to the version. Changing the readers
+							of the estimate later on does not change the approved version.
+						-->
+						<rule id="EstimateReadersOfBaselinedDeliverables"
+							anchors="tl.demo.projectManagement:Baseline#deliverables"
+							history="anchored"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Deliverable"
+							role="demo.react.EstimateReader"
+						>
+							<path>
+								<step attribute="tl.demo.projectManagement:Deliverable#estimateReaders"/>
+							</path>
+						</rule>
+						<!--
 							The ticket-watcher scenario, see the grants above: an account listed in the
 							watchers of a ticket is a ticket watcher on that ticket, and a ticket watcher on
 							a ticket of a project is a project path viewer on that project. The project
@@ -857,6 +1048,11 @@
 					<target type="tl.demo.projectManagement:ProjectScope">
 						<show view="projects/overview.view.xml">
 							<bind channel="project"/>
+						</show>
+					</target>
+					<target type="tl.demo.projectManagement:Baseline">
+						<show view="baselines.view.xml">
+							<bind channel="baseline"/>
 						</show>
 					</target>
 					<target type="tl.demo.projectManagement:Milestone">
@@ -1104,6 +1300,14 @@ Behind a reverse proxy that sends forwarding headers (Forwarded, X-Forwarded-*),
 				<entry-point
 					anonymous="true"
 					view="browse.view.xml"
+				/>
+				<!--
+					The page a ticket link (TicketLinkServlet) answers a link with that leads to no
+					ticket: shown to every visitor, with or without an account.
+				-->
+				<entry-point
+					anonymous="true"
+					view="ticket-link-error.view.xml"
 				/>
 			</entry-points>
 		</config>

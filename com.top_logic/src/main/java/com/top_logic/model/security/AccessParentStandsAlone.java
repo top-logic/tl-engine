@@ -5,10 +5,15 @@
 package com.top_logic.model.security;
 
 import java.util.Collection;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.top_logic.basic.config.constraint.algorithm.GenericPropertyConstraint;
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.AccessRightsConfig;
+import com.top_logic.model.annotate.security.AccessRule;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 
 /**
  * Constraint rejecting an access parent on a type that has a definition of its own.
@@ -17,6 +22,15 @@ import com.top_logic.basic.util.ResKey;
  * hold the grants and the marks of the same entry. A type delegating its access decision to another
  * object has no grants and no marks, so a {@link AccessParentConfig#delegates(AccessParentConfig)
  * delegating} setting is reported as the problem whenever one of the others is set.
+ * </p>
+ * <p>
+ * A setting {@link AccessParentConfig#isRestricted(AccessParentConfig) restricted} to some
+ * operations leaves the other operations to the grants of the type. Beside it, a mark is reported,
+ * and a grant of an operation the setting
+ * {@link AccessParentConfig#delegatesOperation(AccessParentConfig, String) delegates}: one of the
+ * {@link OperationRestriction#getOperations() operations listed}, or Discover, which is delegated
+ * together with any of them. The operations are compared by their names, as written in the
+ * configuration.
  * </p>
  * 
  * @see SecurityConfigurationService.TLClassAccessRights#getAccessParent()
@@ -45,11 +59,47 @@ public class AccessParentStandsAlone extends GenericPropertyConstraint {
 		}
 		for (int n = 1, cnt = models.length; n < cnt; n++) {
 			PropertyModel<?> other = models[n];
-			if (isSet(other.getValue())) {
+			if (isGrants(other)) {
+				checkGrants(self, other, config);
+			} else if (Boolean.TRUE.equals(other.getValue())) {
 				self.setProblemDescription(
 					I18NConstants.ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY.fill(label(other)));
 			}
 		}
+	}
+
+	/**
+	 * Reports the grants of the given property that name an operation the given setting delegates.
+	 */
+	private static void checkGrants(PropertyModel<?> self, PropertyModel<?> grants, AccessParentConfig config) {
+		Collection<?> rules = (Collection<?>) grants.getValue();
+		if (rules == null || rules.isEmpty()) {
+			return;
+		}
+		if (!AccessParentConfig.isRestricted(config)) {
+			self.setProblemDescription(
+				I18NConstants.ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY.fill(label(grants)));
+			return;
+		}
+		Set<String> granted = new TreeSet<>();
+		for (Object rule : rules) {
+			CommandGroupReference operation = ((AccessRule) rule).getOperation();
+			if (operation != null && AccessParentConfig.delegatesOperation(config, operation.id())) {
+				granted.add(operation.id());
+			}
+		}
+		if (!granted.isEmpty()) {
+			self.setProblemDescription(I18NConstants.ACCESS_PARENT_DECIDES_GRANTED__PROPERTY_OPERATIONS
+				.fill(label(grants), OperationLabels.of(granted)));
+		}
+	}
+
+	/**
+	 * Whether the given property holds the grants of the entry, all other checked properties being
+	 * marks.
+	 */
+	private static boolean isGrants(PropertyModel<?> model) {
+		return AccessRightsConfig.GRANTS.equals(model.getProperty().getPropertyName());
 	}
 
 	/**
@@ -62,16 +112,6 @@ public class AccessParentStandsAlone extends GenericPropertyConstraint {
 	 */
 	private static ResKey label(PropertyModel<?> model) {
 		return ResKey.fallback(model.getProperty().labelKey(null), model.getLabel());
-	}
-
-	/**
-	 * Whether the given value of a grants list or of a mark counts as a definition of the type.
-	 */
-	private static boolean isSet(Object value) {
-		if (value instanceof Collection<?> collection) {
-			return !collection.isEmpty();
-		}
-		return Boolean.TRUE.equals(value);
 	}
 
 	@Override

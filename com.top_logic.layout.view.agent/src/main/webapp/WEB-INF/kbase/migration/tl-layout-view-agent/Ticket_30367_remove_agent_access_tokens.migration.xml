@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The access tokens of the user interface are access tokens of the type tl.accounts:AccessToken
-	(Ticket #30367), so the module tl.agent with its token types is deleted. Its tokens are deleted
-	with it: each was bound to the session it was issued from, which has ended since.
+	First migration of the migration module tl-layout-view-agent. It changes no data: it records the
+	version of the module, so that later migrations of its data reach existing databases.
+
+	The module tl.agent with its access tokens is deleted by the migration
+	Ticket_30558_remove_agent_access_tokens of tl-element, which reaches every database storing
+	these tokens.
 -->
 <migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
@@ -25,10 +28,5 @@
 			module="tl-monitoring"
 		/>
 	</dependencies>
-	<processors>
-		<!-- The tokens are stored in the generic table, with their attributes and links. -->
-		<delete-module name="tl.agent"
-			type-tables="GenericObject"
-		/>
-	</processors>
+	<processors/>
 </migration>

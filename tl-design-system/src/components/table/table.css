@@ -6,9 +6,9 @@
    drag.css. Breiten, Versätze und die Lage der Zeilen sind Daten und stehen inline; alles andere hier.
    Eine Zeile schwebt nicht (skalen.md „Elevation“): kein Schatten, Kanten sind Linien. Die Tabelle als Ganzes steht
    abgesetzt (UI-Durchgang 1, „Tiefe“): Fläche, Rundung, Rand und ein leichter Schatten — außer sie füllt eine ganze
-   Fläche (tl-fill). Zebra, Spaltenlinien und Dichte sind Attribute an tl-table (data-tl-striped, data-tl-column-lines,
-   data-tl-density), Zahlenspalten data-tl-align="end" an Kopf- und Datenzelle; beide Zeilenformen, Gruppe und gerade
-   Zeile, sind Wörter in data-tl-state der Zeile ("group", "even"). */
+   Fläche (tl-fill). Zebra und Spaltenlinien sind Attribute an tl-table (data-tl-striped, data-tl-column-lines; die
+   Dichte erbt die Tabelle von der Seite), Zahlenspalten data-tl-align="end" an Kopf- und Datenzelle; beide Zeilenformen,
+   Gruppe und gerade Zeile, sind Wörter in data-tl-state der Zeile ("group", "even"). */
 
 /* isolation hält die Marke an der Wurzel (drop-onto, drop-refused: Fläche ::before auf layer-sticky,
    drag.css) im Stapel der Tabelle: sie liegt über Filterleiste, Kopf und Zeilen, nie über einem Nachbarn
@@ -26,14 +26,14 @@
 }
 .tl-table[hidden] { display: none; }
 
-/* Die abgesetzte Fläche (UI-Durchgang 1, Hendrik 26.10.): surface-layer mit Rundung, Rand und dem leichtesten Schatten
-   der Skala. Eine Tabelle, die eine ganze Fläche füllt (tl-fill), bekommt ihn nicht — dort kommt die Tiefe vom
-   abgesetzten Kopf, nicht von einer schwebenden Karte. overflow: hidden (oben) schneidet Kopf und Zeilen an der Rundung. */
+/* Die abgesetzte Fläche (UI-Durchgang 1, Hendrik 26.10.): surface-layer mit Rundung und Rand, ohne Schatten: die
+   Tabelle liegt in der Oberfläche wie die Karte (docs/skalen.md „Schatten bekommt nur, was wirklich schwebt“). Eine
+   Tabelle, die eine ganze Fläche füllt (tl-fill), trägt auch Rundung und Rand nicht — dort kommt die Tiefe vom
+   abgesetzten Kopf. overflow: hidden (oben) schneidet Kopf und Zeilen an der Rundung. */
 .tl-table:not(.tl-fill) {
   border: var(--tl-border-width-sm) solid var(--tl-border-separator);
   border-radius: var(--tl-radius-md);
   background: var(--tl-surface-layer);
-  box-shadow: var(--tl-shadow-1);
 }
 
 /* Eine füllende Tabelle behält Kopf, drei Zeilen und Fuß (#29922): kürzer zeigt sie nichts Brauchbares. Ist die
@@ -86,31 +86,43 @@
 }
 .tl-table__save[hidden] { display: none; }
 
-/* --- Ansicht: das Popover des Zahnrads ---------------------------------------------- */
+/* --- Spalten: das Popover des Zahnrads ---------------------------------------------- */
 
-/* Der Inhalt des Popovers „Ansicht“ (tl-popover tl-picker tl-menu tl-table-view-options): Titel, Abschnitt „Dichte“
-   mit Segmenten, zwei Schalter, Trennlinie, Einträge. Alles steht auf der Einrückung der Menüeinträge
+/* Der Inhalt des Popovers des Zahnrads (tl-popover tl-picker tl-menu tl-table-view-options): eine Seite — Titel, die
+   Spaltenwahl, Trennlinie, am Fuß „Spalten zurücksetzen“. Alles steht auf der Einrückung der Menüeinträge
    (space-control-x), damit die Zeilen untereinander bündig sind. Die Hülle tl-picker setzt eine Lücke von space-sm
    zwischen die Kinder; hier gilt die dichte Folge eines Menüs. */
 .tl-popover.tl-table-view-options {
   gap: var(--tl-space-2xs);
+  /* Lange Spaltennamen kürzen mit Ellipse; am schmalen Fenster gibt das Popover nach. */
+  inline-size: min(var(--tl-size-popover-view), calc(var(--tl-size-viewport-width) - 2 * var(--tl-space-xs)));
 }
 
-/* Der Titel ist ein Titel, kein Abschnittskopf: Primärtext in tl-type-label-strong (die Klasse setzt das Element),
-   der Abschnitt „Dichte“ darunter bleibt der leise Kopf tl-menu__header. */
+/* Die Seite ist eine Flex-Spalte, die das Popover füllt und mit ihm schrumpft (min-block-size 0): wo das Popover am
+   Fensterrand gedeckelt ist (usePopover setzt maxHeight), gibt die Seite nach, und es rollt genau ein Bereich — die Liste der
+   Spaltenwahl. Die Seite selbst rollt nie. Die Lücke der Folge zieht sie vom Popover mit. */
+.tl-table-view-options__page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+  gap: var(--tl-space-2xs);
+}
+
+/* Die Wurzel der Spaltenwahl sitzt im Popover: Popover und Titelzeile liefern den Abstand, die Höhe gibt die Seite. Das
+   Fensterbild der Wurzel (reorder-list.css: Innenabstand, volle Höhe) fällt hier weg. */
+.tl-table-view-options__page > .tl-reorder-list__host {
+  padding: 0;
+  block-size: auto;
+}
+
+/* Der Titel ist ein Titel, kein Abschnittskopf: Primärtext in tl-type-label-strong (die Klasse setzt das Element). */
 .tl-table-view-options__title {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
   padding: var(--tl-space-2xs) var(--tl-space-control-x);
   color: var(--tl-text-primary);
-}
-
-/* Die Segmente rücken von den Rändern des Popovers ab wie der Text der Einträge. */
-.tl-table-view-options__segments {
-  margin-inline: var(--tl-space-control-x);
-}
-
-/* Ein Schalter ist eine Zeile des Popovers: Einrückung wie der Eintrag, der Zeiger-Hof gehört zur Marke. */
-.tl-table-view-options__switch {
-  padding-inline: var(--tl-space-control-x);
 }
 
 /* --- Rahmen und Raster ------------------------------------------------------------ */
@@ -511,6 +523,14 @@
 
 :where(.tl-table__row:hover) {
   background: var(--tl-surface-interactive-hover);
+}
+
+/* Zebra- und Gruppenzeilen liegen schon auf surface-layer-muted; surface-interactive-hover ist dort im Hellen fast
+   dieselbe Farbe (gray-4 auf gray-3, 1,01:1) — unter dem Zeiger geschah sichtbar nichts (U62). Sie zeigen darum eine
+   Stufe kräftiger, surface-interactive-strong, wie der Tabellenkopf auf derselben Fläche (skalen.md „Der Tabellenkopf
+   zeigt seine Spaltengrenzen“). Nach dem Zeigen, vor der Auswahl: gewählt vor gezeigt vor Zebra bleibt. */
+:where(.tl-table[data-tl-striped] .tl-table__row[data-tl-state~="even"]:hover, .tl-table__row[data-tl-state~="group"]:hover) {
+  background: var(--tl-surface-interactive-strong);
 }
 
 /* Gewählt heißt überall Markenton und Kante (UI-Durchgang 1): die Fläche surface-selected, die Kante als innerer Schatten

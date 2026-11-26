@@ -13,8 +13,12 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.ai.core.agent.StopReason;
@@ -23,21 +27,32 @@ import com.top_logic.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.ai.core.execution.model.AgentExecution;
 import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 import com.top_logic.util.TLContextManager;
 
 /**
- * That {@code aiSessionRename} and {@code aiSessionDelete} act only for the account a chat belongs
- * to, and that deleting one first asks its live run to stop.
+ * That {@code aiSessionRename} and {@code aiSessionDelete} act only for an account that may write
+ * the chat, and that deleting one first asks its live run to stop.
  *
  * <p>
  * These two functions are what a row command of a session list calls, so their input is whatever a
  * channel happened to hold when the menu opened - never something the caller proved they may touch.
- * The ownership check therefore lives in the function, and this is what says so.
+ * The check of the Write right therefore lives in the function, and this is what says so. The
+ * rights come from the shipped policy (the owner reads and writes) and from the test role
+ * {@link #READER_ROLE}, which only reads.
  * </p>
  */
 public class TestSessionScriptFunctions extends BasicTestCase {
+
+	/** The role of the test configuration that may read a session but not write it. */
+	static final String READER_ROLE = "TestChatReader";
 
 	private AgentExecutionStore _store;
 
@@ -104,12 +119,34 @@ public class TestSessionScriptFunctions extends BasicTestCase {
 		advance();
 
 		as(_ben, () -> {
-			assertRefused(() -> AIScriptFunctions.sessionRename(session, "Bens Chat"));
-			assertRefused(() -> AIScriptFunctions.sessionDelete(session));
+			assertRefused(I18NConstants.ERROR_SESSION_WRITE_DENIED,
+				() -> AIScriptFunctions.sessionRename(session, "Bens Chat"));
+			assertRefused(I18NConstants.ERROR_SESSION_WRITE_DENIED,
+				() -> AIScriptFunctions.sessionDelete(session));
 		});
 		advance();
 
 		assertEquals("Annas Chat", session.getTitle());
+		assertNotNull("The chat must still be there.", _store.findSessionById(idOf(session)));
+	}
+
+	/** An account that may read the chat but not write it is refused as well. */
+	public void testReaderRefused() throws Exception {
+		AgentSession session = _store.createSession(SessionKind.CHAT, _anna, "Nur lesen");
+		advance();
+		grantReader(session, _ben);
+
+		as(_ben, () -> {
+			assertTrue("The reader holds Read on the session.",
+				ModelAccessRights.getInstance().isAllowed(_ben, session, SimpleBoundCommandGroup.READ));
+			assertRefused(I18NConstants.ERROR_SESSION_WRITE_DENIED,
+				() -> AIScriptFunctions.sessionRename(session, "Bens Titel"));
+			assertRefused(I18NConstants.ERROR_SESSION_WRITE_DENIED,
+				() -> AIScriptFunctions.sessionDelete(session));
+		});
+		advance();
+
+		assertEquals("Nur lesen", session.getTitle());
 		assertNotNull("The chat must still be there.", _store.findSessionById(idOf(session)));
 	}
 
@@ -126,9 +163,8 @@ public class TestSessionScriptFunctions extends BasicTestCase {
 	 * An administrator may act on a chat that is not theirs.
 	 *
 	 * <p>
-	 * The same bypass {@code ToolAuthorization} and {@code RunAuthorization} have, so that a list
-	 * over all sessions works as an administration view. The commands of the chat controls stay owner-only; see
-	 * the function's own comment.
+	 * The bypass of the model-based security, so that a list over all sessions works as an
+	 * administration view.
 	 * </p>
 	 */
 	public void testAdministratorActsOnAnotherAccountsChat() throws Exception {
@@ -210,9 +246,24 @@ public class TestSessionScriptFunctions extends BasicTestCase {
 			AIScriptFunctions.sessionDelete(session)));
 	}
 
-	/** Every call runs with {@code person} as the acting account, which is what the guard reads. */
-	private static void as(Person person, Runnable job) {
-		TLContextManager.inPersonContext(person, job::run);
+	/**
+	 * Every call runs with {@code person} as the acting account, which is what the guard reads,
+	 * with the security checks on, so that the rights are decided for that account.
+	 */
+	static void as(Person person, Runnable job) {
+		ThreadContext.<Void, RuntimeException, RuntimeException> withSecurityChecks(true, () -> {
+			TLContextManager.inPersonContext(person, job::run);
+			return null;
+		});
+	}
+
+	/** Gives the account the {@link #READER_ROLE} on the given object. */
+	static void grantReader(TLObject object, Person account) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			BoundedRole.assignRole(object, account, BoundedRole.getRoleByName(READER_ROLE));
+			tx.commit();
+		}
+		advance();
 	}
 
 	/** That the given call is refused with a {@link TopLogicException}, not carried out. */
@@ -225,13 +276,23 @@ public class TestSessionScriptFunctions extends BasicTestCase {
 		}
 	}
 
+	/** That the given call is refused with the given message. */
+	static void assertRefused(ResKey message, Runnable job) {
+		try {
+			job.run();
+			fail("Expected the call to be refused.");
+		} catch (TopLogicException expected) {
+			assertEquals(message, expected.getErrorKey());
+		}
+	}
+
 	/** The session's persistent id, as {@link AgentExecutionStore#findSessionById(String)} takes it. */
 	private static String idOf(AgentSession session) {
 		return KBUtils.getWrappedObjectName(session).toString();
 	}
 
 	/** Advances the caller's session revision so the store's writer-thread commits become visible. */
-	private static void advance() {
+	static void advance() {
 		HistoryUtils.updateSessionRevision();
 	}
 
@@ -240,6 +301,8 @@ public class TestSessionScriptFunctions extends BasicTestCase {
 		Test test = new TestSuite(TestSessionScriptFunctions.class);
 		test = ServiceTestSetup.createSetup(test,
 			ModelService.Module.INSTANCE,
+			AccessManager.Module.INSTANCE,
+			SecurityConfigurationService.Module.INSTANCE,
 			AgentExecutionStore.Module.INSTANCE);
 		return PersonManagerSetup.createPersonManagerSetup(test);
 	}

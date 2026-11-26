@@ -4,6 +4,7 @@
  */
 package test.com.top_logic.model.search.rules;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ import com.top_logic.model.search.rules.ScriptAccessParent;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContextManager;
@@ -57,7 +59,8 @@ import com.top_logic.util.model.ModelService;
  * the project the assignee of the task is responsible for (see
  * {@code TestTLScriptSecurity-test.config.xml}). The account of the responsible employee holds
  * {@code ProjectResponsible} on the project; employees themselves are not readable for
- * non-administrative users.
+ * non-administrative users. Its specialization {@code RestrictedTask} has the same access parent,
+ * restricted to Read.
  * </p>
  */
 @SuppressWarnings("javadoc")
@@ -95,6 +98,15 @@ public class TestScriptAccessParent extends BasicTestCase {
 	/** A task without assignee, whose access parent is empty. */
 	private TLObject _freeTask;
 
+	/** A {@code RestrictedTask} assigned to {@link #_employee}. */
+	private TLObject _restrictedTask;
+
+	/** The employee of {@link #_other}, responsible for no project. */
+	private TLObject _lonelyEmployee;
+
+	/** A task assigned to {@link #_lonelyEmployee}, whose access parent is empty. */
+	private TLObject _lonelyTask;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -123,6 +135,17 @@ public class TestScriptAccessParent extends BasicTestCase {
 			_freeTask = newObject("ProjectTask");
 			_freeTask.tUpdateByName("name", "freeTask");
 
+			_restrictedTask = newObject("RestrictedTask");
+			_restrictedTask.tUpdateByName("name", "restrictedTask");
+			_restrictedTask.tUpdateByName("assignee", _employee);
+
+			_lonelyEmployee = newObject("Employee");
+			_lonelyEmployee.tUpdateByName("salary", Integer.valueOf(1000));
+			_lonelyEmployee.tUpdateByName("account", _other);
+			_lonelyTask = newObject("ProjectTask");
+			_lonelyTask.tUpdateByName("name", "lonelyTask");
+			_lonelyTask.tUpdateByName("assignee", _lonelyEmployee);
+
 			tx.commit();
 		}
 	}
@@ -145,6 +168,20 @@ public class TestScriptAccessParent extends BasicTestCase {
 		assertFalse(allowed(_other, _task));
 	}
 
+	public void testRestrictedScriptDelegatesListedOperationsOnly() {
+		assertTrue("Precondition: the responsible may write the project, and so the unrestricted task.",
+			allowed(_responsible, _task, SimpleBoundCommandGroup.WRITE));
+
+		assertTrue("Read is delegated to the project.", allowed(_responsible, _restrictedTask));
+		assertFalse(allowed(_other, _restrictedTask));
+		assertFalse("Write is not delegated, and the task grants it to nobody.",
+			allowed(_responsible, _restrictedTask, SimpleBoundCommandGroup.WRITE));
+		assertFalse("Delete is not delegated, and the task grants it to nobody.",
+			allowed(_responsible, _restrictedTask, SimpleBoundCommandGroup.DELETE));
+		assertEquals(Set.of(_restrictedTask),
+			ModelAccessRights.getInstance().getRoleHolders(_restrictedTask, SimpleBoundCommandGroup.WRITE));
+	}
+
 	public void testScriptNavigatesThroughUnreadableObject() {
 		assertFalse("Precondition: the employee itself is not readable.", allowed(_responsible, _employee));
 		assertTrue("The script runs without security, so it reaches the project through the employee.",
@@ -153,6 +190,22 @@ public class TestScriptAccessParent extends BasicTestCase {
 
 	public void testEmptyResultDenies() {
 		assertFalse(allowed(_responsible, _freeTask));
+	}
+
+	public void testUncommittedResultGivesNoVerdict() {
+		try (Transaction tx = beginTx()) {
+			TLObject project = newObject("Project");
+			project.tUpdateByName("name", "scriptAccessParentNewProject");
+			project.tUpdateByName("responsible", _lonelyEmployee);
+
+			assertFalse("A project not committed yet gives no verdict, though its responsible will hold a role on it.",
+				allowed(_other, _lonelyTask));
+			assertFalse(allowed(_responsible, _lonelyTask));
+			assertEquals(Set.of(),
+				ModelAccessRights.getInstance().getRoleHolders(_lonelyTask, SimpleBoundCommandGroup.READ));
+			tx.rollback();
+		}
+		assertFalse("No allowance is left after the rollback.", allowed(_other, _lonelyTask));
 	}
 
 	public void testSingleObject() {
@@ -171,17 +224,23 @@ public class TestScriptAccessParent extends BasicTestCase {
 		assertNull(expectNoError(() -> function("t -> null").resolve(_task)));
 	}
 
-	public void testSeveralObjectsDenyAndLog() {
-		assertNull(expectError(
-			() -> function("t -> list(" + project(_project) + ", " + project(_project2) + ")").resolve(_task)));
+	public void testSeveralResultsAreSeveralParents() {
+		ScriptAccessParent function =
+			function("t -> list(" + project(_project) + ", " + project(_project2) + ")");
+		assertEquals(List.of(_project, _project2),
+			expectNoError(() -> list(function.resolveAll(_task, SimpleBoundCommandGroup.READ))));
+		assertSame("A single parent is the first one.", _project, expectNoError(() -> function.resolve(_task)));
 	}
 
-	public void testObjectWithNullDeniesAndLogs() {
-		assertNull(expectError(() -> function("t -> list(" + project(_project) + ", null)").resolve(_task)));
+	public void testNullInResultIsSkipped() {
+		ScriptAccessParent function = function("t -> list(" + project(_project) + ", null)");
+		assertEquals(List.of(_project), expectNoError(() -> list(function.resolveAll(_task, SimpleBoundCommandGroup.READ))));
+		assertSame(_project, expectNoError(() -> function.resolve(_task)));
 	}
 
 	public void testNonObjectDeniesAndLogs() {
 		assertNull(expectError(() -> function("t -> 42").resolve(_task)));
+		assertEquals(List.of(), expectError(() -> list(function("t -> 42").resolveAll(_task, SimpleBoundCommandGroup.READ))));
 	}
 
 	public void testObjectWithoutAccessControlDeniesAndLogs() {
@@ -192,9 +251,17 @@ public class TestScriptAccessParent extends BasicTestCase {
 		assertNull(expectError(() -> function("t -> list(" + transientProject + ")").resolve(_task)));
 	}
 
+	public void testObjectWithoutAccessControlIsSkipped() {
+		String transientProject = "new(type: `" + MODULE + ":Project`, transient: true)";
+		ScriptAccessParent function = function("t -> list(" + transientProject + ", " + project(_project) + ")");
+		assertEquals("The object without access control is skipped, the other one decides.", List.of(_project),
+			expectError(() -> list(function.resolveAll(_task, SimpleBoundCommandGroup.READ))));
+	}
+
 	public void testExceptionDeniesAndLogs() {
 		ScriptAccessParent failing = function("t -> throw('broken')");
 		assertNull(expectError(() -> failing.resolve(_task)));
+		assertEquals(List.of(), expectError(() -> list(failing.resolveAll(_task, SimpleBoundCommandGroup.READ))));
 		assertSame("Another object is still decided after a failure.", _project,
 			function("t -> " + project(_project)).resolve(_freeTask));
 	}
@@ -216,8 +283,16 @@ public class TestScriptAccessParent extends BasicTestCase {
 	 * context of that person.
 	 */
 	private static boolean allowed(Person person, TLObject object) {
+		return allowed(person, object, SimpleBoundCommandGroup.READ);
+	}
+
+	/**
+	 * Whether the given person may perform the given operation on the given object, decided with
+	 * checked security in the context of that person.
+	 */
+	private static boolean allowed(Person person, TLObject object, BoundCommandGroup operation) {
 		return TLContextManager.inPersonContext(person,
-			() -> ModelAccessRights.getInstance().isAllowed(person, object, SimpleBoundCommandGroup.READ));
+			() -> ModelAccessRights.getInstance().isAllowed(person, object, operation));
 	}
 
 	/**
@@ -226,6 +301,12 @@ public class TestScriptAccessParent extends BasicTestCase {
 	private static String project(TLObject project) {
 		return "all(`" + MODULE + ":Project`).filter(p -> $p.get(`" + MODULE + ":Project#name`) == '"
 			+ project.tValueByName("name") + "').singleElement()";
+	}
+
+	private static List<TLObject> list(Iterable<TLObject> parents) {
+		List<TLObject> result = new ArrayList<>();
+		parents.forEach(result::add);
+		return result;
 	}
 
 	private static ScriptAccessParent function(String expr) {

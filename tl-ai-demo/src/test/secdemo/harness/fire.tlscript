@@ -88,7 +88,7 @@
 			"3.2", "anna",
 			'Use the TL-Script tool with commit to evaluate: new(`pm:Ticket`).set(`pm:Ticket#title`, "Anna was here")',
 			"DENIED HERE, ALLOWED IN THE CHAT (test bed, A1) - Anna does hold 'data.write', but this"
-				+ " run is unattended and that capability is off the <background-allowlist>, so the"
+				+ " is a background run and that capability is off the <background-allowlist>, so the"
 				+ " commit is refused naming the allowlist rather than the role. No object is created."
 		],
 		[

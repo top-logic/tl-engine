@@ -20,6 +20,12 @@ test('tl-table: Zeile size-row, Kopf size-bar, Zustände als Attribute, keine Li
   // Die Hover-auf-gewählt-Regel steht nach dem Zeigen und nach der Auswahl (gleiche Spezifität: die Reihenfolge entscheidet).
   assert.ok(css.indexOf(':where(.tl-table__row[aria-selected="true"]:hover)') > css.indexOf(':where(.tl-table__row[aria-selected="true"]) {'));
   assert.ok(css.indexOf(':where(.tl-table__row[aria-selected="true"]) {') > css.indexOf(':where(.tl-table__row:hover)'));
+  // U62: Zebra- und Gruppenzeilen liegen auf surface-layer-muted; surface-interactive-hover ist dort im Hellen fast
+  // dieselbe Farbe (gray-4 auf gray-3). Sie zeigen eine Stufe kräftiger — nach dem Zeigen, vor der Auswahl.
+  const gedaempftZeigen = ':where(.tl-table[data-tl-striped] .tl-table__row[data-tl-state~="even"]:hover, .tl-table__row[data-tl-state~="group"]:hover)';
+  assert.match(declarationsOf(css, gedaempftZeigen) ?? '', /background:\s*var\(--tl-surface-interactive-strong\)/);
+  assert.ok(css.indexOf(gedaempftZeigen) > css.indexOf(':where(.tl-table__row:hover)'));
+  assert.ok(css.indexOf(':where(.tl-table__row[aria-selected="true"]) {') > css.indexOf(gedaempftZeigen));
   assert.match(declarationsOf(css, '.tl-table__row[aria-selected="true"] > .tl-table__cell:first-child') ?? '',
     /box-shadow:\s*inset var\(--tl-border-width-accent\) 0 0 0 var\(--tl-border-selected\)/);
   assert.match(declarationsOf(css, ':where(.tl-table__row)') ?? '', /background:\s*var\(--tl-surface-layer\)/);
@@ -156,13 +162,15 @@ test('der Kopf scrollt waagerecht ohne eigenen Balken (Hendrik 12.10.)', () => {
 
 // --- UI-Durchgang 1, Task 4: Tabelle mit Tiefe (Spec §1) ---------------------------------------------------------
 
-test('Tiefe: die Tabelle steht auf einer abgesetzten Fläche mit Rundung, Rand und leichtem Schatten, die füllende ohne Schatten', () => {
+test('Tiefe: die Tabelle steht auf einer abgesetzten Fläche mit Rundung und Rand, ohne Schatten', () => {
   const d = declarationsOf(css, '.tl-table:not(.tl-fill)') ?? '';
   assert.match(d, /background:\s*var\(--tl-surface-layer\)/);
   assert.match(d, /border-radius:\s*var\(--tl-radius-md\)/);
   assert.match(d, /border:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
-  assert.match(d, /box-shadow:\s*var\(--tl-shadow-1\)/);
-  // Die füllende Tabelle schwebt nicht: kein Schatten (ihre Tiefe kommt vom abgesetzten Kopf).
+  // Die Tabelle schwebt nicht (skalen.md „Schatten bekommt nur, was wirklich schwebt“): kein Schatten, auch kein
+  // Primitiv, das am Modus vorbei die Regel umginge. Die füllende trägt ebenfalls keinen.
+  assert.doesNotMatch(d, /shadow/);
+  assert.doesNotMatch(css, /var\(--tl-shadow-/);
   assert.doesNotMatch(declarationsOfAll(css, '.tl-table.tl-fill'), /shadow/);
   assert.doesNotMatch(declarationsOfAll(css, '.tl-table'), /shadow/);
 });
@@ -298,8 +306,10 @@ test('Tiefe: „+ n weitere“ ist ein Element der Filterleiste, das nur sein La
 
 test('Tiefe: Vertrag und Specimen nennen die neuen Attribute und Klassen', () => {
   const md = readComponent('table', 'table.contract.md');
-  assert.deepEqual(missingInContract(md, ['data-tl-striped', 'data-tl-column-lines', 'data-tl-align="end"', 'data-tl-density',
+  assert.deepEqual(missingInContract(md, ['data-tl-striped', 'data-tl-column-lines', 'data-tl-align="end"',
     'data-tl-state~="group"', 'data-tl-state~="even"', 'tl-table__more', 'tl-type-overline', '--tl-surface-layer-muted', 'tl-reveal-on-hover']), []);
+  // Die Tabelle hat keine eigene Dichte: sie erbt die der Seite (#30233).
+  assert.doesNotMatch(md, /data-tl-density="/, 'der Vertrag kennt kein Dichte-Attribut an der Tabelle');
   const html = readComponent('table', 'table.spec.html');
   for (const t of ['data-tl-striped', 'data-tl-column-lines', 'data-tl-align="end"', 'tl-table__more', 'tl-type-overline',
     'data-tl-state="filtered"', 'aria-sort="ascending"'])
@@ -309,4 +319,20 @@ test('Tiefe: Vertrag und Specimen nennen die neuen Attribute und Klassen', () =>
 
 test('der Knopf im Streifen der Spaltenwahl trägt den Ring innen: tl-table schneidet, rechts bündig wäre er weg (Hendrik 27.10.)', () => {
   assert.match(declarationsOf(css, '.tl-table__columns > .tl-button:focus-visible') ?? '', /outline-offset:\s*calc\(-1 \* var\(--tl-focus-offset\)\)/);
+});
+
+// Z10 (Nachtrag 3): beim Ziehen einer Spalte trägt der Zielblock im Kopf drop-target. Fixierte Kopfzellen
+// erben die Fläche (table.css, (0,2,0)); die Regel steht in drag.css (der Ziehen-Block zeichnet die Zustände) mit (0,3,0).
+test('Kopf: drop-target färbt auch fixierte Kopfzellen, Spezifität schlägt die Lage-Regel', () => {
+  const drag = readGenerated('drag', 'drag.css');
+  const regeln = rulesOf(drag);
+  for (const lage of ['frozen']) {
+    const sel = `.tl-table__header-cell[data-tl-state~="${lage}"][data-tl-state~="drop-target"]`;
+    const r = regeln.find(([s]) => s.split(',').map((x) => x.trim()).includes(sel));
+    assert.ok(r, `Regel für ${lage} + drop-target fehlt in drag.css`);
+    assert.match(r[1], /background:\s*var\(--tl-surface-interactive-strong\)/);
+    // (0,3,0): Klasse + zwei Attribute > Klasse + ein Attribut der Lage-Regel (0,2,0).
+    assert.equal((sel.match(/\[/g) ?? []).length + (sel.match(/\.[a-z]/g) ?? []).length, 3);
+  }
+  assert.doesNotMatch(css, /drop-target/, 'table.css zeichnet kein drop-target');
 });

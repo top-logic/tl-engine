@@ -1,5 +1,5 @@
 ---
-description: Read before showing, undoing or reverting the changes of an object and the objects belonging to it - the change subtree of a root object (SubtreeFilter), the <change-subtree> annotation (TLChangeSubtree) on reference ends, the change log table (ChangeLogListModelBuilder, ChangeLogOptions), the commands UndoCommandHandler, RedoCommandHandler and RevertCommandHandler, ChangeSetReverter and the TL-Script functions changeLog and revertChanges.
+description: Read before showing, undoing or reverting the changes of an object and the objects belonging to it - the change subtree of a root object (SubtreeFilter), the <change-subtree> annotation (TLChangeSubtree) on reference ends, the change log table (ChangeLogListModelBuilder, ChangeLogOptions), the commands UndoCommandHandler, RedoCommandHandler and RevertCommandHandler, ChangeSetReverter and the TL-Script functions changeLog, changeSetRestrict and revertChanges, and the access rights on the change log (ChangeSetRestriction, ChangeSet#incomplete).
 ---
 
 # Change log of an object and its subtree
@@ -102,11 +102,13 @@ thread-safe, so a filter is created per change log request.
 - **Table**: `ChangeLogListModelBuilder` as model builder of a table. With a `TLObject` as model it
   shows the change log of the object's subtree, without a model the change log of the whole
   application (`root-required="true"` keeps the table empty instead). `max-entries` (default
-  `30`) limits the number of rows.
+  `30`) limits the number of rows. Every row is restricted to what the current user may see, see
+  [Access rights](#access-rights).
 - **TL-Script**: `changeLog(obj, maxEntries, includeSubtree, startRev, stopRev, author,
   includeTechnical, excludedModules)`, all arguments optional, returns the change sets newest
   first. `includeSubtree` defaults to `true`; `obj = null` returns the change log of the whole
-  application. See the TL-Script documentation of `changeLog` in the application's help.
+  application. See the TL-Script documentation of `changeLog` in the application's help. With
+  security checks, only administrators may call it, see [Access rights](#access-rights).
 
 The options shared by every configuration inspecting the change log are `ChangeLogOptions`:
 
@@ -119,6 +121,49 @@ The options shared by every configuration inspecting the change log are `ChangeL
 
 Configure a table and the undo/redo commands operating on it with the same options, so that the
 commands consider exactly the changes the table shows.
+
+## Access rights
+
+A change set holds the old and new values of every changed attribute, regardless of whether the
+user may read the object or the attribute. The change log is therefore not shown unrestricted to
+a user who is no administrator:
+
+- `changeLog()` in an evaluation with security checks (a script of the user interface, an API
+  endpoint, an agent tool, the console) is reserved to administrators, with or without an object
+  argument; other users get an error. Without security checks (a privileged function, model
+  logic) it is not restricted and does not filter.
+- `changeSetRestrict(changeSet, user)` (`ChangeSetRestriction` in Java) copies a change set,
+  keeping the creations, deletions and modifications the user may read, and in the values only
+  the objects the user may discover. A hidden author is removed. A copy that lost a change, a
+  modification or a value object is marked `tl.changelog:ChangeSet#incomplete`.
+- An incomplete change set is not reverted: `ChangeSetReverter.revert` and `revertAll`, the
+  TL-Script function `revertChanges` and the revert commands of the user interfaces refuse it with
+  an error message, nothing is reverted.
+
+`ChangeLogListModelBuilder` restricts every row for the current user. A view of the React UI reads
+the change log in a privileged function and restricts each commit, like the function
+`changeLogOfCurrentUser` the engine ships for the view "My latest changes"
+(`tl-layout-view.conf.config.xml`):
+
+```xml
+<privileged-script name="changeLogOfCurrentUser"
+	command-group="Read"
+	security-object="currentUser()"
+>
+	<parameters>
+		<parameter name="maxEntries"/>
+	</parameters>
+	<implementation>changeLog(null, $maxEntries, true, null, null, currentUser())
+		.map(cs -> changeSetRestrict($cs, currentUser()))</implementation>
+</privileged-script>
+```
+
+The tables show the flag `incomplete` as a column, so that a user recognizes a commit with hidden
+parts.
+
+The change sets are transient objects, which the access check does not check: what a user sees of
+them is decided by the restriction above. The module `tl.changelog` is marked `internal` and grants
+nothing (`ElementConf.config.xml`).
 
 ## Undo, redo and revert
 

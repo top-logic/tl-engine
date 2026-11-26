@@ -32,8 +32,8 @@
   <section class="specimen__base"><p class="tl-type-heading-sm">Ansicht: Kacheln sind Karten ohne Schatten; zwei mit Aktion (Zeigen: Rand border-interactive; Tab auf den verborgenen Knopf: Ring an der Kachel), eine mit deaktivierter Aktion, eine, deren Inhalt rollt</p>
     <div class="tl-dashboard tl-inset">
       <div class="tl-dashboard__grid spec-grid" data-tl-axis="horizontal">
-        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-wide">
-          <button type="button" class="tl-dashboard__action tl-visually-hidden">Projekte öffnen</button>
+        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill tl-activatable spec-wide">
+          <button type="button" class="tl-activatable__action tl-visually-hidden">Projekte öffnen</button>
           <div class="tl-overlay__base">
             <div class="tl-inset tl-inset--card"><p class="tl-type-heading-sm">Projekte</p><p class="tl-type-body">12 laufend, 3 im Verzug</p></div>
           </div>
@@ -54,14 +54,14 @@
             </div>
           </div>
         </div>
-        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-c1">
-          <button type="button" class="tl-dashboard__action tl-visually-hidden">Tickets öffnen</button>
+        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill tl-activatable spec-c1">
+          <button type="button" class="tl-activatable__action tl-visually-hidden">Tickets öffnen</button>
           <div class="tl-overlay__base">
             <div class="tl-inset tl-inset--card"><p class="tl-type-heading-sm">Tickets</p><p class="tl-type-body">5 offen</p></div>
           </div>
         </div>
-        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-c2">
-          <button type="button" class="tl-dashboard__action tl-visually-hidden" disabled>Berichte öffnen</button>
+        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill tl-activatable spec-c2">
+          <button type="button" class="tl-activatable__action tl-visually-hidden" disabled>Berichte öffnen</button>
           <div class="tl-overlay__base">
             <div class="tl-inset tl-inset--card"><p class="tl-type-heading-sm">Berichte</p><p class="tl-type-body">Aktion deaktiviert</p></div>
           </div>
@@ -74,7 +74,6 @@
     <div class="tl-dashboard tl-inset" data-tl-state="edit">
       <div class="tl-dashboard__grid spec-grid" data-tl-axis="horizontal">
         <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-wide" role="group" tabindex="0" aria-label="Projekte verschieben">
-          <button type="button" class="tl-dashboard__action tl-visually-hidden" tabindex="-1">Projekte öffnen</button>
           <div class="tl-overlay__base">
             <div class="tl-inset tl-inset--card"><p class="tl-type-heading-sm">Projekte</p><p class="tl-type-body">12 laufend, 3 im Verzug</p></div>
           </div>

@@ -23,6 +23,7 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonAction;
+import com.top_logic.layout.react.control.button.ButtonAppearance;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -157,6 +158,7 @@ public class I18NEditorDialog {
 			});
 		editLanguages.setImage(ThemeImage.icon("css:fa-solid fa-globe"));
 		editLanguages.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		editLanguages.setAppearance(ButtonAppearance.GHOST);
 		inline.setEditModeAdornment(editLanguages);
 
 		// Top-align the languages button next to a tall editor rather than centering it.
@@ -342,6 +344,7 @@ public class I18NEditorDialog {
 		ReactButtonControl button = new ReactButtonControl(_context, "", action);
 		button.setImage(ThemeImage.icon("css:fa-solid fa-language"));
 		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		button.setAppearance(ButtonAppearance.GHOST);
 		return button;
 	}
 

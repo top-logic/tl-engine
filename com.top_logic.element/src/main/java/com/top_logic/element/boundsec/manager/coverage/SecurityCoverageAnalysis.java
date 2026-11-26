@@ -56,10 +56,11 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * For every concrete global type the analysis answers the two questions that decide whether a user
  * can ever see an object of that type: does a rule deliver a role on it, and is a role granted the
- * read operation on it? Each gap is reported as a {@link CoverageFinding}. A type with an
- * {@link AccessParentFunction access parent} delegates every access decision to another object and needs no
- * definition of its own; it is reported as delegated, with a finding only where a rule applying to
- * it is shadowed by the access parent.
+ * read operation on it? Each gap is reported as a {@link CoverageFinding}. A type whose
+ * {@link AccessParentFunction access parent} delegates every access decision to another object needs
+ * no definition of its own; it is reported as delegated, with a finding only where a rule applying
+ * to it is shadowed by the access parent. A type whose access parent is restricted to some
+ * operations is checked like a type deciding for itself for the operations it does not delegate.
  * </p>
  *
  * <p>
@@ -73,10 +74,11 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * A grant of {@link SimpleBoundCommandGroup#CREATE} is checked where the engine checks it, see
  * {@link ModelAccessRights#isAllowedCreate(com.top_logic.knowledge.wrap.person.Person, TLClass, TLObject)}:
- * an object is created in its container, so the role must be deliverable on a type holding the
- * created type in a composition. A type no composition holds is created without a container, so the
- * role must be deliverable on the security root. Every other operation is checked on the type
- * itself and its role parents.
+ * on the context the caller passes, or on the security root when it passes none. The context is not
+ * known statically, so the role must be deliverable on one of the plausible contexts: the security
+ * root, a type holding the created type in a composition, or a type the created type references,
+ * see {@link #createContextTypes(TLClass)}. Every other operation is checked on the type itself and
+ * its role parents.
  * </p>
  *
  * <p>
@@ -114,6 +116,8 @@ public class SecurityCoverageAnalysis {
 	 * The types an object of a type is created in, by the type, see {@link #containerTypes(TLModel)}.
 	 */
 	private final Map<TLClass, Set<TLClass>> _containerTypes;
+
+	private final HistoryRuleCheck _historyRuleCheck;
 
 	private final Map<TLClass, Set<BoundedRole>> _directlyAssignedRoles;
 
@@ -176,6 +180,7 @@ public class SecurityCoverageAnalysis {
 
 		_compositeReferences = compositeReferences(model);
 		_containerTypes = containerTypes(model);
+		_historyRuleCheck = new HistoryRuleCheck(accessManager, accessRights, _containerTypes);
 
 		_directlyAssignedRoles = directlyAssignedRoles();
 
@@ -253,8 +258,8 @@ public class SecurityCoverageAnalysis {
 	 *
 	 * <p>
 	 * A grant of {@link SimpleBoundCommandGroup#CREATE} takes effect when a user can hold the role
-	 * where the object is created: on a container of the type, or on the security root for a type
-	 * no composition holds. A grant of any other operation takes effect when a user can
+	 * where the object may be created: on one of its {@link #createContextTypes(TLClass) context
+	 * types}. A grant of any other operation takes effect when a user can
 	 * {@link #canHold(TLClass, BoundedRole) hold} the role on an object of the type.
 	 * </p>
 	 *
@@ -274,27 +279,71 @@ public class SecurityCoverageAnalysis {
 	}
 
 	/**
-	 * Whether a user can hold the given role where an object of the given type is created.
+	 * Whether a user can hold the given role where an object of the given type may be created.
 	 *
-	 * @return Also <code>true</code> for a type created without a container when the application
-	 *         has no security root whose type is known, so that an undecidable creation never
-	 *         produces a finding.
+	 * @return Also <code>true</code> when the application has no security root whose type is known,
+	 *         so that an undecidable creation never produces a finding.
 	 */
 	private boolean canDeliverCreate(TLClass type, BoundedRole role) {
-		Set<TLClass> containers = _containerTypes.getOrDefault(type, Collections.emptySet());
-		if (containers.isEmpty()) {
-			TLObject root = securityRoot();
-			if (!(root != null && root.tType() instanceof TLClass rootType)) {
-				return true;
-			}
-			return canDeliver(rootType, role, new HashSet<>());
+		if (securityRootType() == null) {
+			return true;
 		}
-		for (TLClass container : containers) {
-			if (canDeliver(container, role, new HashSet<>())) {
+		for (TLClass context : createContextTypes(type)) {
+			if (canDeliver(context, role, new HashSet<>())) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * The types of the objects an object of the given type may be created in, ordered by their
+	 * names.
+	 *
+	 * <p>
+	 * The engine checks the creation on the context the caller passes, see
+	 * {@link ModelAccessRights#isAllowedCreate(com.top_logic.knowledge.wrap.person.Person, TLClass, TLObject)}.
+	 * Since the caller is not known statically, every plausible context counts:
+	 * </p>
+	 * <ul>
+	 * <li>the security root, the context of a creation without context,</li>
+	 * <li>the {@link #containerTypes(TLModel) containers}, the types holding the type in a
+	 * composition,</li>
+	 * <li>the types the type references, as the object it hangs on is a natural context: the
+	 * targets of the references in effect on the type, inverse references included, and their
+	 * specializations. Computed references and the type's own compositions are left out: nothing
+	 * is created in the value of a computed reference, and the parts of an object are created after
+	 * it.</li>
+	 * </ul>
+	 */
+	private List<TLClass> createContextTypes(TLClass type) {
+		Set<TLClass> result = new LinkedHashSet<>();
+		TLClass rootType = securityRootType();
+		if (rootType != null) {
+			result.add(rootType);
+		}
+		result.addAll(_containerTypes.getOrDefault(type, Collections.emptySet()));
+		for (TLStructuredTypePart part : type.getAllParts()) {
+			if (!(part instanceof TLReference reference) || !(reference.getType() instanceof TLClass target)) {
+				continue;
+			}
+			if (!reference.isBackwards() && (reference.isDerived() || reference.isComposite())) {
+				continue;
+			}
+			result.addAll(TLModelUtil.getReflexiveTransitiveSpecializations(target));
+		}
+		List<TLClass> sorted = new ArrayList<>(result);
+		sorted.sort(Comparator.comparing(TLModelUtil::qualifiedName));
+		return sorted;
+	}
+
+	/**
+	 * The type of the {@link #securityRoot() security root}, <code>null</code> when it is not
+	 * known.
+	 */
+	private static TLClass securityRootType() {
+		TLObject root = securityRoot();
+		return root != null && root.tType() instanceof TLClass rootType ? rootType : null;
 	}
 
 	/**
@@ -407,22 +456,32 @@ public class SecurityCoverageAnalysis {
 		List<CoverageFinding> findings = new ArrayList<>();
 		if (withoutSecurity != null || internal != null) {
 			// An exempt type needs no definition.
-		} else if (accessParent != null) {
+		} else if (AccessParentFunction.delegatesAll(accessParent)) {
 			List<String> shadowed = shadowedRules(roleRules, parentRules);
 			if (!shadowed.isEmpty()) {
 				findings.add(CoverageFinding.shadowedRules(type, shadowed));
 			}
 		} else {
-			if (roleRules.isEmpty() && parentRules.isEmpty()) {
+			// A type whose access parent decides only some operations decides the others itself.
+			if (roleRules.isEmpty() && parentRules.isEmpty()
+				&& (accessParent == null || hasOwnGrant(type, accessParent))) {
 				findings.add(CoverageFinding.noRoleSource(type));
 			}
-			// Every grant on the type or on one of its attributes implies Discover.
-			if (discoverRoles.isEmpty()) {
+			// Every grant on the type or on one of its attributes implies Discover. Discover is
+			// delegated together with any operation, the declared operations not delegated are
+			// reported one by one. A type deciding Read itself is reported when it grants Read to
+			// nobody, as a type deciding for itself.
+			if (accessParent == null) {
+				if (discoverRoles.isEmpty()) {
+					findings.add(CoverageFinding.noReadGrant(type));
+				}
+			} else if (readRoles.isEmpty() && !readsThroughParent(type, accessParent)) {
 				findings.add(CoverageFinding.noReadGrant(type));
 			}
-			addDeadGrantFindings(type, findings);
-			addUngrantedOperationFindings(type, findings);
-			addUncheckedGrantFindings(type, findings);
+			addDeadGrantFindings(type, accessParent, findings);
+			addUngrantedOperationFindings(type, accessParent, findings);
+			addUncheckedGrantFindings(type, accessParent, findings);
+			_historyRuleCheck.addFindings(type, findings);
 		}
 		if (withoutSecurity == null && internal == null) {
 			findings.addAll(_useFindings.getOrDefault(type, Collections.emptyList()));
@@ -458,12 +517,46 @@ public class SecurityCoverageAnalysis {
 	}
 
 	/**
+	 * Whether the given access parent decides Read on objects of the given type: it delegates Read
+	 * itself or an operation implying Read.
+	 */
+	private boolean readsThroughParent(TLClass type, AccessParentFunction accessParent) {
+		if (accessParent.delegates(SimpleBoundCommandGroup.READ)) {
+			return true;
+		}
+		for (BoundCommandGroup implying : _accessRights.getOperations(type).getImplying(SimpleBoundCommandGroup.READ)) {
+			if (accessParent.delegates(implying)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Whether the given type grants an operation its access parent does not delegate.
+	 */
+	private boolean hasOwnGrant(TLClass type, AccessParentFunction accessParent) {
+		for (BoundCommandGroup operation : _accessRights.getOperations(type).getOperations()) {
+			if (!accessParent.delegates(operation) && !_accessRights.getAllowedRoles(type, operation).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Reports every operation whose grant names a role that cannot be delivered where the operation
 	 * is checked, see {@link #isLiveGrant(TLClass, BoundCommandGroup, BoundedRole)}.
+	 *
+	 * @param accessParent
+	 *        The access parent deciding some operations of the type, <code>null</code> when the
+	 *        type decides all of them itself.
 	 */
-	private void addDeadGrantFindings(TLClass type, List<CoverageFinding> findings) {
+	private void addDeadGrantFindings(TLClass type, AccessParentFunction accessParent,
+			List<CoverageFinding> findings) {
 		for (BoundCommandGroup operation : _operations) {
-			if (SimpleBoundCommandGroup.DISCOVER.equals(operation)) {
+			if (SimpleBoundCommandGroup.DISCOVER.equals(operation)
+				|| AccessParentFunction.isDelegated(accessParent, operation)) {
 				// Its roles are derived; every source grant is already checked on its own.
 				continue;
 			}
@@ -481,7 +574,7 @@ public class SecurityCoverageAnalysis {
 				continue;
 			}
 			if (SimpleBoundCommandGroup.CREATE.equals(operation)) {
-				findings.add(CoverageFinding.deadCreateGrant(type, dead, containerTypes(type)));
+				findings.add(CoverageFinding.deadCreateGrant(type, dead, createContextTypes(type)));
 			} else {
 				findings.add(CoverageFinding.deadGrant(type, operation, dead));
 			}
@@ -489,22 +582,22 @@ public class SecurityCoverageAnalysis {
 	}
 
 	/**
-	 * The types an object of the given type is created in, ordered by their names.
-	 *
-	 * @see #containerTypes(TLModel)
-	 */
-	private List<TLClass> containerTypes(TLClass type) {
-		List<TLClass> result = new ArrayList<>(_containerTypes.getOrDefault(type, Collections.emptySet()));
-		result.sort(Comparator.comparing(TLModelUtil::qualifiedName));
-		return result;
-	}
-
-	/**
 	 * Reports every operation declared for the given type that no role holds on it.
+	 *
+	 * <p>
+	 * A built-in operation is not reported: a type may well be read-only. An operation the access
+	 * parent of the type decides is not reported either, since the type does not grant it.
+	 * </p>
+	 *
+	 * @param accessParent
+	 *        The access parent deciding some operations of the type, <code>null</code> when the
+	 *        type decides all of them itself.
 	 */
-	private void addUngrantedOperationFindings(TLClass type, List<CoverageFinding> findings) {
+	private void addUngrantedOperationFindings(TLClass type, AccessParentFunction accessParent,
+			List<CoverageFinding> findings) {
 		for (BoundCommandGroup operation : sortedById(_accessRights.getOperations(type).getOperations())) {
-			if (ApplicableOperations.isBuiltIn(operation)) {
+			if (ApplicableOperations.isBuiltIn(operation)
+				|| AccessParentFunction.isDelegated(accessParent, operation)) {
 				continue;
 			}
 			if (_accessRights.getAllowedRoles(type, operation).isEmpty()) {
@@ -532,14 +625,20 @@ public class SecurityCoverageAnalysis {
 	 * <p>
 	 * Only reported when the places checking an operation are known.
 	 * </p>
+	 *
+	 * @param accessParent
+	 *        The access parent deciding some operations of the type, <code>null</code> when the
+	 *        type decides all of them itself.
 	 */
-	private void addUncheckedGrantFindings(TLClass type, List<CoverageFinding> findings) {
+	private void addUncheckedGrantFindings(TLClass type, AccessParentFunction accessParent,
+			List<CoverageFinding> findings) {
 		if (!_usesKnown) {
 			return;
 		}
 		ApplicableOperations applicable = _accessRights.getOperations(type);
 		for (BoundCommandGroup operation : sortedById(applicable.getOperations())) {
-			if (ApplicableOperations.isBuiltIn(operation)) {
+			if (ApplicableOperations.isBuiltIn(operation)
+				|| AccessParentFunction.isDelegated(accessParent, operation)) {
 				continue;
 			}
 			Set<BoundedRole> granted = getGrantedRoles(type, operation);
@@ -576,7 +675,7 @@ public class SecurityCoverageAnalysis {
 	/**
 	 * Whether the given place checks its operation on objects of the given type.
 	 *
-	 * @see #addUncheckedGrantFindings(TLClass, List)
+	 * @see #addUncheckedGrantFindings(TLClass, AccessParentFunction, List)
 	 */
 	private boolean checks(OperationUse use, TLClass type) {
 		return switch (use.target()) {
@@ -753,6 +852,14 @@ public class SecurityCoverageAnalysis {
 	 * hand would look undeliverable.
 	 * </p>
 	 *
+	 * <p>
+	 * An abstract type, for example the owner of a reference a role parent rule navigates
+	 * backwards, has no objects of its own: the rules of the {@link ElementAccessManager} are
+	 * registered for its concrete specializations only. At runtime the concrete type of the role
+	 * parent decides, therefore the role counts as delivered on an abstract type when it is
+	 * delivered on at least one of its concrete specializations.
+	 * </p>
+	 *
 	 * @param visited
 	 *        The types already inspected along the role parent chain, guarding against cycles.
 	 * @return Also <code>true</code> when the end of a role parent path cannot be determined
@@ -760,6 +867,14 @@ public class SecurityCoverageAnalysis {
 	 */
 	private boolean canDeliver(TLClass type, BoundedRole role, Set<TLClass> visited) {
 		if (!visited.add(type)) {
+			return false;
+		}
+		if (type.isAbstract()) {
+			for (TLClass specialization : TLModelUtil.getConcreteSpecializations(type)) {
+				if (canDeliver(specialization, role, visited)) {
+					return true;
+				}
+			}
 			return false;
 		}
 		if (_accessManager.canHaveRole(type, role) || isAssignedDirectly(type, role)) {

@@ -23,7 +23,6 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.DynamicVisibility;
 import com.top_logic.model.util.TLModelNamingConvention;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * The {@code <column>} of a table: one column showing a model attribute of its rows.
@@ -37,8 +36,10 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  *
  * <p>
  * The column follows the model access rights of the user: a cell whose value the user may not read
- * on its row is empty, and a column whose attribute the user may read on no row at all does not
- * exist - it is neither displayed nor offered - until the user gains the right to read it. Where the rows are edited, a cell is edited as a form field for its attribute on that row
+ * on its row is empty, and a column whose attribute has a read grant of its own listing no role the
+ * user holds does not exist - it is neither displayed nor offered - until the user gains such a
+ * role. The read right on the type of the rows never withholds the column; it decides which rows
+ * the table shows. Where the rows are edited, a cell is edited as a form field for its attribute on that row
  * is: only where the model lets the attribute be edited and the user may write it.
  * </p>
  */
@@ -158,11 +159,15 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 
 	/**
 	 * The condition under which the access rights of the user release the column of the given
-	 * attribute: the user may read the attribute on one of the row types holding it.
+	 * attribute: the column is withheld only by a read grant of the attribute itself listing no
+	 * role the user holds, on every row type holding the attribute, see
+	 * {@link ModelAccessPolicy#onAttributeColumn(TLStructuredType, TLStructuredTypePart)}. The read
+	 * right on the row type never withholds the column; it decides about the rows and their cells.
 	 *
 	 * <p>
 	 * The condition is asked anew whenever the table is updated, so that the column appears once
-	 * the user gains the right to read the attribute, and disappears when the user loses it.
+	 * the user gains a role the attribute's read grant lists, and disappears when the user loses
+	 * it.
 	 * </p>
 	 *
 	 * @param part
@@ -193,8 +198,10 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	}
 
 	/**
-	 * Whether the current user may read the given attribute on any of the row types holding one of
-	 * that name.
+	 * Whether the column of the given attribute is offered to the current user for any of the row
+	 * types holding one of that name: it is withheld only for a type whose attribute has a read
+	 * grant of its own listing no role the user holds, see
+	 * {@link ModelAccessPolicy#onAttributeColumn(TLStructuredType, TLStructuredTypePart)}.
 	 *
 	 * <p>
 	 * Each type is checked with the attribute it holds itself: an attribute of the same name on
@@ -204,8 +211,7 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	private static boolean mayRead(List<TLStructuredType> rowTypes, String attribute) {
 		for (TLStructuredType type : rowTypes) {
 			TLStructuredTypePart part = type.getPart(attribute);
-			if (part != null && ModelAccessPolicy
-				.onAttributeOfType(SimpleBoundCommandGroup.READ, type, part).isExecutable()) {
+			if (part != null && ModelAccessPolicy.onAttributeColumn(type, part).isExecutable()) {
 				return true;
 			}
 		}

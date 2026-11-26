@@ -83,21 +83,22 @@ public class TestPartRightsPerTypePolicy extends AbstractModelAccessTest {
 
 	/**
 	 * Without an object, the attribute rights of the given type decide: a column of the name is
-	 * hidden for {@code Foo} objects, but offered for {@code Bar} objects.
+	 * hidden for {@code Foo} objects, whose name has a read grant of its own, but offered for
+	 * {@code Bar} objects.
 	 */
 	public void testOnType() {
 		TLStructuredTypePart name = part(NAMED, NAME);
 
 		becomeUser(_responsible);
-		assertHidden(ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, type(FOO), name));
-		assertExecutable(ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, type(BAR), name));
+		assertHidden(ModelAccessPolicy.onAttributeColumn(type(FOO), name));
+		assertExecutable(ModelAccessPolicy.onAttributeColumn(type(BAR), name));
 		assertExecutable(
-			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, type(BAR), part(BAR, NAME)));
+			ModelAccessPolicy.onAttributeColumn(type(BAR), part(BAR, NAME)));
 
 		becomeUser(_outsider);
-		assertExecutable(ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, type(FOO), name));
+		assertExecutable(ModelAccessPolicy.onAttributeColumn(type(FOO), name));
 		assertExecutable(
-			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, type(FOO), part(FOO, NAME)));
+			ModelAccessPolicy.onAttributeColumn(type(FOO), part(FOO, NAME)));
 	}
 
 	private static ExecutableState onAttribute(BoundCommandGroup operation, TLObject object,

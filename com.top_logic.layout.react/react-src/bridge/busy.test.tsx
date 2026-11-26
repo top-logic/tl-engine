@@ -353,6 +353,10 @@ describe('the busy overlay', () => {
   it('shows the translation the server gave while it still answered', async () => {
     translations = { 'js.connection.reconnecting': 'Verbindung zum Server unterbrochen.' };
     const { reportUnreachable, DISCONNECTED_LOCK_DELAY_MS } = await loadOverlay();
+    // The overlay renders before the first mount(), which makes the context path known on a page
+    // without context attributes.
+    const { setMountContext } = await import('./page-context');
+    setMountContext('/ctx', 'v1a2b');
     await act(() => vi.advanceTimersByTimeAsync(0));
 
     act(() => reportUnreachable());

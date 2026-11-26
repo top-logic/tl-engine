@@ -1,5 +1,7 @@
 import {
+  EscapeToClose,
   FillBarrier,
+  KeyboardScopeProvider,
   labelWithBadge,
   React,
   rootClassName,
@@ -11,7 +13,6 @@ import {
 import type { BadgeJson, TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
-import { seenCounts, unseenRailBadge } from './rail-model'
 import { ThemeIcon } from './theme-icon'
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React
@@ -21,6 +22,12 @@ export const CMD_SET_OPEN = 'setOpen'
 
 /** Argument of {@link CMD_SET_OPEN}: whether the panel is open. Must match `ChatDockControl.ARG_OPEN`. */
 export const ARG_OPEN = 'open'
+
+/**
+ * State key of the badge the launcher shows, as the server's `BadgeDisplay` writes it; absent or
+ * `null` for none. Must match `ChatDockControl.BADGE`.
+ */
+export const DOCK_BADGE = 'badge'
 
 /** What a `<chat-dock/>` control puts into its state, as the browser reads it. */
 export interface DockState {
@@ -33,32 +40,22 @@ export interface DockState {
    * the agent nothing.
    */
   open: boolean
+  /**
+   * The badge of the closed launcher, e.g. what the sections of a side rail in the panel count
+   * beyond what the user has seen; `null` for none.
+   */
+  badge: Partial<BadgeJson> | null
 }
 
-/**
- * Reads the frame a `<chat-dock/>` control serialized.
- *
- * `dockOpen` rather than `open`, because `open` is how `<chat-rail/>` states *its* first-load
- * default and the whole bootstrap comes out of one state map (`readBootstrap`).
- */
+/** Reads the frame a `<chat-dock/>` control serialized. */
 export function readDockState(state: Record<string, unknown>): DockState {
+  const badge = state[DOCK_BADGE]
   return {
     icon: typeof state.icon === 'string' ? state.icon : '',
     label: typeof state.label === 'string' ? state.label.trim() : '',
     open: state.dockOpen === true,
+    badge: badge && typeof badge === 'object' ? (badge as Partial<BadgeJson>) : null,
   }
-}
-
-/**
- * Whether a key press in the dock closes it.
- *
- * Escape closes an open dock and means nothing to a closed one. Whether this handler ever sees the
- * key is the other half of the rule and belongs to the DOM: a popover inside the panel that handles
- * Escape itself calls `stopPropagation`, so a user who opens the model picker and backs out gets
- * the picker back rather than losing the conversation.
- */
-export function closesOnKey(key: string, open: boolean): boolean {
-  return open && key === 'Escape'
 }
 
 /** What the launcher shows beside its glyph. */
@@ -86,7 +83,7 @@ export function launcherMark(
  *
  * The dock is a frame. It renders a button in the corner of the window and, over the page, a card
  * holding whatever the application nested inside it - normally one `<chat>` with the session list,
- * the conversation and the rail.
+ * the conversation and a side rail.
  *
  * **The panel is hidden when closed, never unmounted.** Everything the conversation is - the event
  * stream, the transcript, the open run - lives in the elements inside it, and the store drops a
@@ -94,8 +91,9 @@ export function launcherMark(
  * a new, empty conversation every time they opened it, and would stop hearing about a run it
  * started.
  *
- * The launcher is what a closed dock still says: the unseen count of the rail's sections, and a dot
- * while the agent works.
+ * The launcher is what a closed dock still says: the badge the server sends ({@link DOCK_BADGE}),
+ * e.g. what a side rail in the panel counts beyond what the user has seen, and a dot while the agent
+ * works.
  *
  * **Whether the panel is open is the server's state too** ({@link CMD_SET_OPEN}): a conversation in a
  * closed dock offers the agent nothing - no channel to present on, no page command, no facts - while
@@ -103,8 +101,7 @@ export function launcherMark(
  *
  * **A dock steps aside for a page that shows its conversation.** Not for the transport any more -
  * a window carries as many conversations as it shows - but because these two are the *same* one:
- * two composers on one draft channel overwrite each other's text, and two rails on one chat id
- * fight over the one remembered layout. While a `<chat-conversation/>` of this chat id is mounted
+ * two composers on one draft channel overwrite each other's text. While a `<chat-conversation/>` of this chat id is mounted
  * outside a dock, this element therefore renders nothing at all: no panel, no launcher, and its
  * content is unmounted rather than hidden. A dock that is open when such a page appears closes, so
  * that its conversation stops offering the agent anything on the server as well.
@@ -112,7 +109,7 @@ export function launcherMark(
 export function TLChatDock({ controlId }: TLCellProps) {
   const state = useTLState()
   const boot = useMemo(() => readBootstrap(state), [state])
-  const { chat, actions } = useChat(chatIdOf(state, controlId), boot)
+  const { chat } = useChat(chatIdOf(state, controlId), boot)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
   const dock = useMemo(() => readDockState(state), [state])
   const content = state.content ?? null
@@ -133,10 +130,9 @@ export function TLChatDock({ controlId }: TLCellProps) {
    * The content from the second commit on, not the first.
    *
    * On the first commit this dock cannot know yet whether the page shows its conversation: a
-   * `<chat-conversation/>` announces itself from an effect, which runs after that commit. The dock
-   * used to mount its content meanwhile and unmount it a moment later - long enough for its rail to
-   * state its own `open="false"` over the page rail's `open="true"`, so a fresh account's rail on
-   * the chat page started closed (#552). One commit later the answer is in.
+   * `<chat-conversation/>` announces itself from an effect, which runs after that commit. Mounting
+   * the content meanwhile would build a second copy of the page's conversation only to unmount it a
+   * moment later. One commit later the answer is in.
    */
   const [settled, setSettled] = useState(false)
   useEffect(() => setSettled(true), [])
@@ -144,16 +140,10 @@ export function TLChatDock({ controlId }: TLCellProps) {
   const launcherRef = useRef<HTMLButtonElement | null>(null)
 
   const name = dock.label || labels.dockName
-  const badge = unseenRailBadge(chat.railBadge, chat.badgeSeen, labels.sideRailBadge)
+  const badge = dock.badge
   const mark = launcherMark(open, chat.busy, badge)
 
-  // Opening the dock is the user looking at this conversation, so what was new stops being new -
-  // the watermark moves to the total as it stands now, exactly as opening the rail moves it. Only
-  // the watermark: the dock does not open the rail, so `toggleSide` would be the wrong half.
-  const toggle = useCallback(() => {
-    if (!open) actions.markBadgesSeen(seenCounts(chat.railBadge))
-    setOpen(!open)
-  }, [open, setOpen, actions, chat.railBadge])
+  const toggle = useCallback(() => setOpen(!open), [open, setOpen])
 
   // Focus follows the panel: into it when it opens, back to the launcher when it closes. Skipped on
   // the first render, so a page configured `open="true"` does not take the focus from the page.
@@ -165,16 +155,17 @@ export function TLChatDock({ controlId }: TLCellProps) {
     else launcherRef.current?.focus()
   }, [open])
 
-  const onKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      // An Escape something inside already answered - the rail's drawer, the list's - closed that,
-      // and closing the dock with it would take the user two steps back for one key.
-      if (event.defaultPrevented || !closesOnKey(event.key, open)) return
-      event.stopPropagation()
-      setOpen(false)
-    },
-    [open, setOpen],
+  /*
+   * Escape closes the open dock while the focus is in its panel - through the keyboard dispatcher's
+   * stack of scopes, so that a layer opened inside answers it first: the drawer of a side rail, a
+   * popover. Closing the dock with it would take the user two steps back for one key. The Escape of
+   * an input method composition is the dispatcher's to ignore.
+   */
+  const panelHasFocus = useCallback(
+    () => open && panelRef.current != null && panelRef.current.contains(document.activeElement),
+    [open],
   )
+  const close = useCallback(() => setOpen(false), [setOpen])
 
   // A page that starts showing this conversation closes an open dock: the dock stands down, and
   // its conversation must stop offering the agent its pane, the page's is the one shown.
@@ -199,7 +190,6 @@ export function TLChatDock({ controlId }: TLCellProps) {
     <div
       id={controlId}
       className={rootClassName(state, 'tl-chat-dock', open && 'is-open')}
-      onKeyDown={onKeyDown}
     >
       <div
         id={panelId}
@@ -210,11 +200,14 @@ export function TLChatDock({ controlId }: TLCellProps) {
         tabIndex={-1}
         hidden={!open}
       >
-        <div className="tl-chat-dock__body">
-          <FillBarrier>
-            {content != null && settled ? <TLChild control={content} /> : null}
-          </FillBarrier>
-        </div>
+        <KeyboardScopeProvider active={panelHasFocus}>
+          <EscapeToClose onClose={close} />
+          <div className="tl-chat-dock__body">
+            <FillBarrier>
+              {content != null && settled ? <TLChild control={content} /> : null}
+            </FillBarrier>
+          </div>
+        </KeyboardScopeProvider>
       </div>
 
       <button

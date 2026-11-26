@@ -36,12 +36,14 @@ import com.top_logic.layout.react.control.ToolbarControl;
  * with its content</li>
  * <li>{@code width} - a width of the panel's own (optional), instead of the width its container
  * offers</li>
- * <li>{@code toolbar} - child control descriptor for the toolbar (optional)</li>
- * <li>{@code buttonBar} - child control descriptor for the button bar (optional)</li>
+ * <li>{@link #TOOLBAR} - child control descriptor for the toolbar, while it holds a command
+ * (optional)</li>
+ * <li>{@link #BUTTON_BAR} - child control descriptor for the button bar, while it holds a command
+ * (optional)</li>
  * <li>{@code child} - the content child control descriptor</li>
  * </ul>
  */
-public class ReactPanelControl extends ToolbarControl {
+public class ReactPanelControl extends ToolbarControl implements CollapsibleChild {
 
 	private static final String REACT_MODULE = "TLPanel";
 
@@ -78,11 +80,17 @@ public class ReactPanelControl extends ToolbarControl {
 	/** @see #ReactPanelControl(ReactContext, String, ReactControl, ReactToolbarControl, ReactToolbarControl, boolean, boolean, boolean) */
 	private static final String SHOW_POP_OUT = "showPopOut";
 
-	/** @see #getToolbar() */
-	private static final String TOOLBAR = "toolbar";
+	/**
+	 * State of the {@link #getToolbar() toolbar}, present only while the toolbar is not
+	 * {@link ReactToolbarControl#isEmpty() empty}.
+	 */
+	public static final String TOOLBAR = "toolbar";
 
-	/** @see #getButtonBar() */
-	private static final String BUTTON_BAR = "buttonBar";
+	/**
+	 * State of the {@link #getButtonBar() button bar}, present only while the button bar is not
+	 * {@link ReactToolbarControl#isEmpty() empty}.
+	 */
+	public static final String BUTTON_BAR = "buttonBar";
 
 	/** @see #ReactPanelControl(ReactContext, String, ReactControl, ReactToolbarControl, ReactToolbarControl, boolean, boolean, boolean) */
 	private static final String CHILD = "child";
@@ -138,11 +146,15 @@ public class ReactPanelControl extends ToolbarControl {
 
 	private ExpansionState _expansionState = ExpansionState.NORMALIZED;
 
-	private ReactSplitPanelControl _parentSplitPanel;
-
-	private int _indexInParent = -1;
+	private CollapseContainer _container;
 
 	private ReactMaximizeRootControl _maximizeRoot;
+
+	/**
+	 * Publishes the {@link #getToolbar() toolbar} or {@link #getButtonBar() button bar} while it
+	 * holds a command, so that a panel with nothing to show in its header draws none.
+	 */
+	private final ReactToolbarControl.EmptyListener _barListener = (bar, wasEmpty, empty) -> publishBar(bar);
 
 	/**
 	 * Creates a new {@link ReactPanelControl}.
@@ -152,9 +164,11 @@ public class ReactPanelControl extends ToolbarControl {
 	 * @param child
 	 *        The content child control.
 	 * @param toolbar
-	 *        The toolbar control, or {@code null}.
+	 *        The toolbar control, or {@code null}. It is sent to the client only while it holds a
+	 *        command, but belongs to the panel either way.
 	 * @param buttonBar
-	 *        The button-bar control, or {@code null}.
+	 *        The button-bar control, or {@code null}. It is sent to the client only while it holds
+	 *        a command, but belongs to the panel either way.
 	 * @param showMinimize
 	 *        Whether the minimize button is shown.
 	 * @param showMaximize
@@ -176,12 +190,62 @@ public class ReactPanelControl extends ToolbarControl {
 		putState(SHOW_MAXIMIZE, Boolean.valueOf(showMaximize));
 		putState(SHOW_POP_OUT, Boolean.valueOf(showPopOut));
 		if (toolbar != null) {
-			putState(TOOLBAR, toolbar);
+			toolbar.addListener(ReactToolbarControl.EMPTY_PROPERTY, _barListener);
+			publishBar(toolbar);
 		}
 		if (buttonBar != null) {
-			putState(BUTTON_BAR, buttonBar);
+			buttonBar.addListener(ReactToolbarControl.EMPTY_PROPERTY, _barListener);
+			publishBar(buttonBar);
 		}
 		putState(CHILD, child);
+	}
+
+	/**
+	 * Puts the given bar into the state while it holds a command and removes it from the state
+	 * while it is empty.
+	 *
+	 * <p>
+	 * A bar outside the state is not displayed, so it is detached while it is empty; it is attached
+	 * again together with the panel's state once it holds a command.
+	 * </p>
+	 */
+	private void publishBar(ReactToolbarControl bar) {
+		String key = bar == _toolbar ? TOOLBAR : BUTTON_BAR;
+		if (bar.isEmpty()) {
+			putState(key, null);
+			bar.detach();
+		} else {
+			putState(key, bar);
+			if (isAttached()) {
+				bar.attach();
+			}
+		}
+	}
+
+	/**
+	 * Disposes the {@link #getToolbar() toolbar} and the {@link #getButtonBar() button bar} as
+	 * well, since the state holds them only while they hold a command.
+	 */
+	@Override
+	protected void cleanupChildren() {
+		super.cleanupChildren();
+		if (_toolbar != null) {
+			_toolbar.cleanupTree();
+		}
+		if (_buttonBar != null) {
+			_buttonBar.cleanupTree();
+		}
+	}
+
+	@Override
+	protected void onCleanup() {
+		super.onCleanup();
+		if (_toolbar != null) {
+			_toolbar.removeListener(ReactToolbarControl.EMPTY_PROPERTY, _barListener);
+		}
+		if (_buttonBar != null) {
+			_buttonBar.removeListener(ReactToolbarControl.EMPTY_PROPERTY, _barListener);
+		}
 	}
 
 	/**
@@ -278,11 +342,16 @@ public class ReactPanelControl extends ToolbarControl {
 	}
 
 	/**
-	 * Sets the parent split panel reference for collapse notification.
+	 * Sets the container of this panel; a panel the container lays out as collapsed is
+	 * {@link ExpansionState#MINIMIZED minimized} to its header.
 	 */
-	void setParentSplitPanel(ReactSplitPanelControl parent, int indexInParent) {
-		_parentSplitPanel = parent;
-		_indexInParent = indexInParent;
+	@Override
+	public void setCollapseContainer(CollapseContainer container) {
+		_container = container;
+		if (container != null && container.isCollapsed()) {
+			setExpansionState(ExpansionState.MINIMIZED);
+			container.collapsed(COLLAPSED_SIZE);
+		}
 	}
 
 	/**
@@ -319,15 +388,18 @@ public class ReactPanelControl extends ToolbarControl {
 		boolean wasMinimized = _expansionState == ExpansionState.MINIMIZED;
 		boolean collapsed = !wasMinimized;
 
-		if (collapsed && _parentSplitPanel != null
-				&& !_parentSplitPanel.canChildCollapse(_indexInParent)) {
+		if (collapsed && _container != null && !_container.canCollapse()) {
 			return;
 		}
 
 		setExpansionState(collapsed ? ExpansionState.MINIMIZED : ExpansionState.NORMALIZED);
 
-		if (_parentSplitPanel != null) {
-			_parentSplitPanel.childCollapsed(_indexInParent, collapsed, COLLAPSED_SIZE);
+		if (_container != null) {
+			if (collapsed) {
+				_container.collapsed(COLLAPSED_SIZE);
+			} else {
+				_container.expanded();
+			}
 		}
 	}
 

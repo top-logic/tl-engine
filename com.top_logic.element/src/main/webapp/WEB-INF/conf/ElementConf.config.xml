@@ -243,6 +243,10 @@
 			(the change log is written on commit, the gallery images are handled by the gallery
 			control) and never on behalf of a user through the access check, so they carry no
 			access definition on purpose.
+			
+			The objects of the change log are transient and therefore not checked; a user reaches
+			them only through changeLog(), which is reserved to administrators in a secured
+			evaluation, or as copies restricted by changeSetRestrict().
 		-->
 		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
 			<instance class="com.top_logic.model.security.SecurityConfigurationService">
@@ -253,7 +257,8 @@
 					<module name="tl.imagegallery"
 						internal="true"
 					/>
-					<!-- A revision is commit metadata readable by everyone; it cannot hold roles. -->
+					<!-- A revision is commit metadata readable by everyone; it cannot hold roles. Its author is
+						readable only for an administrator and the author itself, see SecurityConfigurationService. -->
 					<class name="tl.core:Revision"
 						without-security="true"
 					/>

@@ -357,6 +357,8 @@ the commands the component sends. The controls a library replaces as a whole:
 | `TLSlider` | `SliderState` |
 | `TLFloatingAction` | `FloatingActionState` |
 | `TLDataList` | `DataListState` |
+| `TLSideRail` | `SideRailState` |
+| `TLSideRailSections` | `SideRailSectionsState` |
 
 The typographic role of a `TLText` (`TextState.variant`) is a role of the type scale of the design
 system - `display`, `heading-lg`, `heading-md`, `heading-sm`, `body`, `body-strong`, `label`,

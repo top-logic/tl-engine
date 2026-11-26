@@ -6,6 +6,10 @@
 			<instance>
 				<clients>
 					<google name="pac4j-google">
+						<label>
+							<en>Sign in with Google</en>
+							<de>Über Google anmelden</de>
+						</label>
 						<client-id>%PAC_CLIENT_ID%</client-id>
 						<scope>%PAC_SCOPE%</scope>
 						<secret name="tl_pac_secret"/>

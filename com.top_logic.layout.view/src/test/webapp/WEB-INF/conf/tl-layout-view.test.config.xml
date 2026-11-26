@@ -21,5 +21,15 @@
 				</type-system>
 			</type-systems>
 		</config>
+
+		<!-- The page TestForwardToView forwards to. -->
+		<config config:interface="com.top_logic.layout.view.ViewConfig">
+			<entry-points>
+				<entry-point
+					anonymous="true"
+					view="test/forward-to-view.view.xml"
+				/>
+			</entry-points>
+		</config>
 	</configs>
 </application>

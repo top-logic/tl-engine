@@ -6,3 +6,4 @@ modelSearchConf-test.config.xml
 TestScriptPathElement-test.config.xml
 TestTLScriptSecurity-test.config.xml
 TestTLScriptSecurity-overlay.config.xml
+TestHistoricSecurity-test.config.xml

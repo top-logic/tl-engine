@@ -141,7 +141,9 @@ public class DefaultTableView<R> implements TableView<R> {
 	 * @param source
 	 *        The row source.
 	 * @param state
-	 *        The (mutable) view state.
+	 *        The (mutable) view state. A sort or grouping column it names that is not among the
+	 *        given columns - or a sort column that cannot be sorted by - is dropped from it, so
+	 *        that a column withheld from the user takes no effect.
 	 * @param store
 	 *        Where personalization (column order/widths/frozen/sort/grouping) is persisted, or
 	 *        {@code null} to disable persistence.
@@ -206,6 +208,10 @@ public class DefaultTableView<R> implements TableView<R> {
 			_columns.put(column.name(), column);
 		}
 		_source = source;
+		// A sort or grouping of the given state naming a column this table does not have - one
+		// withheld from the user, for instance - has no effect, neither now nor after a reset.
+		state.setSort(knownSort(state.getSort()));
+		state.setGrouping(knownGrouping(state.getGrouping()));
 		_state = state;
 		_defaults = state.copy();
 		_store = store;
@@ -963,8 +969,18 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	// ---- commands ----
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @throws IllegalArgumentException
+	 *         If the given order names a column this table does not have. The table then keeps its
+	 *         order.
+	 */
 	@Override
 	public void sort(SortSpec spec) {
+		for (SortColumn sortColumn : spec.columns()) {
+			ColumnLogic.require(_columns, sortColumn.column());
+		}
 		_state.setSort(new ArrayList<>(spec.columns()));
 		pushOrder();
 		persist();
@@ -1233,8 +1249,18 @@ public class DefaultTableView<R> implements TableView<R> {
 		return null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @throws IllegalArgumentException
+	 *         If the given grouping names a column this table does not have. The table then keeps
+	 *         its grouping.
+	 */
 	@Override
 	public void group(GroupSpec spec) {
+		for (String name : spec.columns()) {
+			ColumnLogic.require(_columns, name);
+		}
 		for (String name : spec.columns()) {
 			if (isPinnedEnd(name)) {
 				// A pinned column carries what acts on a row, not a value the rows are bucketed by.
@@ -1450,9 +1476,6 @@ public class DefaultTableView<R> implements TableView<R> {
 		_state.setFrozenCount(defaults.getFrozenCount());
 		_state.setSort(defaults.getSort());
 		_state.setGrouping(defaults.getGrouping());
-		_state.setDensity(defaults.getDensity());
-		_state.setStriped(defaults.isStriped());
-		_state.setColumnLines(defaults.isColumnLines());
 		fitArrangement();
 		searchScopeChanged();
 		pushOrder();
@@ -1460,16 +1483,6 @@ public class DefaultTableView<R> implements TableView<R> {
 		_source.withGrouping(effectiveGrouping());
 		persist();
 		fireColumnsChanged();
-	}
-
-	@Override
-	public void setViewOptions(String density, boolean striped, boolean columnLines) {
-		// A density this version does not know is the default, as when it is read back.
-		boolean known = TableViewState.DENSITY_NORMAL.equals(density) || TableViewState.DENSITY_COMPACT.equals(density);
-		_state.setDensity(known ? density : TableViewState.DENSITY_DEFAULT);
-		_state.setStriped(striped);
-		_state.setColumnLines(columnLines);
-		persist();
 	}
 
 	/**
@@ -1598,29 +1611,18 @@ public class DefaultTableView<R> implements TableView<R> {
 
 		_state.setFrozenCount(Math.min(persisted.getFrozenCount(), _state.getColumnOrder().size()));
 
-		List<SortColumn> sort = new ArrayList<>();
-		for (SortColumn sortColumn : persisted.getSort()) {
-			Column<R, ?> column = _columns.get(sortColumn.column());
-			if (column != null && column.sort().isPresent()) {
-				sort.add(sortColumn);
-			}
-		}
+		List<SortColumn> sort = knownSort(persisted.getSort());
 		// An empty persisted sort means the user never sorted this table, so the configured
 		// default order stays in effect.
 		if (!sort.isEmpty()) {
 			_state.setSort(sort);
 		}
 
-		List<String> groupColumns = new ArrayList<>();
-		for (String name : persisted.getGrouping().columns()) {
-			if (_columns.containsKey(name)) {
-				groupColumns.add(name);
-			}
-		}
+		GroupSpec grouping = knownGrouping(persisted.getGrouping());
 		// An empty persisted grouping means the user never grouped this table, so the configured
 		// initial grouping stays in effect. The constructor tells the source about the outcome.
-		if (!groupColumns.isEmpty()) {
-			_state.setGrouping(new GroupSpec(groupColumns));
+		if (!grouping.columns().isEmpty()) {
+			_state.setGrouping(grouping);
 		}
 
 		for (Map.Entry<String, FilterState> entry : persisted.getFilters().entrySet()) {
@@ -1635,13 +1637,36 @@ public class DefaultTableView<R> implements TableView<R> {
 			_state.setSearch(search);
 		}
 
-		_state.setDensity(persisted.getDensity());
-		_state.setStriped(persisted.isStriped());
-		_state.setColumnLines(persisted.isColumnLines());
-
 		if (!_state.getFilters().isEmpty() || _state.getSearch() != null) {
 			applyFilter();
 		}
+	}
+
+	/**
+	 * The given sort without the columns this table does not have or that cannot be sorted by.
+	 */
+	private List<SortColumn> knownSort(List<SortColumn> sort) {
+		List<SortColumn> result = new ArrayList<>(sort.size());
+		for (SortColumn sortColumn : sort) {
+			Column<R, ?> column = _columns.get(sortColumn.column());
+			if (column != null && column.sort().isPresent()) {
+				result.add(sortColumn);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The given grouping without the columns this table does not have.
+	 */
+	private GroupSpec knownGrouping(GroupSpec grouping) {
+		List<String> result = new ArrayList<>(grouping.columns().size());
+		for (String name : grouping.columns()) {
+			if (_columns.containsKey(name)) {
+				result.add(name);
+			}
+		}
+		return result.size() == grouping.columns().size() ? grouping : new GroupSpec(result);
 	}
 
 	/**

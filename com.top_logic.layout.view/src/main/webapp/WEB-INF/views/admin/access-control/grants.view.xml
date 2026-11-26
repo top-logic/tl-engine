@@ -114,7 +114,7 @@
 						rebuild="true"
 					>
 						<case id="with-grants"
-							test="$grants != null &amp;&amp; securityGrantsInfo($grants) == null"
+							test="securityGrantsHasOwn($grants)"
 						>
 							<table id="grants-table"
 								edit-in-place="true"

@@ -11,9 +11,11 @@ import java.util.Objects;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * Explanation of the access an account has to an object, see
@@ -37,9 +39,22 @@ import com.top_logic.tool.boundsec.BoundObject;
  *        Whether the type of the object is marked {@link ModelAccessRights#isInternal(TLClass)
  *        internal}: it is not meant to be accessed on behalf of an account.
  * @param decidingObject
- *        The object whose roles decide: the end of the chain of access parents of the object, or
- *        the object itself when its type decides for itself. <code>null</code> when the chain of
- *        access parents leads nowhere or runs in a cycle.
+ *        The object whose roles decide on reading the object: the end of the chain of access
+ *        parents of the object delegating {@link SimpleBoundCommandGroup#READ}, or the object
+ *        itself when its type decides for itself, see the first of
+ *        {@link ModelAccessRights#getRoleHolders(TLObject, BoundCommandGroup)}. Unless the access
+ *        parent is restricted to some operations or leads to several objects, it decides every
+ *        operation. The objects deciding a single operation are its
+ *        {@link OperationDecision#roleHolders() role holders}. <code>null</code> when every chain
+ *        of access parents leads nowhere or runs in a cycle.
+ * @param combiningParent
+ *        The first access parent on the chains of access parents of the object that does not
+ *        {@link AccessParentFunction#isDisjunctive() combine its candidates by OR}, also as a
+ *        candidate of an access parent with several candidates. Such an access parent decides
+ *        itself how the roles held on its candidates combine, so that the
+ *        {@link OperationDecision#grantingRoles() granting} and
+ *        {@link OperationDecision#admittingRoles() admitting} roles may admit more than it does.
+ *        <code>null</code> when every access parent on the chains combines its candidates by OR.
  * @param roleParents
  *        The role parents of the {@link #decidingObject()}, collected transitively, whose roles the
  *        account holds on the deciding object as well.
@@ -56,9 +71,9 @@ import com.top_logic.tool.boundsec.BoundObject;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public record AccessExplanation(Person person, TLObject object, boolean administrator, boolean restrictedUser,
-		boolean withoutSecurity,
-		boolean internal, TLObject decidingObject, List<BoundObject> roleParents, List<OperationDecision> operations,
-		List<HeldRole> heldRoles, boolean sourcesAvailable) {
+		boolean withoutSecurity, boolean internal, TLObject decidingObject, AccessParentFunction combiningParent,
+		List<BoundObject> roleParents, List<OperationDecision> operations, List<HeldRole> heldRoles,
+		boolean sourcesAvailable) {
 
 	/**
 	 * Whether the object delegates the decision to an access parent, see {@link #decidingObject()}.

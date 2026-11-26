@@ -26,6 +26,7 @@ import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteManager.Navigation;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
@@ -486,7 +487,7 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 			.withChildSlotPath(id)
 			.withScope(WizardScope.class, _scope)
 			.withScope(RevealPath.class, _here.append(_element, id));
-		return step.content().apply(stepContext);
+		return ViewUnitControl.create(stepContext, step.content()::apply);
 	}
 
 	/**

@@ -87,6 +87,47 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_DUPLICATE_RULE_ID__ID;
 
+	/**
+	 * @en The rule {0} navigates a historic reference backwards and therefore always starts at the
+	 *     checked version. It must not set the attribute "history".
+	 */
+	public static ResKey1 ERROR_HISTORY_WITH_ANCHOR_STEP__RULE;
+
+	/**
+	 * @en The singleton rule {0} must not set the attribute "history".
+	 */
+	public static ResKey1 ERROR_HISTORY_AT_SINGLETON_RULE__RULE;
+
+	/**
+	 * @en The rule {0} has no path. It must not use history="anchored", because the object would
+	 *     lose the role in its current version.
+	 */
+	public static ResKey1 ERROR_ANCHORED_WITHOUT_PATH__RULE;
+
+	/**
+	 * @en The rule {0} uses history="anchored" but does not name a reference in the attribute
+	 *     "anchors".
+	 */
+	public static ResKey1 ERROR_ANCHORED_WITHOUT_ANCHORS__RULE;
+
+	/**
+	 * @en The rule {0} names "{1}" in the attribute "anchors", which is not a reference with
+	 *     history type "historic".
+	 */
+	public static ResKey2 ERROR_ANCHOR_NOT_HISTORIC_REFERENCE__RULE_NAME;
+
+	/**
+	 * @en The rule {0} sets the attribute "anchors" without using history="anchored".
+	 */
+	public static ResKey1 ERROR_ANCHORS_WITHOUT_ANCHORED__RULE;
+
+	/**
+	 * @en The rule {0} uses the historic reference "{1}" as anchor. The reference is stored in a way
+	 *     that the objects referring to a version cannot be found, so the rule would never find an
+	 *     anchor. Store the reference in a link table.
+	 */
+	public static ResKey2 ERROR_ANCHOR_NOT_NAVIGABLE__RULE_REFERENCE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

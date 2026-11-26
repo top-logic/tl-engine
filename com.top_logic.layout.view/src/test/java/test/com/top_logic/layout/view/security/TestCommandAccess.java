@@ -236,9 +236,9 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * An operation on an object, or on an attribute of objects of a type, decided by an access
-	 * parent is refused for a user without the right on the parent, but not hidden as long as the
-	 * user holds a role granted the operation on a type of the parent on some object.
+	 * An operation on an object, or on an attribute of it, decided by an access parent is refused
+	 * for a user without the right on the parent, but not hidden as long as the user holds a role
+	 * granted the operation on a type of the parent on some object.
 	 */
 	public void testDelegatingTypeRefusedNotHidden() {
 		TLObject milestone = newPart(_project, MILESTONES, MILESTONE);
@@ -249,19 +249,14 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE,
 			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, milestone, milestoneName));
-		assertSame(ExecutableState.EXECUTABLE,
-			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(MILESTONE), milestoneName));
 		assertSame("No role may write a category, the container of a note.", ExecutableState.NOT_EXEC_HIDDEN,
-			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(NOTE), noteName));
-		assertSame(ExecutableState.NOT_EXEC_HIDDEN,
 			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, note, noteName));
 
 		becomeUser(_outsider);
 		assertTrue("The user may write another project, but not this one.",
 			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, milestone, null).isDisabled());
-		assertTrue(ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, milestone, milestoneName).isDisabled());
-		assertSame("Whether the user may write depends on the object.", ExecutableState.EXECUTABLE,
-			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(MILESTONE), milestoneName));
+		assertTrue("Whether the user may write depends on the object.",
+			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, milestone, milestoneName).isDisabled());
 	}
 
 	/**
@@ -283,8 +278,6 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, createTask.isExecutable(_project));
 		assertTrue("The user may rate another project.",
 			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, _project, rating).isDisabled());
-		assertSame(ExecutableState.EXECUTABLE,
-			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(PROJECT), rating));
 		assertTrue("The user may delete the steps of another project.",
 			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.DELETE, step, null).isDisabled());
 
@@ -296,8 +289,6 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		assertSame(ExecutableState.NOT_EXEC_HIDDEN, createTask.isExecutable(_project));
 		assertSame("The attribute has a grant of its own.", ExecutableState.NOT_EXEC_HIDDEN,
 			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, _project, rating));
-		assertSame(ExecutableState.NOT_EXEC_HIDDEN,
-			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(PROJECT), rating));
 		assertSame(ExecutableState.NOT_EXEC_HIDDEN,
 			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.DELETE, step, null));
 
@@ -527,7 +518,9 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		context.checkErrors();
 		ChannelFactory factory = context.getInstance(config);
 		context.checkErrors();
-		return factory.createChannel(_context);
+		ViewChannel channel = factory.createChannel(_context);
+		factory.bindChannel(_context, channel);
+		return channel;
 	}
 
 	/**

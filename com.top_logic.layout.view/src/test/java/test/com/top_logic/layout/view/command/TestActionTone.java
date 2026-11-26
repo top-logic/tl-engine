@@ -52,8 +52,8 @@ import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.element.PanelElement;
 
 /**
- * Tests that the tone of a command follows what the command does: an author says what a command
- * is - it deletes, it sits in the clique of deleting commands - and never which color it has.
+ * Tests the tone of a command: it follows what the command does - it deletes, it sits in the clique
+ * of deleting commands -, unless the command states its tone in its configuration.
  */
 public class TestActionTone extends TestCase {
 
@@ -243,6 +243,76 @@ public class TestActionTone extends TestCase {
 		assertEquals(List.of(ButtonTone.DEFAULT, ButtonTone.DEFAULT), ToneProbe.SEEN);
 	}
 
+	/**
+	 * A configured tone gives an overflow-menu command running a script the destructive tone, for
+	 * its button and for the confirmation in its chain.
+	 */
+	public void testAConfiguredToneMakesACommandDestructive() throws Exception {
+		GenericViewCommand.Config config = parseCommand(
+			"clique='" + CommandCliques.MORE + "' tone='danger'", PROBE + PROBE);
+		ViewCommand command = instantiate(config);
+
+		assertEquals(ButtonTone.DANGER, modelOf(command, config).getTone());
+
+		ToneProbe.SEEN.clear();
+		command.execute(new DefaultViewContext(null), "in");
+		assertEquals(List.of(ButtonTone.DANGER, ButtonTone.DANGER), ToneProbe.SEEN);
+	}
+
+	/** A configured ordinary tone wins over the clique of deleting commands. */
+	public void testAConfiguredToneWinsOverTheDeleteClique() throws Exception {
+		GenericViewCommand.Config config = parseCommand(
+			"clique='" + CommandCliques.DELETE + "' tone='default'", PROBE + PROBE);
+		ViewCommand command = instantiate(config);
+
+		assertEquals(ButtonTone.DEFAULT, modelOf(command, config).getTone());
+
+		ToneProbe.SEEN.clear();
+		command.execute(new DefaultViewContext(null), "in");
+		assertEquals(List.of(ButtonTone.DEFAULT, ButtonTone.DEFAULT), ToneProbe.SEEN);
+	}
+
+	/**
+	 * A configured ordinary tone wins over a destructive action: neither the button nor the
+	 * confirmation before the deletion is destructive. The probe declines, so that nothing is
+	 * deleted.
+	 */
+	public void testAConfiguredToneWinsOverADestructiveAction() throws Exception {
+		GenericViewCommand.Config config = parseCommand("tone='default'",
+			"<action class='" + DecliningToneProbe.class.getName() + "'/><delete-object/>");
+		ViewCommand command = instantiate(config);
+
+		assertEquals(ButtonTone.DANGER, command.getTone());
+		assertEquals(ButtonTone.DEFAULT, modelOf(command, config).getTone());
+
+		ToneProbe.SEEN.clear();
+		command.execute(new DefaultViewContext(null), "in");
+		assertEquals(List.of(ButtonTone.DEFAULT), ToneProbe.SEEN);
+	}
+
+	/**
+	 * Without a configured tone, the confirmation before a destructive action of a command is
+	 * destructive, as its button is.
+	 */
+	public void testWithoutConfiguredToneTheActionsDecide() throws Exception {
+		GenericViewCommand.Config config = parseCommand("",
+			"<action class='" + DecliningToneProbe.class.getName() + "'/><delete-object/>");
+		ViewCommand command = instantiate(config);
+
+		assertEquals(ButtonTone.DANGER, modelOf(command, config).getTone());
+
+		ToneProbe.SEEN.clear();
+		command.execute(new DefaultViewContext(null), "in");
+		assertEquals(List.of(ButtonTone.DANGER), ToneProbe.SEEN);
+	}
+
+	private static ViewCommandModel modelOf(ViewCommand command, ViewCommand.Config config) {
+		return new ViewCommandModel(null, command, config, null, ViewExecutabilityRule.ALWAYS_EXECUTABLE);
+	}
+
+	/** A {@link ToneProbe} in a chain. */
+	private static final String PROBE = "<action class='" + ToneProbe.class.getName() + "'/>";
+
 	/** A step recording the tone of what follows it, standing in for a {@code <confirm>}. */
 	public static class ToneProbe extends ArgumentsViewAction {
 
@@ -271,6 +341,36 @@ public class TestActionTone extends TestCase {
 		public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
 			SEEN.add(continuation.tone());
 			continuation.resume(arguments.value());
+		}
+	}
+
+	/**
+	 * A {@link ToneProbe} that declines to go on, as a user answering a confirmation may.
+	 */
+	public static class DecliningToneProbe extends ToneProbe {
+
+		/**
+		 * Configuration of a {@link DecliningToneProbe}.
+		 */
+		public interface Config extends ToneProbe.Config {
+
+			@Override
+			@ClassDefault(DecliningToneProbe.class)
+			Class<? extends ToneProbe> getImplementationClass();
+		}
+
+		/**
+		 * Creates a {@link DecliningToneProbe}.
+		 */
+		@CalledByReflection
+		public DecliningToneProbe(InstantiationContext context, Config config) {
+			super(context, config);
+		}
+
+		@Override
+		public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+			SEEN.add(continuation.tone());
+			continuation.abort();
 		}
 	}
 

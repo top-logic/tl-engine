@@ -25,8 +25,8 @@ import com.top_logic.layout.view.channel.ViewChannel;
  *
  * <p>
  * The count travels browser -&gt; server -&gt; rail because that is the only way one view element
- * can tell another one a number: the chat's counts are derived in the browser store, while the rail
- * is a separate element that can see nothing but its channels. A section whose number is a model
+ * can tell another one a number: the chat's counts are derived in the browser store, while the
+ * {@code <side-rail>} is a separate element that can see nothing but its channels. A section whose number is a model
  * question - how many rows a list has - writes the channel on the server and pays nothing.
  * </p>
  */

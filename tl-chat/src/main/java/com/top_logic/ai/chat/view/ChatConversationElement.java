@@ -17,6 +17,7 @@ import com.top_logic.basic.config.ConfigurationDescriptorConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.EntryTag;
@@ -31,6 +32,7 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
@@ -60,7 +62,7 @@ import com.top_logic.ai.core.tools.parameters.DeclaredParameters;
  * <p>
  * Merges what used to be the separate {@code <chat-thread/>} and {@code <chat-composer/>} elements.
  * Transcript and input almost always sit together, so they are one placeable box; a session list (a
- * {@code <data-list>} of {@code AgentSession}s) and a rail ({@code <chat-rail/>}) stay separate
+ * {@code <data-list>} of {@code AgentSession}s) and a rail ({@code <side-rail>}) stay separate
  * because those genuinely want independent placement. Several chat elements on one page join the
  * same conversation through {@code chat-id}. The optional {@code input} channel carries the open
  * {@code AgentSession}; the optional {@code busy} channel is written {@code true} while the agent
@@ -342,6 +344,13 @@ public class ChatConversationElement implements UIElement {
 		String MENU_ITEMS = "menu-items";
 
 		/**
+		 * Configuration property name for {@link #getCommands()}.
+		 *
+		 * @see #getCommands()
+		 */
+		String COMMANDS = "commands";
+
+		/**
 		 * Configuration property name for {@link #getReactElement()}.
 		 *
 		 * @see #getReactElement()
@@ -562,7 +571,7 @@ public class ChatConversationElement implements UIElement {
 		 *
 		 * <p>
 		 * The agent writes the objects, not the rendering: what the value looks like is whatever
-		 * element reads that channel - a {@code <chat-rail>}'s pane, a {@code <form>}, a
+		 * element reads that channel - a {@code <presentation-pane>}, a {@code <form>}, a
 		 * {@code <data-list>}. Usually one channel, the one the pane reads:
 		 * {@code present="paneObject"}.
 		 * </p>
@@ -626,6 +635,22 @@ public class ChatConversationElement implements UIElement {
 		@Key(ViewCommand.Config.NAME)
 		@EntryTag(AgentCommand.TAG_NAME)
 		List<AgentCommand> getAgentCommands();
+
+		/**
+		 * Commands shown as buttons at the end of the head of the transcript.
+		 *
+		 * <p>
+		 * Each is a standard view command - a {@code <generic-command>} with label, image, badge,
+		 * executability and input. A page with a {@code <side-rail>} beside the conversation puts the
+		 * button here that opens and closes the rail: it toggles the {@code open-channel} of the rail
+		 * and shows the {@code badge-channel} of the rail as its badge.
+		 * </p>
+		 */
+		@Name(COMMANDS)
+		@Label("Commands")
+		@EntryTag("command")
+		@TreeProperty
+		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 
 		/**
 		 * Optional two-way channel holding the text standing in the composer, unsent.
@@ -1564,7 +1589,7 @@ public class ChatConversationElement implements UIElement {
 		 * The icon on the card, e.g. {@code css:bi bi-receipt}.
 		 *
 		 * <p>
-		 * Named the way a {@code <chat-rail/>} section names its icon. Cards without one show their
+		 * Named the way a {@code <side-rail>} section names its icon. Cards without one show their
 		 * label alone, which is what a set of cards that say nothing an icon could add should do.
 		 * </p>
 		 */
@@ -1771,16 +1796,51 @@ public class ChatConversationElement implements UIElement {
 
 	private final List<ViewCommand> _agentCommands;
 
+	private final HeaderCommands _commands;
+
 	/** Creates a {@link ChatConversationElement}. */
 	@CalledByReflection
 	public ChatConversationElement(InstantiationContext context, Config config) {
 		_config = config;
 		_agentCommands = instantiateAgentCommands(context, config);
+		_commands = HeaderCommands.instantiate(context, config);
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new ChatConversationControl(context, _config, _agentCommands);
+		return new ChatConversationControl(context, _config, _agentCommands, _commands);
+	}
+
+	/**
+	 * The instantiated {@link Config#getCommands() commands} with their configurations, in their
+	 * order.
+	 *
+	 * @param commands
+	 *        The commands.
+	 * @param configs
+	 *        Their configurations.
+	 */
+	record HeaderCommands(List<ViewCommand> commands, List<ViewCommand.Config> configs) {
+
+		/**
+		 * Instantiates the {@link Config#getCommands() commands} of the given configuration.
+		 *
+		 * @param context
+		 *        The context to instantiate the commands in; reports a command that cannot be
+		 *        created.
+		 */
+		static HeaderCommands instantiate(InstantiationContext context, Config config) {
+			List<ViewCommand> commands = new ArrayList<>();
+			List<ViewCommand.Config> configs = new ArrayList<>();
+			for (PolymorphicConfiguration<? extends ViewCommand> commandConfig : config.getCommands()) {
+				ViewCommand command = context.getInstance(commandConfig);
+				if (command != null && commandConfig instanceof ViewCommand.Config viewConfig) {
+					commands.add(command);
+					configs.add(viewConfig);
+				}
+			}
+			return new HeaderCommands(commands, configs);
+		}
 	}
 
 	/**

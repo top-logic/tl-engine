@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.view.I18NConstants;
@@ -35,6 +36,7 @@ import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.AnnotationLookup;
@@ -1018,6 +1020,16 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			return text.toString();
 		}
 		return MetaLabelProvider.INSTANCE.getLabel(result);
+	}
+
+	/**
+	 * The tooltip a script computed, written as HTML: the {@link #tooltipText(Object) text} of the
+	 * result with a line break for each line break of the text, {@code null} for an empty or no
+	 * text.
+	 */
+	public static String tooltipHtml(Object result) {
+		String text = tooltipText(result);
+		return text == null || text.isEmpty() ? null : HTMLUtil.encodeBRforNewLine(TagUtil.encodeXML(text));
 	}
 
 	/**

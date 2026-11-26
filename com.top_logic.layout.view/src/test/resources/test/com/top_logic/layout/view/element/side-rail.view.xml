@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="count"/>
+		<channel name="present"/>
+		<channel name="railOpen"/>
+		<channel name="railBadge"/>
+		<channel name="railShown"/>
+		<channel name="other"/>
+		<channel name="picked"/>
+	</channels>
+
+	<side-rail
+		badge-channel="railBadge"
+		css-class="my-rail"
+		open="false"
+		open-channel="railOpen"
+		shown="railShown"
+		side="right"
+		width="320"
+	>
+		<section name="tasks"
+			badge="count"
+			dismiss-on="picked"
+			icon="css:fa-solid fa-list-check"
+		>
+			<label>
+				<en>Tasks</en>
+			</label>
+			<panel/>
+		</section>
+		<section name="sources"
+			open="false"
+		>
+			<panel/>
+		</section>
+		<section name="document"
+			header="false"
+			reveal="true"
+			width="560"
+		>
+			<visibility
+				expr="$present"
+				inputs="present"
+			/>
+			<panel/>
+		</section>
+		<section name="extra"
+			open="false"
+		>
+			<visibility
+				expr="$other"
+				inputs="other"
+			/>
+			<panel/>
+		</section>
+	</side-rail>
+</view>

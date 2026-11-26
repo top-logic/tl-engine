@@ -429,7 +429,7 @@ public final class ChatTranscripts {
 			return null;
 		}
 		try {
-			return ConversationBackendService.backendFor(agentSession);
+			return ConversationBackendService.backendFor(agentSession.getSubject());
 		} catch (RuntimeException ex) {
 			// The run asks again and fails there, where the user is told; a request that only reads
 			// the conversation must not break on it.
@@ -444,7 +444,11 @@ public final class ChatTranscripts {
 	 * own agent for <code>null</code>.
 	 */
 	public static ConversationFeaturesDto featuresDto(ConversationBackend backend) {
-		BackendFeatures features = backend == null ? BackendFeatures.INTERNAL : backend.features();
+		return featuresDto(backend == null ? BackendFeatures.INTERNAL : backend.features());
+	}
+
+	/** What the chat offers in a conversation with the given features. */
+	public static ConversationFeaturesDto featuresDto(BackendFeatures features) {
 		return ConversationFeaturesDto.create()
 			.setRegenerate(features.regenerate())
 			.setEditMessages(features.editMessages())

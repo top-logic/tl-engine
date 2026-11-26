@@ -142,7 +142,7 @@ public class TestAgentAccess extends TestCase {
 			+ " xmlns:config='http://www.top-logic.com/ns/config/6.0'>"
 			+ "  <agent-access default='none'>"
 			+ "    <role name='SalesUser'>"
-			+ "      <grants><grant agents='sales-assistant, pietro'/></grants>"
+			+ "      <grants><grant agents='sales-assistant, planner'/></grants>"
 			+ "      <denies><deny agents='framework-wiring-agent'/></denies>"
 			+ "    </role>"
 			+ "  </agent-access>"
@@ -158,7 +158,7 @@ public class TestAgentAccess extends TestCase {
 		assertEquals(ToolAccessPolicy.McpDefault.NONE, policy.getMcpAccess().getDefault());
 
 		RoleAccessPolicy access = agents(policy);
-		assertGranted(access.check(Set.of("SalesUser"), "pietro", Set.of()), "SalesUser");
+		assertGranted(access.check(Set.of("SalesUser"), "planner", Set.of()), "SalesUser");
 		assertDenied(access.check(Set.of("SalesUser"), "framework-wiring-agent", Set.of()),
 			Cause.ROLE_DENY);
 		assertDenied(access.check(Set.of("SalesUser"), "TL_SingleAgent", Set.of()), Cause.NOT_GRANTED);

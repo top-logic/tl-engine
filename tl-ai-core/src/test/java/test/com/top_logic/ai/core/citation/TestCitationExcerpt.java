@@ -22,7 +22,7 @@ import com.top_logic.ai.core.citation.CitationExcerpt;
  */
 public class TestCitationExcerpt extends TestCase {
 
-	/** A host whose tools answer JSON with Markdown inside, as BOS/Consulting's do. */
+	/** A host whose tools answer JSON with Markdown inside, as tools of an application may. */
 	private static final String SECTIONS = "{\"sections\":[{\"id\":\"sec-3\",\"title\":\"Versand\","
 		+ "\"body\":\"## Versand\\n\\nDie **Versandkosten** trägt der Besteller, sofern nichts anderes"
 		+ " vereinbart ist.\\n\\nEine [Ausnahme](https://example.org/awb) gilt für Teillieferungen.\"}]}";

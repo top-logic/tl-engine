@@ -4,6 +4,7 @@
  */
 package test.com.top_logic.model.security;
 
+import java.util.Arrays;
 import java.util.List;
 
 import junit.framework.Test;
@@ -12,10 +13,13 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.model.security.AccessParentConfig;
+import com.top_logic.model.security.AccessParentDefinition;
+import com.top_logic.model.security.AnyOfAccessParent;
 import com.top_logic.model.security.ContainerAccessParent;
 import com.top_logic.model.security.HideBesideOtherDefinition;
 import com.top_logic.model.security.SelfAccessParent;
@@ -81,6 +85,41 @@ public class TestHideBesideOtherDefinition extends TestCase {
 		assertEquals(FieldMode.INVISIBLE, _grantsMode.invoke(false, List.of(), unrestricted));
 		assertEquals("A restricted access parent leaves no room for a mark.", FieldMode.INVISIBLE,
 			_mode.invoke(false, restricted));
+	}
+
+	public void testGrantsVisibleBesideRestrictedAnyOf() {
+		AnyOfAccessParent.Config restricted = anyOf(target(SimpleBoundCommandGroup.READ_NAME),
+			anyOf(target(SimpleBoundCommandGroup.WRITE_NAME)));
+		AnyOfAccessParent.Config unrestricted = anyOf(target(SimpleBoundCommandGroup.READ_NAME),
+			TypedConfiguration.newConfigItem(ContainerAccessParent.Config.class));
+
+		assertEquals("All candidates leave some operations to the type itself.", FieldMode.ACTIVE,
+			_grantsMode.invoke(false, List.of(), restricted));
+		assertEquals("The container candidate delegates all operations.", FieldMode.INVISIBLE,
+			_grantsMode.invoke(false, List.of(), unrestricted));
+	}
+
+	public void testGrantsVisibleBesideAnyOfWithoutContainer() {
+		assertEquals("Create is granted by the type itself.", FieldMode.ACTIVE,
+			_grantsMode.invoke(false, List.of(), anyOf(target(), target())));
+		assertEquals("The container candidate delegates Create.", FieldMode.INVISIBLE,
+			_grantsMode.invoke(false, List.of(), anyOf(TypedConfiguration.newConfigItem(ContainerAccessParent.Config.class),
+				target())));
+		assertEquals("A single candidate is the candidate itself.", FieldMode.INVISIBLE,
+			_grantsMode.invoke(false, List.of(), anyOf(target())));
+	}
+
+	private static TargetAccessParent.Config target(String... operations) {
+		TargetAccessParent.Config result = TypedConfiguration.newConfigItem(TargetAccessParent.Config.class);
+		result.setOperations(Arrays.stream(operations).map(CommandGroupReference::new).toList());
+		return result;
+	}
+
+	@SafeVarargs
+	private static AnyOfAccessParent.Config anyOf(PolymorphicConfiguration<? extends AccessParentDefinition>... candidates) {
+		AnyOfAccessParent.Config result = TypedConfiguration.newConfigItem(AnyOfAccessParent.Config.class);
+		result.getCandidates().addAll(Arrays.asList(candidates));
+		return result;
 	}
 
 	public void testGrantsAreHiddenWithoutSecurity() {

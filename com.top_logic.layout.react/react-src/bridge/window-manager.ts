@@ -6,17 +6,13 @@
  */
 
 import { BACKGROUND_COMMAND, enqueueCommand } from './command-channel';
+import { getContextPath, getWindowName } from './page-context';
 
 /** Registry of windows opened from this page. */
 const openWindows: Map<string, Window> = new Map();
 
 /** Interval ID for polling closed windows. */
 let pollIntervalId: ReturnType<typeof setInterval> | null = null;
-
-/** The current page's window name. */
-function getMyWindowId(): string {
-  return document.body.dataset.windowName ?? '';
-}
 
 /**
  * The token the server issued for this page, or undefined for a page that carries none.
@@ -26,11 +22,6 @@ function getMyWindowId(): string {
  */
 function getPageLoad(): string | undefined {
   return document.body.dataset.pageLoad;
-}
-
-/** The context path for URL construction. */
-function getContextPath(): string {
-  return document.body.dataset.contextPath ?? '';
 }
 
 /** Convert WindowOpenEvent options to window.open() features string. */
@@ -65,7 +56,7 @@ function ensurePolling(): void {
  */
 function notifyWindowClosed(windowId: string): void {
   const contextPath = getContextPath();
-  const myWindowId = getMyWindowId();
+  const myWindowId = getWindowName();
   void enqueueCommand(`${contextPath}/react-api/command`, {
     controlId: '',
     command: 'windowClosed',
@@ -129,7 +120,7 @@ export function handleWindowFocus(event: WindowFocusEventData): void {
 /** Notify server that a popup was blocked. Best-effort: transport failures are only logged. */
 function notifyWindowBlocked(windowId: string): void {
   const contextPath = getContextPath();
-  const myWindowId = getMyWindowId();
+  const myWindowId = getWindowName();
   void enqueueCommand(`${contextPath}/react-api/command`, {
     controlId: '',
     command: 'windowBlocked',
@@ -150,7 +141,7 @@ function notifyWindowBlocked(windowId: string): void {
 export function initSelfCloseNotification(): void {
   window.addEventListener('beforeunload', () => {
     const contextPath = getContextPath();
-    const myWindowId = getMyWindowId();
+    const myWindowId = getWindowName();
     if (!myWindowId) return;
 
     // Use sendBeacon for reliability during unload.

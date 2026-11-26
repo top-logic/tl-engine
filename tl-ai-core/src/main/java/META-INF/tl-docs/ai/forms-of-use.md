@@ -31,7 +31,7 @@ Different groups benefit:
 
 ## The built-in assistant
 
-The built-in assistant is a chat inside the application (`tl-chat`, in React pages through `<chat-conversation>`, `<chat-rail>` or `<chat-dock>`, in classic layouts through `tl-chat-classic`). The user asks a question or gives an order in natural language; the assistant understands it, carries out what is needed and answers. Behind it, the assistant talks to a language model (Anthropic, OpenAI, ...). The model decides by itself which tools it needs and may use several of them in a row to solve a complex task.
+The built-in assistant is a chat inside the application (`tl-chat`, in React pages through `<chat-conversation>` (with a `<side-rail>` beside it) or `<chat-dock>`, in classic layouts through `tl-chat-classic`). The user asks a question or gives an order in natural language; the assistant understands it, carries out what is needed and answers. Behind it, the assistant talks to a language model (Anthropic, OpenAI, ...). The model decides by itself which tools it needs and may use several of them in a row to solve a complex task.
 
 ### From chatbot to copilot
 

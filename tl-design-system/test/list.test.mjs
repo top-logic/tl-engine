@@ -29,7 +29,7 @@ test('tl-list: Zustände sind Attribute, die Liste setzt weder Fläche noch Schr
   const ohne = css.replace(/\/\*[\s\S]*?\*\//g, '');
   assert.doesNotMatch(ohne, /\.tl-list[a-z_-]*--/);
   assert.doesNotMatch(ohne, /font-size|font-weight|border-left|@keyframes/);
-  assert.match(decl('.tl-list[data-tl-state~="collapsed"]'), /width:\s*calc\(var\(--tl-size-control\) \+ 2 \* var\(--tl-space-2xs\)\)/);
+  assert.doesNotMatch(ohne, /collapsed/, 'Einklappen hat die Liste nicht selbst: sie steht dafür in einer tl-side-rail.');
   assert.doesNotMatch(decl('.tl-list'), /background|border(-[a-z-]+)?:/);
   assert.deepEqual(colorVarsOf(css), ['border-selected', 'focus-offset', 'surface-interactive-hover', 'surface-selected', 'surface-selected-hover',
     'text-primary', 'text-secondary']);
@@ -70,7 +70,7 @@ test('tl-list: Vertrag nennt jede Klasse, die Zustände als Attribute und die Pa
   assert.deepEqual(missingInContract(md, ['tl-list', 'tl-list__header', 'tl-list__title', 'tl-list__commands', 'tl-list__search',
     'tl-list__body', 'tl-list__group', 'tl-list__subheader', 'tl-list__items', 'tl-list__item', 'tl-list__main',
     'tl-list__leading', 'tl-list__text', 'tl-list__primary', 'tl-list__secondary', 'tl-list__trailing', 'tl-list__message',
-    'aria-current="true"', 'data-tl-state~="collapsed"', 'tl-reveal-on-hover', 'tl-avatar', 'tl-badge', 'select', 'rowMenu']), []);
+    'aria-current="true"', 'tl-side-rail', 'tl-reveal-on-hover', 'tl-avatar', 'tl-badge', 'select', 'rowMenu']), []);
 });
 
 test('tl-list: Specimen — gewählter Eintrag, Avatar und Badge als Parts, Auslöser mit Namen', () => {
@@ -80,26 +80,12 @@ test('tl-list: Specimen — gewählter Eintrag, Avatar und Badge als Parts, Ausl
   assert.match(html, /<span class="tl-list__leading"><span class="tl-avatar /);
   assert.match(html, /<span class="tl-list__trailing"><span class="tl-badge /);
   assert.match(html, /tl-reveal-on-hover" aria-haspopup="menu" aria-label="Aktionen: /);
-  assert.match(html, /<div class="tl-list" data-tl-state="collapsed"/);
-});
-
-test('tl-list: als Schublade — der Ort ist Anker, der Streifen blendet nur eigene Kinder aus, der Scrim deckt den Behälter', () => {
-  const anker = decl(':where(:has(> .tl-list > .tl-drawer__scrim))');
-  assert.match(anker, /position:\s*relative/);
-  assert.match(anker, /isolation:\s*isolate/);
-  assert.ok(declarationsOf(css, '.tl-list[data-tl-state~="collapsed"] > .tl-list__body'));
-  assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /\.tl-list\[data-tl-state~="collapsed"\] \.tl-list__/);
-  const scrim = declarationsOf(readGenerated('drawer', 'drawer.css'), '.tl-drawer__scrim') ?? '';
-  assert.match(scrim, /position:\s*absolute/);
-  assert.match(scrim, /z-index:\s*var\(--tl-layer-raised\)/);
-  assert.match(scrim, /background:\s*var\(--tl-surface-scrim\)/);
-  assert.deepEqual(missingInContract(readComponent('drawer', 'drawer.contract.md'), ['tl-drawer__scrim', '--tl-surface-scrim']), []);
-  assert.deepEqual(missingInContract(readComponent('list', 'list.contract.md'), ['drawerBelow', 'tl-drawer__scrim', 'tl-drawer--container']), []);
+  assert.doesNotMatch(html, /data-tl-state="collapsed"|tl-toggle/);
 });
 
 test('tl-list: Vertrag nennt die Teile vorn und hinten im Eintrag und den Rechtsklick', () => {
   const md = readComponent('list', 'list.contract.md');
   assert.deepEqual(missingInContract(md, ['rows[].leading.name', 'rows[].leading.icon', 'rows[].leading.image',
-    'rows[].trailing.text', 'rows[].trailing.badge', 'tl-menu-region']), []);
+    'rows[].trailing.text', 'rows[].trailing.badge', 'rows[].trailing.control', 'tl-menu-region']), []);
   assert.deepEqual(missingInContract(readComponent('avatar', 'avatar.contract.md'), ['Avatar', 'replacePart']), []);
 });

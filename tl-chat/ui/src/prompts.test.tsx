@@ -16,7 +16,7 @@ function approval(over: Partial<ApprovalRequest> = {}): ApprovalRequest {
     id: 'a1',
     approvalRequestId: 'a1',
     toolCallId: 't1',
-    toolName: 'consulting.recordStatement',
+    toolName: 'notes.recordStatement',
     argsJson: '{"text":"FACT-004 Das Service-Center hat 19 VZÄ.","code":"FACT-004"}',
     displayReason: 'Modifies shared application data.',
     toolMode: 'DATA_WRITE',
@@ -138,7 +138,7 @@ describe('the approval card', () => {
   it('says which tool approving for the chat will cover', () => {
     const html = card(approval())
     expect(html).toContain('jeden weiteren Aufruf')
-    expect(html).toContain('<code class="tool-id">consulting.recordStatement</code>')
+    expect(html).toContain('<code class="tool-id">notes.recordStatement</code>')
   })
 
   /*

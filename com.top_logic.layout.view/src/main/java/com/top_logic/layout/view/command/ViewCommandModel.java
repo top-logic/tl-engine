@@ -31,6 +31,7 @@ import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.table.AbstractColumnDeclaration;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tool.execution.ExecutableState;
@@ -118,6 +119,11 @@ public class ViewCommandModel implements CommandModel {
 	 */
 	private final ActionScript _imageScript;
 
+	/**
+	 * The {@link ViewCommand.Config#getActiveExpr() active expression}, {@code null} for none.
+	 */
+	private final ActionScript _activeScript;
+
 	private ExecutableState _executableState;
 
 	/**
@@ -134,6 +140,11 @@ public class ViewCommandModel implements CommandModel {
 	 * The icon for the current arguments, {@code null} for none.
 	 */
 	private ThemeImage _image;
+
+	/**
+	 * Whether the effect of the command is in force for the current arguments.
+	 */
+	private boolean _active;
 
 	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
 
@@ -224,10 +235,12 @@ public class ViewCommandModel implements CommandModel {
 		_labelScript = compile(config.getLabelExpr(), scope);
 		_tooltipScript = compile(config.getTooltipExpr(), scope);
 		_imageScript = compile(config.getImageExpr(), scope);
+		_activeScript = compile(config.getActiveExpr(), scope);
 		Object input = resolveInput();
 		_label = label(input);
 		_tooltip = tooltip(input);
 		_image = image(input);
+		_active = active(input);
 		_badgeBinding = BadgeBinding.create(context, config);
 		_badge = _badgeBinding == null ? null : _badgeBinding.current();
 	}
@@ -411,6 +424,43 @@ public class ViewCommandModel implements CommandModel {
 	}
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Whether the {@link ViewCommand.Config#getActiveExpr() active expression} holds for the current
+	 * {@link #resolveInput() input}, as last evaluated together with the
+	 * {@link #getExecutableState() state}.
+	 * </p>
+	 */
+	@Override
+	public boolean isActive() {
+		return _active;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A command with an {@link ViewCommand.Config#getActiveExpr() active expression} is a toggle.
+	 * </p>
+	 */
+	@Override
+	public boolean isToggle() {
+		return _activeScript != null;
+	}
+
+	/**
+	 * Whether the effect of the command is in force for a main argument the caller supplies, see
+	 * {@link #label(Object)}.
+	 *
+	 * @return Whether the {@link ViewCommand.Config#getActiveExpr() active expression} yields a value
+	 *         TL-Script takes as true; {@code false} without one.
+	 */
+	public boolean active(Object input) {
+		return _activeScript != null && SearchExpression.isTrue(evaluate(_activeScript, input));
+	}
+
+	/**
 	 * Evaluates the given script over the arguments of a run with the given main argument,
 	 * {@code null} for no script.
 	 */
@@ -491,19 +541,19 @@ public class ViewCommandModel implements CommandModel {
 	 * {@inheritDoc}
 	 *
 	 * <p>
-	 * The tone the command {@link ViewCommand#getTone() takes from what it does}. A command that
-	 * states its meaning only by its {@link ViewCommand.Config#getClique() clique} - one without a
-	 * destructive action of its own, placed in {@link CommandCliques#DELETE} - is destructive as
-	 * well, see {@link CommandCliques#tone(String)}.
+	 * The tone the command takes from its configuration - its {@link ViewCommand.Config#getTone()
+	 * tone}, or the {@link ViewCommand.Config#getClique() clique} of deleting commands, see
+	 * {@link CommandCliques#tone(ViewCommand.Config)} -, otherwise the tone the command
+	 * {@link ViewCommand#getTone() takes from what it does}.
 	 * </p>
 	 */
 	@Override
 	public ButtonTone getTone() {
-		ButtonTone tone = _command.getTone();
-		if (tone == ButtonTone.DEFAULT) {
-			return CommandCliques.tone(_config.getClique());
+		ButtonTone configured = CommandCliques.tone(_config);
+		if (configured != null) {
+			return configured;
 		}
-		return tone;
+		return _command.getTone();
 	}
 
 	@Override
@@ -776,8 +826,8 @@ public class ViewCommandModel implements CommandModel {
 	}
 
 	/**
-	 * Re-evaluates the state together with label, tooltip and icon, and reports a change of any of
-	 * them.
+	 * Re-evaluates the state together with label, tooltip, icon and whether the command is active,
+	 * and reports a change of any of them.
 	 */
 	private void updateExecutableState() {
 		ExecutableState newState = _executability.getState();
@@ -785,14 +835,16 @@ public class ViewCommandModel implements CommandModel {
 		String newLabel = label(input);
 		String newTooltip = tooltip(input);
 		ThemeImage newImage = image(input);
+		boolean newActive = active(input);
 		if (newState.equals(_executableState) && Objects.equals(newLabel, _label)
-			&& Objects.equals(newTooltip, _tooltip) && Objects.equals(newImage, _image)) {
+			&& Objects.equals(newTooltip, _tooltip) && Objects.equals(newImage, _image) && newActive == _active) {
 			return;
 		}
 		_executableState = newState;
 		_label = newLabel;
 		_tooltip = newTooltip;
 		_image = newImage;
+		_active = newActive;
 		fireStateChanged();
 	}
 

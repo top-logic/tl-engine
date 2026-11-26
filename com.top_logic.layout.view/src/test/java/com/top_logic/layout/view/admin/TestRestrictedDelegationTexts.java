@@ -20,6 +20,7 @@ import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.element.boundsec.manager.explain.AccessExplanation;
 import com.top_logic.element.boundsec.manager.explain.OperationDecision;
@@ -30,9 +31,12 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ContainerRelation;
+import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.security.RestrictedRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -49,6 +53,13 @@ public class TestRestrictedDelegationTexts extends TestCase {
 
 	private static final AccessParentFunction RESTRICTED =
 		new RestrictedRelation(ContainerRelation.ANY, Set.of(SimpleBoundCommandGroup.READ));
+
+	private static final AnyOfRelation ANY_OF = new AnyOfRelation(List.of(ContainerRelation.ANY,
+		new RestrictedRelation(ContainerRelation.DEFAULT, Set.of(SimpleBoundCommandGroup.READ))));
+
+	private static final AnyOfRelation RESTRICTED_ANY_OF = new AnyOfRelation(List.of(
+		new RestrictedRelation(ContainerRelation.ANY, Set.of(SimpleBoundCommandGroup.WRITE)),
+		new RestrictedRelation(ContainerRelation.DEFAULT, Set.of(SimpleBoundCommandGroup.READ))));
 
 	public void testGrantsOfRestrictedType() {
 		ResKey restricted = SecurityGrantFunctions.delegation(RESTRICTED);
@@ -121,16 +132,87 @@ public class TestRestrictedDelegationTexts extends TestCase {
 			label.startsWith(german.getString(ContainerRelation.ANY.getLabel())));
 	}
 
+	/**
+	 * An operation decided by several objects names all of them; an operation decided by a single
+	 * object keeps its text.
+	 */
+	public void testReasonNamesEveryRoleHolder() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.explain");
+		TLClass object = TLModelUtil.addClass(module, "Part");
+		TLClass folder = TLModelUtil.addClass(module, "Folder");
+		TLClass document = TLModelUtil.addClass(module, "Document");
+		OperationDecision several = decision(SimpleBoundCommandGroup.READ, List.of(folder, document));
+		OperationDecision single = decision(SimpleBoundCommandGroup.WRITE, List.of(folder));
+		AccessExplanation explanation = explanation(object, folder, List.of(several, single));
+
+		String reason = EffectiveAccessFunctions.reason(explanation, several, LABELS);
+		String expected = translate(I18NConstants.EFFECTIVE_ACCESS_CHECKED_ON_SEVERAL__OPERATION_OBJECTS_REASON.fill(
+			translate(SecurityGrantFunctions.labelKey(SimpleBoundCommandGroup.READ)), "Folder, Document",
+			translate(I18NConstants.EFFECTIVE_ACCESS_DENIED_RESTRICTED)));
+		assertEquals("Every object deciding the operation is named.", expected, reason);
+
+		String singleReason = EffectiveAccessFunctions.reason(explanation, single, LABELS);
+		String singleExpected = translate(I18NConstants.EFFECTIVE_ACCESS_CHECKED_ON__OPERATION_OBJECT_REASON.fill(
+			translate(SecurityGrantFunctions.labelKey(SimpleBoundCommandGroup.WRITE)), "Folder",
+			translate(I18NConstants.EFFECTIVE_ACCESS_DENIED_RESTRICTED)));
+		assertEquals("A single object deciding keeps its text.", singleExpected, singleReason);
+	}
+
+	/**
+	 * An access parent combining its candidates itself is told, an access parent combining them by
+	 * OR is not.
+	 */
+	public void testCombiningParentIsTold() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.explain");
+		TLClass object = TLModelUtil.addClass(module, "Both");
+		AccessParentFunction combining = new AccessParentFunction() {
+			@Override
+			public TLObject resolve(TLObject delegating) {
+				return null;
+			}
+
+			@Override
+			public Set<TLClass> getParentTypes(TLClass type) {
+				return null;
+			}
+
+			@Override
+			public ResKey getLabel() {
+				return ResKey.text("all of first, second");
+			}
+
+			@Override
+			public boolean isDisjunctive() {
+				return false;
+			}
+		};
+		AccessExplanation explanation = new AccessExplanation(null, object, false, false, false, false, object,
+			combining, List.of(), List.of(), List.of(), true);
+
+		ResKey text = EffectiveAccessFunctions.combination(explanation);
+		assertNotNull(text);
+		assertEquals(I18NConstants.EFFECTIVE_ACCESS_COMBINED__PARENT.getKey(), text.plain().getKey());
+		assertEquals("The combining access parent is named.",
+			translate(I18NConstants.EFFECTIVE_ACCESS_COMBINED__PARENT.fill(combining.getLabel())), translate(text));
+
+		assertNull("An access parent combining by OR has nothing to tell.",
+			EffectiveAccessFunctions.combination(explanation(object, object, List.of())));
+	}
+
 	private static final Function<Object, String> LABELS = object -> ((TLClass) object).getName();
 
 	private static AccessExplanation explanation(TLObject object, TLObject decidingObject,
 			List<OperationDecision> decisions) {
-		return new AccessExplanation(null, object, false, false, false, false, decidingObject, List.of(), decisions,
-			List.of(), true);
+		return new AccessExplanation(null, object, false, false, false, false, decidingObject, null, List.of(),
+			decisions, List.of(), true);
 	}
 
 	private static OperationDecision decision(BoundCommandGroup operation, TLObject roleHolder) {
-		return new OperationDecision(operation, operation, roleHolder, false, Set.of(), Set.of(), Set.of(), true);
+		return decision(operation, List.of(roleHolder));
+	}
+
+	private static OperationDecision decision(BoundCommandGroup operation, List<TLObject> roleHolders) {
+		return new OperationDecision(operation, operation, roleHolders, false, Set.of(), Set.of(), Set.of(), true);
 	}
 
 	/**
@@ -158,6 +240,171 @@ public class TestRestrictedDelegationTexts extends TestCase {
 		assertFalse("A restricted type does not delegate every access decision: " + html, html.contains(unrestricted));
 	}
 
+	/**
+	 * An access parent with several candidates is told as such, naming every candidate, with the
+	 * operations its candidates delegate when none delegates all of them.
+	 */
+	public void testGrantsOfAnyOf() {
+		ResKey all = SecurityGrantFunctions.delegation(ANY_OF);
+		assertEquals(I18NConstants.GRANTS_DELEGATED_ANY_OF__CANDIDATES.getKey(), all.plain().getKey());
+		assertNamesCandidates(ANY_OF, translate(all));
+
+		ResKey restricted = SecurityGrantFunctions.delegation(RESTRICTED_ANY_OF);
+		assertEquals(I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.getKey(),
+			restricted.plain().getKey());
+		assertNamesCandidates(RESTRICTED_ANY_OF, translate(restricted));
+		assertTrue("The delegated operations are named: " + translate(restricted),
+			translate(restricted).contains(SecurityGrantFunctions.operationLabels(RESTRICTED_ANY_OF.getOperations())));
+	}
+
+	/**
+	 * The coverage of a type with several access parents tells them as such, naming every
+	 * candidate.
+	 */
+	public void testCoverageOfAnyOf() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.coverage");
+		TLClass part = TLModelUtil.addClass(module, "Part");
+		for (AnyOfRelation anyOf : List.of(ANY_OF, RESTRICTED_ANY_OF)) {
+			TypeCoverage row = row(part, anyOf);
+			ViewChannel findings = new DefaultViewChannel("findings");
+			Detail detail = new Detail(null, null, null, null, findings, null, null);
+
+			detail.show(part, Map.of(part, row)::get);
+
+			String html = (String) findings.get();
+			assertNamesCandidates(anyOf, html);
+		}
+		ResKey all = SecurityCoverageTable.delegation(row(part, ANY_OF));
+		assertEquals(I18NConstants.COVERAGE_DELEGATED_ANY_OF__CANDIDATES.getKey(), all.plain().getKey());
+		ResKey restricted = SecurityCoverageTable.delegation(row(part, RESTRICTED_ANY_OF));
+		assertEquals(I18NConstants.COVERAGE_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.getKey(),
+			restricted.plain().getKey());
+		assertTrue("The delegated operations are named: " + translate(restricted),
+			translate(restricted).contains(SecurityGrantFunctions.operationLabels(RESTRICTED_ANY_OF.getOperations())));
+	}
+
+	/**
+	 * An access parent with several candidates, none of them the container, leaves Create to the
+	 * grants of the type, and the texts say so.
+	 */
+	public void testAnyOfWithoutContainerTellsOwnCreate() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.coverage");
+		TLClass note = TLModelUtil.addClass(module, "Note");
+		AnyOfRelation anyOf = new AnyOfRelation(List.of(relation("target of folder"), relation("notes of folder")));
+
+		ResKey grants = SecurityGrantFunctions.delegation(anyOf);
+		assertEquals(I18NConstants.GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey(), grants.plain().getKey());
+		ResKey coverage = SecurityCoverageTable.delegation(row(note, anyOf));
+		assertEquals(I18NConstants.COVERAGE_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey(),
+			coverage.plain().getKey());
+		assertNamesCandidates(anyOf, translate(coverage));
+
+		assertEquals("A container candidate delegates Create.", I18NConstants.GRANTS_DELEGATED_ANY_OF__CANDIDATES.getKey(),
+			SecurityGrantFunctions.delegation(ANY_OF).plain().getKey());
+	}
+
+	/**
+	 * A referer directly in the access parent and an access parent with several candidates, none of
+	 * them the container, leave Create to the grants of the type: the explanation of the effective
+	 * access, the grants and the coverage say so.
+	 */
+	public void testOwnCreateIsTold() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.coverage");
+		TLClass note = TLModelUtil.addClass(module, "Note");
+		TLClass document = TLModelUtil.addClass(module, "Document");
+		TLReference notes = TLModelUtil.addForwardReference(document, "notes", note);
+		AccessParentFunction referer = new RefererRelation(notes);
+		AnyOfRelation anyOf = new AnyOfRelation(List.of(relation("target of folder"), relation("notes of folder")));
+		for (AccessParentFunction parent : List.of(referer, anyOf)) {
+			ResKey effective = EffectiveAccessFunctions.delegation("Note", "Document", parent);
+			assertEquals(I18NConstants.EFFECTIVE_ACCESS_DELEGATED_OWN_CREATE__TYPE_OBJECT.getKey(),
+				effective.plain().getKey());
+			assertTrue("The type deciding Create is named: " + translate(effective),
+				translate(effective).contains("Note"));
+			assertEquals(I18NConstants.GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey(),
+				SecurityGrantFunctions.delegation(parent).plain().getKey());
+			assertEquals(I18NConstants.COVERAGE_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey(),
+				SecurityCoverageTable.delegation(row(note, parent)).plain().getKey());
+		}
+		assertEquals("A container candidate delegates Create.",
+			I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.getKey(),
+			EffectiveAccessFunctions.delegation("Part", "Folder", ANY_OF).plain().getKey());
+	}
+
+	/**
+	 * An access parent leaving some operation to the type without listing its operations, but
+	 * deciding Create, does not claim that the type decides Create.
+	 */
+	public void testCreateDecidingParentDoesNotTellOwnCreate() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.coverage");
+		TLClass part = TLModelUtil.addClass(module, "Part");
+		AccessParentFunction parent = new AccessParentFunction() {
+			@Override
+			public TLObject resolve(TLObject delegating) {
+				return null;
+			}
+
+			@Override
+			public Set<TLClass> getParentTypes(TLClass type) {
+				return null;
+			}
+
+			@Override
+			public ResKey getLabel() {
+				return ResKey.text("custom");
+			}
+
+			@Override
+			public boolean delegatesAll() {
+				// Leaves some operation to the type, though without listing its operations.
+				return false;
+			}
+		};
+		assertNull("Precondition: the operations are not listed.", parent.getOperations());
+		assertTrue("Precondition: Create is decided by the access parent.", parent.delegatesCreation());
+
+		assertFalse(I18NConstants.EFFECTIVE_ACCESS_DELEGATED_OWN_CREATE__TYPE_OBJECT.getKey()
+			.equals(EffectiveAccessFunctions.delegation("Part", "Folder", parent).plain().getKey()));
+		assertFalse(I18NConstants.GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey()
+			.equals(SecurityGrantFunctions.delegation(parent).plain().getKey()));
+		assertFalse(I18NConstants.COVERAGE_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey()
+			.equals(SecurityCoverageTable.delegation(row(part, parent)).plain().getKey()));
+	}
+
+	/**
+	 * A relation that is no container, with the given label.
+	 */
+	private static AccessParentFunction relation(String label) {
+		return new AccessParentFunction() {
+			@Override
+			public TLObject resolve(TLObject delegating) {
+				return null;
+			}
+
+			@Override
+			public Set<TLClass> getParentTypes(TLClass type) {
+				return null;
+			}
+
+			@Override
+			public ResKey getLabel() {
+				return ResKey.text(label);
+			}
+		};
+	}
+
+	private static TypeCoverage row(TLClass type, AccessParentFunction accessParent) {
+		return new TypeCoverage(type, null, null, accessParent, List.of(), Set.of(), List.of(), List.of(), List.of());
+	}
+
+	private static void assertNamesCandidates(AnyOfRelation anyOf, String text) {
+		for (AccessParentFunction candidate : anyOf.candidates()) {
+			String candidateLabel = TagUtil.encodeXML(translate(candidate.getLabel()));
+			assertTrue("The candidate '" + candidateLabel + "' is named: " + text, text.contains(candidateLabel)
+				|| text.contains(translate(candidate.getLabel())));
+		}
+	}
+
 	private static String translate(ResKey key) {
 		return Resources.getInstance().getString(key);
 	}
@@ -167,11 +414,12 @@ public class TestRestrictedDelegationTexts extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link ResourcesModule}, which translates the texts.
+	 * Test suite requiring the {@link ResourcesModule}, which translates the texts, and the
+	 * {@link AttributeSettings}, which the labels of types need.
 	 */
 	public static Test suite() throws ModuleException {
 		return TLTestSetup.createTLTestSetup(ServiceTestSetup.createSetup(TestRestrictedDelegationTexts.class,
-			TypeIndex.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
+			TypeIndex.Module.INSTANCE, ResourcesModule.Module.INSTANCE, AttributeSettings.Module.INSTANCE));
 	}
 
 }

@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.RandomAccess;
@@ -29,6 +30,9 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.TimeZones;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
+import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -199,6 +203,13 @@ public final class ReadFilter {
 	 * {@link SearchExpression#filterSecurity(Object)}, kept so the two behave alike.
 	 * </p>
 	 *
+	 * <p>
+	 * A formatted text ({@link StructuredText}, also in several languages as
+	 * {@link I18NStructuredText}) keeps a link to an object with a copy of its label and its identity.
+	 * Each link to an object the principal may not read becomes the placeholder of a masked element,
+	 * see {@link TLObjectLinkUtil#maskLinksFor(String, java.util.function.Predicate)}.
+	 * </p>
+	 *
 	 * @param value
 	 *        Any value, including <code>null</code>.
 	 * @return The filtered value; <code>null</code> for an object the principal may not read.
@@ -221,7 +232,31 @@ public final class ReadFilter {
 			// as sequences, so the filtered form is a list.
 			return visibleCollection(Arrays.asList(array));
 		}
+		if (value instanceof StructuredText text) {
+			return visibleText(text);
+		}
+		if (value instanceof I18NStructuredText text) {
+			return visibleTexts(text);
+		}
 		return value;
+	}
+
+	private StructuredText visibleText(StructuredText text) {
+		String source = text.getSourceCode();
+		String masked = TLObjectLinkUtil.maskLinksFor(source, _security::canRead);
+		return masked == source ? text : new StructuredText(masked, text.getImages());
+	}
+
+	private I18NStructuredText visibleTexts(I18NStructuredText texts) {
+		Map<Locale, StructuredText> visible = new HashMap<>();
+		boolean changed = false;
+		for (Map.Entry<Locale, StructuredText> entry : texts.getEntries().entrySet()) {
+			StructuredText text = entry.getValue();
+			StructuredText visibleText = visibleText(text);
+			changed |= visibleText != text;
+			visible.put(entry.getKey(), visibleText);
+		}
+		return changed ? new I18NStructuredText(visible) : texts;
 	}
 
 	private Object visibleCollection(Collection<?> value) {

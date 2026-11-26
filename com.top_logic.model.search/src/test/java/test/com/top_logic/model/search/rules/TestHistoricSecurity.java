@@ -688,8 +688,12 @@ public class TestHistoricSecurity extends BasicTestCase {
 		return _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	}
 
+	/**
+	 * The test runs on versioned knowledge bases only: an unversioned one keeps no historic
+	 * versions, so a historic reference cannot hold a version apart from the current object.
+	 */
 	public static Test suite() {
-		return KBSetup.getKBTest(TestHistoricSecurity.class,
+		return KBSetup.wrapTLCommonSetups(KBSetup.getKBTestWithoutSetups(TestHistoricSecurity.class,
 			ServiceTestSetup.createStarterFactoryForModules(
 				SearchBuilder.Module.INSTANCE,
 				ModelService.Module.INSTANCE,
@@ -698,7 +702,8 @@ public class TestHistoricSecurity extends BasicTestCase {
 				TLSecurityDeviceManager.Module.INSTANCE,
 				PersonManager.Module.INSTANCE,
 				InitialRolesManager.Module.INSTANCE,
-				SecurityConfigurationService.Module.INSTANCE));
+				SecurityConfigurationService.Module.INSTANCE),
+			true));
 	}
 
 }

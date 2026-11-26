@@ -14,7 +14,11 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.view.channel.ChannelNotificationScope;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.element.BadgeBinding;
 import com.top_logic.layout.view.element.ContentControls;
 import com.top_logic.util.Resources;
 
@@ -33,7 +37,7 @@ import com.top_logic.util.Resources;
  * Whether the panel is open is this control's state ({@link #CMD_SET_OPEN}), and it is handed to the
  * elements inside through their {@link ChatDockScope}: <b>a conversation in a closed dock offers the
  * agent nothing</b> - no channel to present on, no page command, no subject, no facts - although it
- * stays displayed, so that the rail's badges and the store keep following the conversation.
+ * stays displayed, so that the store keeps following the conversation.
  * </p>
  *
  * <p>
@@ -57,9 +61,8 @@ public class ChatDockControl extends ChatControl {
 	 * State key: whether the panel is open.
 	 *
 	 * <p>
-	 * Not {@code "open"}: that is how {@code <chat-rail/>} states its own first-load default, and the
-	 * whole bootstrap is read out of one state map, so a dock writing {@code "open"} would decide for
-	 * the rail inside it whether that rail starts open.
+	 * Not {@code "open"}: the whole bootstrap of the chat is read out of one state map, in which
+	 * {@code "open"} is too general a name to stay unambiguous.
 	 * </p>
 	 */
 	public static final String STATE_OPEN = "dockOpen";
@@ -67,8 +70,17 @@ public class ChatDockControl extends ChatControl {
 	/** State key of the content control. */
 	public static final String STATE_CONTENT = "content";
 
+	/**
+	 * State key: the badge of the launcher, from the {@link Config#getBadge() badge} channel; absent
+	 * for none.
+	 */
+	public static final String STATE_BADGE = "badge";
+
 	/** Whether the panel is open; read by the elements inside. */
 	private final ChatDockScope _scope;
+
+	/** The channel following whether the panel is open, {@code null} for none. */
+	private final ViewChannel _openChannel;
 
 	/**
 	 * Creates a {@link ChatDockControl}.
@@ -90,6 +102,24 @@ public class ChatDockControl extends ChatControl {
 		putState("label", label(config.getLabel()));
 		_scope = new ChatDockScope(config.getOpen());
 		putState(STATE_OPEN, Boolean.valueOf(_scope.isOpen()));
+
+		ChannelRef openRef = config.getOpenChannel();
+		_openChannel = openRef == null ? null : context.resolveChannel(openRef);
+		if (_openChannel != null) {
+			_openChannel.set(Boolean.valueOf(_scope.isOpen()));
+			ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> {
+				if (newValue instanceof Boolean open) {
+					ChannelNotificationScope.current().afterNotification(() -> setPanelOpen(open.booleanValue()));
+				}
+			};
+			addCleanupAction(_openChannel.addListener(listener)::dispose);
+		}
+
+		BadgeBinding badge = BadgeBinding.create(context, config);
+		if (badge != null) {
+			writeBadge(badge.current());
+			badge.bind(this, this::writeBadge);
+		}
 
 		if (!content.isEmpty()) {
 			// Scoped, so a <chat-conversation/> in here knows it is the dock's own: it does not make the
@@ -129,6 +159,13 @@ public class ChatDockControl extends ChatControl {
 		}
 		putState(STATE_OPEN, Boolean.valueOf(open));
 		_scope.setOpen(open);
+		if (_openChannel != null) {
+			_openChannel.set(Boolean.valueOf(open));
+		}
+	}
+
+	private void writeBadge(BadgeDisplay badge) {
+		putState(STATE_BADGE, badge == null ? null : badge.toState());
 	}
 
 	private static String label(ResKey key) {

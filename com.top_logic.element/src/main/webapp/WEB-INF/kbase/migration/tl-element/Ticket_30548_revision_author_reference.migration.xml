@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30548_revision_author_reference"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30183_account_lock"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<delete-property name="tl.core:Revision#author"/>
+		<create-reference name="tl.core:Revision#author"
+			type="tl.core:Author"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.knowledge.service.Revision#resolveAuthor()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+				<delete-protected/>
+			</annotations>
+		</create-reference>
+		<reorder-part name="tl.core:Revision#author"
+			before="log"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

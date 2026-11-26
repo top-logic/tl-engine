@@ -14,7 +14,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
-import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
@@ -50,6 +49,8 @@ import com.top_logic.ai.core.message.TokenUsage;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -57,11 +58,13 @@ import com.top_logic.util.model.ModelService;
  * {@code chatStart} - by writing it onto its {@code input} channel, while the browser's own picks
  * and sends are reported by the browser and not written by the server (#30445).
  */
-public class TestChatFollowsActiveSession extends BasicTestCase {
+public class TestChatFollowsActiveSession extends SecurityCheckedTestCase {
 
 	private static final String SELECTION = "chatSession";
 
 	private static final String WITH_INPUT = "input='" + SELECTION + "'";
+
+	private static final String SUBJECT = "chatSubject";
 
 	private static final long TIMEOUT_MILLIS = 60_000;
 
@@ -244,8 +247,13 @@ public class TestChatFollowsActiveSession extends BasicTestCase {
 	 * the browser knows it - the browser would open it as another chat, in the middle of its turn.
 	 */
 	public void testTheSendOfTheBrowserIsNotWritten() throws Exception {
-		ScriptedBackend.install(session -> new AnsweringBackend());
-		Conversation conversation = _driver.conversation(anna, WITH_INPUT, "");
+		TLObject subject = chat(anna, "what the sent chat is about");
+		ScriptedBackend.install(about -> new AnsweringBackend());
+		ViewChannel subjectChannel = new DefaultViewChannel(SUBJECT);
+		subjectChannel.set(subject);
+		_driver.registerChannel(SUBJECT, subjectChannel);
+		Conversation conversation =
+			_driver.conversation(anna, WITH_INPUT + " subject='" + SUBJECT + "'", "");
 		try {
 			_sending = tracker(conversation);
 			Map<String, Object> reply = _driver.command(conversation, ChatControl.CMD_SEND,
@@ -354,6 +362,8 @@ public class TestChatFollowsActiveSession extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestChatFollowsActiveSession.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				AiToolAccessService.Module.INSTANCE,
 				LLMProviderService.Module.INSTANCE,

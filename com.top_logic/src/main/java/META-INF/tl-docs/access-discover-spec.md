@@ -1,5 +1,5 @@
 ---
-description: Read before designing or implementing the Discover right of the model based security - the specification of an object-level right weaker than Read that makes an object visible (in references, enumerations, option lists, with its label) without exposing its attributes, the filtering of every object source in TL-Script and the UI, the checks on inputs, and the parent-path example Root -> A -> B -> C.
+description: Read before designing or implementing the Discover right of the model based security - the specification of an object-level right weaker than Read that makes an object visible (in references, enumerations, option lists, with its label) without exposing its attributes, the filtering of every object source in TL-Script and the UI, the checks on inputs, the masking of object links and mentions in a formatted text (TLObjectLinkUtil.maskLinks), and the parent-path example Root -> A -> B -> C.
 order: 21
 ---
 
@@ -252,11 +252,60 @@ unreadable boolean is no unchecked checkbox, an unreadable reference no empty ce
   only through the placeholder text, and is exported as the placeholder.
 - An embedded column whose path passes a reference the user may not read shows the placeholder as
   well.
-- A column whose attribute the user may read on no row is not offered at all.
+- A column is not offered at all only when its attribute has a `Read` grant of its own that lists
+  no role the user holds: the column would be empty in every row. The `Read` grant of the type never
+  withholds a column; it decides which rows the table shows.
 - Exception: a column built by a column provider of the application (`ColumnProvider`) shows and
   searches the cell by the placeholder, but its own sort and filter see the cell as empty - the
   provider is given the readable values only.
 - Form fields are not affected: a field of an attribute the user may not read is hidden.
+
+### R11b - object links in a formatted text are masked elements
+
+A formatted text (`tl.model.wysiwyg:Html`, `tl.model.i18n:I18NHtml`) stores each link to an object
+as an object link `<a class="tlObject" href="...">label</a>`, also a mention of an object. The
+label is a copy, written when the link was made, and the `href` holds the identity of the object.
+An object link follows the rules for a masked element (R11):
+
+- For an object the user may not discover, the client receives the placeholder (`*****`) in the
+  place of the link: no label, no link and no identity. A link whose `href` names no existing
+  object is masked as well, for every user, so that the placeholder does not tell whether a hidden
+  object exists.
+- Following a link to such an object gives the answer of a link to an object that does not exist.
+  So a link written by hand does not tell whether the object exists or where it is displayed.
+- The stored text keeps its form. A user who edits the text keeps each masked link that the user
+  does not delete: the editor gives each placeholder a token of its own and puts the stored link
+  back when the text is saved. A token is a random value that no other editor hands out. It is
+  valid for the object whose text the editor shows: the editor forgets its tokens when it shows
+  the text of another object. An editor of a value that is no attribute of an object forgets its
+  tokens when the server sets another value. A deleted placeholder deletes the link, a moved one moves it, and a copy
+  in the same text copies it. A placeholder whose token the editor did not hand out for the text it
+  shows brings in no link. Markup that a command inserts at the cursor is masked in the same way,
+  with fresh tokens.
+- The outputs derived from the text for the user are masked as well: the preview where the
+  editor has no room, the text of an inherited value, the display of an HTML property of a
+  configuration that cannot be edited, the text of a table cell of the React view layer (which the
+  cell is sorted, filtered, searched and exported by), the PDF and the Excel export, and every
+  other display of the label of the text.
+- The string conversion of a formatted text in TL-Script follows the security of the script
+  (R12). A secured script gets the placeholder for a link to an object that its user may not
+  discover and for a link to an object that does not exist; like every result of a secured
+  script, the result depends on the user (R6). An unsecured script gets the text as it is stored,
+  so that a value that it stores does not depend on the user who started it. The value of the
+  attribute itself is not masked: `htmlSource()` gives the stored source in every script.
+- An agent run reads a formatted text in a tool result with each link to an object that the
+  account of the run may not read masked, as the run reads no other trace of such an object.
+
+One function applies the rule: `TLObjectLinkUtil.maskLinks` (with `restoreLinks` for the editor).
+The React editor, the derived outputs and the label of a formatted text (its label provider) call
+it. The label masks by default, so that every display of it masks. Only a computation on behalf of
+the system gets the stored text: an unsecured TL-Script evaluation, which sets this mode for its
+duration (`DiscoverRight.computeForUser`).
+
+Not yet covered: the display and the editor of a formatted text in the classic UI (#30517), an
+object link that a client writes by hand into the stored text (#30518), the full-text index and the
+tables of the classic UI (#30543), and the view element `<html>` and the REST services that give a
+formatted text that a script computes (#30544).
 
 ### R12 - secured and unsecured script kinds
 

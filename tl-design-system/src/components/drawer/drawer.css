@@ -1,7 +1,6 @@
 /* Drawer — Spec 2026-10-13 Welle 4a §4. Eine Schublade vom Rand des Viewports oder des Behälters, in dem sie steht
-   (tl-drawer--container). Ohne Scrim ist sie nicht modal: Fokus hinein und zurück, keine Falle. Mit Scrim (die
-   Schublade steht dann in einem .tl-dialog) ist sie modal: Falle, role="dialog", aria-modal — die mobile Sidebar in
-   Welle 4b. Die Seiten heißen nach der Schreibrichtung (start, end), die Breiten sind Maße. */
+   (tl-drawer--container). Ohne Scrim ist sie nicht modal: Fokus hinein und zurück, keine Falle. Mit Scrim
+   (tl-drawer__scrim vor ihr) ist sie modal: Falle, role="dialog", aria-modal. Die Seiten heißen nach der Schreibrichtung (start, end), die Breiten sind Maße. */
 
 .tl-drawer {
   position: fixed;
@@ -78,6 +77,12 @@
   inset: 0;
   z-index: var(--tl-layer-raised);
   background: var(--tl-surface-scrim);
+}
+
+/* Der Scrim einer modalen Schublade am Viewport deckt die ganze Seite, auf der Ebene der Schublade und vor ihr. */
+.tl-drawer__scrim--viewport {
+  position: fixed;
+  z-index: var(--tl-layer-overlay);
 }
 
 /* Der Behälter beschneidet (Master-Detail: overflow: clip); der Ring der Schublade liegt darum innen. */

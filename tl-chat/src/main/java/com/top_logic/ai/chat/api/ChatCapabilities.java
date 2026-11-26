@@ -287,9 +287,9 @@ public final class ChatCapabilities {
 	 */
 	/*
 	 * Read from the definition rather than from a table of the five agents this product ships, which
-	 * is what this was until #392. That table left every other agent - a customer's own record, a
-	 * consulting installation's - with an empty line under its name, and there was nowhere to write
-	 * one. The text now lives where the agent does: a <summary> in the agent's configuration, or the
+	 * is what this was until #392. That table left every other agent - an application's own record,
+	 * one an installation configured - with an empty line under its name, and there was nowhere to
+	 * write one. The text now lives where the agent does: a <summary> in the agent's configuration, or the
 	 * summary attribute of its record.
 	 */
 	/**

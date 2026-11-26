@@ -118,6 +118,10 @@ public class ElementSecurityStorage extends SecurityStorage {
             // Iterator <RoleRule>
             long startTime = System.currentTimeMillis();
             for (RoleProvider theRule : theChangedMap.keySet()) {
+				if (!theAM.getRuleAnalysis().isStored(theRule)) {
+					// The rule is evaluated whenever access is checked.
+					continue;
+				}
             	long startRule = System.currentTimeMillis();
             	long existingTime = 0;
             	long newTime      = 0;
@@ -390,6 +394,10 @@ public class ElementSecurityStorage extends SecurityStorage {
 					Iterator<RoleProvider> itRule = theRules.iterator();
 					while (itRule.hasNext()) {
 						RoleProvider theRule = itRule.next();
+						if (!am.getRuleAnalysis().isStored(theRule)) {
+							// The rule is evaluated whenever access is checked.
+							continue;
+						}
 					    theVector[2] = roleId(theRule);
 						theVector[3] = am.getPersitancyId(theRule);
 						Collection<Group> theGroups = theRule.getGroups((BoundObject) theBusinessObject);

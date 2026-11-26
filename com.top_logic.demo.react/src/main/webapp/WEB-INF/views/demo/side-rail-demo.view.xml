@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A <side-rail> in the left pane of a <split-panel>, beside the form of the contact selected in it.
+	
+	The rail has two sections: "Contacts", a <data-list> of the contacts with "New contact" and, per
+	row, "Delete"; and "Tickets", the tickets assigned to the selected contact, whose count is the
+	badge of the section (on its strip icon and in its header).
+	
+	- Closing the rail (a second click on the strip icon of a shown section, or the button "Side rail"
+	in the toolbar of the panel) shrinks its pane to the strip, and the form takes the space; opening
+	it gives the pane its width back.
+	- The button "Side rail" opens and closes the rail through its open-channel "railOpen", is pressed
+	while the rail is open, and shows the rail's badge-channel "railBadge": what the sections count
+	beyond what was seen of them while they were shown.
+	- Below 44 rem of width of the split panel, the rail keeps only its strip and opens as a modal
+	drawer over the form; picking a contact closes the drawer (dismiss-on).
+	- Whether the rail is open, which sections are expanded and the size of the pane are remembered
+	per user.
+-->
+<view>
+	<channels>
+		<channel name="contact"/>
+		<channel name="ticketCount"/>
+		<channel name="railOpen"/>
+		<channel name="railBadge"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Side rail</en>
+			<de>Seitenspalte</de>
+		</title>
+		<commands>
+			<generic-command
+				active-expr="$railOpen"
+				badge="railBadge"
+				image="css:bi bi-layout-sidebar"
+				inputs="railOpen"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Side rail</en>
+					<de>Seitenspalte</de>
+				</label>
+				<execute-script function="!$railOpen">
+					<with-result>
+						<write-channel name="railOpen"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+		<split-panel
+			orientation="horizontal"
+			resizable="true"
+		>
+			<panes>
+				<pane
+					min-size="200"
+					size="320"
+					unit="px"
+				>
+					<side-rail
+						badge-channel="railBadge"
+						drawer-below="44"
+						open-channel="railOpen"
+					>
+						<section name="contacts"
+							dismiss-on="contact"
+							header="false"
+							icon="css:bi bi-person-lines-fill"
+						>
+							<label>
+								<en>Contacts</en>
+								<de>Kontakte</de>
+							</label>
+							<data-list
+								observed-types="Contacts:PersonContact"
+								row-channel="person"
+								search="true"
+								selection="contact"
+							>
+								<title>
+									<en>Contacts</en>
+									<de>Kontakte</de>
+								</title>
+								<rows><![CDATA[all(`Contacts:PersonContact`)
+	.sort(comparator(c -> {
+		name = $c.get(`Contacts:PersonContact#name`);
+		if(isEmpty($name), '', $name.toLowerCase())
+	}))]]></rows>
+								<leading name="c -> list($c.get(`Contacts:PersonContact#firstname`), $c.get(`Contacts:PersonContact#name`)).filter(p -> !isEmpty($p)).join(' ')"/>
+								<lines>
+									<line value="c -> list($c.get(`Contacts:PersonContact#firstname`), $c.get(`Contacts:PersonContact#name`)).filter(p -> !isEmpty($p)).join(' ')"/>
+									<line
+										attribute="email"
+										emphasis="secondary"
+									/>
+								</lines>
+								<empty-text>
+									<en>No contacts</en>
+									<de>Keine Kontakte</de>
+								</empty-text>
+								<commands>
+									<generic-command image="css:bi bi-person-plus">
+										<label>
+											<en>New contact</en>
+											<de>Neuer Kontakt</de>
+										</label>
+										<create-transient type="Contacts:PersonContact">
+											<with-result>
+												<open-dialog
+													bind-input-to="model"
+													dialog-view="demo/create-contact.view.xml"
+												>
+													<bind
+														channel="selection"
+														to="contact"
+													/>
+												</open-dialog>
+											</with-result>
+										</create-transient>
+									</generic-command>
+								</commands>
+								<row-commands>
+									<generic-command
+										clique="delete"
+										image="css:bi bi-trash"
+										inputs="person"
+									>
+										<label>
+											<en>Delete</en>
+											<de>Löschen</de>
+										</label>
+										<confirm>
+											<expr><![CDATA[#("Delete {0}?"@en, "{0} löschen?"@de).fill($person)]]></expr>
+										</confirm>
+										<delete-object/>
+										<write-channel name="contact"
+											clear="true"
+										/>
+									</generic-command>
+								</row-commands>
+							</data-list>
+						</section>
+						<section name="tickets"
+							badge="ticketCount"
+							icon="css:bi bi-ticket-perforated"
+							open="false"
+						>
+							<label>
+								<en>Tickets</en>
+								<de>Tickets</de>
+							</label>
+							<data-list
+								count="ticketCount"
+								observed-types="Contacts:PersonContact, tl.demo.projectManagement:Ticket"
+								search="false"
+							>
+								<inputs>
+									<input channel="contact"/>
+								</inputs>
+								<rows><![CDATA[c -> if(isEmpty($c), list(), $c.referers(`tl.demo.projectManagement:Ticket#assignee`))]]></rows>
+								<lines>
+									<line attribute="title"/>
+								</lines>
+								<empty-text>
+									<en>No tickets of the selected contact</en>
+									<de>Keine Tickets des gewählten Kontakts</de>
+								</empty-text>
+							</data-list>
+						</section>
+					</side-rail>
+				</pane>
+				<pane
+					size="100"
+					unit="%"
+				>
+					<form
+						input="contact"
+						with-inset="true"
+					>
+						<field attribute="firstname"/>
+						<field attribute="name"/>
+						<field attribute="email"/>
+						<field attribute="phone"/>
+					</form>
+				</pane>
+			</panes>
+		</split-panel>
+	</panel>
+</view>

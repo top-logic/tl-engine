@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The page TestForwardToView forwards to: an anonymous entry point displaying the parameter "nr"
+	it is handed as query.
+-->
+<view>
+	<channels>
+		<channel name="nr"/>
+	</channels>
+	<query-bindings>
+		<bind
+			channel="nr"
+			query-param="nr"
+		/>
+	</query-bindings>
+	<text input="nr"/>
+</view>

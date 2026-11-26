@@ -147,7 +147,7 @@ public class UploadCommand implements ViewCommand {
 
 	private final ResKey _label;
 
-	private final ButtonTone _after;
+	private final ButtonTone _tone;
 
 	/**
 	 * Creates a new {@link UploadCommand} from configuration.
@@ -159,7 +159,7 @@ public class UploadCommand implements ViewCommand {
 		_accept = config.getAccept();
 		_multiple = config.isMultiple();
 		_label = config.getLabel();
-		_after = CommandCliques.tone(config.getClique());
+		_tone = CommandCliques.tone(config);
 	}
 
 	/**
@@ -186,11 +186,13 @@ public class UploadCommand implements ViewCommand {
 	}
 
 	/**
-	 * The tone of what follows the {@link #getActions() chain}, the tone its
-	 * {@link Config#getClique() clique} gives this command (see {@link CommandCliques#tone(String)}).
+	 * The tone the {@link #getActions() chain} runs in, the tone this command takes from its
+	 * configuration (see {@link CommandCliques#tone(ViewCommand.Config)}).
+	 *
+	 * @return {@code null} when the tone follows what the actions of the chain do.
 	 */
-	public ButtonTone getToneAfterActions() {
-		return _after;
+	public ButtonTone getChainTone() {
+		return _tone;
 	}
 
 	/**

@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { resetTLBridge, setTLState } from '../test/tl-react-bridge'
-import { App } from './App'
 import { plusMenuVisible } from './composer'
 import {
   channelName,
@@ -14,6 +13,7 @@ import {
   readThreadConfig,
   tokenWrite,
   sameServers,
+  HEADER_COMMANDS,
   TLChatConversation,
 } from './chat-conversation'
 
@@ -248,10 +248,30 @@ describe('where the prompt cards are rendered', () => {
   })
 })
 
-describe('TLChatConversation and App', () => {
-  it('are functions over the same store API', () => {
-    expect(typeof TLChatConversation).toBe('function')
-    expect(typeof App).toBe('function')
+describe('the commands of the head of the transcript', () => {
+  afterEach(() => resetTLBridge())
+
+  it('renders the toolbar the view configured at the end of the head', () => {
+    setTLState({
+      chatId: 'header-commands-test',
+      authenticated: true,
+      language: 'en',
+      [HEADER_COMMANDS]: { controlId: 'c-toolbar', module: 'TLToolbar', state: {} },
+    })
+    const markup = renderToStaticMarkup(
+      React.createElement(TLChatConversation, { controlId: 'header-commands-test', state: {} }),
+    )
+    expect(markup).toMatch(
+      /<div class="thread-bar-end"><tl-child data-control-id="c-toolbar" data-module="TLToolbar"><\/tl-child><\/div>/,
+    )
+  })
+
+  it('renders no end of the head without commands', () => {
+    setTLState({ chatId: 'no-header-commands-test', authenticated: true, language: 'en' })
+    const markup = renderToStaticMarkup(
+      React.createElement(TLChatConversation, { controlId: 'no-header-commands-test', state: {} }),
+    )
+    expect(markup).not.toContain('thread-bar-end')
   })
 })
 

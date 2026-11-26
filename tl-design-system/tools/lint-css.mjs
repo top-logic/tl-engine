@@ -150,6 +150,7 @@ const MODIFIERS = {
   'tl-item': new Set([]),
   'tl-deck': new Set([]),
   'tl-split': new Set(['horizontal', 'vertical']), // Alle eingeklappt: data-tl-state.
+  'tl-side-rail': new Set(['start', 'end']), // Offen, Schublade, eigene Breite: data-tl-state.
   'tl-tile-stack': new Set([]), // Richtung und Übergang: data-tl-state.
   'tl-swatch': new Set(['color', 'wide']), // Leer, Fehler, Warnung: Attribute.
   'tl-picker': new Set([]),
@@ -196,12 +197,12 @@ const MODIFIERS = {
 // Eintrag hat keinen Modifier.
 const ELEMENT_MODIFIERS = {
   'tl-card__body': new Set(['pad-default', 'pad-compact']),
+  'tl-drawer__scrim': new Set(['viewport']), // Der Scrim einer am Viewport verankerten modalen Schublade.
   'tl-form-field__input': new Set(['explained', 'resettable']),
   'tl-image-field__step': new Set(['previous', 'next']),
   'tl-image-overlay__step': new Set(['previous', 'next']),
-  // check: die Zeile mit gezeichneter Marke (menuitemcheckbox, #30102), nav: die Zeile, die eine nächste Seite öffnet
-  // (Wert und Chevron am Ende, #30234); je eine Form.
-  'tl-menu__item': new Set(['danger', 'check', 'nav']),
+  // check: die Zeile mit gezeichneter Marke (menuitemcheckbox, #30102).
+  'tl-menu__item': new Set(['danger', 'check']),
   'tl-overlay__layer': new Set(['bottom', 'bottom-left', 'bottom-right', 'center', 'fill', 'left', 'right', 'top',
     'top-left', 'top-right']), // Die Anker der Überlagerung.
   'tl-rich-text__markup': new Set(['inline']),

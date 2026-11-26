@@ -7,7 +7,6 @@ package com.top_logic.ai.chat.view;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -15,7 +14,6 @@ import junit.framework.TestSuite;
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
-import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -36,22 +34,17 @@ import com.top_logic.util.TLContextManager;
  */
 public class TestChatLogin extends BasicTestCase {
 
-	private Function<String, ChatPreferencesDto> _previousSource;
-
 	private Person _previousPerson;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		_previousSource = ChatViewBinding.preferenceSource;
-		ChatViewBinding.preferenceSource = chatId -> ChatPreferencesDto.create();
 		_previousPerson = window().getPerson();
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
 		window().setPerson(_previousPerson);
-		ChatViewBinding.preferenceSource = _previousSource;
 		super.tearDown();
 	}
 

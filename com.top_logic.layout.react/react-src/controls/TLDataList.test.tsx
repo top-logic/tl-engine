@@ -39,27 +39,23 @@ const CommandStub: React.FC<TLCellProps> = ({ controlId }) => (
   <button type="button" id={controlId} className="tl-button">New</button>
 );
 
-/** The observers the list created, so that a test can say "the host was resized". */
-const observers: FakeResizeObserver[] = [];
+/**
+ * The stand-in for the content of a template after the lines of a row: a status text and a button
+ * of its own.
+ */
+const TrailingStub: React.FC<TLCellProps> = ({ controlId }) => (
+  <span id={controlId}>
+    <span className="test-status">Open</span>
+    <button type="button" className="test-action">Act</button>
+  </span>
+);
 
-class FakeResizeObserver {
-  constructor(private readonly callback: () => void) {
-    observers.push(this);
-  }
-  observe(): void {}
-  unobserve(): void {}
-  disconnect(): void {
-    observers.splice(observers.indexOf(this), 1);
-  }
-  fire(): void {
-    this.callback();
-  }
-}
+/** The stand-in for a template showing a status the server updates, e.g. a pill. */
+const StatusStub: React.FC<TLCellProps> = ({ controlId, state }) => (
+  <span id={controlId} className="test-status">{String(state.text)}</span>
+);
 
 let sent: Sent[] = [];
-
-/** The width the host reports, in px (at a 16 px rem, 44 rem are 704 px). */
-let hostWidth = 1100;
 
 beforeAll(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -75,6 +71,8 @@ beforeAll(() => {
   registerPart('Avatar', AvatarPart);
   registerPart('Badge', BadgePart);
   register('TestCommand', CommandStub);
+  register('TestTrailing', TrailingStub);
+  register('TestStatus', StatusStub);
   register('TLDataList', TLDataList);
 });
 
@@ -82,7 +80,6 @@ afterEach(async () => {
   act(() => unmount(LIST_ID));
   findMountPoint(LIST_ID)?.remove();
   vi.unstubAllGlobals();
-  observers.length = 0;
   await settle();
 });
 
@@ -104,7 +101,6 @@ async function settle(): Promise<void> {
 function listState(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     search: false,
-    collapsible: false,
     title: 'Contacts',
     emptyText: 'Nobody yet',
     selectedId: '',
@@ -117,11 +113,9 @@ function listState(overrides: Record<string, unknown> = {}): Record<string, unkn
   };
 }
 
-/** Mounts the list into a host of the width {@link hostWidth}, and records the commands it sends. */
-async function mountList(overrides: Record<string, unknown> = {}, width = 1100): Promise<void> {
+/** Mounts the list, and records the commands it sends. */
+async function mountList(overrides: Record<string, unknown> = {}): Promise<void> {
   sent = [];
-  hostWidth = width;
-  vi.stubGlobal('ResizeObserver', FakeResizeObserver);
   vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? '{}'));
     if (body.controlId === LIST_ID) {
@@ -131,33 +125,13 @@ async function mountList(overrides: Record<string, unknown> = {}, width = 1100):
   }));
   const element = document.createElement('div');
   element.setAttribute(MOUNT_ATTRIBUTE, LIST_ID);
-  Object.defineProperty(element, 'clientWidth', { get: () => hostWidth });
   document.body.appendChild(element);
   act(() => mount(LIST_ID, 'TLDataList', listState(overrides), 'w', '/ctx'));
   await settle();
 }
 
-/** The host becomes this wide, and the observer says so. */
-function resize(width: number): void {
-  hostWidth = width;
-  act(() => observers.forEach((observer) => observer.fire()));
-}
-
 function list(): HTMLElement {
   return document.getElementById(LIST_ID)!;
-}
-
-/** The toggle of the strip or column, not the one in an open drawer. */
-function toggle(): HTMLButtonElement {
-  return list().querySelector<HTMLButtonElement>(':scope > .tl-list__header > .tl-toggle')!;
-}
-
-function drawer(): HTMLElement | null {
-  return list().querySelector<HTMLElement>('aside.tl-drawer');
-}
-
-function scrim(): HTMLElement | null {
-  return list().querySelector<HTMLElement>('.tl-drawer__scrim');
 }
 
 function mains(root: ParentNode = list()): HTMLButtonElement[] {
@@ -278,116 +252,12 @@ describe('the trigger of the row commands', () => {
   });
 });
 
-describe('a collapsible list in a wide host', () => {
-  it('collapses to its strip and expands again', async () => {
-    await mountList({ collapsible: true });
+describe('a list', () => {
+  it('has no collapse of its own: no toggle, and its rows always shown', async () => {
+    await mountList({ title: 'Contacts' });
+    expect(list().querySelector('.tl-toggle')).toBeNull();
     expect(list().getAttribute('data-tl-state')).toBeNull();
-    click(toggle());
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
-    expect(toggle().getAttribute('aria-expanded')).toBe('false');
     expect(mains()).toHaveLength(3);
-    click(toggle());
-    expect(list().getAttribute('data-tl-state')).toBeNull();
-  });
-
-  it('starts collapsed when the element says so', async () => {
-    await mountList({ collapsible: true, collapsed: true });
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
-  });
-
-  it('needs collapsible to start collapsed', async () => {
-    await mountList({ collapsible: false, collapsed: true });
-    expect(list().getAttribute('data-tl-state')).toBeNull();
-    expect(toggle()).toBeNull();
-  });
-
-  it('is never a drawer with drawer-below 0', async () => {
-    await mountList({ collapsible: true, drawerBelow: 0 }, 320);
-    expect(list().getAttribute('data-tl-state')).toBeNull();
-    expect(observers).toHaveLength(0);
-  });
-});
-
-describe('a collapsible list in a narrow host', () => {
-  it('is a strip without rows, its toggle offering to open it', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44 }, 560);
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
-    expect(toggle().getAttribute('aria-expanded')).toBe('false');
-    expect(toggle().getAttribute('aria-label')).toBe('Expand list');
-    expect(mains()).toHaveLength(0);
-    expect(drawer()).toBeNull();
-  });
-
-  it('switches at the configured width, measured in rem', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44 }, 704);
-    expect(list().getAttribute('data-tl-state')).toBeNull();
-    resize(703);
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
-  });
-
-  it('opens as a modal drawer with a scrim, the focus on the selected row', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44, selectedId: 'r3' }, 560);
-    click(toggle());
-    const aside = drawer()!;
-    expect(aside.className).toBe('tl-drawer tl-drawer--start tl-drawer--narrow tl-drawer--container');
-    expect(aside.getAttribute('role')).toBe('dialog');
-    expect(aside.getAttribute('aria-modal')).toBe('true');
-    expect(scrim()).not.toBeNull();
-    expect(document.activeElement?.getAttribute('title')).toBe('Berta');
-  });
-
-  it('closes when a row is picked, still picks it, and hands the focus back to the toggle', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44 }, 560);
-    click(toggle());
-    expect(document.activeElement?.getAttribute('title')).toBe('Anna');
-    click(mains(drawer()!)[1]);
-    await settle();
-    expect(drawer()).toBeNull();
-    expect(document.activeElement).toBe(toggle());
-    expect(sent).toEqual([{ command: CMD_SELECT, args: { [ARG_ID]: 'r2' } }]);
-  });
-
-  it('closes on the scrim, on its own toggle and on a command', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44, buttons: [{ controlId: 'b1', module: 'TestCommand', state: {} }] }, 560);
-    click(toggle());
-    click(scrim()!);
-    expect(drawer()).toBeNull();
-
-    click(toggle());
-    click(drawer()!.querySelector('.tl-toggle')!);
-    expect(drawer()).toBeNull();
-
-    click(toggle());
-    click(drawer()!.querySelector('#b1')!);
-    expect(drawer()).toBeNull();
-  });
-
-  it('closes on Escape, but leaves Escape to a search field with text in it', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44, search: true }, 560);
-    click(toggle());
-    const input = drawer()!.querySelector<HTMLInputElement>('input')!;
-    type(input, 'ann');
-    act(() => input.focus());
-    key(input, 'Escape');
-    expect(drawer()).not.toBeNull();
-
-    type(input, '');
-    const event = key(input, 'Escape');
-    expect(event.defaultPrevented).toBe(true);
-    expect(drawer()).toBeNull();
-    expect(document.activeElement).toBe(toggle());
-  });
-
-  it('keeps the user’s column choice across the drawer and back', async () => {
-    await mountList({ collapsible: true, drawerBelow: 44 }, 1100);
-    click(toggle());
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
-    resize(560);
-    click(toggle());
-    expect(drawer()).not.toBeNull();
-    resize(1100);
-    expect(drawer()).toBeNull();
-    expect(list().getAttribute('data-tl-state')).toBe('collapsed');
   });
 });
 
@@ -427,6 +297,90 @@ describe('what stands in front of and after the lines', () => {
     expect(trailing[0].textContent).toBe('yesterday');
     expect(trailing[0].querySelector('.tl-badge')).toBeNull();
     expect(trailing[1].querySelector('.tl-badge')!.textContent).toBe('3');
+  });
+});
+
+describe('the content of a template after the lines', () => {
+  async function mountTemplateList(): Promise<void> {
+    await mountList({
+      rows: [
+        { id: 'r1', lines: [{ text: 'Anna' }], trailing: { text: '', badge: false, control: { controlId: 't1', module: 'TestTrailing', state: {} } } },
+        { id: 'r2', lines: [{ text: 'Arne' }], trailing: { text: 'yesterday' } },
+      ],
+    });
+  }
+
+  it('is the child control of the row, beside the button of the entry, not in it', async () => {
+    await mountTemplateList();
+    const item = list().querySelector('.tl-list__item')!;
+    const trailing = item.querySelector(':scope > .tl-list__trailing')!;
+    expect(trailing.querySelector('#t1')).not.toBeNull();
+    expect(mains()[0].querySelector('#t1')).toBeNull();
+    expect(mains()[0].querySelector('.tl-list__trailing')).toBeNull();
+    expect(mains()[1].querySelector('.tl-list__trailing')!.textContent).toBe('yesterday');
+  });
+
+  it('selects the row on a click on its text', async () => {
+    await mountTemplateList();
+    click(list().querySelector('#t1 .test-status')!);
+    await settle();
+    expect(sent).toEqual([{ command: CMD_SELECT, args: { [ARG_ID]: 'r1' } }]);
+  });
+
+  it('leaves a click on its button to the button, without selecting the row', async () => {
+    await mountTemplateList();
+    click(list().querySelector('#t1 .test-action')!);
+    await settle();
+    expect(sent).toEqual([]);
+  });
+});
+
+describe('the template of an entry hidden by the search', () => {
+  async function mountStatusList(): Promise<HTMLInputElement> {
+    await mountList({
+      search: true,
+      rows: [
+        { id: 'r1', lines: [{ text: 'Anna' }], trailing: { text: '', badge: false, control: { controlId: 's1', module: 'TestStatus', state: { text: 'Open' } } } },
+        { id: 'r2', lines: [{ text: 'Arne' }] },
+      ],
+    });
+    return list().querySelector<HTMLInputElement>('.tl-list__search input')!;
+  }
+
+  function status(): string | null {
+    return list().querySelector('#s1')?.textContent ?? null;
+  }
+
+  function update(controlId: string, patch: Record<string, unknown>): void {
+    act(() => updates.get(controlId)!(patch));
+  }
+
+  it('shows the state it received before it was hidden when it is shown again', async () => {
+    const search = await mountStatusList();
+    update('s1', { text: 'In progress' });
+    expect(status()).toBe('In progress');
+
+    type(search, 'arne');
+    expect(status()).toBeNull();
+    type(search, '');
+    expect(status()).toBe('In progress');
+  });
+
+  it('shows the state it received while it was hidden when it is shown again', async () => {
+    const search = await mountStatusList();
+    type(search, 'arne');
+    expect(status()).toBeNull();
+    update('s1', { text: 'Closed' });
+
+    type(search, '');
+    expect(status()).toBe('Closed');
+  });
+
+  it('is released when the list no longer describes it', async () => {
+    const search = await mountStatusList();
+    type(search, 'arne');
+    update(LIST_ID, { rows: [{ id: 'r2', lines: [{ text: 'Arne' }] }] });
+    expect(updates.has('s1')).toBe(false);
   });
 });
 

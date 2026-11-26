@@ -33,7 +33,9 @@ import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.security.RefererRelation;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -130,7 +132,8 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	/**
 	 * What a view tells above the access of the given account, as paragraphs of HTML: the bypasses
 	 * applying to the account and to the type of the object, the object deciding for an object
-	 * delegating to an access parent, and whether the sources of the roles are available.
+	 * delegating to an access parent, an access parent combining its candidates itself, and
+	 * whether the sources of the roles are available.
 	 *
 	 * @param account
 	 *        The account whose access is shown.
@@ -172,6 +175,10 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 				if (delegation != null) {
 					texts.add(delegation);
 				}
+			}
+			ResKey combination = combination(explanation);
+			if (combination != null) {
+				texts.add(combination);
 			}
 			if (!explanation.sourcesAvailable()) {
 				texts.add(I18NConstants.EFFECTIVE_ACCESS_SOURCES_UNAVAILABLE);
@@ -226,18 +233,39 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * The object holding the roles that decide the first of the given delegated operations, in the
-	 * order of their names, that applies to the object; <code>null</code> when there is none.
+	 * The first object holding the roles that decide the first of the given delegated operations,
+	 * in the order of their names, that applies to the object; <code>null</code> when there is
+	 * none.
 	 */
 	private static TLObject delegatedRoleHolder(AccessExplanation explanation, Set<BoundCommandGroup> operations) {
 		return operations.stream()
 			.sorted(Comparator.comparing(BoundCommandGroup::getID))
 			.map(explanation::getDecision)
 			.filter(Objects::nonNull)
-			.map(OperationDecision::roleHolder)
-			.filter(Objects::nonNull)
+			.map(OperationDecision::roleHolders)
+			.filter(holders -> !holders.isEmpty())
+			.map(holders -> holders.get(0))
 			.findFirst()
 			.orElse(null);
+	}
+
+	/**
+	 * The paragraph telling that an access parent of the object of the given explanation combines
+	 * its candidates itself, so that the roles shown may admit more than it does.
+	 *
+	 * @param explanation
+	 *        The explanation of the access to the object.
+	 * @return The paragraph, <code>null</code> when every access parent combines its candidates by
+	 *         OR.
+	 *
+	 * @see AccessExplanation#combiningParent()
+	 */
+	static ResKey combination(AccessExplanation explanation) {
+		AccessParentFunction parent = explanation.combiningParent();
+		if (parent == null) {
+			return null;
+		}
+		return I18NConstants.EFFECTIVE_ACCESS_COMBINED__PARENT.fill(parent.getLabel());
 	}
 
 	/**
@@ -249,12 +277,18 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 * @param decidingObject
 	 *        The label of the object deciding.
 	 * @param parent
-	 *        The access parent of the type, <code>null</code> when it is not known.
+	 *        The access parent of the type, <code>null</code> when it is not known. An access parent
+	 *        not restricted to some operations that does not
+	 *        {@link AccessParentFunction#delegatesCreation() decide Create} leaves Create to the type,
+	 *        as a {@link RefererRelation} or an {@link AnyOfRelation} without a candidate leading to
+	 *        the container does.
 	 */
 	static ResKey delegation(String type, String decidingObject, AccessParentFunction parent) {
 		Set<BoundCommandGroup> operations = parent == null ? null : parent.getOperations();
 		if (operations == null) {
-			return I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.fill(type, decidingObject);
+			return parent == null || parent.delegatesCreation()
+				? I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.fill(type, decidingObject)
+				: I18NConstants.EFFECTIVE_ACCESS_DELEGATED_OWN_CREATE__TYPE_OBJECT.fill(type, decidingObject);
 		}
 		return I18NConstants.EFFECTIVE_ACCESS_DELEGATED_RESTRICTED__TYPE_OBJECT_OPERATIONS.fill(type, decidingObject,
 			SecurityGrantFunctions.operationLabels(operations));
@@ -311,7 +345,7 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 
 	/**
 	 * The roles granting the operation of the given decision: those of the admitting roles the
-	 * account holds on the deciding object.
+	 * account holds on an object deciding the operation, on which they admit it.
 	 *
 	 * @param decision
 	 *        A decision, see {@link #operations(AccessExplanation)}.
@@ -324,7 +358,8 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * The roles admitting the operation of the given decision when held on the deciding object.
+	 * The roles admitting the operation of the given decision when held on an object deciding the
+	 * operation.
 	 *
 	 * @param decision
 	 *        A decision, see {@link #operations(AccessExplanation)}.
@@ -365,12 +400,21 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 *        A decision of it, see {@link #operations(AccessExplanation)}.
 	 * @return The reason in the language of the user.
 	 *
-	 * @implNote The object deciding the operation is {@link OperationDecision#roleHolder()}, the
-	 *           operation checked on it is {@link OperationDecision#checkedOperation()}.
+	 * @implNote The objects deciding the operation are {@link OperationDecision#roleHolders()},
+	 *           the operation checked on them is {@link OperationDecision#checkedOperation()}.
 	 */
 	@Label("Reason of a decision")
 	@SideEffectFree
 	public static String reason(@Mandatory AccessExplanation explanation, @Mandatory OperationDecision decision) {
+		return reason(explanation, decision, MetaLabelProvider.INSTANCE::getLabel);
+	}
+
+	/**
+	 * Why the given decision is made, naming the objects deciding it with the given labels.
+	 *
+	 * @see #reason(AccessExplanation, OperationDecision)
+	 */
+	static String reason(AccessExplanation explanation, OperationDecision decision, Function<Object, String> labels) {
 		ResKey reason;
 		if (decision.allowed()) {
 			if (!decision.grantingRoles().isEmpty()) {
@@ -393,18 +437,23 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 		}
 		Resources resources = Resources.getInstance();
 		String text = resources.getString(reason);
-		TLObject roleHolder = decision.roleHolder();
-		if (roleHolder == null || roleHolder.equals(explanation.object())) {
+		List<TLObject> roleHolders = decision.roleHolders();
+		if (roleHolders.isEmpty() || roleHolders.equals(List.of(explanation.object()))) {
 			return text;
 		}
 		if (decision.allowed() && !decision.grantingRoles().isEmpty()
 			&& decision.ownGrantingRoles().containsAll(decision.grantingRoles())) {
-			// Allowed by roles held on the object itself, not by roles held on the role holder.
+			// Allowed by roles held on the object itself, not by roles held on the role holders.
 			return text;
 		}
-		return resources.getString(I18NConstants.EFFECTIVE_ACCESS_CHECKED_ON__OPERATION_OBJECT_REASON.fill(
-			resources.getString(SecurityGrantFunctions.labelKey(decision.checkedOperation())),
-			MetaLabelProvider.INSTANCE.getLabel(roleHolder), text));
+		String operation = resources.getString(SecurityGrantFunctions.labelKey(decision.checkedOperation()));
+		if (roleHolders.size() == 1) {
+			return resources.getString(I18NConstants.EFFECTIVE_ACCESS_CHECKED_ON__OPERATION_OBJECT_REASON.fill(
+				operation, labels.apply(roleHolders.get(0)), text));
+		}
+		String holders = roleHolders.stream().map(labels).collect(Collectors.joining(SEPARATOR));
+		return resources.getString(I18NConstants.EFFECTIVE_ACCESS_CHECKED_ON_SEVERAL__OPERATION_OBJECTS_REASON.fill(
+			operation, holders, text));
 	}
 
 	private static String roles(Set<BoundedRole> roles) {

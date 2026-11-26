@@ -100,6 +100,7 @@
 &lt;/create-reference&gt;
 </code></pre>
 <p>The name of the reference must be specified fully qualified. The same syntax can be used in the annotations as in the model files.</p>
+<p>For a composition (<code class="hljs inlineCode">composite="true"</code>), the end of the created association pointing to the owner of the reference refers to the single container of a part: it is single-valued and an aggregate, as for a composition defined in a model file.</p>
 <h2>Deleting a reference</h2>
 <p>If a <code class="hljs inlineCode">TLReference</code> is to be deleted, this can be done with <code class="hljs inlineCode">&lt;delete-reference .../&gt;</code>, e.g.:</p>
 <pre><code>&lt;delete-reference name="test.module:MyType#ref1"/&gt;
@@ -121,10 +122,15 @@
 &lt;/create-inverse-reference&gt;
 </code></pre>
 <p>The syntax is basically the same as for a <code class="hljs inlineCode">TLReference</code>, except that the qualified name of the reference must be specified instead of the qualified name of the target type.</p>
+<p>If the forward reference is a composition, the backward reference answers the single container of a part. As for a backward reference of a composition in a model file, only <code class="hljs inlineCode">navigate</code> is taken from the configuration; <code class="hljs inlineCode">mandatory</code>, <code class="hljs inlineCode">multiple</code>, <code class="hljs inlineCode">bag</code>, <code class="hljs inlineCode">ordered</code>, <code class="hljs inlineCode">aggregate</code> and <code class="hljs inlineCode">composite</code> are ignored.</p>
 <h2>Deleting a backward reference</h2>
 <p>If a backward reference is to be deleted, this can be done with <code class="hljs inlineCode">&lt;delete-inverse-reference .../&gt;</code>, e.g.:</p>
 <pre><code>&lt;delete-inverse-reference name="test.module:MyType#invRef"/&gt;</code></pre>
 <p>The reference name must be specified fully qualified.</p>
+<h2>Repairing the container ends of compositions</h2>
+<p>The end of a composition's association pointing to the container must be single-valued and an aggregate, otherwise a backward reference of the composition answers a set instead of the container. <code class="hljs inlineCode">&lt;repair-composition-container-ends/&gt;</code> makes each such end in the stored model that is multiple or no aggregate single-valued and an aggregate and logs it with its qualified name. A model without such ends stays unchanged. The processor has no attributes:</p>
+<pre><code>&lt;repair-composition-container-ends/&gt;</code></pre>
+<p>The migration <code class="hljs inlineCode">Ticket_30565_composition_container_ends</code> of the module <code class="hljs inlineCode">tl-element</code> runs it for every application.</p>
 <h2>Marking an attribute as an override</h2>
 <p>If an override of an attribute or reference is to be created, this cannot <strong>be </strong>done with the keyword <code class="hljs inlineCode">override="true" </code>. The new attribute or reference must be created normally and then the new attribute defined as an override.</p>
 <p>This can be done with <code class="hljs inlineCode">&lt;mark-override .../&gt;</code>, for example:</p>

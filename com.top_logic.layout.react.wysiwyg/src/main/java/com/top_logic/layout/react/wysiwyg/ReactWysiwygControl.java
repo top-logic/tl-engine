@@ -11,9 +11,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.activation.MimeType;
@@ -26,6 +28,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -62,6 +65,7 @@ import com.top_logic.layout.wysiwyg.ui.HTMLTextExtractor;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.error.TopLogicException;
 
@@ -103,6 +107,14 @@ import de.haumacher.msgbuf.data.DataObject;
  * <p>
  * A text received from the client is stored only if it passes the application's HTML safety check
  * ({@link SafeHTML}), see {@link #setCheckHtml(boolean)}.
+ * </p>
+ *
+ * <p>
+ * An {@link TLObjectLinkUtil#TL_OBJECT object link} whose object the current user may not discover
+ * reaches the client as a placeholder without label, link and identity, see
+ * {@link TLObjectLinkUtil#maskLinks(String, java.util.function.Function)}. The placeholder holds a
+ * token of this editor. A text received from the client gets back the link of each token it holds,
+ * so that saving keeps each hidden link that the user did not delete.
  * </p>
  *
  * <p>
@@ -269,6 +281,45 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	private Map<String, Mention> _mentions = Map.of();
 
 	/**
+	 * The markup of each object link the client received masked, by the token of its placeholder.
+	 *
+	 * <p>
+	 * A token is a random value that no other editor hands out and that cannot be guessed, so that
+	 * a placeholder copied from another editor brings in nothing. A token is valid for the object
+	 * whose text the editor shows: a text that the client sends after the server changed the value
+	 * still gets its links back. When the editor shows the text of another object, it forgets all
+	 * tokens, see {@link #forgetTokensOfOtherObject()}. An editor of a value that is no attribute of
+	 * an object has no object to bind its tokens to: it forgets them when the server sets another
+	 * value, see {@link #handleModelValueChanged(FieldModel, Object, Object)}.
+	 * </p>
+	 */
+	private final Map<String, String> _maskedLinks = new HashMap<>();
+
+	/**
+	 * The tokens of {@link #_maskedLinks} by the occurrence and the markup of the link.
+	 *
+	 * <p>
+	 * A link keeps its token when the text is sent again, so that the client's text stays valid. Two
+	 * equal links within one text as the server sends it get tokens of their own, so that the
+	 * client cannot tell that they name the same object. A link of markup inserted at the cursor
+	 * gets a fresh token, see {@link #insertAtCursor(String)}.
+	 * </p>
+	 */
+	private final Map<String, String> _maskTokens = new HashMap<>();
+
+	/**
+	 * The object whose text the tokens of {@link #_maskedLinks} are handed out for, see
+	 * {@link #forgetTokensOfOtherObject()}.
+	 */
+	private Object _tokenOwner;
+
+	/**
+	 * Whether the editor applies a text of the client to the model, so that a change of the model
+	 * value is no value that the server sets.
+	 */
+	private boolean _applyingClientText;
+
+	/**
 	 * Creates a {@link ReactWysiwygControl} that formats text and offers no commands of its own.
 	 *
 	 * @param context
@@ -324,7 +375,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			+ "&windowName=" + context.getWindowName() + KEY_PARAM;
 
 		initShadowCopy();
-		putState(FieldState.VALUE__PROP, rewriteImageUrls(extractHtml(_shadowCopy)));
+		putState(FieldState.VALUE__PROP, toClientHtml(extractHtml(_shadowCopy)));
 
 		_insertChannel = insertChannel == null ? null : new DefaultViewChannel(insertChannel);
 		if (_insertChannel != null) {
@@ -580,27 +631,53 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		return new StructuredText();
 	}
 
+	/**
+	 * Sends the new value to the client.
+	 *
+	 * <p>
+	 * When the server sets another value and the editor edits no attribute of an object, the editor
+	 * forgets the tokens of the former value, so that their number does not grow while the editor
+	 * lives. The client receives the new value with new tokens. A text that the client sent with a
+	 * token of the former value brings in no link for it.
+	 * </p>
+	 */
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
+		if (!_applyingClientText && tokenOwner() == null && !Objects.equals(oldValue, newValue)) {
+			forgetTokens();
+		}
 		_shadowCopy = toStructuredText(newValue);
-		putState(FieldState.VALUE__PROP, rewriteImageUrls(extractHtml(_shadowCopy)));
+		putState(FieldState.VALUE__PROP, toClientHtml(extractHtml(_shadowCopy)));
 	}
 
 	/**
 	 * The visible text of the given HTML value, since the editor shows a placeholder as plain text.
+	 *
+	 * <p>
+	 * A link to an object that the current user may not discover shows the placeholder of a masked
+	 * element.
+	 * </p>
 	 */
 	@Override
 	protected String formatElement(Object value) {
 		if (value == null) {
 			return null;
 		}
-		return HTMLTextExtractor.INSTANCE.getLabel(toStructuredText(value));
+		String source = toStructuredText(value).getSourceCode();
+		StructuredText masked = new StructuredText(TLObjectLinkUtil.maskLinks(source, null));
+		return HTMLTextExtractor.INSTANCE.getLabel(masked);
 	}
 
 	@Override
 	protected Object parseClientValue(Object rawValue) {
-		String html = rawValue != null ? rawValue.toString() : "";
-		String cleanHtml = stripImageUrls(html);
+		return toModelValue(toStoredHtml(rawValue != null ? rawValue.toString() : ""));
+	}
+
+	/**
+	 * The model value for the given HTML in the form it is stored in, see
+	 * {@link #toStoredHtml(String)}.
+	 */
+	private Object toModelValue(String cleanHtml) {
 		if (isVisuallyEmpty(cleanHtml)) {
 			// An emptied editor means "no value": normalize to null so emptiness checks (e.g. a
 			// mandatory constraint) treat the field like a cleared text input rather than
@@ -770,6 +847,89 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		return doc.body().html();
 	}
 
+	/**
+	 * The HTML the client receives for the given HTML of the stored text: masked object links, and
+	 * download URLs for the images.
+	 */
+	private String toClientHtml(String html) {
+		forgetTokensOfOtherObject();
+		Map<String, Integer> occurrences = new HashMap<>();
+		String masked = TLObjectLinkUtil.maskLinks(html,
+			link -> maskToken(link, occurrences.merge(link, 1, Integer::sum)));
+		return rewriteImageUrls(masked);
+	}
+
+	/**
+	 * The token of the given occurrence of the given masked link, see {@link #_maskTokens}.
+	 */
+	private String maskToken(String link, int occurrence) {
+		return _maskTokens.computeIfAbsent(occurrence + ":" + link, key -> newToken(link));
+	}
+
+	/**
+	 * A token that names the given masked link and no other, see {@link #_maskedLinks}.
+	 */
+	private String newToken(String link) {
+		String token = SecureRandomService.getInstance().getRandomString();
+		_maskedLinks.put(token, link);
+		return token;
+	}
+
+	/**
+	 * Forgets the tokens of the masked links when the editor shows the text of another object than
+	 * the one they were handed out for, so that a token of the former text brings in nothing.
+	 *
+	 * <p>
+	 * An object edited in a form is compared by the persistent object behind it, so that switching
+	 * between view and edit mode keeps the tokens of the text the client holds.
+	 * </p>
+	 *
+	 * @implNote The client receives the placeholders of the new object's text with new tokens only
+	 *           because the value is sent again on a switch of the object: the form
+	 *           ({@code FormControl}) leaves and enters edit mode, and the field sends its value
+	 *           again. The tokens of the former text are dropped here, before the text of the new
+	 *           object is masked or a text of the client is taken back.
+	 */
+	private void forgetTokensOfOtherObject() {
+		Object owner = tokenOwner();
+		if (Objects.equals(owner, _tokenOwner)) {
+			return;
+		}
+		forgetTokens();
+		_tokenOwner = owner;
+	}
+
+	/**
+	 * The object the tokens of the shown text are valid for, {@code null} for an editor of a value
+	 * that is no attribute of an object.
+	 */
+	private Object tokenOwner() {
+		Object owner = editedObject();
+		if (owner instanceof TLObject object) {
+			return TLFormObjectBase.editedObject(object);
+		}
+		return owner;
+	}
+
+	private void forgetTokens() {
+		_maskedLinks.clear();
+		_maskTokens.clear();
+	}
+
+	/**
+	 * The HTML to store for the given HTML received from the client: the masked object links taken
+	 * back, and image references for the download URLs.
+	 *
+	 * <p>
+	 * The links are taken back first, so that the safety check and the image handling see the text
+	 * as it is stored.
+	 * </p>
+	 */
+	private String toStoredHtml(String clientHtml) {
+		forgetTokensOfOtherObject();
+		return stripImageUrls(TLObjectLinkUtil.restoreLinks(clientHtml, _maskedLinks::get));
+	}
+
 	private String extractHtml(StructuredText text) {
 		if (text == null) {
 			return "";
@@ -806,13 +966,20 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * a second insertion and not a repetition of the first.
 	 * </p>
 	 *
+	 * <p>
+	 * A link of the markup to an object that the current user may not discover is masked as in the
+	 * text, and comes back as a link when the client reports the text. Its placeholder gets a fresh
+	 * token, equal to no token of a link the text holds already.
+	 * </p>
+	 *
 	 * @param html
 	 *        The markup to insert.
 	 */
 	public void insertAtCursor(String html) {
 		Map<String, Object> insert = new LinkedHashMap<>();
 		insert.put(INSERT_SEQ, Integer.valueOf(++_insertions));
-		insert.put(INSERT_HTML, html);
+		forgetTokensOfOtherObject();
+		insert.put(INSERT_HTML, rewriteImageUrls(TLObjectLinkUtil.maskLinks(html, this::newToken)));
 		putState(INSERT, insert);
 	}
 
@@ -827,20 +994,34 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	@Override
 	protected void applyRawClientValue(Object rawValue) {
+		// The masked links are taken back once, for the safety check and the value alike.
+		String storedHtml = toStoredHtml(rawValue != null ? rawValue.toString() : "");
 		if (_checkHtml) {
-			ResKey problem = rawValue == null ? null : htmlProblem(stripImageUrls(rawValue.toString()));
+			ResKey problem = rawValue == null ? null : htmlProblem(storedHtml);
 			setInputError(problem);
 			if (problem == null) {
-				super.applyRawClientValue(rawValue);
+				applyClientText(storedHtml);
 			}
 		} else {
-			super.applyRawClientValue(rawValue);
+			applyClientText(storedHtml);
 		}
 
 		if (getState(INSERT) == null) {
 			return;
 		}
 		putState(INSERT, null);
+	}
+
+	/**
+	 * Applies the given text of the client, in the form it is stored, to the model.
+	 */
+	private void applyClientText(String storedHtml) {
+		_applyingClientText = true;
+		try {
+			applyClientValue(toModelValue(storedHtml));
+		} finally {
+			_applyingClientText = false;
+		}
 	}
 
 	/**

@@ -37,6 +37,8 @@ export function resetTLBridge(): void {
   dispatched = []
   patchListeners.clear()
   uploads.length = 0
+  uploadForms.length = 0
+  escapeHandlers.length = 0
   uploadAnswer = async () => ({ success: true })
   pageLeaving = false
   commandAnswer = async () => undefined
@@ -48,6 +50,24 @@ let pageLeaving = false
 /** See `isPageLeaving` of the real bridge. */
 export function isPageLeaving(): boolean {
   return pageLeaving
+}
+
+/** The check of the real bridge, which the key handlers of the chat depend on. */
+/** The `onClose` of every `EscapeToClose` rendered, in order: what Escape in its scope runs. */
+export const escapeHandlers: (() => void)[] = []
+
+/** Renders its children; the dispatcher's stack of scopes exists only in the browser. */
+export const KeyboardScopeProvider = ({ children }: { active?: () => boolean; modal?: boolean; children?: React.ReactNode }) =>
+  React.createElement(React.Fragment, null, children)
+
+/** Records what Escape closes, see {@link escapeHandlers}. */
+export const EscapeToClose = ({ onClose }: { onClose: () => void }) => {
+  escapeHandlers.push(onClose)
+  return null
+}
+
+export function isCompositionKey(event: KeyboardEvent): boolean {
+  return event.isComposing || event.keyCode === 229
 }
 
 /** Sets what `isPageLeaving` answers. */
@@ -146,6 +166,9 @@ export function useTLCommand(): (
 /** The uploads `useTLUpload`'s function sent since the last reset: the files of each. */
 export const uploads: File[][] = []
 
+/** The uploads `useTLUpload`'s function sent since the last reset: the whole form of each. */
+export const uploadForms: FormData[] = []
+
 /** What an upload is answered with; a plain success by default. */
 let uploadAnswer: (files: File[]) => Promise<CommandResponse | undefined> = async () => ({ success: true })
 
@@ -158,6 +181,7 @@ export function answerUploads(answer: (files: File[]) => Promise<CommandResponse
 export const tlUpload = async (formData: FormData): Promise<CommandResponse | undefined> => {
   const files = formData.getAll('file').filter((value): value is File => value instanceof File)
   uploads.push(files)
+  uploadForms.push(formData)
   return uploadAnswer(files)
 }
 
@@ -221,4 +245,38 @@ export function labelWithBadge(
   }
   if (!name) return label
   return label ? label + ', ' + name : name
+}
+
+/** See `ICON_PREVIOUS` of the real bridge. */
+export const ICON_PREVIOUS = 'css:fa-solid fa-chevron-left'
+
+/** See `ICON_CLOSE` of the real bridge. */
+export const ICON_CLOSE = 'css:fa-solid fa-xmark'
+
+/** The defaults, as the real bridge answers until the translations have arrived. */
+export function useI18N<K extends string>(keys: Record<K, string>): Record<K, string> {
+  return keys
+}
+
+/** The part `Button` as a plain button naming what the component asked the part to draw. */
+function ButtonStub({
+  label,
+  image,
+  onClick,
+}: {
+  label?: string
+  image?: string
+  onClick?: (event: RealReact.MouseEvent<HTMLElement>) => void
+}) {
+  return RealReact.createElement('button', {
+    type: 'button',
+    'aria-label': label,
+    'data-image': image,
+    onClick,
+  })
+}
+
+/** See `usePart` of the real bridge; only the part `Button` is drawn in a test run. */
+export function usePart(_name: 'Button'): typeof ButtonStub {
+  return ButtonStub
 }

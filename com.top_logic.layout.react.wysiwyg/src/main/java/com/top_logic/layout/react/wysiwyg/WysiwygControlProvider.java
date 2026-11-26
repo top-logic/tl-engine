@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -38,6 +39,7 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
@@ -253,6 +255,11 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 	 * no text and is passed over. The text after the first line is not looked at.
 	 * </p>
 	 *
+	 * <p>
+	 * A link to an object that the current user may not discover shows the placeholder of a masked
+	 * element, see {@link TLObjectLinkUtil#maskLinks(String, java.util.function.Function)}.
+	 * </p>
+	 *
 	 * @param text
 	 *        The formatted text, or {@code null}.
 	 * @return The text of the first line, the empty string where there is none.
@@ -265,7 +272,9 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 		if (source == null || source.isBlank()) {
 			return "";
 		}
-		return firstLine(Jsoup.parseBodyFragment(source).body());
+		Document document = Jsoup.parseBodyFragment(source);
+		TLObjectLinkUtil.maskLinks(document, null);
+		return firstLine(document.body());
 	}
 
 	/**

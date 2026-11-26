@@ -76,6 +76,15 @@ public class TestOperationCoverage extends BasicTestCase {
 	/** Composition part of {@link #GRANTED_OPERATION}, delegating to its container by default. */
 	private static final String PART_OF_GRANTED = MODULE + ":PartOfGranted";
 
+	/**
+	 * Composition part of {@link #GRANTED_OPERATION}, delegating to its container or to a
+	 * {@link #COVERED} it relates.
+	 */
+	private static final String ANY_OF_PART_OF_GRANTED = MODULE + ":AnyOfPartOfGranted";
+
+	/** Delegating to its folder or to the documents relating it, none of them granting Finish. */
+	private static final String ANY_OF_PART_ELSEWHERE = "TestAccessParentAnyOf:Part";
+
 	/** Composition part of {@link #COVERED}, delegating to its container by default. */
 	private static final String PART_OF_COVERED = MODULE + ":PartOfCovered";
 
@@ -180,6 +189,23 @@ public class TestOperationCoverage extends BasicTestCase {
 		OperationUse onOtherPart =
 			OperationUse.onType(Kind.COMMAND, FINISH_NAME, type(PART_OF_COVERED), "test.view.xml:10");
 		assertTrue("A part of another container does not check the grant.",
+			coverage(List.of(onOtherPart)).get(GRANTED_OPERATION).hasFinding(FindingKind.UNCHECKED_GRANT));
+	}
+
+	/**
+	 * A check on a type deciding by any of several access parents is a use of the grants of the
+	 * types each candidate may lead to, a container candidate leading to the types that may contain
+	 * the type, and of no other type.
+	 */
+	public void testAnyOfIsFollowedToTheTypesOfAllCandidates() {
+		OperationUse onPart =
+			OperationUse.onType(Kind.COMMAND, FINISH_NAME, type(ANY_OF_PART_OF_GRANTED), "test.view.xml:11");
+		assertFalse("The check on the part is decided on its container as well.",
+			coverage(List.of(onPart)).get(GRANTED_OPERATION).hasFinding(FindingKind.UNCHECKED_GRANT));
+
+		OperationUse onOtherPart =
+			OperationUse.onType(Kind.COMMAND, FINISH_NAME, type(ANY_OF_PART_ELSEWHERE), "test.view.xml:12");
+		assertTrue("A part whose candidates lead to other types does not check the grant.",
 			coverage(List.of(onOtherPart)).get(GRANTED_OPERATION).hasFinding(FindingKind.UNCHECKED_GRANT));
 	}
 

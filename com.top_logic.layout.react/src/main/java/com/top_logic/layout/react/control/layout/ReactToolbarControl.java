@@ -10,6 +10,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.listener.EventType;
+import com.top_logic.basic.listener.NoBubblingEventType;
+import com.top_logic.basic.listener.PropertyListener;
+import com.top_logic.basic.listener.PropertyListeners;
+import com.top_logic.basic.listener.PropertyObservable;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -33,8 +38,51 @@ import com.top_logic.layout.react.control.ReactControl;
  * {@link #setPinnedGroup(String, ToolbarGroupDisplay, List) pinned group} that a rebuild keeps.
  * The pinned group leads the {@link #GROUPS} the client receives.
  * </p>
+ *
+ * <p>
+ * Whoever displays the toolbar can observe whether it {@link #isEmpty() is empty} through
+ * {@link #EMPTY_PROPERTY}, e.g. to show it only while it holds a command.
+ * </p>
  */
-public class ReactToolbarControl extends ReactControl {
+public class ReactToolbarControl extends ReactControl implements PropertyObservable {
+
+	/**
+	 * The {@link #isEmpty()} property, observable through
+	 * {@link #addListener(EventType, PropertyListener)}.
+	 *
+	 * <p>
+	 * Listeners are notified when the toolbar changes between empty and holding commands, not when
+	 * a rebuild exchanges commands for others.
+	 * </p>
+	 */
+	public static final EventType<EmptyListener, ReactToolbarControl, Boolean> EMPTY_PROPERTY =
+		new NoBubblingEventType<>("empty") {
+			@Override
+			protected void internalDispatch(EmptyListener listener, ReactToolbarControl sender, Boolean oldValue,
+					Boolean newValue) {
+				listener.handleEmptyChanged(sender, oldValue.booleanValue(), newValue.booleanValue());
+			}
+		};
+
+	/**
+	 * Listener for changes of the {@link ReactToolbarControl#isEmpty()} property.
+	 *
+	 * @see ReactToolbarControl#EMPTY_PROPERTY
+	 */
+	public interface EmptyListener extends PropertyListener {
+
+		/**
+		 * Handles a change between an empty toolbar and one holding commands.
+		 *
+		 * @param sender
+		 *        The toolbar whose content changed.
+		 * @param oldValue
+		 *        Whether the toolbar was empty before.
+		 * @param newValue
+		 *        Whether the toolbar is empty now.
+		 */
+		void handleEmptyChanged(ReactToolbarControl sender, boolean oldValue, boolean newValue);
+	}
 
 	private static final String REACT_MODULE = "TLToolbar";
 
@@ -74,6 +122,13 @@ public class ReactToolbarControl extends ReactControl {
 	private final List<ReactControl> _pinnedChildren = new ArrayList<>();
 
 	private ToolbarOverflow _overflow = ToolbarOverflow.NONE;
+
+	/**
+	 * The value of {@link #isEmpty()} the {@link #EMPTY_PROPERTY} listeners last saw.
+	 */
+	private boolean _empty = true;
+
+	private final PropertyListeners _listeners = new PropertyListeners();
 
 	/**
 	 * Creates a new empty {@link ReactToolbarControl}.
@@ -219,7 +274,9 @@ public class ReactToolbarControl extends ReactControl {
 	}
 
 	/**
-	 * Publishes the pinned group followed by the added ones as the {@link #GROUPS} state.
+	 * Publishes the pinned group followed by the added ones as the {@link #GROUPS} state, and
+	 * notifies the {@link #EMPTY_PROPERTY} listeners when the toolbar changed between empty and
+	 * holding commands.
 	 */
 	private void publishGroups() {
 		List<Object> published = new ArrayList<>(_groups.size() + 1);
@@ -228,6 +285,22 @@ public class ReactToolbarControl extends ReactControl {
 		}
 		published.addAll(_groups);
 		putState(GROUPS, published);
+
+		boolean empty = isEmpty();
+		if (empty != _empty) {
+			_empty = empty;
+			_listeners.notify(EMPTY_PROPERTY, this, Boolean.valueOf(!empty), Boolean.valueOf(empty));
+		}
+	}
+
+	@Override
+	public <L extends PropertyListener, S, V> boolean addListener(EventType<L, S, V> type, L listener) {
+		return _listeners.addListener(type, listener);
+	}
+
+	@Override
+	public <L extends PropertyListener, S, V> boolean removeListener(EventType<L, S, V> type, L listener) {
+		return _listeners.removeListener(type, listener);
 	}
 
 }

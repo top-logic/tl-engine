@@ -9,16 +9,20 @@
 	- the channel "invoiceEvent", the event the agent's "createInvoice" command files a new invoice
 	under: the command writes the event the agent passed into it, and the dialog's event table shows
 	it selected;
-	- on the conversation "conversation": the composer's invitation, the demo's working indicator, the
-	facts about the situation, the first questions of a new chat, the "@" mentions of events, venues
+	- on the conversation "conversation": the composer's invitation, the read-only display of a chat
+	about a paid invoice, the demo's working indicator, the facts about the situation, the first questions of a new chat, the "@" mentions of events, venues
 	and invoices, and the commands "createInvoice" and "openEventTab" the agent may run;
-	- on the rail "rail": the section "events" after the shipped section "sources".
+	- on the rail "rail": the section "events" after the shipped section "sources"; like the shipped
+	sections, it gives way to what the agent presents.
+
+	Both stand in the split panel "chatSplit" inside the shipped <chat>, which this fragment enters by
+	its id.
 -->
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<channels>
 		<channel name="invoiceEvent"/>
 	</channels>
-	<chat config:ref="albert">
+	<split-panel config:ref="chatSplit">
 		<!--
 			`working-indicator` is what stands where the answer will appear while the agent works:
 			here the demo's own example animation instead of the chat's three dots. An SVG is placed
@@ -39,6 +43,19 @@
 				<en>Ask about the events, their programme, registrations, sponsors or invoices.</en>
 				<de>Frag nach den Veranstaltungen, ihrem Programm, Anmeldungen, Sponsoren oder Rechnungen.</de>
 			</placeholder>
+			<!--
+				A chat about a paid invoice is an archive (Ticket #30546): it is shown without an input
+				line and without the actions that change it, also to the account it belongs to. That is
+				no question of rights - the owner keeps Write on the chat -, so it is decided here and
+				not in the security configuration. A chat about anything else, or about nothing, stays
+				writable; a new chat is always writable.
+			-->
+			<writable><![CDATA[s -> {
+				subject = $s.get(`tl.ai.execution:AgentSession#subject`);
+				!(!isEmpty($subject)
+					&& $subject.instanceOf(`demo.events:Invoice`)
+					&& $subject.get(`demo.events:Invoice#status`) == `demo.events:InvoiceStatus#PAID`);
+			}]]></writable>
 			<!--
 				What this page states about the situation the user is asking in (Issue #437). The
 				server evaluates these when the page's channels change and they travel with every
@@ -162,7 +179,7 @@
 				event chosen, as "Neu" on the Rechnungen page does.
 				
 				After "Erstellen" the dialog writes the new invoice to its "selection", bound here to
-				the rail's pane, so the invoice opens beside the conversation.
+				the pane in the rail, so the invoice opens beside the conversation.
 				
 				"Zeig mir das Programm von KI im Mittelstand" opens the page Veranstaltungen with that
 				event selected and its tab "Programm" open. The parameter "tab" takes one of the tab ids
@@ -283,20 +300,24 @@
 		</chat-conversation>
 		<!--
 			Nothing chat-specific: an ordinary <data-list> of this application's own objects, in a rail
-			section. Picking one writes it to "paneObject", which is what opens the pane.
+			section. Picking one writes it to "paneObject", which shows it in the section "presented".
 		-->
-		<chat-rail config:ref="rail">
+		<side-rail config:ref="rail">
 			<section name="events"
 				config:position="after"
 				config:reference="sources"
 				icon="css:bi bi-calendar-event"
+				open="false"
 			>
 				<label>
 					<en>Events</en>
 					<de>Veranstaltungen</de>
 				</label>
+				<visibility
+					expr="isEmpty($paneObject)"
+					inputs="paneObject"
+				/>
 				<data-list
-					collapsible="false"
 					observed-types="demo.events:Event"
 					row-actions="hover"
 					row-channel="event"
@@ -406,6 +427,6 @@
 						.sort((e -> $e.get(`demo.events:Event#startDate`)).comparator().desc())]]></rows>
 				</data-list>
 			</section>
-		</chat-rail>
-	</chat>
+		</side-rail>
+	</split-panel>
 </view>

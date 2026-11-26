@@ -29,10 +29,37 @@ A migration runs once, at the first start of an application version that contain
 
 Two consequences follow:
 
-- **A module with persistent types is a migration module from its first release on.** Its first migration may change nothing; it records the version of the module, so that every later migration of its data reaches the databases created with it. A module that becomes a migration module only when its first data migration is needed finds no stored version on the existing databases, and that migration is skipped there.
+- **A module with persistent types is a migration module from its first release on.** Its first migration may change nothing; it records the version of the module, so that every later migration of its data reaches the databases created with it. A module that becomes a migration module only when its first data migration is needed finds no stored version on the existing databases, and that migration is skipped there. Such a module ships its first data migration in another migration module whose version every affected database stores, usually a module it depends on, see [First data migration of a late migration module](#first-data-migration-of-a-late-migration-module).
 - **A migration only reaches databases of applications that contain its module.** A migration that has to change the data of an application without a certain module must be part of a module that this application still contains.
 
 An application whose database already exists when it gets its own migration folder lists its module in `minimum-modules` of the `MigrationService`, see [the upgrade guide](doc:upgrade-7.11-to-8.0#83-own-migrations).
+
+### First data migration of a late migration module
+
+A module `my-feature` with the model module `my.feature`, which becomes a migration module only when its data must be changed, splits this change into two migrations:
+
+- The first migration of `my-feature` has empty `<processors/>`. It only records the version of `my-feature`: an existing database stores it at the first start, and the later migrations of `my-feature` reach that database.
+- The change itself is a migration of a migration module whose version every database with the data stores, for example `my-base`, a module `my-feature` depends on. It is the successor of the latest migration of `my-base`, created with `CreateMigrationScriptTemplate` in that module:
+
+```xml
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_12345_remove_my_feature_data"
+		module="my-base"
+	/>
+	<dependencies>
+		...
+	</dependencies>
+	<processors>
+		<delete-module name="my.feature"
+			type-tables="GenericObject"
+		/>
+	</processors>
+</migration>
+```
+
+The migration of `my-base` also runs on databases of applications without `my-feature`. Its processors must therefore leave a database without the data unchanged: `<delete-module>` logs a module that does not exist and deletes nothing.
 
 ## Lock, progress and resuming
 
@@ -80,9 +107,11 @@ The engine does not remove the data of a module that an application no longer co
 
 Table, classes and model module are deleted in one migration, so that neither the recovery of the table nor the model upgrade reacts to the removed declarations:
 
-- `<delete-class>` with `type-table` deletes the instances of the class in that table together with their generic attribute values (`FLEX_DATA`) and all links from or to them. It must run **before** the `<delete-table>` of the same table: it selects the instances through the table, and the generic attribute values and links are stored outside of it. Without `type-table`, or after the table has been dropped, they stay behind in the database. `<delete-class>` also deletes the values of the class's own references.
+- `<delete-class>` with `type-table` deletes the instances of the class in that table together with their generic attribute values (`FLEX_DATA`) and all links from or to them. It must run **before** the `<delete-table>` of the same table: it selects the instances through the table, and the generic attribute values and links are stored outside of it. Without `type-table`, they stay behind in the database. `<delete-class>` also deletes the values of the class's own references.
 - `<delete-table>` removes the type from the stored schema and drops its table. The revision cross reference (`RevisionXref`) of the dropped table is cleared at the end of the migration phase.
 - `<delete-module>` with `fail-on-existing-types="true"` deletes the model module and fails if it still contains a type, i.e. a type the migration does not delete.
+
+The processors delete only what exists, so the migration also runs on a database that lacks some of it: a missing class or model module is skipped, and `<delete-table>` leaves a type alone that the stored schema does not know. If the stored schema no longer knows the table, e.g. because an earlier migration dropped it, `<delete-class>` with `type-table` deletes the generic attribute values and links left behind by the objects of that table: all `FLEX_DATA` rows stored for the table and all links whose polymorphic end points to it.
 
 Each class of the module gets its own `<delete-class>`; `<delete-module>` alternatively deletes the instances of all its classes through `type-tables`. The processors run in their order with the connection and log of the migration, as processors on the top level of a migration do.
 

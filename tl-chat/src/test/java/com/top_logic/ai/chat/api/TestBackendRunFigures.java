@@ -37,6 +37,7 @@ import com.top_logic.ai.core.agent.AgentPolicyService;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.agent.StopReason;
 import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.ai.core.agent.event.AgentEvent;
 import com.top_logic.ai.core.agent.event.AgentEventListener;
 import com.top_logic.ai.core.cost.Money;
@@ -44,6 +45,7 @@ import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.ai.core.execution.model.AgentSession;
 import com.top_logic.ai.core.message.TextContent;
 import com.top_logic.ai.core.message.TokenUsage;
+import com.top_logic.model.TLObject;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.util.TLContextManager;
@@ -67,6 +69,8 @@ public class TestBackendRunFigures extends BasicTestCase {
 
 	private Person _previousPerson;
 
+	private TLObject _subject;
+
 	private AgentSession _session;
 
 	private TaskProgressTracker _window;
@@ -78,7 +82,8 @@ public class TestBackendRunFigures extends BasicTestCase {
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
 		_previousPerson = subSession.getPerson();
 		subSession.setPerson(_owner);
-		_session = (AgentSession) ChatHistoryService.createSession("Figures", _owner);
+		_subject = ChatHistoryService.createSession("What the figures are about", _owner);
+		_session = (AgentSession) ChatHistoryService.createSession("Figures", _owner, ApprovalMode.MANUAL, _subject);
 		HistoryUtils.updateSessionRevision();
 		_window = new TaskProgressTracker();
 		assertTrue(_window.setActiveSessionId(_session.tHandle().getObjectName().toExternalForm(), _owner));
@@ -98,16 +103,16 @@ public class TestBackendRunFigures extends BasicTestCase {
 	public void testContextWindowOfABackend() {
 		assertNull("The framework's agent answers.", ChatSSEHandler.backendContextWindow(_window));
 
-		ScriptedBackend.install(session -> session.equals(_session) ? backend(0) : null);
+		ScriptedBackend.install(subject -> subject.equals(_subject) ? backend(0) : null);
 		assertEquals(Integer.valueOf(0), ChatSSEHandler.backendContextWindow(_window));
 
-		ScriptedBackend.install(session -> session.equals(_session) ? backend(200_000) : null);
+		ScriptedBackend.install(subject -> subject.equals(_subject) ? backend(200_000) : null);
 		assertEquals(Integer.valueOf(200_000), ChatSSEHandler.backendContextWindow(_window));
 	}
 
 	/** The cost a run reported is read back with the turn the run ended with. */
 	public void testCostIsReadBack() throws Exception {
-		ScriptedBackend.install(session -> session.equals(_session) ? backend(0) : null);
+		ScriptedBackend.install(subject -> subject.equals(_subject) ? backend(0) : null);
 		Map<String, RecordedRun> runs = sendAndReadBack();
 		assertEquals(1, runs.size());
 		Money cost = runs.values().iterator().next().cost();
@@ -122,7 +127,7 @@ public class TestBackendRunFigures extends BasicTestCase {
 	 * what the backend did before - starting a process - is no part of the run's duration.
 	 */
 	public void testStartIsReadBack() throws Exception {
-		ScriptedBackend.install(session -> session.equals(_session) ? backend(0) : null);
+		ScriptedBackend.install(subject -> subject.equals(_subject) ? backend(0) : null);
 		long sentAt = System.currentTimeMillis();
 		Map<String, RecordedRun> runs = sendAndReadBack();
 		assertEquals(1, runs.size());

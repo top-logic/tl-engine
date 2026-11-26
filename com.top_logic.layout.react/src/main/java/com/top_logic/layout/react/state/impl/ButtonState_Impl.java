@@ -11,6 +11,8 @@ public class ButtonState_Impl extends com.top_logic.layout.react.state.impl.Cont
 
 	private boolean _active = false;
 
+	private boolean _toggle = false;
+
 	private String _image = "";
 
 	private String _tooltip = "";
@@ -88,6 +90,22 @@ public class ButtonState_Impl extends com.top_logic.layout.react.state.impl.Cont
 	/** Internal setter for {@link #isActive()} without chain call utility. */
 	protected final void internalSetActive(boolean value) {
 		_active = value;
+	}
+
+	@Override
+	public final boolean isToggle() {
+		return _toggle;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.ButtonState setToggle(boolean value) {
+		internalSetToggle(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isToggle()} without chain call utility. */
+	protected final void internalSetToggle(boolean value) {
+		_toggle = value;
 	}
 
 	@Override
@@ -301,6 +319,8 @@ public class ButtonState_Impl extends com.top_logic.layout.react.state.impl.Cont
 		out.value(isDisabled());
 		out.name(ACTIVE__PROP);
 		out.value(isActive());
+		out.name(TOGGLE__PROP);
+		out.value(isToggle());
 		out.name(IMAGE__PROP);
 		out.value(getImage());
 		out.name(TOOLTIP__PROP);
@@ -333,6 +353,7 @@ public class ButtonState_Impl extends com.top_logic.layout.react.state.impl.Cont
 			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DISABLED__PROP: setDisabled(in.nextBoolean()); break;
 			case ACTIVE__PROP: setActive(in.nextBoolean()); break;
+			case TOGGLE__PROP: setToggle(in.nextBoolean()); break;
 			case IMAGE__PROP: setImage(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TOOLTIP__PROP: setTooltip(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DISPLAY_MODE__PROP: setDisplayMode(com.top_logic.layout.react.state.ButtonState.DisplayMode.readDisplayMode(in)); break;

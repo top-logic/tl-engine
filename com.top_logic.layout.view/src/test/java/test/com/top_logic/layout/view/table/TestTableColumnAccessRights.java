@@ -68,12 +68,12 @@ import com.top_logic.util.Resources;
 /**
  * Tests that the columns of a table follow the model access rights of the current user, see
  * {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)} and
- * {@link ModelAccessPolicy#onAttributeOfType(BoundCommandGroup, com.top_logic.model.TLStructuredType, TLStructuredTypePart)}.
+ * {@link ModelAccessPolicy#onAttributeColumn(com.top_logic.model.TLStructuredType, TLStructuredTypePart)}.
  *
  * <p>
  * A cell whose value the user may not read on its row shows the placeholder
- * {@link com.top_logic.model.security.I18NConstants#MASKED_VALUE} instead of its value, a column whose attribute the user
- * may read on no row is withheld, and a cell is edited only where the user may write it - the
+ * {@link com.top_logic.model.security.I18NConstants#MASKED_VALUE} instead of its value, a column whose attribute has a
+ * read grant of its own listing no role the user holds is withheld, and a cell is edited only where the user may write it - the
  * condition the edited tables (row edit and composition table) ask through
  * {@link AttributeCellEditing#canEdit(Object)}.
  * </p>
@@ -308,14 +308,12 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 		BoundCommandGroup write = SimpleBoundCommandGroup.WRITE;
 
 		becomeUser(_responsible);
-		assertTrue(ModelAccessPolicy.onAttributeOfType(write, type(CATEGORY), categoryName).isExecutable());
 		assertTrue(ModelAccessPolicy.onAttribute(write, _category, categoryName).isExecutable());
 		ExecutableState refused = ModelAccessPolicy.onAttribute(write, _hiddenCategory, categoryName);
 		assertTrue("Refused on the object: disabled, not hidden.", refused.isDisabled());
 		assertTrue(ModelAccessPolicy.onObject(write, _hiddenCategory, categoryName).isDisabled());
 
 		// Without a grant of its own, the type decides, which grants writing to no role.
-		assertTrue(ModelAccessPolicy.onAttributeOfType(write, type(CATEGORY), categoryReader).isHidden());
 		assertTrue(ModelAccessPolicy.onAttribute(write, _category, categoryReader).isHidden());
 	}
 
@@ -466,8 +464,8 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * A column whose attribute the user may read on no row is withheld - it does not exist for the
-	 * table -; the others are not.
+	 * A column whose attribute has a read grant of its own listing no role the user holds is
+	 * withheld - it does not exist for the table -; the others are not.
 	 */
 	public void testColumnReadByNoRoleWithheld() throws ConfigurationException {
 		becomeUser(_responsible);
@@ -479,8 +477,9 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * The column of an attribute the user may read on no row is resolved nevertheless, so that it
-	 * can appear once the user gains the right: it is not withheld for good.
+	 * The column of an attribute whose read grant lists no role the user holds is resolved
+	 * nevertheless, so that it can appear once the user gains such a role: it is not withheld for
+	 * good.
 	 */
 	public void testWithheldColumnsResolved() throws ConfigurationException {
 		becomeUser(_responsible);

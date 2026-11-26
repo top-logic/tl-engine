@@ -34,8 +34,9 @@ import com.top_logic.ai.core.message.ImageContent;
  * </p>
  *
  * <p>
- * One per conversation of a window, like the text the composer holds: switching to another chat of
- * the same conversation keeps the files, as it keeps the text.
+ * One per chat session of a conversation of a window, see {@link ChatViewBinding#attachments(String)}:
+ * switching the conversation to another chat shows that chat's files, and the files of the chat
+ * that was left wait for it.
  * </p>
  */
 public final class ChatAttachments {

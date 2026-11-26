@@ -68,6 +68,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.ai.core.agent.approval.UserInteractionStore;
@@ -459,9 +460,11 @@ public class ChatSSEHandler implements ChatEventHandler {
 			return null;
 		}
 		try {
-			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, owner);
+			TLObject session = ChatHistoryService.findAccessibleSession(sessionId, owner, SimpleBoundCommandGroup.READ);
 			ConversationBackend backend =
-				session instanceof AgentSession agentSession ? ConversationBackendService.backendFor(agentSession) : null;
+				session instanceof AgentSession agentSession
+					? ConversationBackendService.backendFor(agentSession.getSubject())
+					: null;
 			return backend == null ? null : Integer.valueOf(backend.contextWindow());
 		} catch (RuntimeException ex) {
 			Logger.warn("Could not ask which backend answers chat " + sessionId + ".", ex, ChatSSEHandler.class);
@@ -603,7 +606,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 		// Heartbeat if no activity for 15s - into a stream that is read. A queue that still holds what
 		// it could not write has no browser on it: the browser attaches again when it misses the
 		// heartbeat, and a page that is gone would collect one more heartbeat every 15 s until its
-		// session ends (Pietro #738).
+		// session ends.
 		long now = System.currentTimeMillis();
 		if (now - _lastActivityTime > HEARTBEAT_INTERVAL_MS && _queue.pendingEventCount() == 0) {
 			sendHeartbeat();

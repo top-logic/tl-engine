@@ -27,6 +27,7 @@ import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.state.DataListState;
+import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
@@ -116,6 +117,12 @@ public class DataListControl extends ReactControl {
 	/** The {@link Config#getRowChannel() row channel} name used when none is configured. */
 	private static final String DEFAULT_ROW_CHANNEL = "row";
 
+	/** The {@link TrailingConfig#getElementChannel() element channel} name used when none is configured. */
+	private static final String DEFAULT_ELEMENT_CHANNEL = "element";
+
+	/** Prefix of the slot path of a {@link TrailingConfig#getContent() trailing template} instance. */
+	private static final String TRAILING_SLOT = "trailing";
+
 	private final QueryExecutor _rowsExecutor;
 
 	private final List<LineSpec> _lineSpecs = new ArrayList<>();
@@ -130,8 +137,20 @@ public class DataListControl extends ReactControl {
 	/** The picture or icon in front of a row, or {@code null} for none. */
 	private final QueryExecutor _leadingImageExecutor;
 
-	/** What stands after the lines of a row, or {@code null} for nothing. */
+	/**
+	 * The value after the lines of a row, or {@code null} for none, also where a
+	 * {@link #_trailingTemplate template} stands there.
+	 */
 	private final LineSpec _trailing;
+
+	/**
+	 * The instances of the template after the lines of a row, one per row, or {@code null} without
+	 * a template.
+	 */
+	private final TemplateInstances _trailingTemplate;
+
+	/** The context the {@link #_trailingTemplate template} instances are created in. */
+	private final ViewContext _context;
 
 	/** Whether {@link #_trailing} is shown as a badge. */
 	private final boolean _trailingBadge;
@@ -164,11 +183,18 @@ public class DataListControl extends ReactControl {
 	/** The row objects of the last serialisation, by their id, for the {@code select} lookup. */
 	private Map<String, TLObject> _rowsById = Map.of();
 
-	/** Creates a {@link DataListControl}. */
+	/**
+	 * Creates a {@link DataListControl}.
+	 *
+	 * @param trailingContent
+	 *        The {@link TrailingConfig#getContent() template} instantiated after the lines of each
+	 *        row, empty for none.
+	 */
 	public DataListControl(ViewContext context, Config config, List<ViewCommand> commands,
 			List<ViewCommand.Config> commandConfigs, List<ViewCommand> rowCommands,
-			List<ViewCommand.Config> rowCommandConfigs) {
+			List<ViewCommand.Config> rowCommandConfigs, List<UIElement> trailingContent) {
 		super(context, null, REACT_MODULE);
+		_context = context;
 
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
 		_groupExecutor = config.getGroupBy() == null ? null : QueryExecutor.compile(config.getGroupBy());
@@ -179,10 +205,18 @@ public class DataListControl extends ReactControl {
 		_leadingImageExecutor = leading == null ? null : compile(leading.getImage());
 
 		TrailingConfig trailing = config.getTrailing();
-		if (trailing == null || (trailing.getValue() == null && blank(trailing.getAttribute()))) {
+		if (!trailingContent.isEmpty()) {
+			// The template takes the place of the short form.
+			_trailingTemplate = new TemplateInstances(trailingContent,
+				blankToDefault(trailing.getElementChannel(), DEFAULT_ELEMENT_CHANNEL), TRAILING_SLOT);
+			_trailing = null;
+			_trailingBadge = false;
+		} else if (trailing == null || (trailing.getValue() == null && blank(trailing.getAttribute()))) {
+			_trailingTemplate = null;
 			_trailing = null;
 			_trailingBadge = false;
 		} else {
+			_trailingTemplate = null;
 			_trailing = new LineSpec(trailing.getAttribute(), compile(trailing.getValue()), null);
 			_trailingBadge = trailing.getDisplay() == TrailingDisplay.BADGE;
 		}
@@ -203,9 +237,6 @@ public class DataListControl extends ReactControl {
 
 		setCssClass(config.getCssClass());
 		putState(DataListState.SEARCH__PROP, Boolean.valueOf(config.getSearch()));
-		putState(DataListState.COLLAPSIBLE__PROP, Boolean.valueOf(config.getCollapsible()));
-		putState(DataListState.COLLAPSED__PROP, Boolean.valueOf(config.getCollapsed()));
-		putState(DataListState.DRAWER_BELOW__PROP, Integer.valueOf(config.getDrawerBelow()));
 		putState(DataListState.TITLE__PROP, labelOf(config.getTitle()));
 		putState(DataListState.EMPTY_TEXT__PROP, labelOf(config.getEmptyText()));
 
@@ -380,7 +411,6 @@ public class DataListControl extends ReactControl {
 	/** Serialises the rows to browser state and re-indexes them by id. */
 	private void serialize(Collection<?> rows) {
 		Map<String, TLObject> byId = new LinkedHashMap<>();
-		List<Map<String, Object>> out = new ArrayList<>();
 		for (Object row : rows) {
 			if (!(row instanceof TLObject object)) {
 				continue;
@@ -389,7 +419,16 @@ public class DataListControl extends ReactControl {
 			if (id.isEmpty()) {
 				continue;
 			}
-			byId.put(id, object);
+			byId.putIfAbsent(id, object);
+		}
+		List<TLObject> objects = new ArrayList<>(byId.values());
+		List<ReactControl> trailingControls =
+			_trailingTemplate == null ? null : _trailingTemplate.update(_context, objects);
+
+		List<Map<String, Object>> out = new ArrayList<>();
+		for (int n = 0; n < objects.size(); n++) {
+			TLObject object = objects.get(n);
+			String id = idOf(object);
 			Map<String, Object> entry = new LinkedHashMap<>();
 			entry.put(DataListState.Row.ID__PROP, id);
 			entry.put(DataListState.Row.LINES__PROP, lines(object));
@@ -403,7 +442,8 @@ public class DataListControl extends ReactControl {
 			if (leading != null) {
 				entry.put(DataListState.Row.LEADING__PROP, leading);
 			}
-			Map<String, Object> trailing = trailing(object);
+			Map<String, Object> trailing =
+				trailingControls == null ? trailing(object) : trailingControl(trailingControls.get(n));
 			if (trailing != null) {
 				entry.put(DataListState.Row.TRAILING__PROP, trailing);
 			}
@@ -528,6 +568,16 @@ public class DataListControl extends ReactControl {
 	 */
 	private static boolean isIconFont(String encoded) {
 		return !(encoded.startsWith("/") || encoded.startsWith(DATA_URI_PREFIX));
+	}
+
+	/**
+	 * What stands after the lines of a row with a {@link TrailingConfig#getContent() template}: the
+	 * instance of the template for the row, see {@link DataListState.Trailing#getControl()}.
+	 */
+	private static Map<String, Object> trailingControl(ReactControl control) {
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put(DataListState.Trailing.CONTROL__PROP, control);
+		return result;
 	}
 
 	/**

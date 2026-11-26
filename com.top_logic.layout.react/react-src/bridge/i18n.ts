@@ -1,4 +1,5 @@
 import React from 'react';
+import { getApiBase, getWindowName, isContextKnown, onMountContext } from './page-context';
 
 /**
  * Client-side i18n service for React controls.
@@ -7,8 +8,9 @@ import React from 'react';
  * fetching so that multiple components requesting keys in the same render cycle trigger
  * only a single HTTP request.
  *
- * Keys requested before the application's context path is known (a component rendering before
- * the first mount()) wait until {@link setI18NApiBase} is called and are then requested together.
+ * The first request reads the context path and the window name of the page at once (see
+ * page-context.ts), also before the first mount(). Only on a page whose body does not name its
+ * context, keys wait until the first mount() gives a context path, and are then requested together.
  */
 
 /** Resolved translations keyed by resource key. */
@@ -36,35 +38,14 @@ let _cacheVersion = 0;
 /** React re-render callbacks registered via useSyncExternalStore. */
 const _subscribers = new Set<() => void>();
 
-/**
- * Context path of the application the i18n endpoint is resolved against (e.g. "/demo/"), or
- * {@code null} as long as it is unknown.
- */
-let _apiBase: string | null = null;
-
-/** Window name to include in i18n requests so the server resolves the correct locale. */
-let _windowName = '';
-
-/**
- * Sets the API base URL. Called once from tl-react-bridge.ts during mount().
- *
- * Keys requested before are sent in the next microtask, so that the window name set by the same
- * mount() is part of the request.
- */
-export function setI18NApiBase(base: string): void {
-  _apiBase = base;
+// A mount() can make the context known: the keys that wait for it go out in the next microtask,
+// together with the keys that the components of the same mount() request.
+onMountContext(() => {
   if (_pending.size > 0 && !_fetchScheduled) {
     _fetchScheduled = true;
     queueMicrotask(flushPending);
   }
-}
-
-/**
- * Sets the window name for i18n requests. Called from tl-react-bridge.ts on every mount().
- */
-export function setI18NWindowName(name: string): void {
-  _windowName = name;
-}
+});
 
 function notifySubscribers(): void {
   for (const cb of _subscribers) {
@@ -94,9 +75,9 @@ function scheduleFetch(key: string): void {
 
 async function flushPending(): Promise<void> {
   _fetchScheduled = false;
-  const apiBase = _apiBase;
-  if (_pending.size === 0 || apiBase === null) {
-    // Without a known context path, the keys stay pending until setI18NApiBase() is called.
+  if (_pending.size === 0 || !isContextKnown()) {
+    // Without a known context path, the request would go to an address relative to the page. The
+    // keys stay pending until a mount() gives the context path.
     return;
   }
 
@@ -109,8 +90,11 @@ async function flushPending(): Promise<void> {
 
   let data: Record<string, string>;
   try {
-    const url = apiBase + 'react-api/i18n?keys=' + encodeURIComponent(keys.join(','))
-      + '&windowName=' + encodeURIComponent(_windowName);
+    // The window name lets the server answer in the locale of the session of the window. The page
+    // context is read now and not at the first mount(): the busy overlay asks for its text before
+    // any control is mounted.
+    const url = getApiBase() + 'react-api/i18n?keys=' + encodeURIComponent(keys.join(','))
+      + '&windowName=' + encodeURIComponent(getWindowName());
     const resp = await fetch(url);
     if (!resp.ok) {
       console.error('[TLReact] i18n fetch failed:', resp.status);

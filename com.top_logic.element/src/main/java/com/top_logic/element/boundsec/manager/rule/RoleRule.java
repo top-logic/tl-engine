@@ -10,10 +10,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.util.ResKey;
@@ -21,6 +23,7 @@ import com.top_logic.element.boundsec.manager.ElementAccessHelper;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -57,6 +60,8 @@ public abstract class RoleRule implements RoleProvider {
 	/** The id of the configuration this rule was created from. */
 	private final String _configId;
 
+	private RuleHistory _history = RuleHistory.CURRENT;
+
     /**
      * Constructor with all attributes
      */
@@ -77,6 +82,20 @@ public abstract class RoleRule implements RoleProvider {
 	@Override
 	public String getConfigId() {
 		return _configId;
+	}
+
+	/**
+	 * How this rule treats historic versions of objects.
+	 */
+	public RuleHistory getHistory() {
+		return _history;
+	}
+
+	/**
+	 * Sets {@link #getHistory()}. Must only be called while the rule is being created.
+	 */
+	public void initHistory(RuleHistory history) {
+		_history = Objects.requireNonNull(history);
 	}
 
     /**
@@ -147,11 +166,48 @@ public abstract class RoleRule implements RoleProvider {
 		if (!matches(base)) {
     	    return Collections.emptySet();
     	}
+		boolean historic = RuleHistory.isHistoric(base);
+		switch (_history.getMode()) {
+			case CURRENT: {
+				if (!historic) {
+					return navigateGroups(base);
+				}
+				// The roles of the identity hold for each version of the object.
+				Wrapper current = WrapperHistoryUtils.getCurrent(base);
+				if (current == null || !matches(current)) {
+					return Collections.emptySet();
+				}
+				return navigateGroups(current);
+			}
+			case HISTORIC: {
+				return navigateGroups(base);
+			}
+			case ANCHORED: {
+				if (!historic) {
+					return Collections.emptySet();
+				}
+				Collection<Group> pathGroups = navigateGroups(base);
+				if (pathGroups.isEmpty()) {
+					return pathGroups;
+				}
+				ElementAccessManager accessManager = (ElementAccessManager) AccessManager.getInstance();
+				return accessManager.anchoredGroups(base, pathGroups, _history.getAnchors());
+			}
+		}
+		throw new UnreachableAssertion("No such mode: " + _history.getMode());
+	}
 
+	/**
+	 * The groups the path of this rule leads to from the given object, in the data the object
+	 * belongs to.
+	 */
+	private Collection<Group> navigateGroups(Wrapper base) {
 		Collection<Group> theResult;
         ElementAccessManager theAM = (ElementAccessManager)AccessManager.getInstance();
 		Tuple resultCacheKey;
-        if (theAM.isInCacheMode()) {
+		// The cache is keyed by the identity of the object, it must not hold results for a version.
+		boolean useCache = theAM.isInCacheMode() && !RuleHistory.isHistoric(base);
+		if (useCache) {
 			resultCacheKey = new TupleFactory.Pair<>(getId(), KBUtils.getWrappedObjectName(base));
 			theResult = (Collection<Group>) theAM.getResult(resultCacheKey);
 
@@ -189,7 +245,7 @@ public abstract class RoleRule implements RoleProvider {
             theResult = theFinalResult;
         }
 
-        if (theAM.isInCacheMode()) {
+		if (useCache) {
 			theAM.putResult(resultCacheKey, ElementAccessHelper.shrink(theResult));
         }
         return theResult;
@@ -270,6 +326,11 @@ public abstract class RoleRule implements RoleProvider {
 	 * @return The group, or {@code null} if the given object does not denote a group.
 	 */
 	private static Group toGroup(Object target) {
+		if (target instanceof TLObject object && RuleHistory.isHistoric(object)) {
+			// Roles are computed for the groups of today: a group or person found in a historic
+			// version stands for its current object.
+			target = WrapperHistoryUtils.getCurrent(object);
+		}
 		if (target instanceof Group group) {
 			return group;
 		}

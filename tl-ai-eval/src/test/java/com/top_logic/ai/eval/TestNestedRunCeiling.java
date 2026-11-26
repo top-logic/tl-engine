@@ -8,8 +8,12 @@ package com.top_logic.ai.eval;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import junit.framework.Test;
@@ -21,18 +25,25 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.ai.core.agent.AgentApplicationService;
 import com.top_logic.ai.core.agent.AgentPolicyService;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.agent.SecurityContext;
 import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.ai.core.execution.AgentEnvironment;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
@@ -49,7 +60,11 @@ import com.top_logic.ai.core.provider.ProviderRequest;
 import com.top_logic.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.ai.core.provider.ScriptedProvider;
 import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.SecurityContextProxy;
 import com.top_logic.ai.core.security.ToolAccessPolicy;
+import com.top_logic.ai.core.tools.ToolExecutions;
+import com.top_logic.ai.core.tools.registry.ScriptToolFactory;
+import com.top_logic.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
@@ -99,7 +114,18 @@ public class TestNestedRunCeiling extends BasicTestCase {
 	/** An agent that spawns a subagent. */
 	private static final String LEAD_AGENT = "Eval_Lead";
 
+	/** What the run that {@code aiAgentChatAsync} starts is asked. */
+	private static final String ASYNC_TASK = "ASYNC-TASK: create a ticket.";
+
+	/** A script that changes the application. */
+	private static final String CREATE_TICKET = "new(`pm:Ticket`)..set(`pm:Ticket#title`, \"Nested async ticket\")";
+
+	/** The refusal of the limit of {@link NoWrites}. */
+	private static final String NO_WRITES = "This run may not change the application.";
+
 	private static volatile String _outerScript;
+
+	private static final BlockingQueue<String> ASYNC_TOOL_RESULTS = new LinkedBlockingQueue<>();
 
 	private static final List<String> FACTS = new CopyOnWriteArrayList<>();
 
@@ -118,6 +144,7 @@ public class TestNestedRunCeiling extends BasicTestCase {
 		NESTED_OFFERED.clear();
 		NESTED_TOOL_RESULTS.clear();
 		FACTS.clear();
+		ASYNC_TOOL_RESULTS.clear();
 		ScriptedProvider.install(TestNestedRunCeiling::reply);
 		// The saved policy, not the running one: a restart reads the saved one, and in a suite that
 		// shares its services with other suites the running service can still carry an older item.
@@ -228,6 +255,73 @@ public class TestNestedRunCeiling extends BasicTestCase {
 		assertTrue("The refusal must name the allowlist: " + fact, fact.contains(ALLOWLIST));
 	}
 
+	/**
+	 * {@code aiAgentChatAsync} in the script of a run starts a detached run with every limit of that
+	 * run: a run that may not change the application, as an A2A run with allow-writes="false", starts
+	 * no run that may.
+	 *
+	 * <p>
+	 * The script is the one of a script tool that only reads, which such a run may call. The allowlist
+	 * of the test holds {@code script} and {@code data.write}, so only the limit of the outer run can
+	 * refuse the write of the detached run.
+	 * </p>
+	 */
+	public void testAiAgentChatAsyncKeepsTheLimitsOfTheRun() throws Throwable {
+		Person root = PersonManager.getManager().getRoot();
+		Tool reading = readingScriptTool("aiAgentChatAsync(\"" + OUTER_AGENT + "\", \"" + ASYNC_TASK + "\")");
+
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(root, () -> {
+			SecurityContext noWrites = new NoWrites(ToolContext.forBackgroundRun(root).security());
+			String started = ToolExecutions.execute(reading, Map.of(),
+				new ToolContext(noWrites, ApprovalCallback.AUTO_APPROVE)).text();
+			log("aiAgentChatAsync answered: " + started);
+			return null;
+		});
+
+		String result = ASYNC_TOOL_RESULTS.poll(60, TimeUnit.SECONDS);
+		assertNotNull("The detached run must call changeData and end.", result);
+		assertFalse("The detached run must not change the application: " + result, result.contains("Done"));
+		assertTrue("The limit of the outer run must refuse the write: " + result, result.contains(NO_WRITES));
+	}
+
+	/** A script tool that only reads, as an application configures one, with the given script. */
+	private static Tool readingScriptTool(String script) throws ConfigurationException {
+		ScriptToolConfig tool = TypedConfiguration.newConfigItem(ScriptToolConfig.class);
+		tool.setName("startAsync");
+		tool.setImplementation(ExprFormat.INSTANCE.getValue(ScriptToolConfig.IMPLEMENTATION, script));
+		tool.update(tool.descriptor().getProperty(ScriptToolConfig.MODE), ToolMode.READ);
+		ScriptToolFactory.Config factory = TypedConfiguration.newConfigItem(ScriptToolFactory.Config.class);
+		factory.getTools().put(tool.getName(), tool);
+		return new ScriptToolFactory(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, factory)
+			.createTools().get(0);
+	}
+
+	/**
+	 * The limit of an A2A run with allow-writes="false": no tool that changes the application. A
+	 * proxy of the same kind as the guard of the A2A module, which this module does not see.
+	 */
+	private static final class NoWrites extends SecurityContextProxy {
+
+		NoWrites(SecurityContext impl) {
+			super(impl);
+		}
+
+		@Override
+		protected SecurityContext copy(SecurityContext narrowed) {
+			return new NoWrites(narrowed);
+		}
+
+		@Override
+		public boolean hasToolPermission(Tool tool) {
+			return !tool.mode().writesApplicationState() && super.hasToolPermission(tool);
+		}
+
+		@Override
+		public String toolDenialReason(Tool tool) {
+			return tool.mode().writesApplicationState() ? NO_WRITES : super.toolDenialReason(tool);
+		}
+	}
+
 	/** The fact that the one run of {@link #FACTS_AGENT} was told. */
 	private static String theFact() {
 		assertEquals("The agent with the fact must have run once: " + FACTS, 1, FACTS.size());
@@ -280,6 +374,14 @@ public class TestNestedRunCeiling extends BasicTestCase {
 		}
 		if (first.contains("NESTED-CHAT")) {
 			return nestedReply(request, turn, AGENT_META_TOOL_NAME, last);
+		}
+		if (first.contains("ASYNC-TASK")) {
+			if (turn == 0) {
+				return Reply.of(new ToolCall("call-" + UUID.randomUUID(), "changeData",
+					"{\"script\": \"" + CREATE_TICKET.replace("\\", "\\\\").replace("\"", "\\\"") + "\"}"));
+			}
+			ASYNC_TOOL_RESULTS.add(last);
+			return Reply.text("Async run done.");
 		}
 		if (turn == 0) {
 			return Reply.of(new ToolCall("call-" + UUID.randomUUID(), "changeData",
@@ -363,6 +465,7 @@ public class TestNestedRunCeiling extends BasicTestCase {
 				AgentRuntimeService.Module.INSTANCE,
 				AgentApplicationService.Module.INSTANCE,
 				AgentPolicyService.Module.INSTANCE,
-				SubagentWorkers.Module.INSTANCE));
+				SubagentWorkers.Module.INSTANCE,
+				SchedulerService.Module.INSTANCE));
 	}
 }

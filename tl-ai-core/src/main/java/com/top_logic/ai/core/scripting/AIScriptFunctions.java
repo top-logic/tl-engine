@@ -54,6 +54,8 @@ import com.top_logic.ai.core.agent.AgentLoop;
 import com.top_logic.ai.core.agent.AgentParams;
 import com.top_logic.ai.core.agent.AgentResult;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.agent.RunSecurityBinding;
+import com.top_logic.ai.core.agent.SecurityContext;
 import com.top_logic.ai.core.agent.StopReason;
 import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.agent.TransactionScope;
@@ -752,7 +754,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * write/destructive tool action (delete data, call external systems, ...) unattended. Only start
 	 * async runs for agents you trust to act without supervision. An application that has configured
 	 * a tool access policy can bound this: the run is additionally restricted to that policy's
-	 * background allowlist, precisely because approval is the control it has lost.
+	 * background allowlist, precisely because approval is the control it has lost. Started by a
+	 * script of an agent run, for example the script of a tool, the async run also keeps every limit
+	 * of that run, for example allow-writes="false" of an A2A request.
 	 * </p>
 	 *
 	 * <p>
@@ -842,8 +846,11 @@ public class AIScriptFunctions extends TLScriptFunctions {
 				"ai.agentChatAsync: " + agentName);
 
 		Object messageContent = userMessage;
+		// Read on the calling thread, as the sub-session is: the run whose script starts this one, if
+		// any. The new run must not be wider than that run.
+		SecurityContext outer = RunSecurityBinding.current();
 		SchedulerService.getInstance().submit(() -> ThreadContextManager.inDerivedContext(callerSession,
-			() -> runAsync(agentName, messageContent, session)));
+			() -> runAsync(agentName, messageContent, session, outer)));
 
 		// Return the session's persistent id as a plain String rather than the live AgentSession
 		// wrapper. The session was committed out-of-band on the store's writer thread at a revision
@@ -857,8 +864,13 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	/**
 	 * The background body of {@link #agentChatAsync(String, Object)}: runs the agent as the
 	 * re-established user, in its own transaction, recording the execution against {@code session}.
+	 *
+	 * @param outer
+	 *        The security context of the run whose script started this run, or <code>null</code> for a
+	 *        script outside a run.
 	 */
-	private static void runAsync(String agentName, Object userMessage, AgentSession session) {
+	private static void runAsync(String agentName, Object userMessage, AgentSession session,
+			SecurityContext outer) {
 		UserMessage request = createUserMessage(userMessage);
 		Conversation conversation = new Conversation();
 		conversation.add(request);
@@ -870,11 +882,14 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		// on this thread - and is marked as a background run, so the policy's background allowlist applies as
 		// an additional ceiling. Auto-approval is exactly the compensating control that allowlist
 		// replaces: a run whose tool calls nobody approves must not reach write tools by default.
-		ToolContext context = new ToolContext(
-			RunSecurity.contextFor(
-				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, true,
-					ExecutionRecorder.conversationIdOf(session))),
-			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
+		// Started by the script of a run, it keeps every limit of that run, as a detached subagent does:
+		// a context built for the account instead would lose them, for example allow-writes="false" of
+		// an A2A run.
+		SecurityContext security = outer != null ? outer.withBackgroundCeiling()
+			: RunSecurity.contextFor(new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, true,
+				ExecutionRecorder.conversationIdOf(session)));
+		ToolContext context = new ToolContext(security, ApprovalCallback.AUTO_APPROVE,
+			new TransactionScope(cancellationToken), cancellationToken);
 
 		// Cluster-safe cancellation: this node runs the job and holds the token, so a listener on
 		// this thread observes the persisted cancel marker (committed by aiAgentRunCancel from any

@@ -11,9 +11,9 @@ import com.top_logic.ai.tool.api.RunInfo;
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.ToolExecutionContext;
 import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.ai.core.agent.RunSecurityBinding;
 import com.top_logic.ai.core.agent.SecurityContext;
@@ -43,7 +43,8 @@ import com.top_logic.ai.core.execution.RunInfoBinding;
  * authenticated account whose context {@code McpAuthenticationFilter} has already opened, and the
  * fallback below would be the wrong answer if that ever failed: a system context bypasses all access
  * checks, and issue #261 was exactly the case of an MCP request being served in one. It
- * calls the tool inside the caller's own context and refuses when there is none.
+ * calls the tool inside the caller's own context and refuses when there is none. It binds the run of
+ * the call with {@link #bindRun(ToolExecutionContext)}, as {@link #execute} does.
  * </p>
  *
  * <p>
@@ -79,12 +80,32 @@ public final class ToolExecutions {
 	 * @return The tool result.
 	 */
 	public static ToolResult execute(Tool tool, Map<String, Object> args, ToolExecutionContext context) {
-		RunInfo run = context != null ? context.runInfo() : RunInfo.NONE;
-		try (RunInfoBinding.Binding bound = RunInfoBinding.bind(run);
-				ReadingListBinding.Binding reading = ReadingListBinding.bind(readingListOf(context));
-				ThreadLocalBinding<SecurityContext>.Handle security = RunSecurityBinding.bind(securityOf(context))) {
+		try (RunBinding run = bindRun(context)) {
 			return inCallerOrSystemContext(tool.getClass(), () -> tool.execute(args, context));
 		}
+	}
+
+	/**
+	 * Binds the run of the given context to the current thread, for a tool call: its
+	 * {@link RunInfoBinding run information}, its {@link ReadingListBinding reading list} and its
+	 * {@link RunSecurityBinding security context}.
+	 *
+	 * <p>
+	 * The one list of what a tool call binds, for {@link #execute} and for a tool dispatch that cannot
+	 * use it, such as the MCP server adapter.
+	 * </p>
+	 *
+	 * @param context
+	 *        The tool execution context, or {@code null}.
+	 * @return The handle whose {@link RunBinding#close() close()} restores what was bound before.
+	 */
+	@FrameworkInternal
+	public static RunBinding bindRun(ToolExecutionContext context) {
+		RunInfo run = context != null ? context.runInfo() : RunInfo.NONE;
+		RunInfoBinding.Binding info = RunInfoBinding.bind(run);
+		ReadingListBinding.Binding reading = ReadingListBinding.bind(readingListOf(context));
+		RunSecurityBinding.Binding security = RunSecurityBinding.bind(securityOf(context));
+		return new RunBinding(info, reading, security);
 	}
 
 	/** The reading list the call registers what it read into, or <code>null</code> outside a run. */
@@ -134,5 +155,32 @@ public final class ToolExecutions {
 			return job.run();
 		}
 		return ThreadContext.inSystemContext(caller, job);
+	}
+
+	/**
+	 * Handle returned by {@link ToolExecutions#bindRun(ToolExecutionContext)}.
+	 */
+	@FrameworkInternal
+	public static final class RunBinding implements AutoCloseable {
+
+		private final RunInfoBinding.Binding _info;
+
+		private final ReadingListBinding.Binding _reading;
+
+		private final RunSecurityBinding.Binding _security;
+
+		RunBinding(RunInfoBinding.Binding info, ReadingListBinding.Binding reading,
+				RunSecurityBinding.Binding security) {
+			_info = info;
+			_reading = reading;
+			_security = security;
+		}
+
+		@Override
+		public void close() {
+			_security.close();
+			_reading.close();
+			_info.close();
+		}
 	}
 }

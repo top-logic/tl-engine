@@ -45,13 +45,13 @@ public final class RunSecurityBinding {
 	 *
 	 * @param security
 	 *        The security context of the run, or <code>null</code> for a call that names no run. Such
-	 *        a call keeps the value that is bound already: a tool call inside a background run must
-	 *        not end the ceiling of that run.
-	 * @return A handle whose {@link AutoCloseable#close() close()} restores the previously bound
-	 *         value, or its absence.
+	 *        a call changes nothing: a tool call that names no run inside a background run must not
+	 *        end the ceiling of that run.
+	 * @return The handle whose {@link Binding#close() close()} restores the previously bound value,
+	 *         or its absence.
 	 */
-	public static ThreadLocalBinding<SecurityContext>.Handle bind(SecurityContext security) {
-		return SECURITY.bind(security != null ? security : SECURITY.get());
+	public static Binding bind(SecurityContext security) {
+		return security == null ? Binding.NONE : new Binding(SECURITY.bind(security));
 	}
 
 	/**
@@ -75,5 +75,27 @@ public final class RunSecurityBinding {
 	public static boolean executesBackgroundRun() {
 		SecurityContext security = SECURITY.get();
 		return security != null && security.isBackgroundRun();
+	}
+
+	/**
+	 * Handle returned by {@link RunSecurityBinding#bind(SecurityContext)}.
+	 */
+	public static final class Binding implements AutoCloseable {
+
+		/** The handle of a call that bound nothing: its {@link #close()} changes nothing. */
+		static final Binding NONE = new Binding(null);
+
+		private final ThreadLocalBinding<SecurityContext>.Handle _handle;
+
+		Binding(ThreadLocalBinding<SecurityContext>.Handle handle) {
+			_handle = handle;
+		}
+
+		@Override
+		public void close() {
+			if (_handle != null) {
+				_handle.close();
+			}
+		}
 	}
 }

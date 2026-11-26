@@ -432,9 +432,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *         any request is sent. If the run did not reach an answer - an HTTP error, a stream
 	 *         error, a refusal, a cancellation or an exhausted turn budget - carrying the provider's
 	 *         error kind and message. It never returns the empty string for a failed call: a caller
-	 *         cannot tell that apart from a model that answered nothing. A call that spends the rest
-	 *         of the budget of the account stops after that turn and fails with the reason
-	 *         {@code BUDGET_EXHAUSTED}.
+	 *         cannot tell that apart from a model that answered nothing. A call with tools whose turn
+	 *         spends the rest of the budget of the account stops after that turn, before the next
+	 *         request, and fails with the reason {@code BUDGET_EXHAUSTED}. An admitted call always
+	 *         gets its first turn.
 	 * @throws RunLimitExceededException
 	 *         If the acting account already has as many runs going as it may, or has spent its
 	 *         budget. A call of this function is a run of the account under these limits, also when

@@ -37,6 +37,8 @@ A refusal is a `ProviderException` of kind `INVALID_REQUEST`, raised while the r
 
 `aiChat` and `aiAgentChat` throw a `TopLogicException` carrying the provider's error kind and message for every stop reason but `COMPLETE` - a rejected key, a stream error, an exhausted turn limit, a model that answered nothing - after the run has been recorded. The failed run is a row an administrator can look at and an error the caller cannot mistake for an answer.
 
+Both functions are runs of the acting account under its [run limits](doc:ai/limits-and-caching#run-limits). An account at its limit of concurrent runs, or with a spent budget, gets a `RunLimitExceededException` (a `RuntimeException`) before the model is called.
+
 ### Asynchronous runs
 
 `aiAgentChatAsync(agent, message)` starts a run on a background thread and returns a handle at once. The run re-enters the caller's sub-session, so it acts as the calling account, marked as a background run: nobody answers an approval prompt for it, and the `<background-allowlist>` bounds its tools ([tool authorization](doc:ai/security/tool-authorization#background-and-delegated-runs)). It refuses to start from a system context.

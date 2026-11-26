@@ -96,18 +96,21 @@ public class TestAiChatRunLimits extends BasicTestCase {
 
 		assertEquals(ANSWER, asAccount(account, () -> aiChat(null)));
 		assertEquals(1, ScriptedProvider.requests().size());
+		assertEquals("The call frees its slot when it returns.", 0, RunLimits.runningFor(account));
 	}
 
 	/**
 	 * An account at its limit of concurrent runs: {@code aiAgentChat} is refused, and so must be
-	 * {@code aiChat}, before the model is called.
+	 * {@code aiChat}, before the model is called and before a session is recorded.
 	 */
 	public void testTheConcurrencyLimitRefusesAiChat() {
 		Person account = freshAccount();
 		try (RunLimitSettings.Overridden limits = RunLimitSettings.override(cap(1));
 				RunLimits.Admission running = RunLimits.admit(runOf(account))) {
 			assertRefused("aiAgentChat", () -> asAccount(account, () -> aiAgentChat()));
+			int sessionsBefore = scriptSessionsOf(account);
 			assertRefused("aiChat", () -> asAccount(account, () -> aiChat(null)));
+			assertEquals("A refused call records no session.", sessionsBefore, scriptSessionsOf(account));
 			assertEquals("No request may reach the model.", 0, ScriptedProvider.requests().size());
 			assertEquals("A refused call holds no slot.", 1, RunLimits.runningFor(account));
 		}
@@ -149,6 +152,7 @@ public class TestAiChatRunLimits extends BasicTestCase {
 			}
 		}
 		assertEquals("The turn that spent the rest is the last one.", 2, ScriptedProvider.requests().size());
+		assertEquals("A call that failed frees its slot too.", 0, RunLimits.runningFor(account));
 	}
 
 	private static void assertRefused(String function, Runnable call) {
@@ -179,6 +183,12 @@ public class TestAiChatRunLimits extends BasicTestCase {
 		return new ToolContext(RunSecurity.contextFor(new RunPrincipal(account, RunEntryPoint.SCRIPT, false)),
 			ApprovalCallback.AUTO_APPROVE, TransactionScope.NOOP,
 			CancellationToken.UNCANCELLABLE);
+	}
+
+	/** The script sessions of the account, read at the revision the store committed last. */
+	private static int scriptSessionsOf(Person account) {
+		HistoryUtils.updateSessionRevision();
+		return AgentExecutionStore.getInstance().sessionsForOwner(account, SessionKind.SCRIPT).size();
 	}
 
 	private static Person freshAccount() {

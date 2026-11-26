@@ -193,7 +193,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// What this installation carries and what this account may spend, decided before anything of
 		// the run is built. The same choke point as authorizeRun below, and for the same reason: the
 		// chat, AgentRunner, the scheduler and TL-Script all arrive here, so a ceiling put here is a
-		// ceiling on every run rather than on one surface. Released when the loop returns.
+		// ceiling on every run rather than on one surface. Released when the loop returns. aiChat builds
+		// its own loop without an agent and does not arrive here, so it admits itself.
 		try (RunLimits.Admission admission = RunLimits.admit(context)) {
 			return runAdmitted(name, conversation, conversationMemory,
 				context.withBudgetAllowance(admission.allowance()), listener, sessionRegistry, overrides);

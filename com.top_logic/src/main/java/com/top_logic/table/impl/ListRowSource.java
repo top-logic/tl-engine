@@ -33,6 +33,7 @@ import com.top_logic.table.Option;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
+import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
 
 /**
@@ -290,8 +291,17 @@ public class ListRowSource<R> implements RowSource<R> {
 		return result;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @throws IllegalArgumentException
+	 *         If the given order names a column this source does not have.
+	 */
 	@Override
 	public RowSource<R> withOrder(SortSpec sort) {
+		for (SortColumn sortColumn : sort.columns()) {
+			ColumnLogic.require(_byName, sortColumn.column());
+		}
 		_sort = sort;
 		recompute();
 		fireInvalidated();
@@ -306,8 +316,17 @@ public class ListRowSource<R> implements RowSource<R> {
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @throws IllegalArgumentException
+	 *         If the given grouping names a column this source does not have.
+	 */
 	@Override
 	public RowSource<R> withGrouping(GroupSpec grouping) {
+		for (String name : grouping.columns()) {
+			ColumnLogic.require(_byName, name);
+		}
 		_grouping = grouping;
 		recompute();
 		fireInvalidated();

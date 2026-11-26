@@ -60,6 +60,10 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * <p>
  * A type with an {@link #getAccessParent() access parent} and a type that is
  * {@link #isExempt() exempt} from access control have no grants of their own: they have no rows.
+ * A type whose access parent decides only some operations, see
+ * {@link AccessParentFunction#getOperations()}, has grants of its own for the other operations:
+ * it is offered with these operations only, and with its roles and attributes as a type deciding
+ * for itself.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -181,8 +185,9 @@ public class TypeGrants {
 		_rights = Objects.requireNonNull(rights);
 		_editor = Objects.requireNonNull(editor);
 		_type = Objects.requireNonNull(type);
-		boolean ownGrants = getAccessParent() == null && !isExempt();
-		_operations = ownGrants ? operations(rights.getOperations(type)) : Collections.emptyList();
+		AccessParentFunction accessParent = getAccessParent();
+		boolean ownGrants = !AccessParentFunction.delegatesAll(accessParent) && !isExempt();
+		_operations = ownGrants ? operations(rights.getOperations(type), accessParent) : Collections.emptyList();
 		if (ownGrants) {
 			Map<BoundedRole, Boolean> granted = grantedRoles();
 			_ineffectiveRoles =
@@ -267,19 +272,26 @@ public class TypeGrants {
 	}
 
 	/**
-	 * The operations applying to a type: the built-in operations in their order, followed by the
-	 * declared ones ordered by their names.
+	 * The operations applying to a type that it decides itself: the built-in operations in their
+	 * order, followed by the declared ones ordered by their names.
+	 *
+	 * @param accessParent
+	 *        The access parent of the type, <code>null</code> when it decides for itself. The
+	 *        operations it {@link AccessParentFunction#delegates(BoundCommandGroup) delegates} are
+	 *        left out.
 	 */
-	private static List<BoundCommandGroup> operations(ApplicableOperations applicable) {
+	private static List<BoundCommandGroup> operations(ApplicableOperations applicable,
+			AccessParentFunction accessParent) {
 		List<BoundCommandGroup> result = new ArrayList<>();
 		for (BoundCommandGroup builtIn : ApplicableOperations.BUILT_IN) {
-			if (applicable.appliesTo(builtIn)) {
+			if (applicable.appliesTo(builtIn) && !AccessParentFunction.isDelegated(accessParent, builtIn)) {
 				result.add(builtIn);
 			}
 		}
 		List<BoundCommandGroup> declared = new ArrayList<>();
 		for (BoundCommandGroup operation : applicable.getOperations()) {
-			if (!ApplicableOperations.isBuiltIn(operation)) {
+			if (!ApplicableOperations.isBuiltIn(operation)
+				&& !AccessParentFunction.isDelegated(accessParent, operation)) {
 				declared.add(operation);
 			}
 		}
@@ -308,7 +320,8 @@ public class TypeGrants {
 	 * The access parent the type delegates to, <code>null</code> when the type decides for itself.
 	 *
 	 * <p>
-	 * A type delegating to an access parent has no grants of its own.
+	 * A type delegating to an access parent has no grants of its own for the operations the access
+	 * parent {@link AccessParentFunction#delegates(BoundCommandGroup) delegates}.
 	 * </p>
 	 */
 	public AccessParentFunction getAccessParent() {
@@ -473,7 +486,8 @@ public class TypeGrants {
 	 * the stored ones - are applied to what the type inherits from its generalizations and its
 	 * module, as the {@link com.top_logic.model.security.SecurityConfigurationService} does when
 	 * the stored definition is applied. The result therefore does not depend on which stored rules
-	 * are in effect already.
+	 * are in effect already. Only the {@link #getOperations() operations the type decides itself}
+	 * are asked for: a type inherits no roles for an operation its access parent decides.
 	 * </p>
 	 */
 	private Set<BoundedRole> storedTypeRoles(BoundCommandGroup operation) throws ConfigurationException {

@@ -197,6 +197,28 @@ default) leaves it as it was: a pill for a value with a colour, plain text for o
 asked for by the element reads in the size of the text's own `variant`; one the value's colour
 produced reads in the pill's own size.
 
+A `tooltip` on `<text>` explains the value to the user pointing at it - what a status means, say.
+It is a TL-Script expression. With an `input`, it sees the channel value as a variable named after
+the channel, or by the name given with `as`, and is recomputed together with the text and the
+colour, so it follows a new value on the channel and an edit of the object it holds. Without an
+`input`, it is a constant, e.g. a text in the languages of the application. An empty result or
+`null` leaves the text without a tooltip.
+
+```xml
+<text
+	appearance="pill"
+	input="status as s"
+	tooltip="#('Status {0}'@en, 'Status {0}'@de).fill($s)"
+/>
+<text
+	label="Draft"
+	tooltip="#('Not yet published'@en, 'Noch nicht veröffentlicht'@de)"
+/>
+```
+
+The pill of a status in a [`<data-list>`](doc:view-layer/lists#the-entry) entry is a `<text>` in the
+template of its `<trailing>` slot.
+
 The sites that fill the field:
 
 - **`ReactDropdownSelectControl`** — every option and every selected value passes through its one descriptor factory, so the pill appears in the read-only display of a reference or enumeration attribute (a `<table>` cell, a view-mode `<form>` field), on the chips of the selection while editing, and on the rows of the open dropdown.

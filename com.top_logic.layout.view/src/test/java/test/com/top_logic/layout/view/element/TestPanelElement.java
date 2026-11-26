@@ -33,12 +33,14 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.element.InsetOptions;
 import com.top_logic.layout.view.element.PanelElement;
 
 /**
- * Tests the {@link InsetOptions#getInset() inset} of the body of a {@link PanelElement}.
+ * Tests the {@link InsetOptions#getInset() inset} of the body of a {@link PanelElement}, and that a
+ * panel sends its toolbar and button bar only while they hold a command.
  */
 public class TestPanelElement extends TestCase {
 
@@ -50,6 +52,21 @@ public class TestPanelElement extends TestCase {
 
 	/** Position of the panel saying nothing about the inset in the stack of the test view. */
 	private static final int FLUSH_PANEL = 1;
+
+	/** The view the panels with and without commands are read from. */
+	private static final String BARS_VIEW = "test-panel-bars.view.xml";
+
+	/** The channel the hidden command of {@link #BARS_VIEW} takes as input. */
+	private static final String COUNT_CHANNEL = "count";
+
+	/** Position of the panel without title and commands in the stack of {@link #BARS_VIEW}. */
+	private static final int PLAIN_PANEL = 0;
+
+	/** Position of the panel with a hidden toolbar command in the stack of {@link #BARS_VIEW}. */
+	private static final int HIDDEN_COMMAND_PANEL = 1;
+
+	/** Position of the panel with a button bar command in the stack of {@link #BARS_VIEW}. */
+	private static final int BUTTON_BAR_PANEL = 2;
 
 	/**
 	 * A panel setting the inset wraps its body in an inset, which holds the body content itself.
@@ -72,12 +89,41 @@ public class TestPanelElement extends TestCase {
 			body instanceof ReactStackControl);
 	}
 
+	/** A panel without title and commands displays neither a toolbar nor a button bar. */
+	public void testAPanelWithoutCommandsShowsNoBars() throws Exception {
+		ReactPanelControl panel = panel(BARS_VIEW, PLAIN_PANEL);
+
+		assertFalse("A panel without commands sends no toolbar.", showsToolbar(panel));
+		assertFalse("A panel without commands sends no button bar.", showsButtonBar(panel));
+	}
+
+	/** A hidden command counts: its toolbar is sent, so that it appears when the command shows. */
+	public void testAHiddenCommandKeepsTheToolbar() throws Exception {
+		ReactPanelControl panel = panel(BARS_VIEW, HIDDEN_COMMAND_PANEL);
+
+		assertTrue("A toolbar holding a hidden command is sent.", showsToolbar(panel));
+		assertFalse("A panel without button bar commands sends no button bar.", showsButtonBar(panel));
+	}
+
+	/** A command placed in the button bar sends the button bar, not the toolbar. */
+	public void testAButtonBarCommandShowsTheButtonBar() throws Exception {
+		ReactPanelControl panel = panel(BARS_VIEW, BUTTON_BAR_PANEL);
+
+		assertTrue("A button bar holding a command is sent.", showsButtonBar(panel));
+		assertFalse("A panel without toolbar commands sends no toolbar.", showsToolbar(panel));
+	}
+
+	private static boolean showsToolbar(ReactPanelControl panel) {
+		return panel.displayedChildren().contains(panel.getToolbar());
+	}
+
+	private static boolean showsButtonBar(ReactPanelControl panel) {
+		return panel.displayedChildren().contains(panel.getButtonBar());
+	}
+
 	/** The control displaying the body of the panel at the given position of the test view. */
 	private static ReactControl body(int index) throws Exception {
-		ReactControl stack = createContent();
-		List<ReactControl> panels = stack.displayedChildren();
-		ReactControl panel = panels.get(index);
-		assertTrue("Entry " + index + " must be a panel, but is " + panel, panel instanceof ReactPanelControl);
+		ReactPanelControl panel = panel(VIEW, index);
 
 		List<ReactControl> body = panel.displayedChildren().stream()
 			.filter(child -> !(child instanceof ReactToolbarControl))
@@ -87,17 +133,28 @@ public class TestPanelElement extends TestCase {
 		return body.get(0);
 	}
 
-	/** The control of the element the test view shows. */
-	private static ReactControl createContent() throws ConfigurationException {
+	/** The panel at the given position of the stack the given view shows. */
+	private static ReactPanelControl panel(String viewName, int index) throws Exception {
+		ReactControl stack = createContent(viewName);
+		List<ReactControl> panels = stack.displayedChildren();
+		ReactControl panel = panels.get(index);
+		assertTrue("Entry " + index + " must be a panel, but is " + panel, panel instanceof ReactPanelControl);
+		return (ReactPanelControl) panel;
+	}
+
+	/** The control of the element the given view shows. */
+	private static ReactControl createContent(String viewName) throws ConfigurationException {
 		ViewElement.Config view = ViewLoader.parseConfig(
-			List.of(new ClassRelativeBinaryContent(TestPanelElement.class, VIEW)));
+			List.of(new ClassRelativeBinaryContent(TestPanelElement.class, viewName)));
 
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestPanelElement.class);
 		UIElement element = context.getInstance(view.getContent());
 		context.checkErrors();
 
-		return (ReactControl) element.createControl(new DefaultViewContext(new DefaultReactContext("/app", "test",
-			new SSEUpdateQueue(), new ReactWindowRegistry("test"))));
+		DefaultViewContext viewContext = new DefaultViewContext(new DefaultReactContext("/app", "test",
+			new SSEUpdateQueue(), new ReactWindowRegistry("test")));
+		viewContext.registerChannel(COUNT_CHANNEL, new DefaultViewChannel(COUNT_CHANNEL));
+		return (ReactControl) element.createControl(viewContext);
 	}
 
 	/**

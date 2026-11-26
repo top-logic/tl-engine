@@ -196,6 +196,33 @@ public class RequestDispatcherTest extends TestCase {
 //        assertNull( "query string attribute not null", "param=revised&param2=new", restoredRequest.getAttribute( QUERY_STRING ) );
     }
 
+    /**
+     * A forwarded request reports the paths of the original request as the forward attributes of
+     * the servlet specification (9.4.2); the original request carries none of them.
+     */
+    public void testRequestDispatcherForwardAttributes() throws Exception {
+        InvocationContext ic = _runner.newClient().newInvocation( "http://localhost/sample/" + outerServletName + "?param=original&param1=first" );
+
+        final HttpServletRequest request = ic.getRequest();
+        RequestDispatcherServlet servlet = (RequestDispatcherServlet) ic.getServlet();
+        RequestDispatcher rd = servlet.getServletContext().getRequestDispatcher( "/" + innerServletName + "?param=revised&param2=new" );
+
+        ic.pushForwardRequest( rd, request, ic.getResponse() );
+
+        final HttpServletRequest innerRequest = ic.getRequest();
+        assertEquals( "request URI attribute", "/sample/" + outerServletName, innerRequest.getAttribute( RequestDispatcher.FORWARD_REQUEST_URI ) );
+        assertEquals( "context path attribute", "/sample", innerRequest.getAttribute( RequestDispatcher.FORWARD_CONTEXT_PATH ) );
+        assertEquals( "servlet path attribute", "/" + outerServletName, innerRequest.getAttribute( RequestDispatcher.FORWARD_SERVLET_PATH ) );
+        assertNull( "path info attribute not null", innerRequest.getAttribute( RequestDispatcher.FORWARD_PATH_INFO ) );
+        assertEquals( "query string attribute", "param=original&param1=first", innerRequest.getAttribute( RequestDispatcher.FORWARD_QUERY_STRING ) );
+
+        ic.popRequest();
+        final HttpServletRequest restoredRequest = ic.getRequest();
+
+        assertNull( "reverted URI attribute not null", restoredRequest.getAttribute( RequestDispatcher.FORWARD_REQUEST_URI ) );
+        assertNull( "reverted query string attribute not null", restoredRequest.getAttribute( RequestDispatcher.FORWARD_QUERY_STRING ) );
+    }
+
     static class RequestDispatcherServlet extends HttpServlet {
 
         public void doGet( HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {

@@ -79,7 +79,7 @@ final class ChatJoinLog {
 	 * @param chatId
 	 *        The resolved conversation the element joined.
 	 * @param element
-	 *        The element's tag, e.g. {@code chat-rail}, for the message.
+	 *        The element's tag, e.g. {@code chat-dock}, for the message.
 	 */
 	void join(String windowId, String chatId, String element) {
 		_windows

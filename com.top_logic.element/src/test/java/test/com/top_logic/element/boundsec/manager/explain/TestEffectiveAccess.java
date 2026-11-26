@@ -15,6 +15,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.element.boundsec.manager.TestAllOfAccessParent.AllOfRelation;
 import test.com.top_logic.element.util.ElementWebTestSetup;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
@@ -32,6 +33,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -48,6 +50,17 @@ import com.top_logic.util.model.ModelService;
  * {@code Covered} object holding it as role parent and grants read to the reader role, a
  * {@code PartOfCovered} object delegates to its container as access parent, and a
  * {@code DirectlyAssigned} object grants read to a role no rule delivers.
+ * </p>
+ * <p>
+ * An {@code Entry} of the model module {@code TestAccessParentOperations} delegates read to its
+ * {@code Catalog} only, and decides write by the roles held on the entry itself.
+ * </p>
+ * <p>
+ * A {@code Part} of the model module {@code TestAccessParentAnyOf} delegates every operation to its
+ * {@code Folder} and read to every {@code Document} relating it. A {@code Both} object delegates to
+ * two folders at once, through a combinator requiring the operation on both of them. A
+ * {@code Nested} object delegates Write to its folder and Read through that combinator, nested in
+ * an {@code any-of}.
  * </p>
  * <p>
  * The analysis runs in the system context of the test, in which the security checks are bypassed:
@@ -81,6 +94,32 @@ public class TestEffectiveAccess extends BasicTestCase {
 
 	private static final String RULE_COVERED = "TestSecurityCoverage_covered";
 
+	private static final String RESTRICTED_MODULE = "TestAccessParentOperations";
+
+	private static final String CATALOG = RESTRICTED_MODULE + ":Catalog";
+
+	private static final String ENTRY = RESTRICTED_MODULE + ":Entry";
+
+	private static final String ROLE_CATALOG_READER = RESTRICTED_MODULE + ".CatalogReader";
+
+	private static final String ROLE_ENTRY_EDITOR = RESTRICTED_MODULE + ".EntryEditor";
+
+	private static final String ANY_OF_MODULE = "TestAccessParentAnyOf";
+
+	private static final String FOLDER = ANY_OF_MODULE + ":Folder";
+
+	private static final String DOCUMENT = ANY_OF_MODULE + ":Document";
+
+	private static final String ANY_OF_PART = ANY_OF_MODULE + ":Part";
+
+	private static final String BOTH = ANY_OF_MODULE + ":Both";
+
+	private static final String NESTED = ANY_OF_MODULE + ":Nested";
+
+	private static final String ROLE_DOC_READER = ANY_OF_MODULE + ".DocReader";
+
+	private static final String ROLE_FOLDER_OWNER = ANY_OF_MODULE + ".FolderOwner";
+
 	private BoundedRole _reader;
 
 	private BoundedRole _direct;
@@ -95,6 +134,8 @@ public class TestEffectiveAccess extends BasicTestCase {
 
 	private Person _other;
 
+	private Person _entryEditor;
+
 	private TLObject _covered;
 
 	private TLObject _child;
@@ -104,6 +145,10 @@ public class TestEffectiveAccess extends BasicTestCase {
 	private TLObject _assigned;
 
 	private TLObject _unsecured;
+
+	private TLObject _catalog;
+
+	private TLObject _entry;
 
 	private final List<TLObject> _created = new ArrayList<>();
 
@@ -117,6 +162,7 @@ public class TestEffectiveAccess extends BasicTestCase {
 		_member = createPerson("effectiveAccessMember");
 		_directHolder = createPerson("effectiveAccessDirect");
 		_other = createPerson("effectiveAccessOther");
+		_entryEditor = createPerson("effectiveAccessEntryEditor");
 		inTransaction(() -> {
 			_reader = BoundedRole.getRoleByName(ROLE_READER);
 			_direct = BoundedRole.getRoleByName(ROLE_DIRECT);
@@ -138,6 +184,14 @@ public class TestEffectiveAccess extends BasicTestCase {
 
 			BoundedRole.assignRole(_covered, _group, _reader);
 			BoundedRole.assignRole(_assigned, _directHolder, _direct);
+
+			_catalog = create(CATALOG);
+			_catalog.tUpdateByName("reader", _owner);
+		});
+		inTransaction(() -> {
+			_entry = create(ENTRY);
+			_entry.tUpdateByName("catalog", _catalog);
+			_entry.tUpdateByName("editor", _entryEditor);
 		});
 	}
 
@@ -251,11 +305,161 @@ public class TestEffectiveAccess extends BasicTestCase {
 			delete.checkedOperation());
 		assertSame("Reading a part is checked as reading its container.", SimpleBoundCommandGroup.READ,
 			read.checkedOperation());
+		assertEquals("Every operation is checked on the container.", List.of(_covered), read.roleHolders());
+		assertEquals("Every operation is checked on the container.", List.of(_covered), delete.roleHolders());
+		assertNull("A container combines nothing.", explanation.combiningParent());
 
 		RoleAssignment source = singleSource(explanation, _reader);
 		assertFalse(explanation.isInherited(source));
 		assertSame(_covered, source.object());
 		assertEquals(RULE_COVERED, source.ruleId());
+	}
+
+	public void testRestrictedAccessParent() {
+		BoundedRole catalogReader = BoundedRole.getRoleByName(ROLE_CATALOG_READER);
+		BoundedRole entryEditor = BoundedRole.getRoleByName(ROLE_ENTRY_EDITOR);
+
+		AccessExplanation explanation = explain(_owner, _entry);
+
+		assertSame("The catalog decides on reading the entry.", _catalog, explanation.decidingObject());
+		assertTrue(explanation.isDelegating());
+
+		OperationDecision read = decision(explanation, SimpleBoundCommandGroup.READ);
+		assertEquals(List.of(_catalog), read.roleHolders());
+		assertNull("A restricted single access parent combines nothing.", explanation.combiningParent());
+		assertTrue(read.allowed());
+		assertEquals(Set.of(catalogReader), read.grantingRoles());
+
+		OperationDecision write = decision(explanation, SimpleBoundCommandGroup.WRITE);
+		assertEquals("The entry decides on writing itself.", List.of(_entry), write.roleHolders());
+		assertSame(SimpleBoundCommandGroup.WRITE, write.checkedOperation());
+		assertFalse(write.allowed());
+		assertEquals(Set.of(entryEditor), write.admittingRoles());
+		assertEquals(Set.of(), write.grantingRoles());
+
+		AccessExplanation editorExplanation = explain(_entryEditor, _entry);
+		OperationDecision editorWrite = decision(editorExplanation, SimpleBoundCommandGroup.WRITE);
+		assertTrue(editorWrite.allowed());
+		assertEquals("The role is held on the entry, not on the catalog.", Set.of(entryEditor),
+			editorWrite.grantingRoles());
+		assertFalse(decision(editorExplanation, SimpleBoundCommandGroup.READ).allowed());
+		assertEquals("Write is decided by the entry itself, no own role of a delegating object.", Set.of(),
+			editorWrite.ownGrantingRoles());
+
+		OperationDecision editorDiscover = decision(editorExplanation, SimpleBoundCommandGroup.DISCOVER);
+		assertEquals("Discover is delegated to the catalog.", List.of(_catalog), editorDiscover.roleHolders());
+		assertTrue("The own Write grant of the entry implies Discover.", editorDiscover.allowed());
+		assertEquals(Set.of(catalogReader, entryEditor), editorDiscover.admittingRoles());
+		assertEquals(Set.of(entryEditor), editorDiscover.grantingRoles());
+		assertEquals("The role is held on the entry, not on the catalog.", Set.of(entryEditor),
+			editorDiscover.ownGrantingRoles());
+
+		OperationDecision readerDiscover = decision(explanation, SimpleBoundCommandGroup.DISCOVER);
+		assertTrue(readerDiscover.allowed());
+		assertEquals(Set.of(catalogReader), readerDiscover.grantingRoles());
+		assertEquals("The role is held on the catalog.", Set.of(), readerDiscover.ownGrantingRoles());
+	}
+
+	/**
+	 * A part decides Read by its folder and by every document relating it, Write by its folder
+	 * only: the decision names every object deciding it, and the roles granting it are those held
+	 * on the object admitting them.
+	 */
+	public void testAnyOfExplainsEveryHolder() {
+		Person docReader = createPerson("effectiveAccessDocReader");
+		TLObject folder = inTransaction(() -> {
+			TLObject result = create(FOLDER);
+			result.tUpdateByName(OWNER, _owner);
+			return result;
+		});
+		TLObject part = inTransaction(() -> {
+			TLObject result = create(ANY_OF_PART);
+			folder.tUpdateByName(PARTS, List.of(result));
+			return result;
+		});
+		TLObject document = inTransaction(() -> {
+			TLObject result = create(DOCUMENT);
+			result.tUpdateByName("reader", docReader);
+			result.tUpdateByName("relatedParts", List.of(part));
+			return result;
+		});
+
+		AccessExplanation explanation = explain(docReader, part);
+		assertSame("The first object deciding Read is the deciding object.", folder, explanation.decidingObject());
+		assertNull("An any-of of a container and a referer combines its candidates by OR.",
+			explanation.combiningParent());
+
+		OperationDecision read = decision(explanation, SimpleBoundCommandGroup.READ);
+		assertTrue(read.allowed());
+		assertEquals(List.of(folder, document), read.roleHolders());
+		assertEquals("The role is held on the document, which admits it.",
+			Set.of(BoundedRole.getRoleByName(ROLE_DOC_READER)), read.grantingRoles());
+
+		OperationDecision write = decision(explanation, SimpleBoundCommandGroup.WRITE);
+		assertFalse(write.allowed());
+		assertEquals("The documents relating the part decide Read only.", List.of(folder), write.roleHolders());
+		assertEquals(Set.of(), write.grantingRoles());
+	}
+
+	/**
+	 * An access parent combining its candidates itself is marked, since the roles shown may admit
+	 * more than it does.
+	 */
+	public void testCustomCombinatorIsMarked() {
+		TLObject both = inTransaction(() -> {
+			TLObject first = create(FOLDER);
+			first.tUpdateByName(OWNER, _owner);
+			TLObject second = create(FOLDER);
+			second.tUpdateByName(OWNER, _other);
+			TLObject result = create(BOTH);
+			result.tUpdateByName("first", first);
+			result.tUpdateByName("second", second);
+			return result;
+		});
+
+		AccessExplanation explanation = explain(_owner, both);
+		assertNotNull("The combinator is named.", explanation.combiningParent());
+		assertFalse(explanation.combiningParent().isDisjunctive());
+
+		OperationDecision read = decision(explanation, SimpleBoundCommandGroup.READ);
+		assertFalse("The owner owns only the first folder.", read.allowed());
+		assertEquals(2, read.roleHolders().size());
+		assertEquals("The role held on the first folder is shown, although it does not suffice.",
+			Set.of(BoundedRole.getRoleByName(ROLE_FOLDER_OWNER)), read.grantingRoles());
+	}
+
+	/**
+	 * A combinator nested in an any-of is named for the operations it decides, not the any-of
+	 * holding it.
+	 */
+	public void testCombinatorNestedInAnyOf() {
+		TLObject nested = inTransaction(() -> {
+			TLObject container = create(FOLDER);
+			container.tUpdateByName(OWNER, _owner);
+			TLObject first = create(FOLDER);
+			first.tUpdateByName(OWNER, _owner);
+			TLObject second = create(FOLDER);
+			second.tUpdateByName(OWNER, _other);
+			TLObject result = create(NESTED);
+			container.tUpdateByName("nesteds", List.of(result));
+			result.tUpdateByName("first", first);
+			result.tUpdateByName("second", second);
+			return result;
+		});
+
+		AccessParentFunction readCombinator =
+			inInteraction(() -> analysis().combiningParent(nested, SimpleBoundCommandGroup.READ));
+		assertTrue("The combinator deciding Read is named, not the any-of holding it: " + readCombinator,
+			readCombinator instanceof AllOfRelation);
+		assertNull("Write is decided by the container alone, which combines nothing.",
+			inInteraction(() -> analysis().combiningParent(nested, SimpleBoundCommandGroup.WRITE)));
+
+		AccessExplanation explanation = explain(_owner, nested);
+		assertEquals(readCombinator, explanation.combiningParent());
+		assertFalse("The owner owns only the first of the folders deciding Read.",
+			decision(explanation, SimpleBoundCommandGroup.READ).allowed());
+		assertTrue("The owner owns the container deciding Write.",
+			decision(explanation, SimpleBoundCommandGroup.WRITE).allowed());
 	}
 
 	public void testDenied() {
@@ -405,11 +609,19 @@ public class TestEffectiveAccess extends BasicTestCase {
 	}
 
 	private static void inTransaction(Runnable modification) {
-		ThreadContext.withoutSecurityChecks(() -> {
+		inTransaction(() -> {
+			modification.run();
+			return null;
+		});
+	}
+
+	private static <T> T inTransaction(Supplier<T> modification) {
+		return ThreadContext.withoutSecurityChecks(() -> {
 			try (Transaction tx =
 				kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-				modification.run();
+				T result = modification.get();
 				tx.commit();
+				return result;
 			}
 		});
 	}

@@ -11,9 +11,8 @@ import { chatStore, readBootstrap } from './chat-store'
  * `<chat-dock/>` in a live DOM: what it mounts, and when.
  *
  * A static render performs no effect, and the question here is exactly what happens between a
- * commit and the effects that follow it: whether the dock's content - a `<chat>` with its own rail -
- * is mounted for a moment on a page that shows the dock's conversation itself. For that moment the
- * dock's rail stated its own `open="false"` over the page rail's `open="true"` (#552).
+ * commit and the effects that follow it: whether the dock's content is mounted for a moment on a
+ * page that shows the dock's conversation itself.
  */
 
 /** Runs `work` and commits what it caused, effects included; React's production build has no `act`. */
@@ -83,10 +82,6 @@ afterEach(() => {
   resetTLBridge()
 })
 
-function escape(): KeyboardEvent {
-  return new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
-}
-
 /**
  * Lets the passive effects run and the commits they cause land, and the observer deliver what they
  * did: `flushSync` commits a render and its layout effects, not the effects that follow.
@@ -120,28 +115,6 @@ describe('the dock in a live page', () => {
     await records()
     expect(host.querySelector('.tl-chat-dock')!.className).toContain('is-stood-down')
     expect(mounted).toEqual([])
-  })
-
-  it('leaves open for an Escape that something inside it already answered', async () => {
-    const state = dockState({ dockOpen: true })
-    setTLState(state)
-    act(() => root.render(React.createElement(TLChatDock, { controlId: 'dock', state })))
-    await records()
-    const inner = host.querySelector('.tl-chat-dock__panel tl-child')!
-    // What the rail's drawer does with the key: it closes itself and says so.
-    const answer = (event: Event) => event.preventDefault()
-    inner.addEventListener('keydown', answer)
-    act(() => {
-      inner.dispatchEvent(escape())
-    })
-    expect(host.querySelector('.tl-chat-dock')!.className).toContain('is-open')
-
-    // An Escape nothing inside answered closes the dock, as before.
-    inner.removeEventListener('keydown', answer)
-    act(() => {
-      inner.dispatchEvent(escape())
-    })
-    expect(host.querySelector('.tl-chat-dock')!.className).not.toContain('is-open')
   })
 
   it('tells the server when the user opens and closes the panel', async () => {

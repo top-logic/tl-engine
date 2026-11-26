@@ -8,7 +8,6 @@
 
 		<config service-class="com.top_logic.base.discovery.AgentDiscoveryService">
 			<instance
-				display-name="Test Application"
 				summary="An application for testing the agent discovery."
 			>
 				<contributions>

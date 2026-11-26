@@ -15,7 +15,6 @@ import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
@@ -46,7 +45,7 @@ public class TestRoleRevokeByReference extends AbstractModelAccessTest {
 	}
 
 	private boolean budgetReadable() {
-		return ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.READ, type(PROJECT), part(PROJECT, BUDGET))
+		return ModelAccessPolicy.onAttributeColumn(type(PROJECT), part(PROJECT, BUDGET))
 			.isExecutable();
 	}
 

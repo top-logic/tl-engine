@@ -108,7 +108,7 @@ public class TestChatStart extends BasicTestCase {
 			received.set(turn);
 			return "Done.";
 		});
-		ScriptedBackend.install(session -> subject.equals(session.getSubject()) ? backend : null);
+		ScriptedBackend.install(about -> about.equals(subject) ? backend : null);
 
 		TLSubSessionContext window = TLContextManager.getSubSession();
 		AgentSession session = ChatStart.start(window, "orders", _owner, subject, "  Do the work.  ");
@@ -133,16 +133,16 @@ public class TestChatStart extends BasicTestCase {
 
 	/** A chat element of the window that is displayed later finds the chat the start sent through. */
 	public void testUsesTheChatTheWindowShows() throws Exception {
-		ScriptedBackend.install(session -> backend(turn -> "Ok."));
+		ScriptedBackend.install(subject -> backend(turn -> "Ok."));
 		TLSubSessionContext window = TLContextManager.getSubSession();
 		TaskProgressTracker shown = new TaskProgressTracker();
 		ChatSessionRegistry.register(window, "shown", shown);
 
-		AgentSession session = ChatStart.start(window, "shown", _owner, null, "Hello");
+		TLObject subject = persistedObject("the object of the shown chat");
+		AgentSession session = ChatStart.start(window, "shown", _owner, subject, "Hello");
 
 		assertSame(shown, ChatSessionRegistry.tracker(window, "shown"));
 		assertEquals(session.tHandle().getObjectName().toExternalForm(), shown.getActiveSessionId());
-		assertNull(session.getSubject());
 		awaitIdle(shown);
 	}
 

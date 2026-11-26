@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- typed configuration for TestRunHandleAttributeRights -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+
+		<!-- A role that nobody holds in the test. -->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="TestRunHandle.TranscriptReader"/>
+				</roles>
+			</instance>
+		</config>
+
+		<!-- The transcript of a run is read by that role only, also not by the owner of the run. -->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<part name="tl.ai.execution:AgentExecution#transcript">
+						<grant
+							operation="Read"
+							roles="TestRunHandle.TranscriptReader"
+						/>
+					</part>
+				</security-config>
+			</instance>
+		</config>
+
+	</services>
+
+</application>

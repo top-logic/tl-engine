@@ -84,20 +84,17 @@ public class ReactDashboardControl extends ReactControl {
 	/** Descriptor key holding the control rendered inside a tile. */
 	private static final String TILE_CONTROL = "control";
 
+	/** Descriptor key holding a tile's {@link Tile#withLabel(String) name}, {@code null} without one. */
+	private static final String TILE_LABEL = "label";
+
 	/** Descriptor key telling that a tile is withheld, see {@link #setTileWithheld(String, boolean)}. */
 	private static final String TILE_HIDDEN = "hidden";
 
-	/** Descriptor key holding a tile's {@link TileAction action}, {@code null} without one. */
+	/**
+	 * Descriptor key holding the {@link ItemAction#toState() state} of a tile's {@link TileAction
+	 * action}, {@code null} without one.
+	 */
 	private static final String TILE_ACTION = "action";
-
-	/** Action descriptor key holding the name the action is offered under. */
-	private static final String ACTION_LABEL = "label";
-
-	/** Action descriptor key telling whether the action is currently refused. */
-	private static final String ACTION_DISABLED = "disabled";
-
-	/** Action descriptor key holding the text explaining the action, e.g. why it is refused. */
-	private static final String ACTION_TOOLTIP = "tooltip";
 
 	/**
 	 * What a tile runs when the user activates it.
@@ -145,6 +142,12 @@ public class ReactDashboardControl extends ReactControl {
 		private boolean _visible;
 
 		private boolean _withheld;
+
+		private String _label;
+
+		private ItemActivation _activation;
+
+		private Object _item;
 
 		/**
 		 * Creates a {@link Tile}.
@@ -197,6 +200,44 @@ public class ReactDashboardControl extends ReactControl {
 			_withheld = withheld;
 			return this;
 		}
+
+		/**
+		 * Sets the name the tile is announced under while it is moved in the edit mode: the title
+		 * it displays.
+		 *
+		 * @param label
+		 *        The name of the tile, {@code null} for a tile without a title, which is then
+		 *        announced by its position.
+		 * @return This instance for fluent chaining.
+		 */
+		public Tile withLabel(String label) {
+			_label = label;
+			return this;
+		}
+
+		/**
+		 * Makes the tile an entry point for an object: activating it runs the given activation with
+		 * the given object.
+		 *
+		 * <p>
+		 * This is how a tile computed from an object is activated, the activation deciding per
+		 * object whether and how the tile is offered, like an item of an activatable
+		 * {@link ReactLayoutControl}. It takes the place of the {@link TileContent#action() action}
+		 * of the content. When what the activation offers changes, its owner reports it with
+		 * {@link ReactDashboardControl#updateActivation()}.
+		 * </p>
+		 *
+		 * @param activation
+		 *        What activating the tile runs.
+		 * @param item
+		 *        The object the activation runs with.
+		 * @return This instance for fluent chaining.
+		 */
+		public Tile withActivation(ItemActivation activation, Object item) {
+			_activation = activation;
+			_item = item;
+			return this;
+		}
 	}
 
 	private final List<Tile> _tiles;
@@ -206,6 +247,9 @@ public class ReactDashboardControl extends ReactControl {
 	private final BiConsumer<String, Boolean> _onVisibilityChange;
 
 	private boolean _editMode;
+
+	/** @see #setRearrangeable(boolean) */
+	private boolean _rearrangeable = true;
 
 	private final List<Runnable> _stateChangeListeners = new CopyOnWriteArrayList<>();
 
@@ -255,11 +299,12 @@ public class ReactDashboardControl extends ReactControl {
 			d.put(TILE_ID, t._id);
 			d.put(TILE_WIDTH, t._width.getExternalName());
 			d.put(TILE_ROW_SPAN, Integer.valueOf(t._rowSpan));
+			d.put(TILE_LABEL, t._label);
 			if (!t._withheld) {
 				// A withheld tile is not drawn, so its content is not part of the displayed tree.
 				d.put(TILE_CONTROL, content.control());
 			}
-			d.put(TILE_ACTION, actionDescriptor(content.action()));
+			d.put(TILE_ACTION, t._activation != null ? itemActionDescriptor(t) : actionDescriptor(content.action()));
 			if (t._withheld) {
 				d.put(TILE_HIDDEN, Boolean.TRUE);
 			}
@@ -301,12 +346,18 @@ public class ReactDashboardControl extends ReactControl {
 		if (!model.isVisible()) {
 			return null;
 		}
-		Map<String, Object> d = new LinkedHashMap<>();
 		String label = model.getLabel();
-		d.put(ACTION_LABEL, label == null || label.isEmpty() ? action.label() : label);
-		d.put(ACTION_DISABLED, Boolean.valueOf(!model.isExecutable()));
-		d.put(ACTION_TOOLTIP, model.getTooltip());
-		return d;
+		return new ItemAction(label == null || label.isEmpty() ? action.label() : label, !model.isExecutable(),
+			model.getTooltip()).toState();
+	}
+
+	/**
+	 * What the client needs to offer a tile with an {@link Tile#withActivation(ItemActivation, Object)
+	 * activation} as an entry point, {@code null} where the activation offers nothing for its object.
+	 */
+	private static Map<String, Object> itemActionDescriptor(Tile tile) {
+		ItemAction action = tile._activation.action(tile._item);
+		return action == null ? null : action.toState();
 	}
 
 	/**
@@ -315,6 +366,100 @@ public class ReactDashboardControl extends ReactControl {
 	 */
 	private void handleActionChange() {
 		putState(CHILDREN, buildDescriptors());
+	}
+
+	/**
+	 * Publishes again what activating each tile offers, after an
+	 * {@link Tile#withActivation(ItemActivation, Object) activation} reported a change.
+	 */
+	public void updateActivation() {
+		handleActionChange();
+	}
+
+	/**
+	 * Replaces the tiles of this dashboard.
+	 *
+	 * <p>
+	 * The given tiles take the place of the current ones, in the given order, with their width, row
+	 * span, name, visibility and withholding. A given tile whose {@link Tile#getId() id} names a
+	 * current tile takes over the content of that tile, so that its controls keep what they display;
+	 * its own content factory is not called. The content of a current tile whose id is not given
+	 * anymore is disposed.
+	 * </p>
+	 *
+	 * <p>
+	 * Neither the reorder nor the visibility callback is notified: the given arrangement is what the
+	 * caller already knows. The listeners registered via {@link #addStateChangeListener(Runnable)}
+	 * are notified, since tiles may have been shown, hidden, added or removed.
+	 * </p>
+	 *
+	 * @param tiles
+	 *        All tiles, shown or hidden, in the order they should appear. The ids must be distinct.
+	 */
+	public void setTiles(List<Tile> tiles) {
+		Map<String, Tile> current = new LinkedHashMap<>();
+		for (Tile tile : _tiles) {
+			current.put(tile._id, tile);
+		}
+		Set<Tile> displayedBefore = new HashSet<>();
+		for (Tile tile : tiles) {
+			Tile before = current.remove(tile._id);
+			if (before == null || before == tile || before._content == null) {
+				if (before == tile && isDisplayed(tile)) {
+					displayedBefore.add(tile);
+				}
+				continue;
+			}
+			tile._content = before._content;
+			if (isDisplayed(before)) {
+				if (isDisplayed(tile)) {
+					displayedBefore.add(tile);
+				} else {
+					tile._content.control().detach();
+				}
+			}
+		}
+		_tiles.clear();
+		_tiles.addAll(tiles);
+
+		for (Tile dropped : current.values()) {
+			disposeContent(dropped);
+		}
+
+		putState(CHILDREN, buildDescriptors());
+		if (isAttached()) {
+			// The content of a new tile, or of one that is shown again, is part of the displayed tree
+			// now, whether or not its serialization already attached it.
+			for (Tile tile : _tiles) {
+				if (isDisplayed(tile) && !displayedBefore.contains(tile)) {
+					tile._content.control().attach();
+				}
+			}
+		}
+		fireStateChange();
+	}
+
+	/**
+	 * Whether the content of the given tile is part of the displayed tree, given that this control
+	 * is displayed.
+	 */
+	private static boolean isDisplayed(Tile tile) {
+		return tile._visible && !tile._withheld;
+	}
+
+	/**
+	 * Disposes the content of a tile that is no longer part of this dashboard.
+	 */
+	private void disposeContent(Tile tile) {
+		TileContent content = tile._content;
+		if (content == null) {
+			return;
+		}
+		tile._content = null;
+		if (content.action() != null) {
+			content.action().model().removeStateChangeListener(_actionChangeHandler);
+		}
+		content.control().cleanupTree();
 	}
 
 	/**
@@ -339,6 +484,34 @@ public class ReactDashboardControl extends ReactControl {
 				content.action().model().removeStateChangeListener(_actionChangeHandler);
 			}
 		}
+	}
+
+	/**
+	 * Whether the user may currently rearrange the tiles, see {@link #setRearrangeable(boolean)}.
+	 */
+	public boolean isRearrangeable() {
+		return _rearrangeable;
+	}
+
+	/**
+	 * Sets whether the user may currently rearrange the tiles.
+	 *
+	 * <p>
+	 * While the user may not, a {@link #REORDER_COMMAND} or {@link #HIDE_COMMAND} the client sends
+	 * changes nothing: the tiles keep their order and visibility, no callback is notified, and the
+	 * tiles are published again, so that a client that moved or removed a tile in anticipation shows
+	 * the unchanged arrangement again.
+	 * </p>
+	 */
+	public void setRearrangeable(boolean rearrangeable) {
+		_rearrangeable = rearrangeable;
+	}
+
+	/**
+	 * Publishes the unchanged tiles again, answering a refused rearrangement.
+	 */
+	private void refuseRearrangement() {
+		putState(CHILDREN, buildDescriptors());
 	}
 
 	/**
@@ -481,7 +654,8 @@ public class ReactDashboardControl extends ReactControl {
 	 *
 	 * <p>
 	 * The client sends the order of the shown tiles. The hidden tiles keep their positions in the
-	 * order of all tiles.
+	 * order of all tiles. A dashboard that is not {@link #setRearrangeable(boolean) rearrangeable}
+	 * refuses the order and publishes its unchanged tiles again.
 	 * </p>
 	 */
 	// Argument is a string array (ordered tile ids). The config-JSON binding does not support a List
@@ -490,6 +664,10 @@ public class ReactDashboardControl extends ReactControl {
 		required = true, description = "The ids of the shown tiles in their new order."))
 	@FrameworkInternal
 	void handleReorder(Map<String, Object> arguments) {
+		if (!_rearrangeable) {
+			refuseRearrangement();
+			return;
+		}
 		@SuppressWarnings("unchecked")
 		List<String> newOrder = (List<String>) arguments.get(ORDER_ARG);
 		reorderTiles(newOrder);
@@ -513,6 +691,11 @@ public class ReactDashboardControl extends ReactControl {
 	 * unknown tile does nothing.
 	 * </p>
 	 *
+	 * <p>
+	 * A tile with an {@link Tile#withActivation(ItemActivation, Object) activation} runs it with its
+	 * object instead, see {@link ItemActivation#activate(Object)}.
+	 * </p>
+	 *
 	 * @param args
 	 *        Names the tile the user activated, see {@link ActivateTileArguments#getTileId()}.
 	 */
@@ -521,6 +704,10 @@ public class ReactDashboardControl extends ReactControl {
 	void handleActivate(ActivateTileArguments args) {
 		Tile tile = tile(args.getTileId());
 		if (tile == null || !tile._visible || tile._withheld) {
+			return;
+		}
+		if (tile._activation != null) {
+			tile._activation.activate(tile._item);
 			return;
 		}
 		TileAction action = contentOf(tile).action();
@@ -535,8 +722,10 @@ public class ReactDashboardControl extends ReactControl {
 	 * dashboard.
 	 *
 	 * <p>
-	 * The tile is no longer published and its content is no longer displayed. A dashboard created
-	 * without a visibility callback, a hidden tile and an unknown tile ignore the command.
+	 * The tile is no longer published and its content is no longer displayed. A hidden tile and an
+	 * unknown tile ignore the command. A dashboard created without a visibility callback, or one
+	 * that is not {@link #setRearrangeable(boolean) rearrangeable}, refuses it and publishes its
+	 * unchanged tiles again.
 	 * </p>
 	 *
 	 * @param args
@@ -545,7 +734,8 @@ public class ReactDashboardControl extends ReactControl {
 	@ReactCommandHandler(HIDE_COMMAND)
 	@FrameworkInternal
 	void handleHide(HideTileArguments args) {
-		if (_onVisibilityChange == null) {
+		if (_onVisibilityChange == null || !_rearrangeable) {
+			refuseRearrangement();
 			return;
 		}
 		setTileVisible(args.getTileId(), false);

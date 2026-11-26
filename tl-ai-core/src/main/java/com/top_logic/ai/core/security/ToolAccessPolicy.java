@@ -241,8 +241,8 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	}
 
 	/**
-	 * What an agent run with nobody to ask may use: a scheduled or asynchronous run, or a request from
-	 * an external client.
+	 * What an agent run may use when nobody approves its tool calls: a scheduled or asynchronous run,
+	 * or a request of an external client over MCP or A2A.
 	 *
 	 * <p>
 	 * Such a run confirms every tool call itself, so this is its upper limit; the acting user's roles
@@ -335,7 +335,7 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		String GRANTS = "grants";
 
 		/**
-		 * Lets a run with nobody to ask use everything the acting user's roles allow.
+		 * Lets a run whose tool calls nobody approves use everything the acting user's roles allow.
 		 *
 		 * <p>
 		 * Switch this on only if you deliberately want such runs without a limit of their own. It gives
@@ -351,7 +351,7 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		void setAll(boolean value);
 
 		/**
-		 * The capabilities and single tools a run with nobody to ask may use.
+		 * The capabilities and single tools that a run whose tool calls nobody approves may use.
 		 *
 		 * <p>
 		 * Ignored when {@link #isAll()} is switched on.
@@ -544,7 +544,7 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 *
 	 *     <agent-access default="all">
 	 *         <role name="SalesUser">
-	 *             <grants><grant agents="sales-assistant, pietro"/></grants>
+	 *             <grants><grant agents="sales-assistant, planner"/></grants>
 	 *             <denies><deny agents="framework-wiring-agent"/></denies>
 	 *         </role>
 	 *     </agent-access>

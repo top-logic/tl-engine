@@ -44,6 +44,7 @@ import com.top_logic.ai.core.agent.AgentPolicyService;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.agent.StopReason;
 import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.ai.core.agent.event.AgentEvent;
 import com.top_logic.ai.core.agent.event.AgentEventListener;
 import com.top_logic.ai.core.cost.Money;
@@ -60,6 +61,7 @@ import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.ai.core.session.Part;
 import com.top_logic.ai.core.session.Turn;
 import com.top_logic.ai.core.session.persist.ConversationLogSerializer;
+import com.top_logic.model.TLObject;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
@@ -88,6 +90,8 @@ public class TestChatBackend extends BasicTestCase {
 
 	private Person _previousPerson;
 
+	private TLObject _subject;
+
 	private AgentSession _session;
 
 	private String _sessionId;
@@ -103,7 +107,8 @@ public class TestChatBackend extends BasicTestCase {
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
 		_previousPerson = subSession.getPerson();
 		subSession.setPerson(_owner);
-		_session = (AgentSession) ChatHistoryService.createSession("Backend", _owner);
+		_subject = ChatHistoryService.createSession("What the backend works on", _owner);
+		_session = (AgentSession) ChatHistoryService.createSession("Backend", _owner, ApprovalMode.MANUAL, _subject);
 		_sessionId = _session.tHandle().getObjectName().toExternalForm();
 		HistoryUtils.updateSessionRevision();
 
@@ -326,7 +331,7 @@ public class TestChatBackend extends BasicTestCase {
 	 * once.
 	 */
 	public void testFailingAgentLoopIsRecorded() throws Exception {
-		ScriptedBackend.install(session -> null);
+		ScriptedBackend.install(subject -> null);
 		ScriptedModel.install((request, turn) -> {
 			throw new TopLogicException(REFUSAL);
 		});
@@ -374,7 +379,7 @@ public class TestChatBackend extends BasicTestCase {
 	/** A conversation no resolver claims is answered by the framework's own agent. */
 	public void testUnclaimedConversationRunsTheAgent() throws Exception {
 		AtomicBoolean asked = new AtomicBoolean();
-		ScriptedBackend.install(session -> {
+		ScriptedBackend.install(subject -> {
 			asked.set(true);
 			return null;
 		});
@@ -404,7 +409,7 @@ public class TestChatBackend extends BasicTestCase {
 				return script.send(turn, sink, cancel);
 			}
 		};
-		ScriptedBackend.install(session -> session.equals(_session) ? backend : null);
+		ScriptedBackend.install(subject -> subject.equals(_subject) ? backend : null);
 	}
 
 	private static String answer(AgentEventListener sink, String text) {

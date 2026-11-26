@@ -29,6 +29,8 @@ import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.AccessRevoke;
 import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
+import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
@@ -67,6 +69,9 @@ public class TestTypeGrants extends BasicTestCase {
 
 	/** Type excluded from access control. */
 	private static final String UNSECURED = MODULE + ":Unsecured";
+
+	/** Type delegating Read and TestCoverageShow to its access parent, deciding Finish itself. */
+	private static final String RESTRICTED_LINKED = MODULE + ":RestrictedLinked";
 
 	private static final String OWNER = COVERED + "#owner";
 
@@ -113,6 +118,12 @@ public class TestTypeGrants extends BasicTestCase {
 
 	/** Role delivered on objects of {@link #CREATED_BY_SELF} only. */
 	private static final String ROLE_SELF_CREATOR = MODULE + ".SelfCreator";
+
+	/** Type delegating Write to its folder and Read to the documents relating it. */
+	private static final String ANY_OF_RESTRICTED = "TestAccessParentAnyOf:Mixed";
+
+	/** Type delegating every operation to its folder and Read to the documents relating it. */
+	private static final String ANY_OF_UNRESTRICTED = "TestAccessParentAnyOf:Part";
 
 	private static final BoundCommandGroup READ = SimpleBoundCommandGroup.READ;
 
@@ -472,6 +483,49 @@ public class TestTypeGrants extends BasicTestCase {
 		TypeGrants exempt = grants(UNSECURED);
 		assertTrue(exempt.isExempt());
 		assertEquals(List.of(), exempt.getRows());
+	}
+
+	/**
+	 * A type delegating only Read offers grants of its own for the operations it does not delegate.
+	 */
+	public void testRestrictedParentOffersUndelegatedOperations() throws Exception {
+		TypeGrants grants = grants(RESTRICTED_LINKED);
+		assertNotNull(grants.getAccessParent());
+		assertEquals("Discover is delegated together with Read, the declared TestCoverageShow is delegated as well.",
+			List.of(WRITE, SimpleBoundCommandGroup.CREATE, DELETE, SimpleBoundCommandGroup.EXPORT,
+				CommandGroupRegistry.getInstance().getGroup(SimpleBoundCommandGroup.FINISH_NAME)),
+			grants.getOperations());
+		assertFalse("The attributes are granted as on a type deciding for itself.",
+			grants.getAttributes().isEmpty());
+	}
+
+	/**
+	 * A type deciding by any of several access parents, each restricted to some operations, offers
+	 * grants of its own for the operations no candidate delegates; with a candidate delegating all
+	 * operations, it offers none. The label names the candidates.
+	 */
+	public void testAnyOfOffersUndelegatedOperations() throws Exception {
+		TypeGrants restricted = grants(ANY_OF_RESTRICTED);
+		assertTrue(restricted.getAccessParent() instanceof AnyOfRelation);
+		assertEquals("Write is delegated to the folder, Read and Discover to the documents.",
+			List.of(SimpleBoundCommandGroup.CREATE, DELETE, SimpleBoundCommandGroup.EXPORT),
+			restricted.getOperations());
+
+		TypeGrants unrestricted = grants(ANY_OF_UNRESTRICTED);
+		assertEquals("The folder decides all operations.", List.of(), unrestricted.getOperations());
+		String label = Resources.getInstance().getString(unrestricted.getAccessParent().getLabel());
+		for (AccessParentFunction candidate : ((AnyOfRelation) unrestricted.getAccessParent()).candidates()) {
+			assertTrue(label, label.contains(Resources.getInstance().getString(candidate.getLabel())));
+		}
+	}
+
+	/**
+	 * A type deciding by any of several access parents, none of them its container, grants Create
+	 * itself.
+	 */
+	public void testAnyOfWithoutContainerOffersCreate() throws Exception {
+		assertEquals(List.of(SimpleBoundCommandGroup.CREATE), grants("TestAccessParentAnyOf:Note").getOperations());
+		assertEquals(List.of(SimpleBoundCommandGroup.CREATE), grants("TestAccessParentAnyOf:Node").getOperations());
 	}
 
 	/**

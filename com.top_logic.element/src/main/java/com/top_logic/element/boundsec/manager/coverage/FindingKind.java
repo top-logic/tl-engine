@@ -34,6 +34,8 @@ public enum FindingKind {
 	/**
 	 * No role is granted an operation on the type or on one of its attributes, so its objects are
 	 * inaccessible to every user. A type that the application's code alone uses is declared internal instead.
+	 * For a type whose access parent decides some operations but not Read, no role is granted Read
+	 * on the type itself.
 	 * 
 	 * @see SimpleBoundCommandGroup#READ
 	 * @see ModelAccessRights#getAllowedRoles(com.top_logic.model.TLClass, com.top_logic.tool.boundsec.BoundCommandGroup)
@@ -51,9 +53,9 @@ public enum FindingKind {
 	 * </p>
 	 * 
 	 * <p>
-	 * The operation "Create" is checked where an object is created: in its container, or on the
-	 * security root for a type no composition holds. A role granted it must be deliverable there;
-	 * on the type itself it does not count.
+	 * The operation "Create" is checked where an object is created: on the security root, in a
+	 * container holding it in a composition, or in an object it references. A role granted it must
+	 * be deliverable on one of them; on the type itself it does not count.
 	 * </p>
 	 * 
 	 * @see SimpleBoundCommandGroup#CREATE
@@ -120,6 +122,58 @@ public enum FindingKind {
 	 * @see CoverageFinding#getOperation()
 	 * @see CoverageFinding#getRoles()
 	 */
-	UNCHECKED_GRANT;
+	UNCHECKED_GRANT,
+
+	/**
+	 * A rule granting roles on historic versions only through anchor references applies to the
+	 * type, but no object of the type can be covered by one of these references: The type shares no
+	 * instances with the target type of a reference and is no composition part of such a type. The
+	 * rule never grants a role.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	ANCHOR_NEVER_COVERS,
+
+	/**
+	 * A rule of the type uses a historic reference as anchor that is stored in a column without an
+	 * index. Each search for the anchors of a version scans the whole table.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	ANCHOR_WITHOUT_INDEX,
+
+	/**
+	 * A role on the type depends on itself through rules evaluated on historic versions. A role is
+	 * only held where it can be derived without relying on itself, so the cycle alone never grants
+	 * the role.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	ROLE_CYCLE,
+
+	/**
+	 * A rule of the type navigates a historic reference backwards from an object that is always a
+	 * current object. Such a step leads nowhere, so the rule never grants a role.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	ANCHOR_STEP_FROM_CURRENT,
+
+	/**
+	 * All rules of the type grant roles on historic versions only. The rules switch off the default
+	 * for composition parts, but nobody holds a role on a current object of the type.
+	 */
+	NO_CURRENT_ROLE_SOURCE,
+
+	/**
+	 * A rule of the type inherits a role from a rule whose result is not kept in the security
+	 * storage. The rule is therefore not stored either and evaluated at each access check.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	RULE_NOT_STORED,
+
+	/**
+	 * A rule of the type that is evaluated on historic versions navigates a reference backwards
+	 * that may hold current objects and historic versions. What such a step finds from a historic
+	 * version is not defined for the access check.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	MIXED_BACKWARDS_STEP;
 
 }

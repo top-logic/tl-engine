@@ -6,8 +6,8 @@ import { getComponent } from './registry';
 import { wrapRoot } from './root-wrapper';
 import { installTouchDrag } from './touch-drag';
 import { connect, subscribe, unsubscribe } from './sse-client';
-import { setI18NApiBase, setI18NWindowName } from './i18n';
-import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
+import { getApiBase, setMountContext } from './page-context';
+import { createScope, registerScope, addBinding, pageScope, isCompositionKey, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
 import { CMD_COMMIT, CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, parseResponse, registerPendingFlush, unregisterPendingFlush } from './command-channel';
 import type { CommandOptions, CommandResponse } from './command-channel';
@@ -123,6 +123,7 @@ function createEntry(controlId: string, initialState: Record<string, unknown>, r
   const sseListener = (data: Record<string, unknown>) => {
     registerChildDescriptors(controlId, data);
     store.applyPatch(data);
+    releaseUndescribed(controlId);
   };
   subscribe(controlId, sseListener);
   return { root, store, sseListener, refs: 0, owner: null, owned: new Set() };
@@ -205,6 +206,48 @@ function registerChildDescriptor(
 }
 
 /**
+ * Tears down the entries the given control owns that have no holder and that its state no longer
+ * describes: the server has dropped these children, so no holder will claim them again.
+ */
+function releaseUndescribed(controlId: string): void {
+  const entry = _mounts.get(controlId);
+  if (entry === undefined || entry.owned.size === 0) {
+    return;
+  }
+  const described = new Set<string>();
+  collectDescribed(entry.store.getSnapshot(), described);
+  for (const childId of [...entry.owned]) {
+    const child = _mounts.get(childId);
+    if (child !== undefined && child.refs === 0 && child.owner === controlId && !described.has(childId)) {
+      tearDown(childId, child);
+    }
+  }
+}
+
+/**
+ * Collects the IDs of the child controls described in the given value, at any depth, also inside
+ * the state of another descriptor.
+ */
+function collectDescribed(value: unknown, out: Set<string>): void {
+  if (Array.isArray(value)) {
+    for (const element of value) {
+      collectDescribed(element, out);
+    }
+    return;
+  }
+  if (value === null || typeof value !== 'object') {
+    return;
+  }
+  const obj = value as Record<string, unknown>;
+  if (isChildDescriptor(obj)) {
+    out.add(obj.controlId as string);
+  }
+  for (const key in obj) {
+    collectDescribed(obj[key], out);
+  }
+}
+
+/**
  * Removes the given entry with its SSE subscription and React root, together with the entries it
  * owns that still have no holder.
  */
@@ -229,18 +272,8 @@ function tearDown(controlId: string, entry: MountEntry): void {
   }
 }
 
-/** The application context path (e.g. "/demo"), set on first mount(). */
-let _contextPath = '';
-
 /** Whether SSE has been connected. */
 let _sseConnected = false;
-
-/**
- * Returns the API base URL (context path with trailing slash).
- */
-export function getApiBase(): string {
-  return _contextPath + '/';
-}
 
 /**
  * The attribute naming the control whose React root the element takes, see
@@ -291,12 +324,8 @@ export function mount(
   windowName?: string,
   contextPath?: string
 ): void {
-  // Store context path from the first mount call.
-  if (contextPath !== undefined) {
-    _contextPath = contextPath;
-  }
-
   const resolvedWindowName = windowName ?? '';
+  setMountContext(contextPath, resolvedWindowName);
 
   // Connect SSE on first mount, or reconnect on page reload.
   // When contextPath is provided (from internalWrite()), a fresh page render is happening.
@@ -305,14 +334,10 @@ export function mount(
   // reconnect to establish a fresh SSE connection.
   if (!_sseConnected) {
     _sseConnected = true;
-    setI18NApiBase(getApiBase());
     connect(getApiBase() + 'react-api/events?windowName=' + encodeURIComponent(resolvedWindowName));
   } else if (contextPath !== undefined) {
     connect(getApiBase() + 'react-api/events?windowName=' + encodeURIComponent(resolvedWindowName));
   }
-
-  // Always update windowName (it may change between mount calls).
-  setI18NWindowName(resolvedWindowName);
 
   const element = findMountPoint(controlId);
   if (!element) {
@@ -376,8 +401,18 @@ export function mountField(
 
 /**
  * Unmounts a React component by control ID, cleaning up its SSE subscription.
+ *
+ * <p>The last holder of a child control releasing it while the control describing it is still
+ * mounted hands the child over to that control instead: the parent stops rendering the child for
+ * a while - a list whose search hides the entry holding it - but the server keeps the child alive
+ * and goes on sending its updates. The entry keeps receiving them, so a holder rendering the child
+ * again shows its current state, not the one of the descriptor the parent still holds. The entry
+ * goes with the parent, or as soon as the state of the parent no longer describes it.</p>
+ *
+ * @param controlId the control to release
+ * @param parentId the control whose state describes the released child, if any
  */
-export function unmount(controlId: string): void {
+export function unmount(controlId: string, parentId?: string): void {
   const entry = _mounts.get(controlId);
   if (!entry) {
     return;
@@ -389,7 +424,21 @@ export function unmount(controlId: string): void {
     entry.refs--;
     return;
   }
+  const parent = parentId === undefined || parentId === controlId ? undefined : _mounts.get(parentId);
+  if (entry.root === null && parent !== undefined && describes(parent, controlId)) {
+    entry.refs = 0;
+    entry.owner = parentId!;
+    parent.owned.add(controlId);
+    return;
+  }
   tearDown(controlId, entry);
+}
+
+/** Whether the state of the given entry describes the given child control. */
+function describes(entry: MountEntry, childId: string): boolean {
+  const described = new Set<string>();
+  collectDescribed(entry.store.getSnapshot(), described);
+  return described.has(childId);
 }
 
 /**
@@ -398,6 +447,15 @@ export function unmount(controlId: string): void {
  */
 export function isMountedControl(id: string): boolean {
   return _mounts.has(id);
+}
+
+/**
+ * The current state of the given mounted control, {@code undefined} for a control that is not
+ * mounted. Every update of the control replaces the state object, so an unchanged object means an
+ * unchanged state.
+ */
+export function controlStateSnapshot(id: string): Record<string, unknown> | undefined {
+  return _mounts.get(id)?.store.getSnapshot();
 }
 
 // --- Hooks ---
@@ -913,6 +971,10 @@ export interface TLTypingField {
  * the text as typed, after the commit; only then is the key's default action prevented, so that
  * Enter otherwise still reaches what binds it around the field (a dialog's default button).</p>
  *
+ * <p>The Enter that ends the composition of an input method (for example for Japanese) is no plain
+ * Enter: it sends neither the commit nor the submit (see {@link isCompositionKey}). The next Enter
+ * does.</p>
+ *
  * <p>All commands go through the FIFO chain of {@link enqueueCommand}, so the value reaches the
  * server before the commit, and the commit before the submit.</p>
  */
@@ -973,7 +1035,8 @@ export function useTLTypingField(options?: TLTypingFieldOptions): TLTypingField 
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) {
+      // The Enter that ends a composition is the input method's: the edit is not finished yet.
+      if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey || isCompositionKey(e.nativeEvent)) {
         return;
       }
       const input = e.currentTarget;

@@ -26,6 +26,8 @@ import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.constraint.check.ConstraintChecker;
+import com.top_logic.basic.config.constraint.check.ConstraintFailure;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
@@ -43,7 +45,9 @@ import com.top_logic.model.annotate.security.OperationDeclaration;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.security.AccessParentConfig;
 import com.top_logic.model.security.AccessParentDefinition;
+import com.top_logic.model.security.AnyOfAccessParent;
 import com.top_logic.model.security.ContainerAccessParent;
+import com.top_logic.model.security.RefererAccessParent;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
@@ -55,6 +59,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.Resources;
 import com.top_logic.util.autoconf.InAppServiceConfigStore;
 
 /**
@@ -91,6 +96,9 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 
 	/** The composition {@link #EXPLICIT_PART} delegates to. */
 	private static final String EXPLICIT_PART_REFERENCE = MODULE + ":Covered#explicitParts";
+
+	/** Type delegating Read to its access parent only. */
+	private static final String RESTRICTED_LINKED = MODULE + ":RestrictedLinked";
 
 	/** Type without a role source and without a container. */
 	private static final String ORPHAN = MODULE + ":Orphan";
@@ -499,6 +507,150 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		_editor.setAccessParent(contained, container(CONTAINER_REFERENCE));
 		_editor.setAccessParent(contained, null);
 		assertNull(_editor.editableAccessRights(contained).getAccessParent());
+	}
+
+	/**
+	 * The label of the given operation as the user knows it.
+	 */
+	private static String operationLabel(Resources resources, String operation) {
+		return resources
+			.getString(com.top_logic.tool.boundsec.simple.I18NConstants.COMMAND_GROUP_NAMES.key(operation));
+	}
+
+	/**
+	 * A type delegating only Read grants the other operations itself, but must not grant Read.
+	 */
+	public void testGrantBesideRestrictedParentIsStored() throws Exception {
+		TLClass restricted = type(RESTRICTED_LINKED);
+		TLClassAccessRights entry = _editor.editableAccessRights(restricted);
+		assertTrue("The restriction of the underlying configuration is shown.",
+			AccessParentConfig.isRestricted(entry.getAccessParent()));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.WRITE_NAME, READER_ROLE));
+		_editor.putAccessRights(entry);
+
+		TLClassAccessRights stored = _editor.editableAccessRights(restricted);
+		assertEquals(1, stored.getGrants().size());
+		assertEquals("A grant of an operation not delegated is fine.", List.of(), constraintFailures(stored));
+
+		stored.getGrants().add(newGrant(SimpleBoundCommandGroup.READ_NAME, READER_ROLE));
+		_editor.putAccessRights(stored);
+		List<ConstraintFailure> failures = constraintFailures(_editor.editableAccessRights(restricted));
+		assertEquals("A grant of a delegated operation is a problem: " + failures, 1, failures.size());
+		Resources resources = Resources.getInstance();
+		String message = resources.getString(failures.get(0).getConstraintName());
+		String grantsLabel =
+			resources.getString(stored.descriptor().getProperty(TLClassAccessRights.GRANTS).labelKey(null));
+		assertTrue("The problem names the grants: " + message, message.contains(grantsLabel));
+		String readLabel = operationLabel(resources, SimpleBoundCommandGroup.READ_NAME);
+		String writeLabel = operationLabel(resources, SimpleBoundCommandGroup.WRITE_NAME);
+		assertTrue("The problem names the delegated operation granted by its label: " + message,
+			message.contains(readLabel));
+		assertFalse("The operation not delegated is fine: " + message, message.contains(writeLabel));
+	}
+
+	/**
+	 * Setting an access parent restricted to Read keeps the grants of the operations it does not
+	 * delegate.
+	 */
+	public void testRestrictedAccessParentKeepsUndelegatedGrants() throws Exception {
+		TLClass contained = type(SINGLE_CONTAINED);
+		TLClassAccessRights entry = _editor.editableAccessRights(contained);
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.READ_NAME, READER_ROLE));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.WRITE_NAME, READER_ROLE));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.DISCOVER_NAME, READER_ROLE));
+		entry.setInternal(true);
+		_editor.putAccessRights(entry);
+
+		ContainerAccessParent.Config definition =
+			(ContainerAccessParent.Config) container(CONTAINER_REFERENCE);
+		definition.setOperations(List.of(new CommandGroupReference(SimpleBoundCommandGroup.READ_NAME)));
+		_editor.setAccessParent(contained, definition);
+
+		TLClassAccessRights stored = _editor.editableAccessRights(contained);
+		assertTrue(AccessParentConfig.isRestricted(stored.getAccessParent()));
+		assertEquals("The grants of the delegated operations, Discover among them, are dropped.",
+			List.of(SimpleBoundCommandGroup.WRITE_NAME),
+			stored.getGrants().stream().map(grant -> grant.getOperation().id()).toList());
+		assertFalse("A type with an access parent has no marks of its own.", stored.isInternal());
+		assertEquals(List.of(), constraintFailures(stored));
+	}
+
+	/**
+	 * An access parent with several candidates is stored with all of them; the grants of the
+	 * operations no candidate delegates are kept, a grant of an operation a candidate delegates is a
+	 * problem.
+	 */
+	public void testAnyOfStored() throws Exception {
+		TLClass contained = type(SINGLE_CONTAINED);
+		TLClassAccessRights entry = _editor.editableAccessRights(contained);
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.READ_NAME, READER_ROLE));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.WRITE_NAME, READER_ROLE));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.DELETE_NAME, READER_ROLE));
+		_editor.putAccessRights(entry);
+
+		ContainerAccessParent.Config writeByContainer = (ContainerAccessParent.Config) container(CONTAINER_REFERENCE);
+		writeByContainer.setOperations(List.of(new CommandGroupReference(SimpleBoundCommandGroup.WRITE_NAME)));
+		RefererAccessParent.Config readByReferer = TypedConfiguration.newConfigItem(RefererAccessParent.Config.class);
+		readByReferer.setReference(TLModelPartRef.ref(CONTAINER_REFERENCE));
+		readByReferer.setOperations(List.of(new CommandGroupReference(SimpleBoundCommandGroup.READ_NAME)));
+		AnyOfAccessParent.Config anyOf = TypedConfiguration.newConfigItem(AnyOfAccessParent.Config.class);
+		anyOf.getCandidates().add(writeByContainer);
+		anyOf.getCandidates().add(readByReferer);
+		_editor.setAccessParent(contained, anyOf);
+
+		TLClassAccessRights stored = _editor.editableAccessRights(contained);
+		AnyOfAccessParent.Config storedAnyOf = (AnyOfAccessParent.Config) stored.getAccessParent().getDefinition();
+		assertEquals(2, storedAnyOf.getCandidates().size());
+		assertTrue(storedAnyOf.getCandidates().get(0) instanceof ContainerAccessParent.Config);
+		RefererAccessParent.Config storedReferer = (RefererAccessParent.Config) storedAnyOf.getCandidates().get(1);
+		assertEquals(CONTAINER_REFERENCE, storedReferer.getReference().qualifiedName());
+		assertEquals("The grants of the operations a candidate delegates are dropped.",
+			List.of(SimpleBoundCommandGroup.DELETE_NAME),
+			stored.getGrants().stream().map(grant -> grant.getOperation().id()).toList());
+		assertEquals(List.of(), constraintFailures(stored));
+
+		stored.getGrants().add(newGrant(SimpleBoundCommandGroup.READ_NAME, READER_ROLE));
+		_editor.putAccessRights(stored);
+		assertEquals("Read is delegated by a candidate.", 1,
+			constraintFailures(_editor.editableAccessRights(contained)).size());
+	}
+
+	/**
+	 * An access parent without a candidate leading to the container leaves Create to the grants of
+	 * the type.
+	 */
+	public void testAnyOfWithoutContainerKeepsCreateGrant() throws Exception {
+		TLClass contained = type(SINGLE_CONTAINED);
+		TLClassAccessRights entry = _editor.editableAccessRights(contained);
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.CREATE_NAME, READER_ROLE));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.WRITE_NAME, READER_ROLE));
+		_editor.putAccessRights(entry);
+
+		AnyOfAccessParent.Config anyOf = TypedConfiguration.newConfigItem(AnyOfAccessParent.Config.class);
+		anyOf.getCandidates().add(referer(CONTAINER_REFERENCE));
+		anyOf.getCandidates().add(referer(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, anyOf);
+
+		TLClassAccessRights stored = _editor.editableAccessRights(contained);
+		assertEquals("Create is not delegated.", List.of(SimpleBoundCommandGroup.CREATE_NAME),
+			stored.getGrants().stream().map(grant -> grant.getOperation().id()).toList());
+		assertEquals(List.of(), constraintFailures(stored));
+
+		stored.getGrants().add(newGrant(SimpleBoundCommandGroup.WRITE_NAME, READER_ROLE));
+		_editor.putAccessRights(stored);
+		assertEquals("Write is delegated.", 1, constraintFailures(_editor.editableAccessRights(contained)).size());
+	}
+
+	private static RefererAccessParent.Config referer(String reference) {
+		RefererAccessParent.Config result = TypedConfiguration.newConfigItem(RefererAccessParent.Config.class);
+		result.setReference(TLModelPartRef.ref(reference));
+		return result;
+	}
+
+	private static List<ConstraintFailure> constraintFailures(TLClassAccessRights entry) throws Exception {
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(entry);
+		return checker.getFailures();
 	}
 
 	public void testMarkDropsAnInheritedAccessParent() throws Exception {

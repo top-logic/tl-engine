@@ -45,20 +45,28 @@ public final class CommandCliques {
 	public static final String DASHBOARD_TILES = "dashboardTiles";
 
 	/**
-	 * The tone the given clique gives a command placed in it.
+	 * The tone a command takes from its configuration.
 	 *
 	 * <p>
-	 * A command in {@link #DELETE} is destructive, even when none of its actions is: its button is
-	 * drawn destructive (see {@link ViewCommandModel#getTone()}), and so is the affirmative answer of
-	 * a confirmation in its chain (see {@link Continuation#tone()}).
+	 * The {@link ViewCommand.Config#getTone() configured tone} always applies, whatever the clique
+	 * of the command and whatever its actions do. Without one, a command in {@link #DELETE} is
+	 * destructive, even when none of its actions is. In both cases the tone is the tone of the
+	 * command's button (see {@link ViewCommandModel#getTone()}) and of the affirmative answer of
+	 * every confirmation in its chain (see {@link Continuation#tone()}).
 	 * </p>
 	 *
-	 * @param clique
-	 *        The {@link ViewCommand.Config#getClique() clique} of a command, {@code null} for none.
-	 * @return {@link ButtonTone#DANGER} for {@link #DELETE}, {@link ButtonTone#DEFAULT} otherwise.
+	 * @param config
+	 *        The configuration of a command.
+	 * @return The configured tone, {@link ButtonTone#DANGER} for a command in {@link #DELETE}
+	 *         without one, {@code null} for a command whose tone follows what its actions do (see
+	 *         {@link ViewCommand#getTone()}).
 	 */
-	public static ButtonTone tone(String clique) {
-		return DELETE.equals(clique) ? ButtonTone.DANGER : ButtonTone.DEFAULT;
+	public static ButtonTone tone(ViewCommand.Config config) {
+		ButtonTone configured = config.getTone();
+		if (configured != null) {
+			return configured;
+		}
+		return DELETE.equals(config.getClique()) ? ButtonTone.DANGER : null;
 	}
 
 	private CommandCliques() {

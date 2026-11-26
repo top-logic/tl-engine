@@ -62,7 +62,7 @@ public class ViewActionChain {
 	 */
 	public static void run(ReactContext context, List<ViewAction> actions, ActionArguments arguments,
 			Consumer<Object> onComplete) {
-		run(context, actions, arguments, ButtonTone.DEFAULT, onComplete, null);
+		run(context, actions, arguments, null, onComplete, null);
 	}
 
 	/**
@@ -72,11 +72,12 @@ public class ViewActionChain {
 	 * @param arguments
 	 *        The arguments every action of the chain runs with; {@code null} for
 	 *        {@link ActionArguments#NONE}.
-	 * @param after
-	 *        The tone of what follows the chain: {@link ButtonTone#DANGER} for the chain of a
-	 *        command that is destructive by its {@link CommandCliques#tone(String) clique}, so that
-	 *        every step of the chain sees a destructive {@link Continuation#tone() tone of what
-	 *        follows it}.
+	 * @param tone
+	 *        The tone of the whole chain, the tone a command takes from its configuration (see
+	 *        {@link CommandCliques#tone(ViewCommand.Config)}): every step of the chain and of the
+	 *        chains nested in it sees it as the {@link Continuation#tone() tone of what follows
+	 *        it}, whatever the actions following the step do. {@code null} for a chain whose tone
+	 *        follows what its actions do.
 	 * @param onComplete
 	 *        Invoked when the chain settles normally, see
 	 *        {@link #run(ReactContext, List, ActionArguments, Consumer)}.
@@ -85,11 +86,12 @@ public class ViewActionChain {
 	 *        see {@link HoldObserver}. May be {@code null}.
 	 */
 	public static void run(ReactContext context, List<ViewAction> actions, ActionArguments arguments,
-			ButtonTone after, Consumer<Object> onComplete, HoldObserver holds) {
+			ButtonTone tone, Consumer<Object> onComplete, HoldObserver holds) {
 		ActionArguments args = nonNull(arguments);
-		Activity activity = new Activity(holds);
+		Activity activity = new Activity(holds, tone);
 		Deque<Runnable> compensations = new ArrayDeque<>();
-		activity.run(() -> runFrom(context, actions, 0, args, args.value(), after, compensations, activity,
+		activity.run(() -> runFrom(context, actions, 0, args, args.value(), ButtonTone.DEFAULT, compensations,
+			activity,
 			value -> {
 				activity.settle();
 				settled(onComplete, value);
@@ -164,8 +166,8 @@ public class ViewActionChain {
 			List<ViewAction> followUps, Function<Object, ActionArguments> followUpArguments,
 			Continuation continuation) {
 		Activity activity = activityOf(continuation);
-		ButtonTone afterAction =
-			ViewActions.tone(followUps) == ButtonTone.DANGER ? ButtonTone.DANGER : continuation.tone();
+		ButtonTone afterAction = activity.tone(
+			ViewActions.tone(followUps) == ButtonTone.DANGER ? ButtonTone.DANGER : continuation.tone());
 		activity.run(() -> action.execute(context, input, new StepContinuation(activity, continuation, afterAction,
 			result -> followUp(context, followUps, followUpArguments.apply(result), result, continuation))));
 	}
@@ -208,7 +210,7 @@ public class ViewActionChain {
 		if (continuation instanceof ChainedContinuation chained) {
 			return chained.activity();
 		}
-		return new Activity(null);
+		return new Activity(null, null);
 	}
 
 	private static ActionArguments nonNull(ActionArguments arguments) {
@@ -231,9 +233,10 @@ public class ViewActionChain {
 			return;
 		}
 		ViewAction action = actions.get(index);
-		ButtonTone rest = ViewActions.tone(actions.subList(index + 1, actions.size())) == ButtonTone.DANGER
-			? ButtonTone.DANGER
-			: after;
+		ButtonTone rest = activity.tone(
+			ViewActions.tone(actions.subList(index + 1, actions.size())) == ButtonTone.DANGER
+				? ButtonTone.DANGER
+				: after);
 		ChainContinuation continuation = new ChainContinuation(activity, compensations, rest,
 			result -> runFrom(context, actions, index + 1, arguments, result, after, compensations, activity,
 				onComplete, onAbort),
@@ -446,7 +449,8 @@ public class ViewActionChain {
 	}
 
 	/**
-	 * Tracks whether an action holds a chain and whether the chain has come to an end.
+	 * Tracks whether an action holds a chain and whether the chain has come to an end, and carries
+	 * the tone the caller of the outermost chain stated for it.
 	 *
 	 * <p>
 	 * Every entry into the chain - the call that starts it, the hand-back of a continuation, a
@@ -465,6 +469,9 @@ public class ViewActionChain {
 
 		private final HoldObserver _observer;
 
+		/** The tone of the whole chain, {@code null} when it follows what the actions do. */
+		private final ButtonTone _tone;
+
 		/** Number of calls into the chain that have not returned yet. */
 		private int _active;
 
@@ -480,8 +487,20 @@ public class ViewActionChain {
 		/** Whether a thread is delivering transitions to the {@link #_observer}. */
 		private boolean _reporting;
 
-		Activity(HoldObserver observer) {
+		Activity(HoldObserver observer, ButtonTone tone) {
 			_observer = observer;
+			_tone = tone;
+		}
+
+		/**
+		 * The tone of what follows a step of the chain.
+		 *
+		 * @param derived
+		 *        The tone derived from the actions following the step.
+		 * @return The tone of the whole chain, when its caller stated one, the given tone otherwise.
+		 */
+		ButtonTone tone(ButtonTone derived) {
+			return _tone != null ? _tone : derived;
 		}
 
 		/**

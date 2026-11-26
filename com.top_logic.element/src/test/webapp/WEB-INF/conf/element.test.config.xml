@@ -199,6 +199,22 @@
 								<step attribute="TestSecurityCoverage:CreateContainer#owner"/>
 							</path>
 						</rule>
+						<rule id="TestSecurityCoverage_createdAtReferenced"
+							meta-element="TestSecurityCoverage:CreatedAtReferenced"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreatedAtReferenced#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_createdAtInverse"
+							meta-element="TestSecurityCoverage:CreatedAtInverse"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreatedAtInverse#owner"/>
+							</path>
+						</rule>
 						<rule id="TestSecurityCoverage_createdInContainer"
 							meta-element="TestSecurityCoverage:CreatedInContainer"
 							role="TestSecurityCoverage.Reader"
@@ -303,6 +319,111 @@
 								<step attribute="TestLocalTypeSecurity:Holder#owner"/>
 							</path>
 						</rule>
+						<!-- Role sources of TestAccessParentOperations. -->
+						<rule id="TestAccessParentOperations_catalog"
+							meta-element="TestAccessParentOperations:Catalog"
+							role="TestAccessParentOperations.CatalogReader"
+						>
+							<path>
+								<step attribute="TestAccessParentOperations:Catalog#reader"/>
+							</path>
+						</rule>
+						<rule id="TestAccessParentOperations_entry"
+							inherit="true"
+							meta-element="TestAccessParentOperations:Entry"
+							role="TestAccessParentOperations.EntryEditor"
+						>
+							<path>
+								<step attribute="TestAccessParentOperations:Entry#editor"/>
+							</path>
+						</rule>
+						<!-- CatalogReader on the entry itself, where it admits nothing. -->
+						<rule id="TestAccessParentOperations_entryReader"
+							meta-element="TestAccessParentOperations:Entry"
+							role="TestAccessParentOperations.CatalogReader"
+						>
+							<path>
+								<step attribute="TestAccessParentOperations:Entry#entryReader"/>
+							</path>
+						</rule>
+						<rule id="TestAccessParentOperations_fullPart"
+							meta-element="TestAccessParentOperations:FullPart"
+							role="TestAccessParentOperations.EntryEditor"
+						>
+							<path>
+								<step attribute="TestAccessParentOperations:FullPart#editor"/>
+							</path>
+						</rule>
+						<!-- Roles on the security root, held by the members of a group. -->
+						<singleton-rule
+							id="TestAccessParentOperations_rootEditors"
+							target="SecurityStructure#ROOT"
+							role="TestAccessParentOperations.EntryEditor"
+						>
+							<group-with-name name="TestAccessParentOperationsRootEditors"/>
+						</singleton-rule>
+						<singleton-rule
+							id="TestAccessParentOperations_rootReaders"
+							target="SecurityStructure#ROOT"
+							role="TestAccessParentOperations.CatalogReader"
+						>
+							<group-with-name name="TestAccessParentOperationsRootReaders"/>
+						</singleton-rule>
+						<!-- Role sources of TestAccessParentAnyOf. -->
+						<rule id="TestAccessParentAnyOf_folderOwner"
+							meta-element="TestAccessParentAnyOf:Folder"
+							role="TestAccessParentAnyOf.FolderOwner"
+						>
+							<path>
+								<step attribute="TestAccessParentAnyOf:Folder#owner"/>
+							</path>
+						</rule>
+						<rule id="TestAccessParentAnyOf_folderReader"
+							meta-element="TestAccessParentAnyOf:Folder"
+							role="TestAccessParentAnyOf.FolderReader"
+						>
+							<path>
+								<step attribute="TestAccessParentAnyOf:Folder#reader"/>
+							</path>
+						</rule>
+						<rule id="TestAccessParentAnyOf_docReader"
+							meta-element="TestAccessParentAnyOf:Document"
+							role="TestAccessParentAnyOf.DocReader"
+						>
+							<path>
+								<step attribute="TestAccessParentAnyOf:Document#reader"/>
+							</path>
+						</rule>
+						<rule id="TestAccessParentAnyOf_docEditor"
+							meta-element="TestAccessParentAnyOf:Document"
+							role="TestAccessParentAnyOf.DocEditor"
+						>
+							<path>
+								<step attribute="TestAccessParentAnyOf:Document#editor"/>
+							</path>
+						</rule>
+						<rule id="TestAccessParentAnyOf_taskOwner"
+							meta-element="TestAccessParentAnyOf:Task"
+							role="TestAccessParentAnyOf.TaskOwner"
+						>
+							<path>
+								<step attribute="TestAccessParentAnyOf:Task#owner"/>
+							</path>
+						</rule>
+						<singleton-rule
+							id="TestAccessParentAnyOf_rootOwners"
+							target="SecurityStructure#ROOT"
+							role="TestAccessParentAnyOf.FolderOwner"
+						>
+							<group-with-name name="TestAccessParentAnyOfRootOwners"/>
+						</singleton-rule>
+						<singleton-rule
+							id="TestAccessParentAnyOf_rootDocReaders"
+							target="SecurityStructure#ROOT"
+							role="TestAccessParentAnyOf.DocReader"
+						>
+							<group-with-name name="TestAccessParentAnyOfRootDocReaders"/>
+						</singleton-rule>
 					</rules>
 				</role-rules>
 
@@ -315,6 +436,25 @@
 							<path>
 								<step
 									attribute="TestSecurityCoverage:Covered#children"
+									inverse="true"
+								/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_abstractParent"
+							inherit="true"
+							meta-element="TestSecurityCoverage:AbstractParent"
+						>
+							<path>
+								<singleton module="SecurityStructure"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_childOfAbstract"
+							inherit="true"
+							meta-element="TestSecurityCoverage:ChildOfAbstract"
+						>
+							<path>
+								<step
+									attribute="TestSecurityCoverage:AbstractParent#children"
 									inverse="true"
 								/>
 							</path>
@@ -368,6 +508,28 @@
 							<target reference="TestSecurityCoverage:Linked#target"/>
 						</access-parent>
 					</class>
+					<class name="TestSecurityCoverage:RestrictedLinked">
+						<access-parent>
+							<target
+								operations="Read,TestCoverageShow"
+								reference="TestSecurityCoverage:RestrictedLinked#target"
+							/>
+						</access-parent>
+						<operations>
+							<!-- Decided by the type itself and granted to no role. -->
+							<operation name="Finish"/>
+							<!-- Delegated to the access parent. -->
+							<operation name="TestCoverageShow"/>
+						</operations>
+					</class>
+					<class name="TestSecurityCoverage:RestrictedWrite">
+						<access-parent>
+							<target
+								operations="Write"
+								reference="TestSecurityCoverage:RestrictedWrite#target"
+							/>
+						</access-parent>
+					</class>
 					<class name="TestSecurityCoverage:LinkedSub">
 						<access-parent>
 							<self/>
@@ -395,6 +557,19 @@
 						<grant
 							operation="Read"
 							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:ConcreteParent">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.RootCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:ChildOfAbstract">
+						<!-- Delivered on the security root, the role parent of the abstract end type. -->
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.RootCreator"
 						/>
 					</class>
 					<class name="TestSecurityCoverage:DeadGrant">
@@ -425,6 +600,14 @@
 							operation="Finish"
 							roles="TestSecurityCoverage.Reader"
 						/>
+					</class>
+					<class name="TestSecurityCoverage:AnyOfPartOfGranted">
+						<access-parent>
+							<any-of>
+								<container/>
+								<target reference="TestSecurityCoverage:AnyOfPartOfGranted#related"/>
+							</any-of>
+						</access-parent>
 					</class>
 					<class name="TestSecurityCoverage:ImpliedOperation">
 						<operations>
@@ -476,7 +659,7 @@
 							roles="TestSecurityCoverage.Reader"
 						/>
 					</part>
-					<!-- Create is checked on the container, or on the security root for a type without container. -->
+					<!-- Create is checked on the security root, on a container, or on a referenced object. -->
 					<class name="TestSecurityCoverage:CreatedAtRoot">
 						<grant
 							operation="Read"
@@ -510,6 +693,26 @@
 						/>
 					</class>
 					<class name="TestSecurityCoverage:CreatedInContainer">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							operation="Create"
+							roles="TestSecurityCoverage.ContainerCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:CreatedAtReferenced">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							operation="Create"
+							roles="TestSecurityCoverage.ContainerCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:CreatedAtInverse">
 						<grant
 							operation="Read"
 							roles="TestSecurityCoverage.Reader"
@@ -595,6 +798,294 @@
 							roles="TestLocalTypeSecurity.Responsible"
 						/>
 					</class>
+					<class name="TestAccessParentOperations:Catalog">
+						<grant
+							operation="Read"
+							roles="TestAccessParentOperations.CatalogReader"
+						/>
+						<grant
+							operation="Write"
+							roles="TestAccessParentOperations.CatalogReader"
+						/>
+					</class>
+					<class name="TestAccessParentOperations:EntryBase">
+						<!-- Dropped by Entry, which delegates Read to its catalog. -->
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestAccessParentOperations.EntryEditor"
+						/>
+						<!-- Kept by Entry, which does not delegate Export. -->
+						<grant
+							inherit="true"
+							operation="Export"
+							roles="TestAccessParentOperations.EntryEditor"
+						/>
+					</class>
+					<class name="TestAccessParentOperations:Entry">
+						<access-parent>
+							<target
+								operations="Read"
+								reference="TestAccessParentOperations:Entry#catalog"
+							/>
+						</access-parent>
+						<operations>
+							<!-- Not delegated, but implied by the delegated Read. -->
+							<operation name="Finish"
+								implied-by="Read"
+							/>
+						</operations>
+						<grant
+							operation="Write"
+							roles="TestAccessParentOperations.EntryEditor"
+						/>
+					</class>
+					<class name="TestAccessParentOperations:EntrySub">
+						<grant
+							operation="Write"
+							roles="TestAccessParentOperations.EntryEditor"
+						/>
+					</class>
+					<!-- Read is checked on the catalog, Write on the entry itself. -->
+					<part name="TestAccessParentOperations:Entry#name">
+						<grant
+							operation="Read"
+							roles="TestAccessParentOperations.CatalogReader"
+						/>
+						<grant
+							operation="Write"
+							roles="TestAccessParentOperations.EntryEditor"
+						/>
+					</part>
+					<class name="TestAccessParentOperations:Part">
+						<access-parent>
+							<container operations="Read,Write"/>
+						</access-parent>
+					</class>
+					<class name="TestAccessParentOperations:ListedPart">
+						<access-parent>
+							<container operations="Read,Create,Delete"/>
+						</access-parent>
+					</class>
+					<!-- Explicit, since the role rule of the type switches off the default of a composition part. -->
+					<class name="TestAccessParentOperations:FullPart">
+						<access-parent>
+							<container/>
+						</access-parent>
+					</class>
+					<class name="TestAccessParentAnyOf:Folder">
+						<grant
+							operation="Read"
+							roles="TestAccessParentAnyOf.FolderOwner, TestAccessParentAnyOf.FolderReader"
+						/>
+						<grant
+							operation="Write"
+							roles="TestAccessParentAnyOf.FolderOwner"
+						/>
+						<grant
+							operation="Create"
+							roles="TestAccessParentAnyOf.FolderOwner"
+						/>
+						<grant
+							operation="Delete"
+							roles="TestAccessParentAnyOf.FolderOwner"
+						/>
+					</class>
+					<class name="TestAccessParentAnyOf:Document">
+						<grant
+							operation="Read"
+							roles="TestAccessParentAnyOf.DocReader, TestAccessParentAnyOf.DocEditor"
+						/>
+						<grant
+							operation="Write"
+							roles="TestAccessParentAnyOf.DocEditor"
+						/>
+					</class>
+					<class name="TestAccessParentAnyOf:Task">
+						<grant
+							operation="Read"
+							roles="TestAccessParentAnyOf.TaskOwner"
+						/>
+					</class>
+					<class name="TestAccessParentAnyOf:Contact">
+						<access-parent>
+							<any-of>
+								<referer
+									operations="Read"
+									reference="TestAccessParentAnyOf:Document#author"
+								/>
+								<referer
+									operations="Read"
+									reference="TestAccessParentAnyOf:Document#reviewers"
+								/>
+								<referer
+									operations="Read"
+									reference="TestAccessParentAnyOf:Task#assignee"
+								/>
+							</any-of>
+						</access-parent>
+					</class>
+					<class name="TestAccessParentAnyOf:Part">
+						<access-parent>
+							<any-of>
+								<container/>
+								<referer
+									operations="Read"
+									reference="TestAccessParentAnyOf:Document#relatedParts"
+								/>
+							</any-of>
+						</access-parent>
+					</class>
+					<!-- Read is granted on the documents relating the part only, Write on the folder only. -->
+					<part name="TestAccessParentAnyOf:Part#name">
+						<grant
+							operation="Read"
+							roles="TestAccessParentAnyOf.DocReader"
+						/>
+						<grant
+							operation="Write"
+							roles="TestAccessParentAnyOf.FolderOwner, TestAccessParentAnyOf.DocEditor"
+						/>
+					</part>
+					<class name="TestAccessParentAnyOf:Mixed">
+						<access-parent>
+							<any-of>
+								<container operations="Write"/>
+								<referer
+									operations="Read"
+									reference="TestAccessParentAnyOf:Document#relatedMixed"
+								/>
+							</any-of>
+						</access-parent>
+					</class>
+					<class name="TestAccessParentAnyOf:Single">
+						<access-parent>
+							<any-of>
+								<container/>
+							</any-of>
+						</access-parent>
+					</class>
+					<class name="TestAccessParentAnyOf:Direct">
+						<access-parent>
+							<container/>
+						</access-parent>
+					</class>
+					<class name="TestAccessParentAnyOf:Node">
+						<access-parent>
+							<any-of>
+								<target reference="TestAccessParentAnyOf:Node#next"/>
+								<target reference="TestAccessParentAnyOf:Node#alt"/>
+							</any-of>
+						</access-parent>
+					</class>
+					<!-- No candidate leads to the container: Create is decided by the grants of the type itself. -->
+					<class name="TestAccessParentAnyOf:Note">
+						<access-parent>
+							<any-of>
+								<target reference="TestAccessParentAnyOf:Note#folder"/>
+								<referer reference="TestAccessParentAnyOf:Document#notes"/>
+							</any-of>
+						</access-parent>
+						<grant
+							operation="Create"
+							roles="TestAccessParentAnyOf.DocReader"
+						/>
+					</class>
+					<!-- A referer never decides Create: the grants of the type decide it. -->
+					<class name="TestAccessParentAnyOf:Annotation">
+						<access-parent>
+							<referer reference="TestAccessParentAnyOf:Document#annotations"/>
+						</access-parent>
+						<grant
+							operation="Create"
+							roles="TestAccessParentAnyOf.DocReader"
+						/>
+					</class>
+					<class name="TestAccessParentAnyOf:Comment">
+						<access-parent>
+							<any-of>
+								<referer reference="TestAccessParentAnyOf:Document#comments"/>
+								<referer reference="TestAccessParentAnyOf:Task#comments"/>
+							</any-of>
+						</access-parent>
+						<grant
+							operation="Create"
+							roles="TestAccessParentAnyOf.DocReader"
+						/>
+					</class>
+					<!-- The work of an access check is counted by test-counting, see TestAccessParentAnyOf. -->
+					<class name="TestAccessParentAnyOf:Mesh">
+						<access-parent>
+							<test-counting>
+								<any-of>
+									<target reference="TestAccessParentAnyOf:Mesh#links"/>
+									<target reference="TestAccessParentAnyOf:Mesh#exit"/>
+								</any-of>
+							</test-counting>
+						</access-parent>
+					</class>
+					<part name="TestAccessParentAnyOf:Mesh#name">
+						<grant
+							operation="Read"
+							roles="TestAccessParentAnyOf.FolderReader"
+						/>
+					</part>
+					<class name="TestAccessParentAnyOf:Holder">
+						<access-parent>
+							<target reference="TestAccessParentAnyOf:Holder#owners"/>
+						</access-parent>
+					</class>
+					<class name="TestAccessParentAnyOf:Both">
+						<access-parent>
+							<test-all-of>
+								<target reference="TestAccessParentAnyOf:Both#first"/>
+								<target reference="TestAccessParentAnyOf:Both#second"/>
+							</test-all-of>
+						</access-parent>
+					</class>
+					<class name="TestAccessParentAnyOf:Granting">
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="TestAccessParentAnyOf.FolderOwner"
+						/>
+						<grant
+							inherit="true"
+							operation="Export"
+							roles="TestAccessParentAnyOf.FolderOwner"
+						/>
+					</class>
+					<class name="TestAccessParentAnyOf:BothRestricted">
+						<access-parent>
+							<test-all-of>
+								<target
+									operations="Read"
+									reference="TestAccessParentAnyOf:Both#first"
+								/>
+								<target
+									operations="Write"
+									reference="TestAccessParentAnyOf:Both#second"
+								/>
+							</test-all-of>
+						</access-parent>
+					</class>
+					<class name="TestAccessParentAnyOf:Nested">
+						<access-parent>
+							<any-of>
+								<container operations="Write"/>
+								<test-all-of>
+									<target
+										operations="Read"
+										reference="TestAccessParentAnyOf:Nested#first"
+									/>
+									<target
+										operations="Read"
+										reference="TestAccessParentAnyOf:Nested#second"
+									/>
+								</test-all-of>
+							</any-of>
+						</access-parent>
+					</class>
 					<module name="TestDiscoverForm">
 						<grant
 							inherit="true"
@@ -647,6 +1138,13 @@
 					<role name="TestSecurityCoverage.ItemCreator"/>
 					<role name="TestDiscoverForm.Editor"/>
 					<role name="TestLocalTypeSecurity.Responsible"/>
+					<role name="TestAccessParentOperations.CatalogReader"/>
+					<role name="TestAccessParentOperations.EntryEditor"/>
+					<role name="TestAccessParentAnyOf.FolderOwner"/>
+					<role name="TestAccessParentAnyOf.FolderReader"/>
+					<role name="TestAccessParentAnyOf.DocReader"/>
+					<role name="TestAccessParentAnyOf.DocEditor"/>
+					<role name="TestAccessParentAnyOf.TaskOwner"/>
 				</roles>
 			</instance>
 		</config>
@@ -666,6 +1164,8 @@
 					<declaration file="/WEB-INF/model/TestPathNavigation.model.xml"/>
 					<declaration file="/WEB-INF/model/TestDiscoverForm.model.xml"/>
 					<declaration file="/WEB-INF/model/TestLocalTypeSecurity.model.xml"/>
+					<declaration file="/WEB-INF/model/TestAccessParentOperations.model.xml"/>
+					<declaration file="/WEB-INF/model/TestAccessParentAnyOf.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="TestXMLInstanceImporter"

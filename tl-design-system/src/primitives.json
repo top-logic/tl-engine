@@ -40,6 +40,7 @@
     "height-1": "1.5rem", "height-2": "1.75rem", "height-3": "2rem", "height-4": "2.25rem", "height-5": "2.5rem",
     "line-1": "1px", "line-2": "2px", "line-3": "4px",
     "corner-1": "0.25rem", "corner-2": "0.5rem", "corner-3": "999px", "corner-4": "50%",
+    "bevel-1": "0.25rem",
     "print-1": "8pt", "print-2": "10pt", "print-3": "12pt", "print-4": "18pt",
     "depth-0": "0", "depth-1": "10", "depth-2": "100", "depth-3": "1000", "depth-4": "1100", "depth-5": "1200", "depth-6": "1300", "depth-7": "1400"
   },

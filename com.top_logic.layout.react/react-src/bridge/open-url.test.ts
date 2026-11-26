@@ -9,7 +9,10 @@ vi.mock('./command-channel', () => ({
   enqueueCommand: (url: string, payload: unknown, options?: unknown) => enqueueCommand(url, payload, options),
 }));
 
-vi.mock('./tl-react-bridge', () => ({ getApiBase: () => '/ctx/' }));
+vi.mock('./page-context', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./page-context')>()),
+  getApiBase: () => '/ctx/',
+}));
 
 import { ARG_URL, CMD_OPEN_URL_REFUSED, handleOpenUrl } from './open-url';
 

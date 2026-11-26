@@ -77,10 +77,10 @@ const SCHICHT_FLAECHE = { '.tl-toggle:hover': 'var(--tl-surface-state-hover)', '
 // Punkt 9: Attributselektoren, die auf Klassen zielen, umgehen das BEM/Prefix-Gate.
 const CLASS_ATTR_SELECTOR = /\[class[*^~]=/;
 // Punkt 10: Zustände sind Attribute (:disabled, [aria-pressed], [aria-busy], :focus-visible), nie Klassen.
-const STATE_MODIFIER = /--(active|disabled|loading|hover|focus|focused|pressed|selected|open|closed|entering|exiting|maximized|clickable|visible|checked|busy|invalid|dirty|immutable|readonly|dragover|dragging|highlighted|collapsed|expanded|cursor|filtered|frozen|frozen-last|pinned|pinned-first|drop-before|drop-after|drop-onto|drop-refused|minimized|covered|current|done|upcoming|forward|backward)$/;
+const STATE_MODIFIER = /--(active|disabled|loading|hover|focus|focused|pressed|selected|open|closed|entering|exiting|maximized|clickable|visible|checked|busy|invalid|dirty|immutable|readonly|dragover|dragging|highlighted|collapsed|expanded|cursor|filtered|frozen|frozen-last|pinned|pinned-first|drop-before|drop-after|drop-onto|drop-target|drop-refused|minimized|covered|current|done|upcoming|forward|backward)$/;
 // Punkt 10a: Am Element ist jeder Zustand ein Attribut — auch Fehler und Warnung, die ein Block (tl-alert,
 // tl-pill) als Bedeutung trägt. tl-x__y--error ist ein Zustand, der sich als Modifier tarnt.
-const ELEMENT_STATE_MODIFIER = /^tl-[a-z0-9-]+__[a-z0-9-]+--(active|disabled|loading|hover|focus|focused|pressed|selected|open|closed|entering|exiting|maximized|clickable|visible|checked|busy|invalid|dirty|error|warning|immutable|readonly|dragover|dragging|highlighted|collapsed|expanded|cursor|filtered|frozen|frozen-last|pinned|pinned-first|drop-before|drop-after|drop-onto|drop-refused|minimized|covered|current|done|upcoming|forward|backward)$/;
+const ELEMENT_STATE_MODIFIER = /^tl-[a-z0-9-]+__[a-z0-9-]+--(active|disabled|loading|hover|focus|focused|pressed|selected|open|closed|entering|exiting|maximized|clickable|visible|checked|busy|invalid|dirty|error|warning|immutable|readonly|dragover|dragging|highlighted|collapsed|expanded|cursor|filtered|frozen|frozen-last|pinned|pinned-first|drop-before|drop-after|drop-onto|drop-target|drop-refused|minimized|covered|current|done|upcoming|forward|backward)$/;
 // Punkt 11: Die Modifier eines Blocks sind entschieden (docs/skalen.md), nicht gewachsen.
 const MODIFIERS = {
   'tl-button': new Set(['primary', 'secondary', 'ghost', 'link', 'danger', 'sm', 'icon']),
@@ -150,6 +150,7 @@ const MODIFIERS = {
   'tl-item': new Set([]),
   'tl-deck': new Set([]),
   'tl-split': new Set(['horizontal', 'vertical']), // Alle eingeklappt: data-tl-state.
+  'tl-side-rail': new Set(['start', 'end']), // Offen, Schublade, eigene Breite: data-tl-state.
   'tl-tile-stack': new Set([]), // Richtung und Übergang: data-tl-state.
   'tl-swatch': new Set(['color', 'wide']), // Leer, Fehler, Warnung: Attribute.
   'tl-picker': new Set([]),
@@ -189,16 +190,19 @@ const MODIFIERS = {
   'tl-region': new Set([]), // layout.css, tabs.css, dialog.css
   'tl-reveal-on-hover': new Set([]), // layout.css
   'tl-table-view-options': new Set([]), // table.css
+  'tl-filter-list': new Set([]), // filter-list.css
 };
 
 // Punkt 11b: Die Modifier eines Elements (block__element--modifier) sind ebenso entschieden. Ein Element ohne
 // Eintrag hat keinen Modifier.
 const ELEMENT_MODIFIERS = {
   'tl-card__body': new Set(['pad-default', 'pad-compact']),
+  'tl-drawer__scrim': new Set(['viewport']), // Der Scrim einer am Viewport verankerten modalen Schublade.
   'tl-form-field__input': new Set(['explained', 'resettable']),
   'tl-image-field__step': new Set(['previous', 'next']),
   'tl-image-overlay__step': new Set(['previous', 'next']),
-  'tl-menu__item': new Set(['danger']),
+  // check: die Zeile mit gezeichneter Marke (menuitemcheckbox, #30102).
+  'tl-menu__item': new Set(['danger', 'check']),
   'tl-overlay__layer': new Set(['bottom', 'bottom-left', 'bottom-right', 'center', 'fill', 'left', 'right', 'top',
     'top-left', 'top-right']), // Die Anker der Überlagerung.
   'tl-rich-text__markup': new Set(['inline']),

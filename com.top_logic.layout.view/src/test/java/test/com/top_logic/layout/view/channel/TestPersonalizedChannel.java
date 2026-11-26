@@ -120,7 +120,7 @@ public class TestPersonalizedChannel extends BasicTestCase {
 		ChannelFactory factory = factory(PERSONALIZED);
 
 		inSession(_alice, () -> {
-			ViewChannel channel = factory.createChannel(_context);
+			ViewChannel channel = channel(factory);
 			assertEquals("Nothing remembered yet: the initial value applies.", INIT_VALUE, channel.get());
 			assertNull("Filling the channel initially remembers nothing.", stored(_defaultKey));
 
@@ -130,12 +130,12 @@ public class TestPersonalizedChannel extends BasicTestCase {
 
 		inSession(_alice, () -> {
 			assertEquals("The remembered value takes precedence over the initial value.", "chosen",
-				factory.createChannel(_context).get());
+				channel(factory).get());
 		});
 
 		inSession(_bob, () -> {
 			assertEquals("Another user does not see the value remembered for the first.", INIT_VALUE,
-				factory.createChannel(_context).get());
+				channel(factory).get());
 			assertNull(stored(_defaultKey));
 		});
 	}
@@ -147,16 +147,16 @@ public class TestPersonalizedChannel extends BasicTestCase {
 	public void testEmptyValueForgets() throws Exception {
 		ChannelFactory factory = factory(PERSONALIZED);
 
-		inSession(_alice, () -> factory.createChannel(_context).set("chosen"));
+		inSession(_alice, () -> channel(factory).set("chosen"));
 
 		inSession(_alice, () -> {
-			ViewChannel channel = factory.createChannel(_context);
+			ViewChannel channel = channel(factory);
 			assertEquals("chosen", channel.get());
 			channel.set(null);
 			assertNull("An empty value removes the entry.", stored(_defaultKey));
 		});
 
-		inSession(_alice, () -> assertEquals(INIT_VALUE, factory.createChannel(_context).get()));
+		inSession(_alice, () -> assertEquals(INIT_VALUE, channel(factory).get()));
 	}
 
 	/**
@@ -166,10 +166,10 @@ public class TestPersonalizedChannel extends BasicTestCase {
 	public void testClassifier() throws Exception {
 		ChannelFactory factory = factory(PERSONALIZED);
 
-		inSession(_alice, () -> factory.createChannel(_context).set(_red));
-		inSession(_alice, () -> assertSame(_red, factory.createChannel(_context).get()));
+		inSession(_alice, () -> channel(factory).set(_red));
+		inSession(_alice, () -> assertSame(_red, channel(factory).get()));
 
-		inSession(_alice, () -> factory.createChannel(_context).set(_green));
+		inSession(_alice, () -> channel(factory).set(_green));
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
 			TLModelUtil.deleteRecursive(_green);
 			tx.commit();
@@ -178,7 +178,7 @@ public class TestPersonalizedChannel extends BasicTestCase {
 		inSession(_alice, () -> {
 			assertNotNull("Precondition: the removed classifier is remembered.", stored(_defaultKey));
 			assertEquals("A remembered value that no longer resolves gives way to the initial value.", INIT_VALUE,
-				factory.createChannel(_context).get());
+				channel(factory).get());
 			assertNull("A remembered value that no longer resolves is forgotten.", stored(_defaultKey));
 		});
 	}
@@ -191,7 +191,7 @@ public class TestPersonalizedChannel extends BasicTestCase {
 		ChannelFactory factory = factory(PERSONALIZED);
 
 		inSession(_alice, () -> {
-			ViewChannel channel = factory.createChannel(_context);
+			ViewChannel channel = channel(factory);
 			channel.set("chosen");
 			assertEquals("chosen", stored(_defaultKey));
 
@@ -204,7 +204,7 @@ public class TestPersonalizedChannel extends BasicTestCase {
 			assertNull(stored(_defaultKey));
 		});
 
-		inSession(_alice, () -> assertEquals(INIT_VALUE, factory.createChannel(_context).get()));
+		inSession(_alice, () -> assertEquals(INIT_VALUE, channel(factory).get()));
 	}
 
 	/**
@@ -214,11 +214,11 @@ public class TestPersonalizedChannel extends BasicTestCase {
 		ChannelFactory factory = factory("<channel name='" + CHANNEL + "' init='\"" + INIT_VALUE + "\"'/>");
 
 		inSession(_alice, () -> {
-			factory.createChannel(_context).set("chosen");
+			channel(factory).set("chosen");
 			assertNull(stored(_defaultKey));
 		});
 
-		inSession(_alice, () -> assertEquals(INIT_VALUE, factory.createChannel(_context).get()));
+		inSession(_alice, () -> assertEquals(INIT_VALUE, channel(factory).get()));
 	}
 
 	/**
@@ -229,12 +229,12 @@ public class TestPersonalizedChannel extends BasicTestCase {
 			factory("<channel name='" + CHANNEL + "' " + ValueChannelConfig.PERSONALIZE + "='true'/>");
 
 		inSession(_alice, () -> {
-			ViewChannel channel = factory.createChannel(_context);
+			ViewChannel channel = channel(factory);
 			assertNull(channel.get());
 			channel.set("chosen");
 		});
 
-		inSession(_alice, () -> assertEquals("chosen", factory.createChannel(_context).get()));
+		inSession(_alice, () -> assertEquals("chosen", channel(factory).get()));
 	}
 
 	/**
@@ -246,12 +246,12 @@ public class TestPersonalizedChannel extends BasicTestCase {
 			+ EXPLICIT_KEY + "'/>");
 
 		inSession(_alice, () -> {
-			factory.createChannel(_context).set("chosen");
+			channel(factory).set("chosen");
 			assertEquals("chosen", stored(EXPLICIT_KEY));
 			assertNull(stored(_defaultKey));
 		});
 
-		inSession(_alice, () -> assertEquals("chosen", factory.createChannel(_context).get()));
+		inSession(_alice, () -> assertEquals("chosen", channel(factory).get()));
 	}
 
 	/**
@@ -280,6 +280,15 @@ public class TestPersonalizedChannel extends BasicTestCase {
 
 	private static Object stored(String key) {
 		return PersonalConfiguration.getPersonalConfiguration().getJSONValue(key);
+	}
+
+	/**
+	 * A channel of the given factory, created and bound in the test context.
+	 */
+	private ViewChannel channel(ChannelFactory factory) {
+		ViewChannel result = factory.createChannel(_context);
+		factory.bindChannel(_context, result);
+		return result;
 	}
 
 	private static ChannelFactory factory(String xml) throws ConfigurationException {

@@ -200,6 +200,7 @@ public class TestControlStateSchema extends TestCase {
 		RecordingButton button = new RecordingButton(createContext());
 		button.setDisabled(true);
 		button.setActive(true);
+		button.setToggle(true);
 		button.setImage(null);
 		button.setTooltip("tooltip");
 		button.setKeyGesture(KeyStroke.ENTER);
@@ -637,6 +638,25 @@ public class TestControlStateSchema extends TestCase {
 		List<?> items = (List<?>) state(control).get(MenuState.ITEMS__PROP);
 		assertEquals(ButtonTone.DANGER.getExternalName(), ((Map<?, ?>) items.get(0)).get(MenuState.Entry.TONE__PROP));
 		assertFalse(((Map<?, ?>) items.get(1)).containsKey(MenuState.Entry.TONE__PROP));
+	}
+
+	/**
+	 * An entry with a tooltip sends it - for a disabled entry the reason it cannot be selected -,
+	 * an entry without one sends none.
+	 */
+	public void testMenuEntryTooltip() {
+		ReactMenuControl control = new ReactMenuControl(createContext(), null, List.of(
+			MenuEntry.item("a", "Delete", null, ExecutableState.NOT_EXEC_DISABLED, null, false, ButtonTone.DANGER,
+				"Not deleted here."),
+			MenuEntry.item("b", "Edit", null, ExecutableState.EXECUTABLE, null, false)),
+			id -> {}, () -> {
+				// Never closed.
+			});
+
+		List<?> items = (List<?>) state(control).get(MenuState.ITEMS__PROP);
+		assertEachDeclared(items, MenuState.Entry.class);
+		assertEquals("Not deleted here.", ((Map<?, ?>) items.get(0)).get(MenuState.Entry.TOOLTIP__PROP));
+		assertFalse(((Map<?, ?>) items.get(1)).containsKey(MenuState.Entry.TOOLTIP__PROP));
 	}
 
 	/**

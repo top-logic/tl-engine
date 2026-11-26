@@ -18,11 +18,18 @@ import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 
 /**
  * {@link RoleComputation} caching the groups of the person and the roles.
+ *
+ * <p>
+ * The cache only holds roles looked up in the security storage. Roles that are evaluated when
+ * access is checked (on a historic version of an object, or by a rule that is not stored) never
+ * reach it, see {@link StorageAccessManager#needsEvaluation(BoundObject, Collection)}.
+ * </p>
  * 
  * @since 5.7.4
  * 
@@ -32,7 +39,7 @@ public class PersonRoleCache extends RoleComputation {
 
 	private List<TLID> _groupIDs;
 
-	private final ConcurrentHashMap<TLID, Set<BoundRole>> cache = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Object, Set<BoundRole>> cache = new ConcurrentHashMap<>();
 
 	private final ConcurrentHashMap<Set<BoundRole>, Set<BoundRole>> roleCache =
 		new ConcurrentHashMap<>();
@@ -55,7 +62,9 @@ public class PersonRoleCache extends RoleComputation {
 
 	@Override
 	public Set<BoundRole> getRoles(BoundObject boundObject) {
-    	TLID id = boundObject.getID();
+		// The key includes the revision of the object: the role parents of a historic version are
+		// those of its revision, so the versions of an object must not share an entry.
+		Object id = boundObject instanceof TLObject item ? item.tId() : boundObject.getID();
 		Set<BoundRole> cachedRoles = this.cache.get(id);
 		if (cachedRoles == null) {
 			Set<BoundRole> roles;

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Tile of a milestone in the cockpit of its project (projects/milestones.view.xml), one per
+	milestone of the project.
+	
+	The card shows the name, the due date and the tile size of the milestone. A click on the tile
+	opens the milestone, the cockpit's <tiles> declaration does that. The delete button of the card
+	answers a press itself: it deletes the milestone, and the cockpit drops its tile.
+-->
+<view>
+	<channels>
+		<channel name="element"/>
+		<derived-channel name="dueDate"
+			expr="$element.get(`tl.demo.projectManagement:Milestone#dueDate`)"
+			inputs="element"
+			observed-types="tl.demo.projectManagement:Milestone"
+		/>
+		<derived-channel name="tileSize"
+			expr="$element.get(`tl.demo.projectManagement:Milestone#tileSize`)"
+			inputs="element"
+			observed-types="tl.demo.projectManagement:Milestone"
+		/>
+	</channels>
+	<card>
+		<text
+			input="element"
+			variant="body-strong"
+		/>
+		<text input="dueDate"/>
+		<text input="tileSize"/>
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-trash"
+				inputs="element"
+			>
+				<label>
+					<en>Delete</en>
+					<de>Löschen</de>
+				</label>
+				<confirm expr="#('Delete milestone {0}?'@en, 'Meilenstein {0} löschen?'@de).fill($element.get(`tl.demo.projectManagement:Milestone#name`))"/>
+				<delete-object/>
+			</action>
+		</button>
+	</card>
+</view>

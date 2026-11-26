@@ -26,11 +26,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
-import com.top_logic.knowledge.service.HistoryManager;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.db2.UpdateChainLink;
-import com.top_logic.knowledge.service.db2.UpdateChainView;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
@@ -256,11 +252,7 @@ public class ContentHandlersRegistry extends WindowRegistry<SubsessionHandler> {
 				if (zone != null) {
 					subSession.setCurrentTimeZone(zone);
 				}
-
-				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-				HistoryManager hm = kb.getHistoryManager();
-				UpdateChainLink lastKBRevision = ((UpdateChainView) kb.getUpdateChain()).current();
-				subSession.updateSessionRevision(hm, lastKBRevision);
+				HistoryUtils.moveToCurrentRevision(subSession);
 			}
 		}
 

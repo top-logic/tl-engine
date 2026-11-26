@@ -10,6 +10,8 @@ import java.util.Collection;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * Maps a chat session between the {@link TLObject} a view channel holds and the id string the
@@ -48,25 +50,28 @@ public final class ChatSessionIds {
 	}
 
 	/**
-	 * The id of {@code channelValue} when it names a session the {@code owner} owns, otherwise
+	 * The id of {@code channelValue} when it names a session the {@code person} may read, otherwise
 	 * {@code ""}.
 	 */
-	public static String selectedId(Object channelValue, Person owner) {
+	public static String selectedId(Object channelValue, Person person) {
 		TLObject session = sessionOf(channelValue);
 		if (session == null) {
 			return "";
 		}
 		String id = idOf(session);
-		return ChatHistoryService.findOwnedSessionById(id, owner) == null ? "" : id;
+		return accessibleSession(id, person, SimpleBoundCommandGroup.READ) == null ? "" : id;
 	}
 
 	/**
-	 * The owned session for {@code id}, or {@code null} when it is missing or not this person's.
+	 * The session for {@code id}, or {@code null} when it is missing or the person may not perform
+	 * the given operation on it.
+	 *
+	 * @see ChatHistoryService#findAccessibleSession(String, Person, BoundCommandGroup)
 	 */
-	public static TLObject ownedSession(String id, Person owner) {
+	public static TLObject accessibleSession(String id, Person person, BoundCommandGroup operation) {
 		if (id == null || id.isBlank()) {
 			return null;
 		}
-		return ChatHistoryService.findOwnedSessionById(id, owner);
+		return ChatHistoryService.findAccessibleSession(id, person, operation);
 	}
 }

@@ -83,7 +83,7 @@ public final class ChatStart {
 		try {
 			// A conversation a backend answers runs no agent of this application, so the agent
 			// policy does not apply to it, as for a message of the browser.
-			if (ConversationBackendService.backendFor(session) == null) {
+			if (ConversationBackendService.backendFor(session.getSubject()) == null) {
 				SendRefusal refusal = SendRefusal.forRun(owner, ChatProcessor.ChatRunOptions.DEFAULT);
 				if (refusal != null) {
 					throw new TopLogicException(I18NConstants.ERROR_NOT_SENT__REASON.fill(refusal.reason()));

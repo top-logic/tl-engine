@@ -26,7 +26,19 @@ export interface ConversationFeatures {
   approvals: boolean
 }
 
-/** Everything: what the framework's own agent supports, and what a new conversation starts with. */
+/**
+ * State key of a `<chat-conversation>` under which the server states what a conversation about the
+ * element's subject offers - the features a new conversation starts with, read with
+ * {@link readFeatures}. Absent on every other chat element.
+ *
+ * Must match `ChatConversationControl.STATE_SUBJECT_FEATURES`.
+ */
+export const STATE_SUBJECT_FEATURES = 'subjectFeatures'
+
+/**
+ * Everything: what the framework's own agent supports, and what a new conversation starts with
+ * where the element states no {@link STATE_SUBJECT_FEATURES}.
+ */
 export const ALL_FEATURES: ConversationFeatures = Object.freeze({
   regenerate: true,
   editMessages: true,

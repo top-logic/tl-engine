@@ -520,7 +520,7 @@ export const Composer = React.memo(
    */
   useEffect(() => {
     if (!attachmentsEnabled) return
-    const root = surface.current?.closest('.tl-cockpit, .tl-chat-conversation') as HTMLElement | null
+    const root = surface.current?.closest('.tl-chat-conversation') as HTMLElement | null
     if (!root) return
     let depth = 0
     const onEnter = (event: DragEvent) => {
@@ -593,6 +593,7 @@ export const Composer = React.memo(
     () => ({
       insertReference: (token: ReferenceToken) => area.current?.insertReference(token),
       setDraft: (draft: string) => area.current?.setDraft(draft),
+      restoreDraft: (draft: string) => area.current?.restoreDraft(draft),
       focus: () => area.current?.focus(),
     }),
     [],

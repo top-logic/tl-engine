@@ -34,6 +34,8 @@ import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -304,6 +306,8 @@ public class TestChatCancelOwnership extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestChatCancelOwnership.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				ColumnProviderService.Module.INSTANCE,
 				FieldControlService.Module.INSTANCE,

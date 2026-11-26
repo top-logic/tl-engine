@@ -8,6 +8,7 @@ package com.top_logic.layout.view.security;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -22,6 +23,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.CheckedObjects;
 import com.top_logic.model.security.CheckedObjects.Decision;
 import com.top_logic.model.security.ModelAccessRights;
@@ -279,35 +281,32 @@ public final class ModelAccessPolicy {
 	}
 
 	/**
-	 * Whether the given operation on the given attribute is refused for the current user
-	 * independent of any concrete object of the given type, e.g. to decide whether a table offers a
-	 * column for the attribute at all.
+	 * Whether a column of the given attribute is offered to the current user in a table of objects
+	 * of the given type.
 	 *
 	 * <p>
-	 * The operation is refused independent of an object when the user is restricted (see
-	 * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}), or the user holds no role
-	 * granted the operation on any object: the attribute's own grant for the operation, if it has one
-	 * (see {@link ModelAccessRights#hasGrant(TLClass, TLStructuredTypePart, BoundCommandGroup)}), lists no
-	 * role the user holds, or, without one, the user holds none of the roles the type grants the
-	 * operation to and it is not {@link #isOffered(BoundCommandGroup, TLClass) offered} to the user on the
-	 * type either, also through an access parent of the type. A refusal is
-	 * {@link ExecutableState#NOT_EXEC_HIDDEN hidden}, like
-	 * {@link #onObject(BoundCommandGroup, TLObject, TLStructuredTypePart)} displays it
-	 * on a concrete object. Everything else depends on the object and is
-	 * {@link ExecutableState#EXECUTABLE executable} here; it is decided per object by
+	 * Access rights withhold such a column only through security at attribute level: the attribute
+	 * has a {@link SimpleBoundCommandGroup#READ read} grant of its own for objects of the type (see
+	 * {@link ModelAccessRights#hasGrant(TLClass, TLStructuredTypePart, BoundCommandGroup)}) listing
+	 * no role the user holds on any object, so that the column would be empty in every row. The
+	 * read right on the type never withholds a column: it decides which rows the table shows, and
+	 * the right on the attribute of a row decides whether its cell shows a value, see
 	 * {@link #onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}.
 	 * </p>
 	 *
-	 * @param operation
-	 *        The operation on the attribute.
+	 * <p>
+	 * A type without security offers every column. A user bypassing the model security (see
+	 * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}) is offered every column,
+	 * without a user there is none. A withheld column is {@link ExecutableState#NOT_EXEC_HIDDEN hidden}.
+	 * </p>
+	 *
 	 * @param type
-	 *        The type of the objects whose attribute is accessed, {@code null} when unknown: then
-	 *        the type defining the attribute stands for it.
+	 *        The type of the objects whose attribute the column shows, {@code null} when unknown:
+	 *        then the type defining the attribute stands for it.
 	 * @param attribute
-	 *        The attribute accessed.
+	 *        The attribute the column shows.
 	 */
-	public static ExecutableState onAttributeOfType(BoundCommandGroup operation, TLStructuredType type,
-			TLStructuredTypePart attribute) {
+	public static ExecutableState onAttributeColumn(TLStructuredType type, TLStructuredTypePart attribute) {
 		ModelAccessRights rights = ModelAccessRights.getInstance();
 		TLClass clazz = type instanceof TLClass typeClass ? typeClass
 			: attribute.getOwner() instanceof TLClass owner ? owner : null;
@@ -315,11 +314,11 @@ public final class ModelAccessPolicy {
 			return ExecutableState.EXECUTABLE;
 		}
 		Person user = TLContext.currentUser();
-		Boolean bypass = BoundChecker.isAllowedBypass(user, operation);
+		Boolean bypass = BoundChecker.isAllowedBypass(user, SimpleBoundCommandGroup.READ);
 		if (bypass != null) {
 			return bypass.booleanValue() ? ExecutableState.EXECUTABLE : ExecutableState.NOT_EXEC_HIDDEN;
 		}
-		if (heldByNoGrantedRole(rights, user, clazz, attribute, operation)) {
+		if (attributeHeldByNoGrantedRole(rights, user, clazz, attribute, SimpleBoundCommandGroup.READ)) {
 			return ExecutableState.NOT_EXEC_HIDDEN;
 		}
 		return ExecutableState.EXECUTABLE;
@@ -454,9 +453,10 @@ public final class ModelAccessPolicy {
 	 * or when the user holds, on any object, none of the roles granted the operation (or an
 	 * operation implying it) on the type or on one of its specializations, as
 	 * {@link AccessManager#hasRoleOnAnyObject(Person, Collection)} answers it. A type with an access
-	 * parent is decided by the types its access parent may
-	 * lead to, with {@link SimpleBoundCommandGroup#WRITE} in place of
-	 * {@link SimpleBoundCommandGroup#CREATE} and {@link SimpleBoundCommandGroup#DELETE} (see
+	 * parent is decided, for each operation it delegates, by the types its access parent may
+	 * lead to (for an access parent with several candidates, the types of all of them), and for
+	 * each operation it does not delegate by the grants of the type itself, with
+	 * {@link SimpleBoundCommandGroup#WRITE} in place of {@link SimpleBoundCommandGroup#CREATE} and {@link SimpleBoundCommandGroup#DELETE} (see
 	 * {@link ModelAccessRights#getAccessParentTypes(TLClass)}). A type without security, one whose
 	 * singletons have rights of their own, or one whose access parent types are not known statically
 	 * is always in reach.
@@ -482,34 +482,60 @@ public final class ModelAccessPolicy {
 	}
 
 	/**
+	 * A type visited for an operation: different operations asked on the same type are independent
+	 * questions.
+	 */
+	private record Visit(TLClass type, BoundCommandGroup operation) {
+		// Pure value.
+	}
+
+	/**
 	 * Whether the given user may hold the given operation on some object of the given type or of
 	 * one of its specializations, see {@link #isOffered(BoundCommandGroup, TLClass)}.
 	 *
 	 * @param seen
-	 *        The types already visited, to stop at cyclic access parent relations.
+	 *        The types already visited, each for the operation asked on it, to stop at cyclic
+	 *        access parent relations.
 	 */
 	private static boolean isGrantable(ModelAccessRights rights, Person user, BoundCommandGroup operation,
-			TLClass type, Set<TLClass> seen) {
+			TLClass type, Set<Visit> seen) {
 		for (TLClass candidate : TLModelUtil.getReflexiveTransitiveSpecializations(type)) {
-			if (!seen.add(candidate)) {
+			if (!seen.add(new Visit(candidate, operation))) {
 				continue;
 			}
 			if (rights.isWithoutSecurity(candidate) || rights.hasSingletonRights(candidate)) {
 				return true;
 			}
-			if (rights.getAccessParent(candidate) != null) {
-				Set<TLClass> parentTypes = rights.getAccessParentTypes(candidate);
-				if (parentTypes == null) {
-					// Not known statically: only the check of a concrete object decides.
-					return true;
-				}
-				BoundCommandGroup parentOperation = isCreate(operation) || isDelete(operation)
-					? SimpleBoundCommandGroup.WRITE
-					: operation;
-				for (TLClass parentType : parentTypes) {
-					if (isGrantable(rights, user, parentOperation, parentType, seen)) {
+			AccessParentFunction accessParent = rights.getAccessParent(candidate);
+			if (accessParent != null) {
+				// The operation itself or one implying it, a delegated one is checked on the parent
+				// types.
+				Set<BoundCommandGroup> operations =
+					new LinkedHashSet<>(rights.getOperations(candidate).getImplying(operation));
+				operations.add(operation);
+				for (BoundCommandGroup delegated : operations) {
+					if (!accessParent.delegates(delegated)) {
+						continue;
+					}
+					Set<TLClass> parentTypes = rights.getAccessParentTypes(candidate);
+					if (parentTypes == null) {
+						// Not known statically: only the check of a concrete object decides.
 						return true;
 					}
+					BoundCommandGroup parentOperation = isCreate(delegated) || isDelete(delegated)
+						? SimpleBoundCommandGroup.WRITE
+						: delegated;
+					for (TLClass parentType : parentTypes) {
+						if (isGrantable(rights, user, parentOperation, parentType, seen)) {
+							return true;
+						}
+					}
+				}
+				if (!accessParent.delegatesAll()
+					&& holdsAnyOf(user, rights.getAllowedRoles(candidate, operation))) {
+					// An access parent not deciding every operation: the grants of the type itself
+					// decide the operations not delegated.
+					return true;
 				}
 				continue;
 			}

@@ -34,6 +34,7 @@ import CheckboxPart from './form/CheckboxPart';
 import TextInputPart from './form/TextInputPart';
 import ChipPart from './chip/ChipPart';
 import SkeletonPart from './skeleton/SkeletonPart';
+import MenuTriggerPart from './button/MenuTriggerPart';
 import BadgePart from './chip/BadgePart';
 
 declare global {
@@ -109,6 +110,8 @@ beforeAll(() => {
   registerPart('TextInput', TextInputPart);
   registerPart('Chip', ChipPart);
   registerPart('Skeleton', SkeletonPart);
+  // The gear of the view is on every table.
+  registerPart('MenuTrigger', MenuTriggerPart);
   registerPart('Badge', BadgePart);
   register('TableTestEditor', EditorCell);
   register('TableTestText', TextCell);

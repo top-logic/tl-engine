@@ -17,9 +17,7 @@ import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.db2.UpdateChainView;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -149,8 +147,7 @@ public abstract class SignedInContentServlet extends TopLogicServlet {
 
 		// Every request reads the newest stand: content stored a moment ago must be deliverable, and
 		// a sub-session that outlives the request would otherwise keep the revision of its first one.
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		subSession.updateSessionRevision(kb.getHistoryManager(), ((UpdateChainView) kb.getUpdateChain()).current());
+		HistoryUtils.moveToCurrentRevision(subSession);
 
 		DefaultDisplayContext.getDisplayContext(request).installSubSessionContext(subSession);
 	}

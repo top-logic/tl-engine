@@ -242,7 +242,8 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 
 	}
 	/**
-	 * What stands after the lines of a {@link Row}: metadata text, or a badge.
+	 * What stands after the lines of a {@link Row}: metadata text, a badge, or the content of a
+	 * template.
 	 */
 	public interface Trailing extends de.haumacher.msgbuf.data.DataObject {
 
@@ -262,8 +263,11 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 		/** @see #isBadge() */
 		String BADGE__PROP = "badge";
 
+		/** @see #getControl() */
+		String CONTROL__PROP = "control";
+
 		/**
-		 * The text, plain text.
+		 * The text, plain text. Ignored with a {@link #getControl()}.
 		 */
 		String getText();
 
@@ -282,6 +286,22 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 		 * @see #isBadge()
 		 */
 		com.top_logic.layout.react.state.DataListState.Trailing setBadge(boolean value);
+
+		/**
+		 * The content of the template the application configured for the row, drawn instead of the
+		 * {@link #getText()}. Absent: the {@link #getText()} is drawn.
+		 */
+		com.top_logic.layout.react.state.ChildControl getControl();
+
+		/**
+		 * @see #getControl()
+		 */
+		com.top_logic.layout.react.state.DataListState.Trailing setControl(com.top_logic.layout.react.state.ChildControl value);
+
+		/**
+		 * Checks, whether {@link #getControl()} has a value.
+		 */
+		boolean hasControl();
 
 		/** Reads a new instance from the given reader. */
 		static com.top_logic.layout.react.state.DataListState.Trailing readTrailing(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
@@ -440,15 +460,6 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 	/** @see #isSearch() */
 	String SEARCH__PROP = "search";
 
-	/** @see #isCollapsible() */
-	String COLLAPSIBLE__PROP = "collapsible";
-
-	/** @see #isCollapsed() */
-	String COLLAPSED__PROP = "collapsed";
-
-	/** @see #getDrawerBelow() */
-	String DRAWER_BELOW__PROP = "drawerBelow";
-
 	/** @see #getButtons() */
 	String BUTTONS__PROP = "buttons";
 
@@ -517,38 +528,6 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 	 * @see #isSearch()
 	 */
 	com.top_logic.layout.react.state.DataListState setSearch(boolean value);
-
-	/**
-	 * Whether the header carries the toggle collapsing the list to a narrow strip.
-	 */
-	boolean isCollapsible();
-
-	/**
-	 * @see #isCollapsible()
-	 */
-	com.top_logic.layout.react.state.DataListState setCollapsible(boolean value);
-
-	/**
-	 * Whether the list starts collapsed; needs {@link #isCollapsible()}.
-	 */
-	boolean isCollapsed();
-
-	/**
-	 * @see #isCollapsed()
-	 */
-	com.top_logic.layout.react.state.DataListState setCollapsed(boolean value);
-
-	/**
-	 * The width of the element containing the list, in rem, below which a {@link #isCollapsible()} list
-	 * keeps only its strip and its toggle opens the list as a drawer over its neighbours. Zero: the
-	 * list never becomes a drawer.
-	 */
-	int getDrawerBelow();
-
-	/**
-	 * @see #getDrawerBelow()
-	 */
-	com.top_logic.layout.react.state.DataListState setDrawerBelow(int value);
 
 	/**
 	 * The command buttons of the list, in display order. Absent: none.

@@ -28,11 +28,14 @@ export {
   VALUE_DEBOUNCE_MS,
 } from './bridge/tl-react-bridge';
 export type { TLTypingField, TLTypingFieldOptions } from './bridge/tl-react-bridge';
+// Whether a key belongs to an input method composition, including the Enter that ends it, which
+// Safari reports after the end of the composition: a control's own key handler leaves such a key alone.
+export { isCompositionKey } from './bridge/keyboard-dispatcher';
 export { useUncontrolledFieldSync } from './bridge/uncontrolled-field';
 export type { UncontrolledFieldSync, UncontrolledFieldSyncOptions } from './bridge/uncontrolled-field';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, anchoredOverlayOf, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
-export { BACKGROUND_COMMAND, BACKGROUND_REPORT, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
+export { BACKGROUND_COMMAND, BACKGROUND_REPORT, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED, registerPendingFlush, unregisterPendingFlush } from './bridge/command-channel';
 export type { CommandOptions, CommandResponse } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
 export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';
@@ -103,6 +106,13 @@ export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDra
 export { DropHint, NO_DRAG_IMAGE } from './bridge/drop-hint';
 export type { DropVerdict, HintAnchor } from './bridge/drop-hint';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
+export {
+  ACTIVATABLE_CLASS, ACTIVATION_ACTION_CLASS, ActivationButton, ActivationOpenButton, activationProps,
+  endsTextSelection,
+} from './bridge/activatable';
+export type {
+  ActivationAction, ActivationButtonProps, ActivationMode, ActivationOpenButtonProps, ActivationProps,
+} from './bridge/activatable';
 export { INTERACTIVE_SELECTOR, isInteractiveWithin, isInteractiveTarget, isOperableTarget, operableSelector } from './bridge/interactive';
 export { ATTR_LONG_PRESS, LONG_PRESS_EVENT } from './bridge/touch-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';
@@ -110,6 +120,10 @@ export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-pre
 export type { InsideRef } from './bridge/outside-press';
 export { usePopover } from './bridge/popover';
 export type { PopoverAnchor, PopoverOptions, PopoverPlacement, PopoverHover } from './bridge/popover';
+export { usePopupSurface } from './bridge/popup-surface';
+export type { PopupSurface, PopupSurfaceOptions, PopupInitialFocus } from './bridge/popup-surface';
+export { usePopupTrigger } from './bridge/popup-trigger';
+export type { PopupTrigger, PopupKind } from './bridge/popup-trigger';
 export { DisplayClassProvider, useDisplayClass } from './bridge/display-class';
 export type { DisplayClass } from './bridge/display-class';
 export { SurfaceProvider, useSurface, cardSurfaceClass, insetClass, paintedLevel, panelSurface } from './bridge/surface';
@@ -125,11 +139,14 @@ export type {
   ListReorderOptions,
   ReorderAxis,
   ReorderContainerProps,
+  ReorderDirection,
   ReorderDropTarget,
   ReorderHandleProps,
   ReorderItemProps,
   ReorderItemState,
   ReorderSide,
+  ReorderStep,
+  ReorderZoneProps,
 } from './bridge/list-reorder';
 export type { TLCellProps } from './bridge/types';
 export { useImageSrc } from './bridge/image-source';
@@ -178,11 +195,13 @@ export type {
   SliderStateJson,
   FloatingActionStateJson,
   DataListStateJson,
+  SideRailStateJson,
+  SideRailSectionsStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { useCopyToClipboard, COPIED_DISPLAY_MS } from './bridge/clipboard';
 export type { CopyToClipboard, CopyOutcome } from './bridge/clipboard';
-export { scrollToAnchor } from './bridge/scroll';
+export { scrollToAnchor, scrollingAncestor } from './bridge/scroll';
 export { resolveAddress, isScriptAddress, opensPage } from './bridge/address';
 export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-mode';
 export type { ThemeMode } from './bridge/theme-mode';
@@ -291,3 +310,8 @@ initFocusTrap();
 // with which the open surfaces close themselves on an outside press.
 import { initOutsidePress } from './bridge/outside-press';
 initOutsidePress();
+export {
+  useTableViewPreferences,
+  resetTableViewPreferencesForTest,
+} from './bridge/table-view-preferences';
+export type { TableViewPreferences } from './bridge/table-view-preferences';

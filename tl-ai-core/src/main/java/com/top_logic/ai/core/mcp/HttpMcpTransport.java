@@ -6,9 +6,13 @@
 package com.top_logic.ai.core.mcp;
 
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -21,15 +25,16 @@ import com.top_logic.basic.credential.RequestAuthentication;
 
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.client.transport.customizer.McpHttpClientTransportAuthorizationErrorHandler;
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.spec.McpClientTransport;
 
 /**
  * {@link McpTransportConfig} creating an MCP HTTP transport (Streamable HTTP).
  *
  * <p>
- * The MCP server runs as an external HTTP service. Each request is authenticated by the configured
- * {@link Config#getCredentials() credentials} at the moment it is sent, e.g. with a bearer token
- * read from an environment variable:
+ * The MCP server runs as an external HTTP service. Each call of the client is authenticated by the
+ * configured {@link Config#getCredentials() credentials} at the moment it is made, e.g. with a bearer
+ * token read from an environment variable:
  * </p>
  *
  * <pre>
@@ -41,7 +46,7 @@ import io.modelcontextprotocol.spec.McpClientTransport;
  * </pre>
  *
  * <p>
- * When the server rejects the credentials (HTTP 401), they are invalidated and the request is sent
+ * When the server rejects the credentials (HTTP 401), they are invalidated and the call is sent
  * once more with fresh ones.
  * </p>
  */
@@ -63,7 +68,14 @@ public class HttpMcpTransport implements McpTransportConfig {
 		String CREDENTIALS = "credentials";
 
 		/**
-		 * The URL of the MCP server endpoint (e.g., {@code "https://mcp.example.com/mcp"}).
+		 * The full address of the MCP server endpoint (e.g., {@code "https://mcp.example.com/mcp"}).
+		 *
+		 * <p>
+		 * It must be an absolute http or https URL with a host. The client uses the path and the
+		 * query of this URL as given, e.g. {@code "https://host/app/mcp"} for the MCP endpoint of
+		 * an application with the context path {@code /app}. A URL without a path addresses the
+		 * root path {@code /}.
+		 * </p>
 		 */
 		@Name(URL)
 		String getUrl();
@@ -106,33 +118,158 @@ public class HttpMcpTransport implements McpTransportConfig {
 	 */
 	@CalledByReflection
 	public HttpMcpTransport(InstantiationContext context, Config config) {
-		_url = config.getUrl();
+		_url = checkUrl(config.getUrl());
 		_headers = config.getHeaders();
 		_credentials = CredentialProvider.create(context, _url, config.getCredentials(), null, null, null);
 	}
 
+	/**
+	 * The given URL, if the transport can send requests to it.
+	 *
+	 * <p>
+	 * The library of the transport accepts a URL without a host (e.g. {@code "localhost:8080/mcp"}
+	 * or {@code "http:///mcp"}) when the transport is built, and fails with a
+	 * {@link NullPointerException} when it sends the first request.
+	 * </p>
+	 */
+	private static String checkUrl(String url) {
+		if (url == null || !isHttpUrl(url)) {
+			throw new ConfigurationError(I18NConstants.ERROR_INVALID_URL__URL.fill(url));
+		}
+		return url;
+	}
+
+	private static boolean isHttpUrl(String url) {
+		URI uri;
+		try {
+			uri = new URI(url);
+		} catch (URISyntaxException ex) {
+			return false;
+		}
+		String scheme = uri.getScheme();
+		return ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) && uri.getHost() != null;
+	}
+
+	/**
+	 * A transport whose requests carry only the credentials of the {@link McpTransportContext} of
+	 * their call. A request that the library sends by itself gets none.
+	 *
+	 * <p>
+	 * The {@link McpClientConnection} uses {@link #createTransport(Supplier, Runnable)}, which gives
+	 * such a request the headers of the last call that succeeded.
+	 * </p>
+	 */
 	@Override
 	public McpClientTransport createTransport() {
+		return createTransport(() -> CredentialHeaders.NONE, () -> {
+			// No caller of this transport invalidates the credentials.
+		});
+	}
+
+	/**
+	 * Creates the transport of one connection.
+	 *
+	 * @param lastSucceeded
+	 *        The headers of the last call of the connection that succeeded.
+	 * @param rejected
+	 *        Called when the server rejects the headers of a request (HTTP 401).
+	 */
+	McpClientTransport createTransport(Supplier<CredentialHeaders> lastSucceeded, Runnable rejected) {
 		return HttpClientStreamableHttpTransport.builder(_url)
+			// Without an endpoint, the library resolves its default endpoint "/mcp" against the
+			// URL, which replaces the path and the query of the URL.
+			.endpoint(_url)
 			.addHttpRequestCustomizer((request, method, uri, body, context) -> {
 				if (_headers != null) {
 					for (NamedValueConfig entry : _headers.values()) {
 						request.header(entry.getName(), entry.getValue());
 					}
 				}
-				_credentials.authenticate(RequestAuthentication.of(request));
+				CredentialHeaders credentials;
+				if (context.get(CredentialHeaders.KEY) instanceof CredentialHeaders resolved) {
+					credentials = resolved;
+				} else {
+					// A request that the library sends by itself has no caller, e.g. the new
+					// initialize after the server forgot the session, or the tools/list after the
+					// server said that its tools changed. It gets the headers of the last call that
+					// succeeded. They belong to the connection, so callers with different
+					// credentials must not share a connection.
+					credentials = lastSucceeded.get();
+				}
+				// The stream of server messages (GET) carries the context of the initialize of its
+				// session: the library opens it once, right after the server accepted this
+				// initialize.
+				credentials.addTo(RequestAuthentication.of(request));
 			})
 			.authorizationErrorHandler(McpHttpClientTransportAuthorizationErrorHandler.fromSync(
 				(request, response, context) -> {
-					if (response.statusCode() != HttpURLConnection.HTTP_UNAUTHORIZED) {
-						return false;
+					if (response.statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+						// Cached credentials (an access token) may have expired or been revoked.
+						// No repeat here: the library would send the same headers again. Fresh
+						// headers come only from the credential provider on the thread of a
+						// caller, and the next caller invalidates the credentials first.
+						rejected.run();
 					}
-					// Cached credentials (an access token) may have expired or been revoked: one
-					// more attempt with fresh ones.
-					_credentials.invalidate();
-					return true;
+					return false;
 				}))
 			.build();
+	}
+
+	/**
+	 * The {@link Config#getCredentials() credentials}, which the {@link McpClientConnection} calls on
+	 * the thread of its caller.
+	 */
+	CredentialProvider credentials() {
+		return _credentials;
+	}
+
+	/**
+	 * The headers that the {@link Config#getCredentials() credentials} set for one call, resolved on
+	 * the thread of the caller.
+	 *
+	 * <p>
+	 * The transport itself never calls the credential provider: it runs inside the wait that a stop
+	 * of the run ends, and on threads of the MCP library. A credential provider may read the
+	 * knowledge base, which such a wait must not touch, and it may take the person from the thread,
+	 * which a thread of the library does not have. The {@link McpClientConnection} calls the
+	 * provider on the thread of its caller and gives these headers to the transport in the
+	 * {@link McpTransportContext} of the call.
+	 * </p>
+	 *
+	 * @param values
+	 *        The header values by header name.
+	 */
+	record CredentialHeaders(Map<String, String> values) {
+
+		/** The key of the headers in the {@link McpTransportContext} of a call. */
+		static final String KEY = CredentialHeaders.class.getName();
+
+		/** No headers, before a call succeeded. */
+		static final CredentialHeaders NONE = new CredentialHeaders(Map.of());
+
+		/** Copies the given values, which the caller may change later. */
+		CredentialHeaders {
+			values = Map.copyOf(values);
+		}
+
+		/**
+		 * The {@link McpTransportContext} that gives these headers to the transport.
+		 */
+		McpTransportContext context() {
+			return McpTransportContext.create(Map.of(KEY, this));
+		}
+
+		void addTo(RequestAuthentication request) {
+			values.forEach(request::setHeader);
+		}
+
+		/**
+		 * The header names only: the values are secrets.
+		 */
+		@Override
+		public String toString() {
+			return "CredentialHeaders" + values.keySet();
+		}
 	}
 
 }

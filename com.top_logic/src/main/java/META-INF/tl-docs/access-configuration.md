@@ -659,10 +659,7 @@ discover), the refusal names only the container and the composition, not the par
   configuration: grant `Create` to the member and the owner, and `Delete` to the owner only.
 - A part that is deleted with another removed part is not checked on its own, as a delete checks
   only the deleted object.
-- TL-Script without security and Java code that calls `tUpdate` do not check the right. Java code
-  with a security check of its own calls
-  `DeleteRight#checkRemovedParts(TLObject, TLStructuredTypePart, Object)` before it changes a
-  composition.
+- TL-Script without security and Java code that calls `tUpdate` do not check the right.
 
 The user interfaces do not offer the remove of a row the user may not delete: a table of the view
 layer shows no delete button for it and does not execute *Delete selected* while it is selected

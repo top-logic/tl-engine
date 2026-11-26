@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -39,6 +40,7 @@ public final class DeleteRight {
 	/**
 	 * Whether the current user may delete the given object.
 	 */
+	@FrameworkInternal
 	public static boolean mayDelete(TLObject object) {
 		return ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), object, SimpleBoundCommandGroup.DELETE);
 	}
@@ -83,6 +85,7 @@ public final class DeleteRight {
 	 *         With the {@link #removeRefusal(TLObject) refusal} of the first part that the new value
 	 *         takes out and that the user may not delete.
 	 */
+	@FrameworkInternal
 	public static void checkRemovedParts(TLObject container, TLStructuredTypePart attribute, Object newValue) {
 		if (!(attribute instanceof TLReference reference) || !reference.isComposite()) {
 			return;
@@ -114,6 +117,7 @@ public final class DeleteRight {
 	 *         {@link I18NConstants#REMOVE_PERMISSION_DENIED__OBJECT_ATTRIBUTE} naming its container
 	 *         and composition, when the user may not discover the part either.
 	 */
+	@FrameworkInternal
 	public static ResKey removeRefusal(TLObject part) {
 		return removeRefusal(part.tContainer(), part.tContainerReference(), part);
 	}

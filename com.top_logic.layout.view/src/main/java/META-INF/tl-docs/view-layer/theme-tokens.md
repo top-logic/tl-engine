@@ -15,14 +15,15 @@ e.g. a shadow) or a `<ref>` naming another token.
 
 `UIThemeService.writeThemeStyles` emits every token of every theme verbatim as `--<name>:<value>`
 into an inline `<style>` element of the React page, in a block with the selector
-`:root[data-theme="<theme>"]`; the default theme is bound to `:root` in addition. So a token named
+`:root[data-theme="<theme>"]`; the default theme is bound to `:root:not([data-theme])` in addition,
+a page without the theme attribute. So a token named
 `corner-radius` is a custom property `--corner-radius` and is consumed as `var(--corner-radius)`.
 
 A theme can also set a role of the design system (a `--tl-*` token, see the section "Typography
 tokens" below). The design system declares its roles in the same layer
-`tl`, after the theme blocks, with selectors such as `[data-tl-mode="dark"]`. The selector of a theme
-block has a higher specificity, so the value of the theme wins in the light and in the dark mode.
-This is also true for the React content of a classic page.
+`tl`, after the theme blocks, with selectors such as `:root` and `[data-tl-mode="dark"]`. The
+selectors of a theme block have a higher specificity, so the value of the theme wins in the light and
+in the dark mode. This is also true for the React content of a classic page.
 Do not set a role of the density (for example `tl-size-control`) in a theme: the value of the theme
 wins in both densities, so the density switch has no effect on this role.
 

@@ -80,21 +80,19 @@ public class TestThemeTokensOverrideDesignSystem extends TestCase {
 	private static final Pattern DECLARATION = Pattern.compile("--([\\w-]+)\\s*:\\s*([^;]+);");
 
 	/**
-	 * One part of a compound selector that can match the {@code html} element. Each of them counts
-	 * as one class in the specificity.
+	 * One part of a compound selector that can match the {@code html} element: {@code :root}, an
+	 * attribute that must be absent ({@code :not([name])}), or an attribute that must be present,
+	 * with or without a value. Each of them counts as one class in the specificity.
 	 */
 	private static final Pattern SIMPLE_SELECTOR =
-		Pattern.compile(":root|\\[([\\w-]+)(?:=\"([^\"]*)\")?\\]");
+		Pattern.compile(":root|:not\\(\\[([\\w-]+)\\]\\)|\\[([\\w-]+)(?:=\"([^\"]*)\")?\\]");
 
 	/**
 	 * A role that a theme names wins over the role of the design system, for each theme and in the
 	 * light and in the dark mode of the design system.
 	 */
 	public void testThemeRoleWins() throws Exception {
-		List<Rule> rules = new ArrayList<>(themeRules(service(THEMES)));
-		for (String sheet : DESIGN_SYSTEM_SHEETS) {
-			rules.addAll(rules(ThemeTokenAudit.stylesheet(sheet)));
-		}
+		List<Rule> rules = allRules();
 
 		for (String theme : List.of("light", "dark")) {
 			for (String mode : List.of("light", "dark")) {
@@ -107,6 +105,32 @@ public class TestThemeTokensOverrideDesignSystem extends TestCase {
 				assertEquals(state, TYPE_VALUE, value(rules, html, TYPE_ROLE));
 			}
 		}
+	}
+
+	/**
+	 * The roles of the default theme win over the roles of the design system also on a page whose
+	 * {@code html} element has no theme attribute, for example because its script did not run.
+	 */
+	public void testDefaultThemeRoleWinsWithoutThemeAttribute() throws Exception {
+		List<Rule> rules = allRules();
+
+		for (Map<String, String> html : List.of(
+			Map.<String, String> of(),
+			Map.of(UIThemeService.DS_MODE_ATTRIBUTE, "light"))) {
+			String state = "Attributes " + html;
+
+			assertEquals(state, COLOR_VALUE, value(rules, html, COLOR_ROLE));
+			assertEquals(state, TYPE_VALUE, value(rules, html, TYPE_ROLE));
+		}
+	}
+
+	/** The rules of the theme blocks and of the design system sheets, in the order of the page. */
+	private static List<Rule> allRules() throws Exception {
+		List<Rule> rules = new ArrayList<>(themeRules(service(THEMES)));
+		for (String sheet : DESIGN_SYSTEM_SHEETS) {
+			rules.addAll(rules(ThemeTokenAudit.stylesheet(sheet)));
+		}
+		return rules;
 	}
 
 	/**
@@ -142,10 +166,13 @@ public class TestThemeTokensOverrideDesignSystem extends TestCase {
 		int result = 0;
 		boolean matches = true;
 		while (part.lookingAt()) {
-			String attribute = part.group(1);
-			if (attribute != null) {
+			String absent = part.group(1);
+			String attribute = part.group(2);
+			if (absent != null) {
+				matches &= !html.containsKey(absent);
+			} else if (attribute != null) {
 				String actual = html.get(attribute);
-				String expected = part.group(2);
+				String expected = part.group(3);
 				matches &= actual != null && (expected == null || expected.equals(actual));
 			}
 			result++;

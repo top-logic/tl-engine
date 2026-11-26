@@ -107,12 +107,13 @@ public class TestUIThemeService extends TestCase {
 
 	/**
 	 * Each theme declares the color scheme of its appearance beside its custom properties, and the
-	 * default theme is bound to {@code :root} as well.
+	 * default theme is bound to a page without a theme attribute as well.
 	 */
 	public void testColorSchemeDeclaredPerTheme() throws ConfigurationException {
 		String css = css(service(LIGHT_AND_DARK));
 
-		assertTrue(css, css.contains(":root, " + selector("light") + "{"));
+		assertTrue(css, css.contains(":root:not([" + UIThemeService.THEME_ATTRIBUTE + "]), "
+			+ selector("light") + "{"));
 		assertTrue(css, block(css, "light").startsWith("color-scheme:light;"));
 		assertTrue(css, block(css, "dark").startsWith("color-scheme:dark;"));
 	}

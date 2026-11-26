@@ -444,7 +444,8 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 * Writes a {@code <style>} element defining every {@link #getSelectableThemes() selectable}
 	 * theme as a block of CSS custom properties scoped by the {@link #THEME_ATTRIBUTE}, each
 	 * declaring the {@code color-scheme} of its appearance. The default theme is additionally bound
-	 * to {@code :root}, which is the appearance of a page whose script did not run.
+	 * to a page without the {@link #THEME_ATTRIBUTE}, which is the appearance of a page whose script
+	 * did not run.
 	 *
 	 * <p>
 	 * The blocks belong to the CSS cascade layer {@value ClientResources#ENGINE_LAYER} of the
@@ -454,11 +455,10 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 *
 	 * <p>
 	 * The design system declares its roles ({@code --tl-*}) in the same layer, after these blocks,
-	 * with selectors such as {@code [data-tl-mode="dark"]}. A block is therefore scoped by
-	 * {@code :root[data-theme="x"]}: this selector has a higher specificity, so that a role that a
-	 * theme sets wins over the role of the design system in the light and in the dark mode. The
-	 * selector {@code :root} alone of the default theme, for a page whose script did not run, does
-	 * not win over a role of the design system.
+	 * with selectors such as {@code :root} and {@code [data-tl-mode="dark"]}. A block is therefore
+	 * scoped by {@code :root[data-theme="x"]}, and the default theme in addition by
+	 * {@code :root:not([data-theme])}: these selectors have a higher specificity, so that a role
+	 * that a theme sets wins over the role of the design system in the light and in the dark mode.
 	 * </p>
 	 *
 	 * <p>
@@ -499,7 +499,7 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 
 	private String selector(String themeId) {
 		String scoped = ":root[" + THEME_ATTRIBUTE + "=\"" + themeId + "\"]";
-		return themeId.equals(_defaultTheme) ? ":root, " + scoped : scoped;
+		return themeId.equals(_defaultTheme) ? ":root:not([" + THEME_ATTRIBUTE + "]), " + scoped : scoped;
 	}
 
 	/**

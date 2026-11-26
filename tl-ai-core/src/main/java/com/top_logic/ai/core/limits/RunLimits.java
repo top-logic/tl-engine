@@ -35,7 +35,8 @@ import com.top_logic.ai.core.security.AiToolAccessService;
  *
  * <p>
  * Asked where every run enters - {@code AgentFactory.runAgent}, which the chat, the scheduler,
- * {@code AgentRunner} and the TL-Script functions all arrive at. A run is
+ * {@code AgentRunner} and the TL-Script functions all arrive at, and the TL-Script function
+ * {@code aiChat}, which builds its own loop without an agent. A run is
  * {@link #admit(ToolContext) admitted} or it does not happen; an admitted run holds its slot until
  * it {@link Admission#close() releases} it.
  * </p>

@@ -72,7 +72,9 @@ import com.top_logic.ai.core.execution.model.AgentExecution;
 import com.top_logic.ai.core.execution.model.AgentSession;
 import com.top_logic.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.ai.core.execution.model.UserMemory;
+import com.top_logic.ai.core.limits.RunLimitExceededException;
 import com.top_logic.ai.core.limits.RunLimitSettings;
+import com.top_logic.ai.core.limits.RunLimits;
 import com.top_logic.ai.core.message.AssistantMessage;
 import com.top_logic.ai.core.message.ContentPart;
 import com.top_logic.ai.core.message.Conversation;
@@ -430,7 +432,13 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *         any request is sent. If the run did not reach an answer - an HTTP error, a stream
 	 *         error, a refusal, a cancellation or an exhausted turn budget - carrying the provider's
 	 *         error kind and message. It never returns the empty string for a failed call: a caller
-	 *         cannot tell that apart from a model that answered nothing.
+	 *         cannot tell that apart from a model that answered nothing. A call that spends the rest
+	 *         of the budget of the account stops after that turn and fails with the reason
+	 *         {@code BUDGET_EXHAUSTED}.
+	 * @throws RunLimitExceededException
+	 *         If the acting account already has as many runs going as it may, or has spent its
+	 *         budget. A call of this function is a run of the account under these limits, also when
+	 *         it is made inside another run. The model is not called.
 	 */
 	public static String chat(List<Object> messages, String model, Object responseFormat,
 			Collection<String> tools) {
@@ -493,36 +501,42 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			// Before the provider is built: a call the account may not make costs no round trip.
 			refuseModel(context.security().runAuthorization(), modelName, defaultModel);
-			LLMProvider provider = registry.buildProvider(modelName, providerName);
+			// This call builds its own loop and does not pass AgentFactory.runAgent, where an agent run is
+			// admitted. Without the admission here, a script could call the model after the account reached
+			// its run limit or spent its budget. Released when the loop returns.
+			try (RunLimits.Admission admission = RunLimits.admit(context)) {
+				ToolContext admitted = context.withBudgetAllowance(admission.allowance());
+				LLMProvider provider = registry.buildProvider(modelName, providerName);
 
-			AgentParams config = new AgentParams(
-				modelName, systemPrompt != null ? systemPrompt : "",
-				// A call without tools is one exchange. A call with tools needs the turns to use them:
-				// the answer comes after the tool results, so a one-turn budget would stop the loop
-				// with the tool calls made and nothing said.
-				toolRegistry.tools().isEmpty() ? 1 : AgentRuntimeService.maxTurns(),
-				AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
-				Map.of(),
-				toResponseFormat(responseFormat));
+				AgentParams config = new AgentParams(
+					modelName, systemPrompt != null ? systemPrompt : "",
+					// A call without tools is one exchange. A call with tools needs the turns to use them:
+					// the answer comes after the tool results, so a one-turn budget would stop the loop
+					// with the tool calls made and nothing said.
+					toolRegistry.tools().isEmpty() ? 1 : AgentRuntimeService.maxTurns(),
+					AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
+					Map.of(),
+					toResponseFormat(responseFormat));
 
-			AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
-			int messageCountBefore = conversation.size();
+				AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
+				int messageCountBefore = conversation.size();
 
-			AgentSession session = createScriptSession("ai.chat (" + modelName + ")");
-			RunRecording recording = RunRecording.open("ai.chat", session, null, context.executionHandle(),
-				() -> scriptTranscript(env), NO_LISTENER);
-			AgentResult result;
-			try {
-				result = loop.run(conversation, context, recording);
-			} catch (RuntimeException ex) {
-				recording.fail(ex);
-				throw ex;
+				AgentSession session = createScriptSession("ai.chat (" + modelName + ")");
+				RunRecording recording = RunRecording.open("ai.chat", session, null, admitted.executionHandle(),
+					() -> scriptTranscript(env), NO_LISTENER);
+				AgentResult result;
+				try {
+					result = loop.run(conversation, admitted, recording);
+				} catch (RuntimeException ex) {
+					recording.fail(ex);
+					throw ex;
+				}
+				recording.finish(null);
+				// The run is recorded before this throws: a failed run is a row an administrator can
+				// look at, and an exception the script cannot mistake for an empty answer.
+				checkRunSucceeded(result);
+				return AgentFactory.extractResponseText(conversation, messageCountBefore);
 			}
-			recording.finish(null);
-			// The run is recorded before this throws: a failed run is a row an administrator can
-			// look at, and an exception the script cannot mistake for an empty answer.
-			checkRunSucceeded(result);
-			return AgentFactory.extractResponseText(conversation, messageCountBefore);
 		} finally {
 			context.transaction().close();
 		}

@@ -229,14 +229,14 @@ public class TestAccessParentOperations extends BasicTestCase {
 			result.tUpdateByName("editor", _editor);
 			return result;
 		});
-		assertNull("Nobody decides Read for an entry without catalog.",
-			rights().getRoleHolder(orphan, SimpleBoundCommandGroup.READ));
+		assertEquals("Nobody decides Read for an entry without catalog.", Set.of(),
+			rights().getRoleHolders(orphan, SimpleBoundCommandGroup.READ));
 		assertFalse("Read is delegated, and the relation leads nowhere.",
 			allowed(_reader, orphan, SimpleBoundCommandGroup.READ));
 		assertFalse("Read is delegated, the inherited Read grant is dropped.",
 			allowed(_editor, orphan, SimpleBoundCommandGroup.READ));
 
-		assertSame(orphan, rights().getRoleHolder(orphan, SimpleBoundCommandGroup.WRITE));
+		assertEquals(Set.of(orphan), rights().getRoleHolders(orphan, SimpleBoundCommandGroup.WRITE));
 		assertTrue("Write is decided by the grant of the entry.",
 			allowed(_editor, orphan, SimpleBoundCommandGroup.WRITE));
 		assertTrue("Export is decided by the grant the entry inherits.",
@@ -311,20 +311,20 @@ public class TestAccessParentOperations extends BasicTestCase {
 	}
 
 	public void testRoleHolderPerOperation() {
-		assertSame(_catalog, rights().getRoleHolder(_entry, SimpleBoundCommandGroup.READ));
-		assertSame(_catalog, rights().getRoleHolder(_entry, SimpleBoundCommandGroup.DISCOVER));
-		assertSame(_entry, rights().getRoleHolder(_entry, SimpleBoundCommandGroup.WRITE));
-		assertSame(_entry, rights().getRoleHolder(_entry, SimpleBoundCommandGroup.EXPORT));
+		assertEquals(Set.of(_catalog), rights().getRoleHolders(_entry, SimpleBoundCommandGroup.READ));
+		assertEquals(Set.of(_catalog), rights().getRoleHolders(_entry, SimpleBoundCommandGroup.DISCOVER));
+		assertEquals(Set.of(_entry), rights().getRoleHolders(_entry, SimpleBoundCommandGroup.WRITE));
+		assertEquals(Set.of(_entry), rights().getRoleHolders(_entry, SimpleBoundCommandGroup.EXPORT));
 		assertSame(SimpleBoundCommandGroup.WRITE,
 			rights().getOperationOnRoleHolder(_entry, SimpleBoundCommandGroup.WRITE));
 
-		assertSame(_catalog, rights().getRoleHolder(_part, SimpleBoundCommandGroup.WRITE));
-		assertSame("Delete is not delegated by the part.", _part,
-			rights().getRoleHolder(_part, SimpleBoundCommandGroup.DELETE));
+		assertEquals(Set.of(_catalog), rights().getRoleHolders(_part, SimpleBoundCommandGroup.WRITE));
+		assertEquals("Delete is not delegated by the part.", Set.of(_part),
+			rights().getRoleHolders(_part, SimpleBoundCommandGroup.DELETE));
 		assertSame("Delete is checked on the part itself.", SimpleBoundCommandGroup.DELETE,
 			rights().getOperationOnRoleHolder(_part, SimpleBoundCommandGroup.DELETE));
 
-		assertSame(_catalog, rights().getRoleHolder(_fullPart, SimpleBoundCommandGroup.DELETE));
+		assertEquals(Set.of(_catalog), rights().getRoleHolders(_fullPart, SimpleBoundCommandGroup.DELETE));
 		assertSame("Deleting a fully delegating part is writing its container.", SimpleBoundCommandGroup.WRITE,
 			rights().getOperationOnRoleHolder(_fullPart, SimpleBoundCommandGroup.DELETE));
 	}

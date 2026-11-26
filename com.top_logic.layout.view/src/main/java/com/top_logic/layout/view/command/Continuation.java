@@ -61,8 +61,9 @@ public interface Continuation {
 	 *
 	 * <p>
 	 * {@link ButtonTone#DANGER} when an action that runs after this step - in this chain, or after
-	 * the action this chain is nested in - {@link ViewAction#getTone() is destructive}, or when the
-	 * command running the chain is destructive by its {@link CommandCliques#tone(String) clique}. A step that
+	 * the action this chain is nested in - {@link ViewAction#getTone() is destructive}. A command
+	 * taking its tone from its configuration (see {@link CommandCliques#tone(ViewCommand.Config)})
+	 * runs its chain in that tone instead, whatever its actions do. A step that
 	 * asks the user before the chain goes on (a {@link ConfirmAction}) draws its affirmative answer
 	 * in this tone: that answer lets the destruction happen. The tone of the step itself and of the
 	 * steps before it does not count.

@@ -161,10 +161,9 @@ the change log in a privileged function and restricts each commit, like the func
 The tables show the flag `incomplete` as a column, so that a user recognizes a commit with hidden
 parts.
 
-The change sets are transient objects, which the access check does not check. A table offers a
-column of an attribute only to a user holding a role granted `Read` on the type somewhere, so the
-module `tl.changelog` (marked `internal`) grants `Read` to the role `PersonalProfile`, which every
-user holds on the own account (`ElementConf.config.xml`). It grants nothing else.
+The change sets are transient objects, which the access check does not check: what a user sees of
+them is decided by the restriction above. The module `tl.changelog` is marked `internal` and grants
+nothing (`ElementConf.config.xml`).
 
 ## Undo, redo and revert
 

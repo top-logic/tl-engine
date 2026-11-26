@@ -101,6 +101,12 @@ public class TestUnitAccess extends AbstractModelAccessTest {
 	/** A dashboard with a tile hidden while denied. */
 	private static final String HIDE_DASHBOARD = "dashboard-hide.view.xml";
 
+	/**
+	 * A dashboard with a tile showing the placeholder while denied, one hidden while denied and an
+	 * unguarded one.
+	 */
+	private static final String PLACEHOLDER_DASHBOARD = "dashboard-placeholder.view.xml";
+
 	/** The ID of the unit checked on the object in the {@code HIDE_*} fixtures. */
 	private static final String GUARDED = "guarded";
 
@@ -464,6 +470,37 @@ public class TestUnitAccess extends AbstractModelAccessTest {
 
 		_object.set(null);
 		assertNull("Without object, the tile is shown empty.", tile(dashboard, GUARDED).get(HIDDEN));
+	}
+
+	/**
+	 * Tests that a tile denied for the displayed object shows the placeholder where it is configured
+	 * to, and is withheld where it is configured to be hidden; and that a user who can hold the
+	 * operation on no object at all is offered neither tile.
+	 */
+	public void testDeniedTiles() throws ConfigurationException {
+		_object.set(_project);
+
+		becomeUser(_outsider);
+		ReactControl dashboard = (ReactControl) content(PLACEHOLDER_DASHBOARD).createControl(_context);
+		dashboard.attach();
+		assertEquals(List.of(PLACEHOLDER, GUARDED, OPEN), tileIds(dashboard));
+		assertNull("The denied tile shows its placeholder.", tile(dashboard, PLACEHOLDER).get(HIDDEN));
+		assertEquals("The tile hidden while denied is withheld.", Boolean.TRUE,
+			tile(dashboard, GUARDED).get(HIDDEN));
+
+		becomeUser(_roleless);
+		ReactControl outOfReach = (ReactControl) content(PLACEHOLDER_DASHBOARD).createControl(_context);
+		outOfReach.attach();
+		assertEquals("A tile whose operation the user can hold on no object is not offered at all.",
+			List.of(OPEN), tileIds(outOfReach));
+	}
+
+	private static List<String> tileIds(ReactControl dashboard) {
+		List<String> result = new ArrayList<>();
+		for (Map<String, Object> tile : maps(state(dashboard).get(CHILDREN))) {
+			result.add((String) tile.get(ID));
+		}
+		return result;
 	}
 
 	private static AccessGuardControl guard(ReactControl container) {

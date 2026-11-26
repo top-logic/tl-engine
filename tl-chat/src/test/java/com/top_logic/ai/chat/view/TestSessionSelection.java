@@ -30,7 +30,7 @@ import com.top_logic.util.model.ModelService;
  * {@code <chat-conversation>} (Issue #576).
  *
  * <p>
- * The host here binds one conversation to the page, as BOS/Consulting binds one per project: a
+ * The host here binds one conversation to the page, as an application may bind one per project: a
  * session the browser reports that is not the page's own is refused, and the page's own is written
  * back. The browser reports a conversation it opened that is not the page's own, so the report is
  * exactly such a session.
@@ -129,8 +129,8 @@ public class TestSessionSelection extends BasicTestCase {
 	}
 
 	/**
-	 * Installs a host that keeps the channel on the given conversation, the way Consulting's
-	 * {@code ProjectConversationControl} pushes back a conversation of another project.
+	 * Installs a host that keeps the channel on the given conversation, the way a host binding one
+	 * conversation per project pushes back a conversation of another project.
 	 */
 	private void hostOwns(TLObject own) {
 		_channel.addListener((sender, oldValue, newValue) -> {

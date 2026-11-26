@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, pushLocalStep, usePart, ICON_PRINT,
-  useFieldLabelProps,
+  useFieldLabelProps, scrollingAncestor,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -25,17 +25,6 @@ function scrollToSection(container: HTMLElement, section: string): boolean {
   }
   target.scrollIntoView({ block: 'start' });
   return true;
-}
-
-/** The nearest ancestor of the element that scrolls its content vertically, if any. */
-function scrollParent(element: HTMLElement): HTMLElement | null {
-  for (let parent = element.parentElement; parent; parent = parent.parentElement) {
-    const overflow = getComputedStyle(parent).overflowY;
-    if ((overflow === 'auto' || overflow === 'scroll') && parent.scrollHeight > parent.clientHeight) {
-      return parent;
-    }
-  }
-  return null;
 }
 
 const I18N_KEYS = {
@@ -133,7 +122,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
     }
     if (section) {
       event.preventDefault();
-      const scroller = scrollParent(container);
+      const scroller = scrollingAncestor(container);
       const before = scroller ? scroller.scrollTop : 0;
       pushLocalStep(
         () => {
@@ -165,7 +154,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
     if (section && scrollToSection(container, section)) {
       return;
     }
-    const scroller = scrollParent(container);
+    const scroller = scrollingAncestor(container);
     if (scroller && container.getBoundingClientRect().top < scroller.getBoundingClientRect().top) {
       container.scrollIntoView({ block: 'start' });
     }

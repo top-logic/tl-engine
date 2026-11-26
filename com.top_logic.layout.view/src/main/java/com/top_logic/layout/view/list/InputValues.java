@@ -12,7 +12,8 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
 
 /**
- * The values an {@link ObjectListElement} applies its functions to.
+ * The values an element computing its content from a list of objects - an {@link ObjectListElement},
+ * the tiles of a dashboard - applies its functions to.
  *
  * <p>
  * The functions of a list are applied to what its inputs hold at the moment they run, and an object
@@ -21,7 +22,7 @@ import com.top_logic.model.TLObject;
  * is what the functions receive and what tells the list that there is no place to add to.
  * </p>
  */
-final class InputValues {
+public final class InputValues {
 
 	private InputValues() {
 		// Static utility.
@@ -48,7 +49,7 @@ final class InputValues {
 	 * @param values
 	 *        The values as delivered by the input channels.
 	 */
-	static Object[] alive(Object[] values) {
+	public static Object[] alive(Object[] values) {
 		Object[] result = new Object[values.length];
 		for (int n = 0; n < values.length; n++) {
 			result[n] = aliveOrNull(values[n]);

@@ -95,7 +95,7 @@ public class AskUserTool {
 	 * <p>
 	 * A question is asked because the decision is the user's, so an unanswered one is no consent.
 	 * The answer used to tell the model to go on with an option of its own choice and finish the work:
-	 * in one Pietro run it then created a methodology the person had not accepted. Before that, the
+	 * in one run it then created a methodology the person had not accepted. Before that, the
 	 * answer said "write your final answer and ask how they would like to proceed", and a model took a
 	 * step nobody asked for: it deleted the document it had just made and built another one. The model
 	 * is now told to write nothing the question was about, to delete or replace nothing, and to end the

@@ -22,9 +22,9 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl.TileAction;
+import com.top_logic.layout.react.control.layout.ReactDashboardControl.TileContent;
 import com.top_logic.layout.react.control.layout.TileWidth;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
@@ -62,14 +62,14 @@ import java.util.List;
  * </p>
  */
 @InApp
-public class TileElement implements UIElement {
+public class TileElement implements TileDeclaration {
 
 	/**
 	 * Configuration for {@link TileElement}.
 	 */
 	@TagName(Config.TAG_NAME)
 	@TypeIcon("css:bi bi-postcard")
-	public interface Config extends UIElement.Config, WithAccessControl, WithVisibility {
+	public interface Config extends TileDeclaration.Config, WithAccessControl, WithVisibility {
 
 		/** Configuration tag of a {@link TileElement}. */
 		String TAG_NAME = "tile";
@@ -284,6 +284,16 @@ public class TileElement implements UIElement {
 	/**
 	 * The configured label of this tile, else the title of its content, {@code null} if there is
 	 * neither.
+	 *
+	 * @see #getTitle()
+	 */
+	public ResKey getName() {
+		return name();
+	}
+
+	/**
+	 * The configured label of this tile, else the title of its content, {@code null} if there is
+	 * neither.
 	 */
 	private ResKey name() {
 		if (_label != null) {
@@ -346,9 +356,37 @@ public class TileElement implements UIElement {
 		return List.of(ChildGroup.elements(_content));
 	}
 
+	/**
+	 * The one tile of this declaration, none for a user who may never access it.
+	 */
 	@Override
-	public IReactControl createControl(ViewContext context) {
-		// Tiles are rendered by DashboardElement; direct rendering is unsupported.
-		throw new UnsupportedOperationException("<tile> must be a child of <dashboard>.");
+	public DashboardTiles createTiles(ViewContext context, DashboardTiles.Host host) {
+		if (!isAccessible()) {
+			return List::of;
+		}
+		ResKey name = getName();
+		DashboardTiles.Entry entry = new DashboardTiles.Entry(_id, _width, _rowSpan,
+			name == null ? null : Resources.getInstance().getString(name), getTitle(), _optional, hiding(context),
+			() -> createTileContent(context), null, null);
+		return () -> List.of(entry);
+	}
+
+	/**
+	 * Creates what this tile displays and runs.
+	 *
+	 * <p>
+	 * The model of the tile's action follows its input exactly while the tile's content is
+	 * displayed, so that a tile is offered, refused or hidden according to what its command says
+	 * about the current input.
+	 * </p>
+	 */
+	private TileContent createTileContent(ViewContext context) {
+		ReactControl content = createContentControl(context);
+		ViewCommandModel action = createActionModel(context);
+		if (action != null) {
+			content.addAttachListener(() -> action.attach(context.getModelScope()));
+			content.addDetachListener(action::detach);
+		}
+		return new TileContent(content, toAction(action));
 	}
 }

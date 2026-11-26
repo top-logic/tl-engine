@@ -44,6 +44,7 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.model.TLObject;
 import com.top_logic.ai.core.agent.AgentApplicationService;
 import com.top_logic.ai.core.agent.AgentPolicyService;
@@ -91,6 +92,8 @@ public class TestChatBackendFeatures extends BasicTestCase {
 
 	private TaskProgressTracker _window;
 
+	private TLObject _subject;
+
 	private AgentSession _chat;
 
 	@Override
@@ -99,7 +102,9 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		if (anna == null) {
 			anna = TestPerson.createPerson("anna-with-a-backend");
 		}
-		_chat = (AgentSession) ChatHistoryService.createSession("Backend " + getName(), anna);
+		_subject = ChatHistoryService.createSession("What the backend works on " + getName(), anna);
+		_chat = (AgentSession) ChatHistoryService.createSession("Backend " + getName(), anna, ApprovalMode.MANUAL,
+			_subject);
 		HistoryUtils.updateSessionRevision();
 		_driver = new ChatCommandDriver("backendWindow", "backend-" + getName());
 		_conversation = _driver.conversation(anna);
@@ -188,14 +193,14 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		claim(BackendFeatures.NONE);
 
 		assertEquals(Map.of(AttachmentUploadReply.REASON__PROP, List.of()),
-			_driver.upload(_conversation, "dot.png", "image/png", new byte[] { 1, 2, 3, 4 }));
+			_driver.upload(_conversation, id(), "dot.png", "image/png", new byte[] { 1, 2, 3, 4 }));
 
 		Map<String, Object> reply = command(ChatControl.CMD_SEND,
 			Map.of(ChatControl.ARG_TEXT, "Sieh dir das an", ChatControl.ARG_SESSION_ID, id()));
 
 		assertRefused(reply, I18NConstants.ATTACHMENTS_NOT_SUPPORTED);
 		assertEquals("A refused send leaves the file with the message.", 1,
-			ChatCommandDriver.attachments(_conversation).entries().size());
+			ChatCommandDriver.attachments(_conversation, id()).entries().size());
 	}
 
 	/** Loading a backend's conversation tells the client what it supports. */
@@ -248,8 +253,8 @@ public class TestChatBackendFeatures extends BasicTestCase {
 				return ANSWER;
 			}
 		};
-		AgentSession claimed = _chat;
-		ScriptedBackend.install(session -> session.equals(claimed) ? backend : null);
+		TLObject claimed = _subject;
+		ScriptedBackend.install(subject -> subject.equals(claimed) ? backend : null);
 	}
 
 	private static void assertRefused(Map<String, Object> reply, ResKey reason) {

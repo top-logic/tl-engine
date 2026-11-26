@@ -237,6 +237,9 @@ test('Übergänge als Attribute: entering/exiting/backward in data-tl-state, ver
   assert.match(t, /\.tl-tile-stack\[data-tl-state~="backward"\] > \.tl-tile-stack__frame\[data-tl-state~="entering"\]/);
   assert.match(t, /:dir\(rtl\)/);
   assert.match(decl('tile-stack', '.tl-tile-stack__frame[data-tl-state~="covered"]'), /visibility:\s*hidden/);
+  // Ein verdeckter oder gehender Rahmen verlängert die Box, die den Stapel scrollt, nicht (Review !2521).
+  assert.match(decl('tile-stack', '.tl-tile-stack__frame[data-tl-state~="covered"]'), /overflow:\s*clip/);
+  assert.match(decl('tile-stack', '.tl-tile-stack__frame[data-tl-state~="exiting"]'), /overflow:\s*clip/);
   const w = ohneKommentar(readGenerated('wizard', 'wizard.css'));
   assert.match(w, /\.tl-wizard__step\[data-tl-state~="exiting"\]\s*\{[^}]*animation:\s*tl-slide-out-forward var\(--tl-duration-slow\) var\(--tl-easing-exit\) forwards/);
 });

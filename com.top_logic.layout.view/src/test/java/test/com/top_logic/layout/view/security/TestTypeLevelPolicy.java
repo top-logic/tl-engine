@@ -30,11 +30,19 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * <p>
  * An {@value #ANNEX} delegates Read to its project and grants Write to the finisher role itself.
  * </p>
+ *
+ * <p>
+ * An {@value #ATTACHMENT} is decided by the category holding it, and delegates Read to every annex
+ * referring to it as well.
+ * </p>
  */
 public class TestTypeLevelPolicy extends AbstractModelAccessTest {
 
 	/** Name of the type delegating only Read to its project. */
 	private static final String ANNEX = "Annex";
+
+	/** Name of the type delegating to its category and Read to every annex referring to it. */
+	private static final String ATTACHMENT = "Attachment";
 
 	/**
 	 * Finishing is offered because Finish is grantable on the parent type, although Read, the other
@@ -82,6 +90,40 @@ public class TestTypeLevelPolicy extends AbstractModelAccessTest {
 		} finally {
 			becomeUser(_root);
 			TestPerson.deletePersonAndUser(finisher);
+		}
+	}
+
+	/**
+	 * An access parent with several candidates is followed to the types of all of them: a
+	 * container candidate to the types owning a composition of the type, a referer to the type
+	 * owning the reference.
+	 */
+	public void testAnyOfFollowsEveryCandidate() {
+		Person categoryReader = TestPerson.createPerson("viewModelAccessAttachmentReader");
+		Person projectViewer = TestPerson.createPerson("viewModelAccessAttachmentViewer");
+		try {
+			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+				_hiddenCategory.tUpdateByName(READER, categoryReader);
+				_project.tUpdateByName(VIEWER, projectViewer);
+				tx.commit();
+			}
+			becomeUser(categoryReader);
+			assertTrue("An attachment is read through the category holding it.",
+				ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.READ, type(ATTACHMENT)));
+
+			becomeUser(projectViewer);
+			assertTrue("An attachment is read through the annexes referring to it.",
+				ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.READ, type(ATTACHMENT)));
+			assertFalse("An attachment is written through its category only.",
+				ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.WRITE, type(ATTACHMENT)));
+
+			becomeUser(_roleless);
+			assertFalse("The types of all candidates are known, none of them is in reach.",
+				ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.READ, type(ATTACHMENT)));
+		} finally {
+			becomeUser(_root);
+			TestPerson.deletePersonAndUser(categoryReader);
+			TestPerson.deletePersonAndUser(projectViewer);
 		}
 	}
 

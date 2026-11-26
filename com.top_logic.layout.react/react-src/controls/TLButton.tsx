@@ -141,6 +141,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       danger={resolvedDanger}
       small={state.size === 'small'}
       active={resolvedActive}
+      checked={state.toggle === true ? resolvedActive : undefined}
       disabled={resolvedDisabled}
       tooltip={tooltip}
       badge={state.badge}

@@ -21,6 +21,7 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.form.AttributeFormContext;
@@ -49,6 +50,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.parser.ParseException;
+import com.top_logic.model.security.DeleteRight;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.util.error.TopLogicException;
 
@@ -61,7 +63,8 @@ import com.top_logic.util.error.TopLogicException;
  * attribute) and <code>remove</code>, the save of a composition table, of a row-editing table and of
  * a row-editing tree table that delete removed rows, the save of a form with a changed composition,
  * the persist of a new part into a single-valued composition, which removes the part it replaces,
- * and the save of a form of the classic layout UI.
+ * and the save of a form of the classic layout UI. The tables and the classic composition field do
+ * not offer the remove of a row the user may not delete.
  * </p>
  *
  * <p>
@@ -378,6 +381,64 @@ public class TestCompositionRemoveDeleteRight extends AbstractModelAccessTest {
 		AttributeUpdate tasks = form.editObject(_project).newEditUpdateDefault(part(PROJECT, TASKS), false);
 		tasks.updateValue(List.of());
 		tasks.checkUpdate();
+	}
+
+	/**
+	 * The reason why a part cannot be removed, which disables the remove of a row in the classic
+	 * composition field: the message of <code>delete()</code>, or for a part the user may not
+	 * discover, a message that names only the container and the composition.
+	 */
+	public void testRemoveRefusal() {
+		TLObject entry;
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			entry = DynamicModelService.getFactoryFor(MODULE).createObject(type(ARCHIVE_ENTRY));
+			_project.tUpdateByName(ARCHIVE, List.of(entry));
+			tx.commit();
+		}
+		becomeUser(_responsible);
+		assertNull(DeleteRight.removeRefusal(_task));
+
+		ResKey refusal = DeleteRight.removeRefusal(_report);
+		assertEquals(DELETE_PERMISSION_DENIED__OBJECT.getKey(), refusal.getKey());
+		assertEquals(List.of(_report), List.of(refusal.arguments()));
+
+		ResKey hidden = DeleteRight.removeRefusal(entry);
+		assertEquals(REMOVE_PERMISSION_DENIED__OBJECT_ATTRIBUTE.getKey(), hidden.getKey());
+		assertEquals(List.of(_project, part(PROJECT, ARCHIVE)), List.of(hidden.arguments()));
+	}
+
+	/**
+	 * A table that deletes removed rows offers no remove of a stored row the user may not delete:
+	 * the row has no delete button, and <i>Delete selected</i> is not executed while it is
+	 * selected. A row the user may delete and a new row keep the remove.
+	 */
+	public void testNoRemoveOfUndeletableRow() throws Exception {
+		becomeUser(_responsible);
+		FormControl form = newForm();
+		RowSetTableControl reports = deletingTable(REPORTS);
+		RowSetTableControl tasks = deletingTable(TASKS);
+		CompositionControl composition = new CompositionControl(form, REPORTS);
+		composition.init();
+		assertTrue(form.enterEditMode());
+
+		assertFalse(reports.isRemovable(reports.session().findRow(_report)));
+		assertTrue(tasks.isRemovable(tasks.session().findRow(_task)));
+		assertFalse(composition.session().mayRemove(composition.session().findRow(_report)));
+		TLObject newRow = composition.addRowOfType(type(REPORT));
+		assertNotNull("The responsible creates reports.", newRow);
+		assertTrue(composition.session().mayRemove(newRow));
+	}
+
+	/**
+	 * A row-editing table over the given composition of the project that deletes removed rows.
+	 */
+	private RowSetTableControl deletingTable(String composition) throws ConfigurationException {
+		return (RowSetTableControl) ((TableElement) parse(TableElement.Config.class,
+			"<table inputs='" + PROJECT_CHANNEL + "' rows='$" + PROJECT_CHANNEL + ".get(`" + qualified(PROJECT)
+				+ "#" + composition + "`)' row-edit='ALL' on-remove='DELETE'>"
+				+ "<columns><column attribute='" + NAME + "'/></columns>"
+				+ "</table>"))
+			.createControl(_context);
 	}
 
 	/**

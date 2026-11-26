@@ -831,11 +831,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
-	 * Whether the given row can be removed from the table while it is edited, as far as the
-	 * {@link #setRowEditable(Predicate) row condition} is concerned.
+	 * Whether the given row can be removed from the table while it is edited: the
+	 * {@link #setRowEditable(Predicate) row condition} accepts it, and the current user may remove
+	 * it, see {@link RowSetEditSession#mayRemove(TLObject)}.
 	 */
 	public boolean isRemovable(Object row) {
-		return _rowEditable == null || _rowEditable.test(row);
+		if (_rowEditable != null && !_rowEditable.test(row)) {
+			return false;
+		}
+		RowSetEditSession session = session();
+		return session == null || !(row instanceof TLObject rowObject) || session.mayRemove(rowObject);
 	}
 
 	/**

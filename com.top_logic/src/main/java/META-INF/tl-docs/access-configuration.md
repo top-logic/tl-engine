@@ -664,6 +664,11 @@ discover), the refusal names only the container and the composition, not the par
   `DeleteRight#checkRemovedParts(TLObject, TLStructuredTypePart, Object)` before it changes a
   composition.
 
+The user interfaces do not offer the remove of a row the user may not delete: a table of the view
+layer shows no delete button for it and does not execute *Delete selected* while it is selected
+(`RowSetTableControl#isRemovable(Object)`), the composition field of the classic layout UI disables
+its remove button with the refusal as reason (`DeleteRight#removeRefusal(TLObject)`).
+
 ### Caching of decisions
 
 Every decision of `isAllowed` is memoized per interaction (request) in an `AccessDecisionCache`

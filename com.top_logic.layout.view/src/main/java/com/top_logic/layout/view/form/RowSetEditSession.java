@@ -1562,6 +1562,27 @@ public class RowSetEditSession implements FormParticipant {
 	}
 
 	/**
+	 * Whether the current user may remove the given row.
+	 *
+	 * <p>
+	 * When the binding {@link RowSetBinding.RemoveMode#DELETE deletes} removed rows, the save
+	 * deletes the stored object of a removed row, which needs the right to delete it, see
+	 * {@link #checkApplyState()}. A new row stores nothing, and a row that is only unlinked keeps its
+	 * object.
+	 * </p>
+	 *
+	 * @param rowObject
+	 *        The row object (the overlay it is edited in).
+	 */
+	public boolean mayRemove(TLObject rowObject) {
+		if (_binding.getRemoveMode() != RowSetBinding.RemoveMode.DELETE) {
+			return true;
+		}
+		TLObject stored = storedObject(rowObject);
+		return stored == null || DeleteRight.mayDelete(stored);
+	}
+
+	/**
 	 * Removes the given row from the row set. The binding's remove semantics are applied on commit,
 	 * not here.
 	 *

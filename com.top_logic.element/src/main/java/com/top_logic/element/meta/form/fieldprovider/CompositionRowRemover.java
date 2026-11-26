@@ -9,16 +9,24 @@ package com.top_logic.element.meta.form.fieldprovider;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.table.RowObjectRemover;
+import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.security.DeleteRight;
 
 /**
  * {@link RowObjectRemover} to remove existing rows.
+ *
+ * <p>
+ * The save deletes a removed row, so a row is removed only where the current user may delete the
+ * part it edits, see {@link DeleteRight#removeRefusal(TLObject)}.
+ * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -39,6 +47,14 @@ class CompositionRowRemover implements RowObjectRemover {
 	CompositionRowRemover(AttributeUpdateContainer updateContainer, boolean multiple) {
 		_updateContainer = updateContainer;
 		_multiple = multiple;
+	}
+
+	@Override
+	public ResKey allowRemoveRow(int row, TableData data, Control control) {
+		Object rowObject = data.getViewModel().getRowObject(row);
+		// A new row edits no stored part: its remove deletes nothing.
+		TLObject part = rowObject instanceof TLFormObject form ? form.getEditedObject() : null;
+		return part == null ? null : DeleteRight.removeRefusal(part);
 	}
 
 	@Override

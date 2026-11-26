@@ -80,10 +80,8 @@ public final class DeleteRight {
 	 *        An object stands for itself, it is compared by identity with the parts the container
 	 *        holds now.
 	 * @throws TopLogicException
-	 *         With {@link I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}, when the user may not
-	 *         delete one of the parts that the new value takes out, or with
-	 *         {@link I18NConstants#REMOVE_PERMISSION_DENIED__OBJECT_ATTRIBUTE}, when that part is
-	 *         one the user may not discover either.
+	 *         With the {@link #removeRefusal(TLObject) refusal} of the first part that the new value
+	 *         takes out and that the user may not delete.
 	 */
 	public static void checkRemovedParts(TLObject container, TLStructuredTypePart attribute, Object newValue) {
 		if (!(attribute instanceof TLReference reference) || !reference.isComposite()) {
@@ -99,6 +97,25 @@ public final class DeleteRight {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Why the current user may not take the given part out of the composition that holds it.
+	 *
+	 * <p>
+	 * A user interface uses it to disable the remove of a part: the reason is the message the save
+	 * of the remove would be refused with.
+	 * </p>
+	 *
+	 * @param part
+	 *        A part of a composition.
+	 * @return {@code null}, when the user may delete the part. Otherwise
+	 *         {@link I18NConstants#DELETE_PERMISSION_DENIED__OBJECT} naming the part, or
+	 *         {@link I18NConstants#REMOVE_PERMISSION_DENIED__OBJECT_ATTRIBUTE} naming its container
+	 *         and composition, when the user may not discover the part either.
+	 */
+	public static ResKey removeRefusal(TLObject part) {
+		return removeRefusal(part.tContainer(), part.tContainerReference(), part);
 	}
 
 	private static ResKey removeRefusal(TLObject container, TLStructuredTypePart attribute, TLObject part) {

@@ -51,6 +51,7 @@ import com.top_logic.ai.core.provider.ProviderExposesModelConstraint;
 import com.top_logic.ai.core.provider.ProviderFieldMode;
 import com.top_logic.ai.core.provider.health.ModelTarget;
 import com.top_logic.ai.core.security.DefaultSecurityContextFactory;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.SecurityContextFactory;
 import com.top_logic.util.error.TopLogicException;
 
@@ -91,7 +92,8 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 				return List.of();
 			}
 			List<String> names = new ArrayList<>();
-			for (AgentDefinition ad : AgentDefinitionQuery.getInstance().getAllAgents()) {
+			// The configuration holds for every account, so it may name every agent.
+			for (AgentDefinition ad : AgentDefinitionQuery.getInstance().getAllAgents(ModelSecurity.UNCHECKED)) {
 				names.add(ad.name());
 			}
 			return names;

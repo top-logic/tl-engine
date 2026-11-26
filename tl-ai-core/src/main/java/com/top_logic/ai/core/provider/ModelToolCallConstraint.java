@@ -11,6 +11,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.ai.core.agent.AgentDefinition;
 import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.ai.core.security.ModelSecurity;
 
 /**
  * Constraint that warns when a model does not support tool calls but the agent has tools assigned.
@@ -46,7 +47,8 @@ public class ModelToolCallConstraint extends ValueDependency<String> {
 			return;
 		}
 
-		AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+		// A check of the configuration, which holds for every account.
+		AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName, ModelSecurity.UNCHECKED);
 		if (agent == null || agent.tools().isEmpty()) {
 			return;
 		}

@@ -46,6 +46,7 @@ import com.top_logic.ai.core.model.Agent;
 import com.top_logic.ai.core.model.TlAiCoreFactory;
 import com.top_logic.ai.core.model.impl.AgentBase;
 import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -118,7 +119,7 @@ public class TestConcurrentAgents extends BasicTestCase {
 		super.setUp();
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction(ResKey.text("Seed " + AGENT_NAME))) {
-			if (AgentDefinitionQuery.getInstance().findAgentByName(AGENT_NAME) == null) {
+			if (AgentDefinitionQuery.getInstance().findAgentByName(AGENT_NAME, ModelSecurity.UNCHECKED) == null) {
 				Agent agent = TlAiCoreFactory.getInstance().createAgent();
 				agent.setName(AGENT_NAME);
 				agent.setSystemPrompt(AGENT_SYSTEM_PROMPT);

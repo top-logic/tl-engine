@@ -21,6 +21,7 @@ import com.top_logic.ai.core.agent.AgentPolicyService;
 import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.security.ModelSecurity;
 
 /**
  * That the arms of the matrix differ in their model and in nothing else.
@@ -92,7 +93,7 @@ public class TestEvalArmsAreComparable extends BasicTestCase {
 	}
 
 	private static AgentDefinition agent(EvalConfig.Arm arm) {
-		return AgentDefinitionQuery.getInstance().findAgentByName(arm.getAgent());
+		return AgentDefinitionQuery.getInstance().findAgentByName(arm.getAgent(), ModelSecurity.UNCHECKED);
 	}
 
 	public static Test suite() {

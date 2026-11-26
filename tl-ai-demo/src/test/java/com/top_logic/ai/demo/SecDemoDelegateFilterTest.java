@@ -21,6 +21,7 @@ import com.top_logic.ai.core.agent.SecurityContext;
 import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.tools.interaction.ListAgentsTool;
 
 /**
@@ -250,7 +251,7 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	public void testListAgentsIsUnfilteredWithoutARun() {
 		String listing = listAgentsAs(SecurityContext.UNRESTRICTED);
 
-		for (AgentDefinition definition : AgentDefinitionQuery.getInstance().getAllAgents()) {
+		for (AgentDefinition definition : AgentDefinitionQuery.getInstance().getAllAgents(ModelSecurity.UNCHECKED)) {
 			assertTrue(definition.name() + " must be listed: " + listing,
 				listing.contains("\"" + definition.name() + "\""));
 		}
@@ -294,7 +295,7 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	}
 
 	private static AgentDefinition agent(String name) {
-		AgentDefinition definition = AgentDefinitionQuery.getInstance().findAgentByName(name);
+		AgentDefinition definition = AgentDefinitionQuery.getInstance().findAgentByName(name, ModelSecurity.UNCHECKED);
 		assertNotNull("The framework agent '" + name + "' must exist; this test bed assumes the agents"
 			+ " shipped in 'tl-ai-core.conf.config.xml'.", definition);
 		return definition;

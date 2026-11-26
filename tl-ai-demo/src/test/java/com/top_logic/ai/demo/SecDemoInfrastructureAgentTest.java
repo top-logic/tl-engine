@@ -57,7 +57,8 @@ public class SecDemoInfrastructureAgentTest extends SecDemoPersonaTest {
 
 	/** The improver is marked as what it is, rather than being hidden by whoever configures it. */
 	public void testTheImproverSaysItIsInfrastructure() {
-		AgentDefinition improver = AgentDefinitionQuery.getInstance().findAgentByName(IMPROVER);
+		AgentDefinition improver =
+			AgentDefinitionQuery.getInstance().findAgentByName(IMPROVER, ModelSecurity.UNCHECKED);
 
 		assertNotNull("The deployment ships " + IMPROVER + "; this test bed assumes it.", improver);
 		assertTrue("The chat runs it for the user, so it is no conversation partner.",

@@ -150,7 +150,8 @@ public class TestStoredAgentAccess extends BasicTestCase {
 		assertFalse(names(query().getAllAgents(rights(outsider))).contains(STORED_AGENT));
 		assertTrue("A configured agent is no stored record and stays known.",
 			names(query().getAllAgents(rights(outsider))).contains(CONFIGURED_AGENT));
-		assertNotNull("The lookup for a configuration check still sees it.", query().findAgentByName(STORED_AGENT));
+		assertNotNull("The lookup for a configuration check still sees it.",
+			query().findAgentByName(STORED_AGENT, ModelSecurity.UNCHECKED));
 		assertNull(query().findStoredAgent(STORED_AGENT, rights(outsider)));
 		assertNotNull(query().findStoredAgent(STORED_AGENT, rights(member)));
 	}

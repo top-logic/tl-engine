@@ -34,11 +34,13 @@ import com.top_logic.ai.core.security.ModelSecurity;
  * </p>
  *
  * <p>
- * There are two kinds of lookup. The methods with a {@link ModelSecurity reader} answer for one
- * account: a stored agent or skill that the reader may not read is unknown to it, and a configured
- * definition of the same name answers in its place. Every run and every list that a person sees
- * uses them. The methods without a reader return every definition without a check. The engine uses
- * them only to check its configuration, for example the agent names of the tool access policy.
+ * Each lookup takes a {@link ModelSecurity reader} and answers for one account: a stored agent or
+ * skill that the reader may not read is unknown to it, and a configured definition of the same name
+ * answers in its place. Every run and every list that a person sees passes the model rights of that
+ * person. A check of the configuration, for example of the agent names of the tool access policy,
+ * must see every definition and passes {@link ModelSecurity#UNCHECKED}, so that each lookup without
+ * a check is visible at its call. The older methods without a reader are deprecated, because they
+ * skip the check and the call does not show it.
  * </p>
  *
  * <p>
@@ -70,13 +72,13 @@ public class AgentDefinitionQuery {
 	 * Finds an agent definition by name using layered lookup (KB first, then config), without a
 	 * check of the model rights.
 	 *
-	 * <p>
-	 * Only for a check of the configuration. A run or a list for a person uses
-	 * {@link #findAgentByName(String, ModelSecurity)}.
-	 * </p>
-	 *
 	 * @return the merged {@link AgentDefinition}, or {@code null} if not found in either source
+	 * @deprecated Skips the check of the model rights, and the call does not show it. Use
+	 *             {@link #findAgentByName(String, ModelSecurity)} with the model rights of the account
+	 *             the answer is for, or with {@link ModelSecurity#UNCHECKED} for a check of the
+	 *             configuration.
 	 */
+	@Deprecated
 	public AgentDefinition findAgentByName(String name) {
 		return findAgentByName(name, ModelSecurity.UNCHECKED);
 	}
@@ -111,11 +113,12 @@ public class AgentDefinitionQuery {
 	 * All agent definitions merged from config and KB, with KB overriding config by name, without a
 	 * check of the model rights.
 	 *
-	 * <p>
-	 * Only for a check of the configuration. A run or a list for a person uses
-	 * {@link #getAllAgents(ModelSecurity)}.
-	 * </p>
+	 * @deprecated Skips the check of the model rights, and the call does not show it. Use
+	 *             {@link #getAllAgents(ModelSecurity)} with the model rights of the account the
+	 *             answer is for, or with {@link ModelSecurity#UNCHECKED} for a check of the
+	 *             configuration.
 	 */
+	@Deprecated
 	public Collection<AgentDefinition> getAllAgents() {
 		return getAllAgents(ModelSecurity.UNCHECKED);
 	}
@@ -150,13 +153,13 @@ public class AgentDefinitionQuery {
 	 * Finds a skill definition by name using layered lookup (KB first, then config), without a
 	 * check of the model rights.
 	 *
-	 * <p>
-	 * Only for a check of the configuration. A run or a list for a person uses
-	 * {@link #findSkillByName(String, ModelSecurity)}.
-	 * </p>
-	 *
 	 * @return the merged {@link SkillDefinition}, or {@code null} if not found in either source
+	 * @deprecated Skips the check of the model rights, and the call does not show it. Use
+	 *             {@link #findSkillByName(String, ModelSecurity)} with the model rights of the
+	 *             account the answer is for, or with {@link ModelSecurity#UNCHECKED} for a check of
+	 *             the configuration.
 	 */
+	@Deprecated
 	public SkillDefinition findSkillByName(String name) {
 		return findSkillByName(name, ModelSecurity.UNCHECKED);
 	}
@@ -190,11 +193,12 @@ public class AgentDefinitionQuery {
 	 * All skill definitions merged from config and KB, with KB overriding config by name, without a
 	 * check of the model rights.
 	 *
-	 * <p>
-	 * Only for a check of the configuration. A run or a list for a person uses
-	 * {@link #getAllSkills(ModelSecurity)}.
-	 * </p>
+	 * @deprecated Skips the check of the model rights, and the call does not show it. Use
+	 *             {@link #getAllSkills(ModelSecurity)} with the model rights of the account the
+	 *             answer is for, or with {@link ModelSecurity#UNCHECKED} for a check of the
+	 *             configuration.
 	 */
+	@Deprecated
 	public Collection<SkillDefinition> getAllSkills() {
 		return getAllSkills(ModelSecurity.UNCHECKED);
 	}

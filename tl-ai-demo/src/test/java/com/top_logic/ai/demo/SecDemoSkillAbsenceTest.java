@@ -25,6 +25,7 @@ import com.top_logic.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.ai.core.message.ToolCall;
 import com.top_logic.ai.core.message.ToolResultMessage;
 import com.top_logic.ai.core.message.ToolState;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.tools.ToolRegistry;
 
 /**
@@ -99,7 +100,7 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 		assertFalse(ENTRY_AGENT + " must not declare " + FOREIGN_SKILL + ", or the not-carried case"
 			+ " has no example: " + agent.skills(), agent.skills().contains(FOREIGN_SKILL));
 		assertNotNull("The not-carried case needs a skill the application really has.",
-			AgentDefinitionQuery.getInstance().findSkillByName(FOREIGN_SKILL));
+			AgentDefinitionQuery.getInstance().findSkillByName(FOREIGN_SKILL, ModelSecurity.UNCHECKED));
 
 		assertEquals("Anna must lack exactly the capabilities of the authoring skill.",
 			Set.of(ToolGroups.AGENT_META, ToolGroups.AGENT_AUTHORING),
@@ -324,14 +325,15 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 	}
 
 	private static AgentDefinition agent() {
-		AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(ENTRY_AGENT);
+		AgentDefinition agent =
+			AgentDefinitionQuery.getInstance().findAgentByName(ENTRY_AGENT, ModelSecurity.UNCHECKED);
 		assertNotNull("The framework agent '" + ENTRY_AGENT + "' must exist; this test bed assumes"
 			+ " the agents shipped in 'tl-ai-core.conf.config.xml'.", agent);
 		return agent;
 	}
 
 	private static SkillDefinition skill(String name) {
-		SkillDefinition definition = AgentDefinitionQuery.getInstance().findSkillByName(name);
+		SkillDefinition definition = AgentDefinitionQuery.getInstance().findSkillByName(name, ModelSecurity.UNCHECKED);
 		assertNotNull("The framework skill '" + name + "' must exist.", definition);
 		return definition;
 	}

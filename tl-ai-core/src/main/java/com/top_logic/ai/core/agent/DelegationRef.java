@@ -8,6 +8,7 @@ package com.top_logic.ai.core.agent;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 
@@ -32,7 +33,8 @@ public interface DelegationRef extends NameRef {
 				return List.of();
 			}
 			List<String> names = new ArrayList<>();
-			for (AgentDefinition ad : AgentDefinitionQuery.getInstance().getAllAgents()) {
+			// The configuration holds for every account, so it may name every agent.
+			for (AgentDefinition ad : AgentDefinitionQuery.getInstance().getAllAgents(ModelSecurity.UNCHECKED)) {
 				names.add(ad.name());
 			}
 			return names;

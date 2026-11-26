@@ -19,6 +19,7 @@ import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.ai.core.agent.TransactionScope;
 import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.ai.core.tools.interaction.SubagentSpawner;
 
@@ -223,7 +224,7 @@ public class SecDemoSpawnFilterTest extends SecDemoPersonaTest {
 	}
 
 	private static AgentDefinition agent(String name) {
-		AgentDefinition definition = AgentDefinitionQuery.getInstance().findAgentByName(name);
+		AgentDefinition definition = AgentDefinitionQuery.getInstance().findAgentByName(name, ModelSecurity.UNCHECKED);
 		assertNotNull("The framework agent '" + name + "' must exist; this test bed assumes the agents"
 			+ " shipped in 'tl-ai-core.conf.config.xml'.", definition);
 		return definition;

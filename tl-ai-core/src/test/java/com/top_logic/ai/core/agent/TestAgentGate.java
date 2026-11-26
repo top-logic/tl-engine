@@ -17,6 +17,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.ai.core.agent.AgentCapabilities.Unusable;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy;
 import com.top_logic.ai.core.security.RunAuthorization;
 import com.top_logic.ai.core.security.ToolAccessPolicy;
@@ -105,7 +106,7 @@ public class TestAgentGate extends TestCase {
 	 * </p>
 	 */
 	public void testDelegateCatalogueDropsWhatTheAccountMayNotRun() {
-		AgentDefinition delegate = AgentDefinitionQuery.getInstance().findAgentByName(AGENT);
+		AgentDefinition delegate = AgentDefinitionQuery.getInstance().findAgentByName(AGENT, ModelSecurity.UNCHECKED);
 		assertNotNull("This module configures " + AGENT + "; the test needs it.", delegate);
 
 		Unusable reason = new AgentCapabilities(name -> null, denying(AGENT)).unusableReason(delegate);
@@ -128,7 +129,7 @@ public class TestAgentGate extends TestCase {
 	 * </p>
 	 */
 	public void testTheWithheldAgentsReasonNamesTheSettingAndNoCapability() {
-		AgentDefinition delegate = AgentDefinitionQuery.getInstance().findAgentByName(AGENT);
+		AgentDefinition delegate = AgentDefinitionQuery.getInstance().findAgentByName(AGENT, ModelSecurity.UNCHECKED);
 
 		Unusable reason = new AgentCapabilities(name -> null, denying(AGENT)).unusableReason(delegate);
 
@@ -151,7 +152,7 @@ public class TestAgentGate extends TestCase {
 	 */
 	public void testAnInfrastructureAgentIsItsOwnCause() {
 		AgentDefinition improver =
-			AgentDefinitionQuery.getInstance().findAgentByName(INFRASTRUCTURE_AGENT);
+			AgentDefinitionQuery.getInstance().findAgentByName(INFRASTRUCTURE_AGENT, ModelSecurity.UNCHECKED);
 
 		Unusable reason =
 			new AgentCapabilities(name -> null, grantingEveryAgent()).unusableReason(improver);
@@ -169,13 +170,13 @@ public class TestAgentGate extends TestCase {
 	/** The shipped improver carries the mark the rest of this reasons about. */
 	public void testTheImproverIsMarkedInfrastructure() {
 		AgentDefinition improver =
-			AgentDefinitionQuery.getInstance().findAgentByName(INFRASTRUCTURE_AGENT);
+			AgentDefinitionQuery.getInstance().findAgentByName(INFRASTRUCTURE_AGENT, ModelSecurity.UNCHECKED);
 
 		assertNotNull("This module configures " + INFRASTRUCTURE_AGENT + "; the test needs it.",
 			improver);
 		assertTrue("The chat runs it for the user, so it is not a persona.", improver.infrastructure());
 		assertFalse("An ordinary agent is a persona.",
-			AgentDefinitionQuery.getInstance().findAgentByName(AGENT).infrastructure());
+			AgentDefinitionQuery.getInstance().findAgentByName(AGENT, ModelSecurity.UNCHECKED).infrastructure());
 	}
 
 	/**
@@ -225,7 +226,7 @@ public class TestAgentGate extends TestCase {
 	/** The delegate catalogue drops it too, so no model is shown an agent it may not hand work to. */
 	public void testDelegateCatalogueDropsAnInfrastructureAgent() {
 		AgentDefinition improver =
-			AgentDefinitionQuery.getInstance().findAgentByName(INFRASTRUCTURE_AGENT);
+			AgentDefinitionQuery.getInstance().findAgentByName(INFRASTRUCTURE_AGENT, ModelSecurity.UNCHECKED);
 
 		Unusable reason = new AgentCapabilities(name -> null, grantingEveryAgent())
 			.unusableReason(improver);

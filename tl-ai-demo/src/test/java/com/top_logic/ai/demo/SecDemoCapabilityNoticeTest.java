@@ -20,6 +20,7 @@ import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.agent.SkillDefinition;
 import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.ai.core.agent.skills.Skill;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.ai.core.tools.ToolCatalog;
 import com.top_logic.ai.core.tools.interaction.SkillTool;
@@ -243,7 +244,7 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 	}
 
 	private static SkillDefinition skill(String name) {
-		SkillDefinition definition = AgentDefinitionQuery.getInstance().findSkillByName(name);
+		SkillDefinition definition = AgentDefinitionQuery.getInstance().findSkillByName(name, ModelSecurity.UNCHECKED);
 		assertNotNull("The framework skill '" + name + "' must exist; this test bed assumes the"
 			+ " skills shipped in 'tl-ai-core.conf.config.xml'.", definition);
 		return definition;

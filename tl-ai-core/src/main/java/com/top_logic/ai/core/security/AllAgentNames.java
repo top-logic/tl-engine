@@ -56,7 +56,8 @@ public class AllAgentNames extends Function0<List<String>> {
 	public static Collection<String> existingAgentNames() {
 		List<String> names = new ArrayList<>();
 		try {
-			for (AgentDefinition agent : AgentDefinitionQuery.getInstance().getAllAgents()) {
+			// The policy holds for every account, so every agent is a name it may use.
+			for (AgentDefinition agent : AgentDefinitionQuery.getInstance().getAllAgents(ModelSecurity.UNCHECKED)) {
 				names.add(agent.name());
 			}
 		} catch (RuntimeException ex) {

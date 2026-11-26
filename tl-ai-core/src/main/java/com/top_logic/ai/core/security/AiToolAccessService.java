@@ -370,7 +370,8 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	private static Set<String> knownAgentNames() {
 		Set<String> names = new TreeSet<>();
 		try {
-			for (AgentDefinition agent : AgentDefinitionQuery.getInstance().getAllAgents()) {
+			// The policy holds for every account, so every agent is a name it may use.
+			for (AgentDefinition agent : AgentDefinitionQuery.getInstance().getAllAgents(ModelSecurity.UNCHECKED)) {
 				names.add(agent.name());
 			}
 		} catch (RuntimeException ex) {

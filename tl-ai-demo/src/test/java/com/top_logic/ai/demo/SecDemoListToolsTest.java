@@ -28,6 +28,7 @@ import com.top_logic.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.ai.core.message.ToolCall;
 import com.top_logic.ai.core.message.ToolResultMessage;
 import com.top_logic.ai.core.message.ToolState;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleToolAccess;
 import com.top_logic.ai.core.tools.ToolRegistry;
 import com.top_logic.ai.core.tools.introspection.ListToolsTool;
@@ -361,13 +362,14 @@ public class SecDemoListToolsTest extends SecDemoPersonaTest {
 	}
 
 	private static SkillDefinition skill(String name) {
-		SkillDefinition definition = AgentDefinitionQuery.getInstance().findSkillByName(name);
+		SkillDefinition definition = AgentDefinitionQuery.getInstance().findSkillByName(name, ModelSecurity.UNCHECKED);
 		assertNotNull("The framework skill '" + name + "' must exist.", definition);
 		return definition;
 	}
 
 	private static AgentDefinition agent() {
-		AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(ENTRY_AGENT);
+		AgentDefinition agent =
+			AgentDefinitionQuery.getInstance().findAgentByName(ENTRY_AGENT, ModelSecurity.UNCHECKED);
 		assertNotNull("The framework agent '" + ENTRY_AGENT + "' must exist; this test bed assumes"
 			+ " the agents shipped in 'tl-ai-core.conf.config.xml'.", agent);
 		return agent;

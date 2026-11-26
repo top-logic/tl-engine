@@ -26,6 +26,7 @@ import com.top_logic.ai.core.agent.AgentDefinition;
 import com.top_logic.ai.core.agent.AgentFactory;
 import com.top_logic.ai.core.agent.AgentLoop;
 import com.top_logic.ai.core.agent.AgentResult;
+import com.top_logic.ai.core.agent.RunSecurityBinding;
 import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.agent.TransactionScope;
 import com.top_logic.ai.core.agent.approval.UserInteractionStoreBinding;
@@ -181,6 +182,14 @@ public class SubagentSpawner {
 				logListener.recordSubagentRunning(j.subagentId());
 			}
 			ComputationEx2<SubagentResult, RuntimeException, RuntimeException> work = () -> {
+				// The child's context first, the loop second, and the loop from the child's own
+				// security context - not the parent's. This spawn is fire-and-forget: the parent
+				// turn ends while the child keeps working here, so the child is an unattended run
+				// and forDetachedSubagent bounds it by the <background-allowlist>. Building the
+				// loop from the parent's context instead would leave the child's prompt claiming
+				// capabilities its own gate then refuses.
+				ToolContext childContext =
+					toolContext.forDetachedSubagent(new TransactionScope(), j.cancellationToken());
 				try (
 					BindingSnapshot.Established established = bindings.establish();
 					// Deliberately clear the registry the snapshot just carried over: a
@@ -199,18 +208,14 @@ public class SubagentSpawner {
 					// What the lead sends it, read at the start of each of its turns.
 					SubagentInboxBinding.Binding inbox = SubagentInboxBinding.bind(j.inbox());
 					// Its own job, which ask_lead parks its question on.
-					SubagentJobBinding.Binding self = SubagentJobBinding.bind(j)) {
+					SubagentJobBinding.Binding self = SubagentJobBinding.bind(j);
+					// Replaces the parent's security context the snapshot just carried over: a script
+					// that the child executes outside a tool call - a fact of its agent, while its loop
+					// is built - starts a nested run with the limits of the child, not of the parent.
+					RunSecurityBinding.Binding ownSecurity = RunSecurityBinding.bind(childContext.security())) {
 
 					Instant start = Instant.now();
 
-					// The child's context first, the loop second, and the loop from the child's own
-					// security context - not the parent's. This spawn is fire-and-forget: the parent
-					// turn ends while the child keeps working here, so the child is an unattended run
-					// and forDetachedSubagent bounds it by the <background-allowlist>. Building the
-					// loop from the parent's context instead would leave the child's prompt claiming
-					// capabilities its own gate then refuses.
-					ToolContext childContext =
-						toolContext.forDetachedSubagent(new TransactionScope(), j.cancellationToken());
 					reportBackgroundCeiling(targetAgentName, j.subagentId(), childContext);
 					j.setReadingList(childContext.readingList());
 

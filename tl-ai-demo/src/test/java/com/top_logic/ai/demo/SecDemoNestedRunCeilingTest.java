@@ -12,10 +12,15 @@ import java.util.Map;
 import junit.framework.Test;
 
 import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
+import com.top_logic.ai.mcp.server.dynamic.ConfigurableResourceTemplate;
+import com.top_logic.ai.mcp.server.dynamic.ResourceTemplateConfig;
 import com.top_logic.ai.mcp.server.tools.ExposedTool;
 import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.ai.core.agent.SecurityContext;
 import com.top_logic.ai.core.agent.TopLogicSecurityContext;
@@ -24,6 +29,7 @@ import com.top_logic.ai.core.security.RunEntryPoint;
 import com.top_logic.ai.core.security.RunPrincipal;
 import com.top_logic.ai.core.security.RunSecurity;
 
+import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 
 /**
@@ -36,6 +42,11 @@ import io.modelcontextprotocol.spec.McpSchema;
  * a background run add it for their duration. The nested call asks for a tool of {@code agent.meta},
  * which is off every allowlist used here. The account is an administrator, whose roles bound nothing:
  * the allowlist is the only limit.
+ * </p>
+ *
+ * <p>
+ * An MCP resource template computes its content with a script of its own, also for a request with
+ * nobody to approve: its nested call is bounded in the same way.
  * </p>
  */
 public class SecDemoNestedRunCeilingTest extends SecDemoPersonaTest {
@@ -51,6 +62,9 @@ public class SecDemoNestedRunCeilingTest extends SecDemoPersonaTest {
 
 	/** What each refusal by the ceiling says. */
 	private static final String ALLOWLIST = "background allowlist";
+
+	/** The address of the MCP resource of {@link #testANestedCallOfAnMcpResourceIsBoundedByTheAllowlist()}. */
+	private static final String RESOURCE_URI = "secdemo://nested";
 
 	/**
 	 * How {@code aiCallTool} begins a refusal of {@link #AGENT_META_READ_TOOL}. Only the nested call
@@ -102,6 +116,26 @@ public class SecDemoNestedRunCeilingTest extends SecDemoPersonaTest {
 	}
 
 	/**
+	 * The content of an MCP resource is computed for a request with nobody to approve, as an MCP tool
+	 * call is: a nested call of its script is bounded by the allowlist, too.
+	 */
+	public void testANestedCallOfAnMcpResourceIsBoundedByTheAllowlist() throws Exception {
+		Person administrator = anyAdministrator();
+		actAs(administrator);
+		McpServerFeatures.SyncResourceTemplateSpecification resource = new ConfigurableResourceTemplate(
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, resourceTemplate(NESTED_CALL))
+				.createSpecification();
+
+		McpSchema.ReadResourceResult result = McpCallerContext.withCaller(administrator,
+			() -> resource.readHandler().apply(null, new McpSchema.ReadResourceRequest(RESOURCE_URI)));
+
+		String content = ((McpSchema.TextResourceContents) result.contents().get(0)).text();
+		assertFalse("The nested call must not run the agent.meta tool: " + content, content.contains(TOOL_ANSWER));
+		assertTrue("The nested call must be refused: " + content, content.contains(NESTED_REFUSAL));
+		assertTrue("The refusal must name the allowlist: " + content, content.contains(ALLOWLIST));
+	}
+
+	/**
 	 * A detached subagent becomes a background run after its principal was described as attended: its
 	 * nested call is refused, too.
 	 */
@@ -128,6 +162,15 @@ public class SecDemoNestedRunCeilingTest extends SecDemoPersonaTest {
 
 		assertTrue("The nested call of an attended run is bounded by the roles only: " + nested,
 			nested.contains(TOOL_ANSWER));
+	}
+
+	/** An MCP resource without parameters whose content is the given script. */
+	private static ResourceTemplateConfig resourceTemplate(String script) throws ConfigurationException {
+		String xml = "<dynamic-resource xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + ResourceTemplateConfig.class.getName() + "'"
+			+ " class='" + ConfigurableResourceTemplate.class.getName() + "'"
+			+ " name='nested' uri-template='" + RESOURCE_URI + "'><content>" + script + "</content></dynamic-resource>";
+		return (ResourceTemplateConfig) TypedConfiguration.parse(CharacterContents.newContent(xml));
 	}
 
 	private static void assertRefusedByTheAllowlist(String result) {

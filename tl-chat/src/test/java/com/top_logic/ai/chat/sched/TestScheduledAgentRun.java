@@ -32,6 +32,7 @@ import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 import com.top_logic.ai.core.agent.AgentApplicationService;
 import com.top_logic.ai.core.agent.AgentPolicyService;
@@ -64,6 +65,9 @@ import com.top_logic.util.sched.task.result.TaskResult.ResultType;
  * </p>
  */
 public class TestScheduledAgentRun extends BasicTestCase {
+
+	/** In {@code agent.meta}, which no background allowlist of this application holds. */
+	private static final String AGENT_META_TOOL = "framework-wiring.listFrameworkAgents";
 
 	private static Person account;
 
@@ -131,6 +135,24 @@ public class TestScheduledAgentRun extends BasicTestCase {
 
 		assertFalse("The expression must be evaluated per run, not compiled into a fixed text: "
 			+ before, before.equals(task.prompt()));
+	}
+
+	/**
+	 * The scheduler computes the prompt with nobody to approve anything: a nested call of the
+	 * expression is bounded by the background allowlist, also for an account whose roles bound
+	 * nothing.
+	 */
+	public void testThePromptExpressionIsBoundedByTheAllowlist() throws Exception {
+		Person root = PersonManager.getManager().getRoot();
+		ProbeTask task = task("<task %s name='Nightly' run-as='" + root.getName() + "'><prompt-expression>"
+			+ "aiCallTool(\"" + AGENT_META_TOOL + "\", null)"
+			+ "</prompt-expression></task>");
+		task.drive();
+
+		String prompt = sentMessage(task);
+		assertTrue("The nested call must be refused: " + prompt,
+			prompt.contains("Error invoking tool '" + AGENT_META_TOOL + "'"));
+		assertTrue("The refusal must name the allowlist: " + prompt, prompt.contains("background allowlist"));
 	}
 
 	/**

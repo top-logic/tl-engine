@@ -31,7 +31,11 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.ai.core.agent.RunSecurityBinding;
 import com.top_logic.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.security.RunEntryPoint;
+import com.top_logic.ai.core.security.RunPrincipal;
+import com.top_logic.ai.core.security.RunSecurity;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.sched.task.impl.StateHandlingTask;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;
@@ -71,7 +75,9 @@ import com.top_logic.util.sched.task.result.TaskResult.ResultType;
  * {@link TaskProgressTracker#isUnattended() unattended}: the run is bounded by the policy's
  * {@code <background-allowlist>} instead of by an approval prompt, and {@code askUser} answers the
  * model at once rather than parking the run until the interaction timeout. See the developer
- * article {@code ai/script-and-scheduled-runs}.
+ * article {@code ai/script-and-scheduled-runs}. The {@code prompt-expression} has nobody either,
+ * in every approval mode: a run that it starts with {@code aiCallTool}, {@code aiAgentChat} or
+ * {@code aiChat} is bounded by the allowlist, too.
  * </p>
  *
  * <p>
@@ -327,7 +333,11 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 	protected void runSitting(Person account, TLSubSessionContext subSession,
 			TaskProgressTracker tracker) {
 		String prompt;
-		try {
+		// The scheduler computes the prompt, and nobody approves what the expression does, whatever
+		// the approval mode of the run: a run that the expression starts has the limits of a background
+		// run of the account.
+		try (RunSecurityBinding.Binding background = RunSecurityBinding.bind(
+				RunSecurity.contextFor(new RunPrincipal(account, RunEntryPoint.SCHEDULED, true)))) {
 			prompt = prompt();
 		} catch (RuntimeException ex) {
 			Logger.error("Task '" + getName() + "': computing the prompt failed: " + ex.getMessage(), ex,

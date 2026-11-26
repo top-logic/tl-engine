@@ -26,6 +26,9 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.ai.core.agent.RunSecurityBinding;
+import com.top_logic.ai.core.agent.SecurityContext;
+import com.top_logic.ai.core.agent.ToolContext;
 
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
@@ -135,8 +138,15 @@ public class ConfigurableResourceTemplate extends AbstractConfiguredInstance<Res
 			McpSchema.ReadResourceRequest request) {
 
 		// Evaluate as the account this request was authenticated as, not in system context: the
-		// expression reaches TopLogic services and whatever they can read.
-		return McpCallerContext.inCallerContext(() -> readResource(request));
+		// expression reaches TopLogic services and whatever they can read. Nobody approves anything
+		// of an MCP request, as for its tool calls: a run that the expression starts has the limits
+		// of a background run of that account.
+		return McpCallerContext.inCallerContext(() -> {
+			SecurityContext background = ToolContext.forBackgroundRun(McpCallerContext.requireCaller()).security();
+			try (RunSecurityBinding.Binding run = RunSecurityBinding.bind(background)) {
+				return readResource(request);
+			}
+		});
 	}
 
 	/**

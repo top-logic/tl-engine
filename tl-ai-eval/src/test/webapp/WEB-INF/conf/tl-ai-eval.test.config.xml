@@ -125,6 +125,19 @@ Answer in one short sentence when you are done.]]></system-prompt>
 							<tool name="subagent.wait_for_subagent"/>
 						</tools>
 					</agent>
+					<agent name="Eval_Facts"
+						description="States a fact that calls a tool off the background allowlist, for TestNestedRunCeiling."
+					>
+						<system-prompt><![CDATA[Say what you were told, in one short sentence.]]></system-prompt>
+						<facts>
+							<fact name="Framework agents" stable="true">
+								<value>aiCallTool("framework-wiring.listFrameworkAgents", null)</value>
+							</fact>
+						</facts>
+						<tools>
+							<tool name="model-instances.listInstances"/>
+						</tools>
+					</agent>
 					<agent name="Eval_NoTools"
 						description="Assigned a model that cannot call tools, so that the harness's 'could not run' path has something to report."
 					>

@@ -95,8 +95,8 @@ public class ToolContext implements ToolExecutionContext {
 	 * </p>
 	 *
 	 * <p>
-	 * The exception is a script that a tool of a run executes, for example through {@code changeData}:
-	 * the account that started the run does not watch that script. The context then has the
+	 * The exception is a script that a run executes, for example the script of a tool or a fact of
+	 * the agent: the account that started the run does not watch that script. The context then has the
 	 * {@link #security() security context} of that run, which {@link RunSecurityBinding} names, with
 	 * every limit of it: the {@code <background-allowlist>} of a background run, and each narrowing that
 	 * the entry point of the run added. A nested run is therefore never wider than the run that

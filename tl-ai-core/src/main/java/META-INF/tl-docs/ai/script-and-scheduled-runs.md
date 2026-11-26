@@ -104,6 +104,8 @@ Approval itself does not block: the run's `ChatApprovalCallback` reads the chat'
 
 `approval-mode="MANUAL"` declares that a person will answer: any window of the `run-as` account sees the request in the `run_state` frame of its chat and answers it with the chat's `respond` command. Such a run is attended - it keeps `askUser` and the approval prompt instead of the allowlist - and blocks up to the interaction timeout (30 minutes) per call if nobody is watching, so use it only when somebody is.
 
+In both modes nobody watches the `prompt-expression`: the task computes it before the run, as a background run of the `run-as` account. A run that the expression starts with `aiCallTool`, `aiAgentChat` or `aiChat` with tools therefore gets only the tools of the `<background-allowlist>`, and `chatStart` refuses ([nested runs](doc:ai/security/tool-authorization#background-and-delegated-runs)).
+
 ### Overlap, stopping, cluster
 
 - A run started while the previous one of the task is still working is **skipped** and reported as a warning in the scheduler's task table; it is not queued.

@@ -194,7 +194,11 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// the run is built. The same choke point as authorizeRun below, and for the same reason: the
 		// chat, AgentRunner, the scheduler and TL-Script all arrive here, so a ceiling put here is a
 		// ceiling on every run rather than on one surface. Released when the loop returns.
-		try (RunLimits.Admission admission = RunLimits.admit(context)) {
+		// The run's security context is bound for the same reason, while the run is built and while it
+		// runs: a script that the run executes outside a tool call - a fact of the agent, the commit
+		// message of a script tool - starts a nested run with every limit of this run.
+		try (RunSecurityBinding.Binding security = RunSecurityBinding.bind(context.security());
+				RunLimits.Admission admission = RunLimits.admit(context)) {
 			return runAdmitted(name, conversation, conversationMemory,
 				context.withBudgetAllowance(admission.allowance()), listener, sessionRegistry, overrides);
 		}

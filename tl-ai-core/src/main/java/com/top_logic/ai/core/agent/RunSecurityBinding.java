@@ -9,25 +9,27 @@ import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.thread.ThreadLocalBinding;
 
 /**
- * Thread-local binding of the {@link SecurityContext} of the run whose tool executes on the current
+ * Thread-local binding of the {@link SecurityContext} of the run that executes code on the current
  * thread.
  *
  * <p>
- * A tool can execute TL-Script, and the script can start a nested run with {@code aiCallTool},
- * {@code aiAgentChat} or {@code aiChat}. These functions get no context from their caller and build
- * one with {@link ToolContext#forCurrentUser()}. This binding gives them the context of the run that
- * executes the script, so that the nested run has every limit of that run: the
- * {@code <background-allowlist>} of a background run, and each narrowing that the entry point of the
- * run added. A nested run is therefore never wider than the run that executes it.
+ * A run executes TL-Script that it did not write itself: the script of a tool, the facts of its
+ * agent, the commit message of a script tool. The script can start a nested run with
+ * {@code aiCallTool}, {@code aiAgentChat} or {@code aiChat}. These functions get no context from
+ * their caller and build one with {@link ToolContext#forCurrentUser()}. This binding gives them the
+ * context of the run that executes the script, so that the nested run has every limit of that run:
+ * the {@code <background-allowlist>} of a background run, and each narrowing that the entry point of
+ * the run added. A nested run is therefore never wider than the run that executes it.
  * </p>
  *
  * <p>
- * Only the tool dispatch of the engine binds it, for the duration of one tool call: the agent loop
- * and {@code aiCallTool} through {@link com.top_logic.ai.core.tools.ToolExecutions}, an MCP request
- * through its tool adapter.
- * Outside a tool call nothing is bound, so a script of a person or of the script console runs as
- * before. As a {@link ThreadLocalBinding}, the value goes with the other bindings of the run onto the
- * threads that a tool call starts, for example the worker threads of a nested run.
+ * The engine binds it for the whole run: {@code AgentFactory} while it builds and runs an agent, the
+ * subagent worker for its detached run, the tool dispatch for each tool call
+ * ({@link com.top_logic.ai.core.tools.ToolExecutions}, also for an MCP request), the scheduler's
+ * {@code AgentTask} while it computes its prompt, and an MCP resource while it computes its content.
+ * Outside a run nothing is bound, so a script of a person or of the script console runs as before.
+ * As a {@link ThreadLocalBinding}, the value goes with the other bindings of the run onto the threads
+ * that the run starts, for example the worker threads of a parallel tool batch.
  * </p>
  *
  * @see RunCancellationBinding
@@ -42,7 +44,7 @@ public final class RunSecurityBinding {
 	}
 
 	/**
-	 * Binds the security context of the run whose tool is about to execute on the current thread.
+	 * Binds the security context of the run that executes code on the current thread.
 	 *
 	 * @param security
 	 *        The security context of the run, or <code>null</code> for a call that names no run. Such
@@ -56,15 +58,15 @@ public final class RunSecurityBinding {
 	}
 
 	/**
-	 * The security context of the run whose tool executes on the current thread, or
-	 * <code>null</code> outside a tool call.
+	 * The security context of the run that executes code on the current thread, or
+	 * <code>null</code> outside a run.
 	 */
 	public static SecurityContext current() {
 		return SECURITY.get();
 	}
 
 	/**
-	 * Whether the current thread executes a tool of a {@link SecurityContext#isBackgroundRun()
+	 * Whether the current thread executes code of a {@link SecurityContext#isBackgroundRun()
 	 * background run}.
 	 *
 	 * <p>
@@ -78,8 +80,7 @@ public final class RunSecurityBinding {
 	 * cannot bound asks here, and refuses in a background run.
 	 * </p>
 	 *
-	 * @return <code>false</code> outside a tool call, and in a tool call of a run that a person can
-	 *         approve.
+	 * @return <code>false</code> outside a run, and in a run that a person can approve.
 	 */
 	public static boolean executesBackgroundRun() {
 		SecurityContext security = SECURITY.get();

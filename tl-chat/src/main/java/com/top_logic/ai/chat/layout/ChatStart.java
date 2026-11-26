@@ -56,8 +56,8 @@ public final class ChatStart {
 	 * @return The new conversation, a run answering the message is in progress.
 	 * @throws TopLogicException
 	 *         If the message cannot be sent: the agent policy refuses it, the installation has no
-	 *         room for a run. The conversation is not kept then. Also if a tool of a background run
-	 *         executes this call, for example through a script.
+	 *         room for a run. The conversation is not kept then. Also if a background run executes
+	 *         this call, for example in the script of a tool or in a fact of its agent.
 	 */
 	public static AgentSession start(TLSubSessionContext window, String conversation, Person owner,
 			TLObject subject, String text) {

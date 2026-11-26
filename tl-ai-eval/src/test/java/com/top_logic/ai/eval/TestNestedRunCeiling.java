@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -32,6 +33,7 @@ import com.top_logic.ai.core.agent.AgentPolicyService;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.ai.core.execution.AgentEnvironment;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.ai.core.execution.AgentExecutionStore.SessionKind;
@@ -52,16 +54,17 @@ import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
- * TL-Script that a tool of a background agent run executes is bounded by the
- * {@code <background-allowlist>} when it starts a nested run with {@code aiCallTool},
- * {@code aiAgentChat} or {@code aiChat} with tools.
+ * TL-Script that a background agent run executes is bounded by the {@code <background-allowlist>}
+ * when it starts a nested run with {@code aiCallTool}, {@code aiAgentChat} or {@code aiChat} with
+ * tools: the script of a tool, and a fact of the agent of the run.
  *
  * <p>
  * The background run is a real agent loop, started as an MCP request starts one
  * ({@code ToolContext.forBackgroundRun}), on the scripted model. Its model calls {@code changeData}
  * with a script that starts the nested run. For the test, the allowlist of the eval also holds
  * {@code script} and {@code data.write}, so that {@code changeData} may run the script;
- * {@code agent.meta} and {@code workspace} stay off it.
+ * {@code agent.meta} and {@code workspace} stay off it. The agent {@code Eval_Facts} of the test
+ * application has a fact that calls a tool of {@code agent.meta}.
  * </p>
  */
 public class TestNestedRunCeiling extends BasicTestCase {
@@ -87,7 +90,18 @@ public class TestNestedRunCeiling extends BasicTestCase {
 	/** In {@code workspace}, off the allowlist, on the tool list of {@link #NESTED_AGENT}. */
 	private static final String WORKSPACE_TOOL = "task.listTasks";
 
+	/** An agent whose fact calls {@link #AGENT_META_TOOL}. */
+	private static final String FACTS_AGENT = "Eval_Facts";
+
+	/** How the environment block of a run of {@link #FACTS_AGENT} starts the line of its fact. */
+	private static final String FACT_LINE = "- Framework agents:";
+
+	/** An agent that spawns a subagent. */
+	private static final String LEAD_AGENT = "Eval_Lead";
+
 	private static volatile String _outerScript;
+
+	private static final List<String> FACTS = new CopyOnWriteArrayList<>();
 
 	private static final List<String> OUTER_TOOL_RESULTS = new CopyOnWriteArrayList<>();
 
@@ -103,6 +117,7 @@ public class TestNestedRunCeiling extends BasicTestCase {
 		OUTER_TOOL_RESULTS.clear();
 		NESTED_OFFERED.clear();
 		NESTED_TOOL_RESULTS.clear();
+		FACTS.clear();
 		ScriptedProvider.install(TestNestedRunCeiling::reply);
 		// The saved policy, not the running one: a restart reads the saved one, and in a suite that
 		// shares its services with other suites the running service can still carry an older item.
@@ -173,6 +188,52 @@ public class TestNestedRunCeiling extends BasicTestCase {
 			nested.contains(ALLOWLIST));
 	}
 
+	/**
+	 * The facts of the agent of a background run are computed while the run is built, before any tool
+	 * call: a fact that calls {@code aiCallTool} is refused a tool off the allowlist, too.
+	 */
+	public void testAFactOfABackgroundRunIsBoundedByTheAllowlist() throws Throwable {
+		Person root = PersonManager.getManager().getRoot();
+		assertRefusedInBackground(root, AGENT_META_TOOL);
+
+		run(root, FACTS_AGENT, () -> ToolContext.forBackgroundRun(root));
+
+		String fact = theFact();
+		assertFalse("The fact must not run the agent.meta tool: " + fact, fact.contains(NESTED_AGENT));
+		assertTrue("The refusal must name the allowlist: " + fact, fact.contains(ALLOWLIST));
+	}
+
+	/** In a run that a person can approve, the fact reaches the tool as before. */
+	public void testAFactOfAnAttendedRunReachesTheTool() throws Throwable {
+		Person root = PersonManager.getManager().getRoot();
+
+		run(root, FACTS_AGENT, ToolContext::forCurrentUser);
+
+		String fact = theFact();
+		assertTrue("The fact of an attended run is bounded by the roles only: " + fact, fact.contains(NESTED_AGENT));
+	}
+
+	/**
+	 * A detached subagent is a background run, also when the run that spawned it is attended: the
+	 * facts of its agent are refused a tool off the allowlist.
+	 */
+	public void testAFactOfADetachedSubagentIsBoundedByTheAllowlist() throws Throwable {
+		Person root = PersonManager.getManager().getRoot();
+		ScriptedProvider.install(TestNestedRunCeiling::spawningReply);
+
+		run(root, LEAD_AGENT, ToolContext::forCurrentUser);
+
+		String fact = theFact();
+		assertFalse("The fact of the subagent must not run the agent.meta tool: " + fact, fact.contains(NESTED_AGENT));
+		assertTrue("The refusal must name the allowlist: " + fact, fact.contains(ALLOWLIST));
+	}
+
+	/** The fact that the one run of {@link #FACTS_AGENT} was told. */
+	private static String theFact() {
+		assertEquals("The agent with the fact must have run once: " + FACTS, 1, FACTS.size());
+		return FACTS.get(0);
+	}
+
 	/** The background run itself is refused the given tool, so a nested run must be too. */
 	private static void assertRefusedInBackground(Person account, String toolName) {
 		String direct = ToolContext.forBackgroundRun(account).security().toolDenialReason(tool(toolName));
@@ -182,18 +243,23 @@ public class TestNestedRunCeiling extends BasicTestCase {
 
 	/** Runs the outer agent as an MCP request runs it: unattended, auto-approving, as root. */
 	private static void runInBackground(Person root) throws Throwable {
+		run(root, OUTER_AGENT, () -> ToolContext.forBackgroundRun(root));
+	}
+
+	/** Runs the given agent as root, in the context the given function builds in the context of root. */
+	private static void run(Person root, String agent, Supplier<ToolContext> newContext) throws Throwable {
 		AgentSession session =
 			AgentExecutionStore.getInstance().createSession(SessionKind.BACKGROUND, root, "TestNestedRunCeiling");
 		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(root, () -> {
-			ToolContext context = ToolContext.forBackgroundRun(root);
+			ToolContext context = newContext.get();
 			Conversation conversation = new Conversation();
 			try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 				conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 					List.of(new TextContent("Run the script."))));
-				AgentRunner.RecordedRun run = AgentRunner.run(OUTER_AGENT, conversation, null, context, event -> {
+				AgentRunner.RecordedRun run = AgentRunner.run(agent, conversation, null, context, event -> {
 					// Only the tool results matter here.
 				}, null, env.logListener().log(), session, null);
-				log("background run ended: " + run.result().stopReason() + " " + run.result().errorMessage());
+				log(agent + " ended: " + run.result().stopReason() + " " + run.result().errorMessage());
 			} finally {
 				context.transaction().close();
 				HistoryUtils.updateSessionRevision();
@@ -203,6 +269,9 @@ public class TestNestedRunCeiling extends BasicTestCase {
 	}
 
 	private static Reply reply(ProviderRequest request, int turn) {
+		if (hasFact(request)) {
+			return factsReply(request);
+		}
 		List<Message> messages = request.messages();
 		String last = String.valueOf(messages.get(messages.size() - 1));
 		String first = String.valueOf(messages.get(0));
@@ -218,6 +287,39 @@ public class TestNestedRunCeiling extends BasicTestCase {
 		}
 		OUTER_TOOL_RESULTS.add(last);
 		return Reply.text("Outer run done.");
+	}
+
+	/**
+	 * The model of a lead that spawns a subagent of {@link #FACTS_AGENT}, waits for it and ends; and
+	 * of that subagent.
+	 */
+	private static Reply spawningReply(ProviderRequest request, int turn) {
+		if (hasFact(request)) {
+			return factsReply(request);
+		}
+		switch (turn) {
+			case 0:
+				return Reply.of(new ToolCall("call-" + UUID.randomUUID(), "spawn_subagent",
+					"{\"agent\": \"" + FACTS_AGENT + "\", \"task\": \"Say what you were told.\"}"));
+			case 1:
+				return Reply.of(new ToolCall("call-" + UUID.randomUUID(), "wait_for_subagent", "{}"));
+			default:
+				return Reply.text("Lead done.");
+		}
+	}
+
+	/** Whether the request is one of a run of {@link #FACTS_AGENT}, whose environment block states its fact. */
+	private static boolean hasFact(ProviderRequest request) {
+		return String.valueOf(request.systemPrompt()).contains(FACT_LINE);
+	}
+
+	/** The model of a run of {@link #FACTS_AGENT}: it notes the line of its fact and ends. */
+	private static Reply factsReply(ProviderRequest request) {
+		String prompt = request.systemPrompt();
+		int start = prompt.indexOf(FACT_LINE);
+		int end = prompt.indexOf('\n', start);
+		FACTS.add(prompt.substring(start, end < 0 ? prompt.length() : end));
+		return Reply.text("Facts noted.");
 	}
 
 	/**
@@ -260,6 +362,7 @@ public class TestNestedRunCeiling extends BasicTestCase {
 				LLMProviderService.Module.INSTANCE,
 				AgentRuntimeService.Module.INSTANCE,
 				AgentApplicationService.Module.INSTANCE,
-				AgentPolicyService.Module.INSTANCE));
+				AgentPolicyService.Module.INSTANCE,
+				SubagentWorkers.Module.INSTANCE));
 	}
 }

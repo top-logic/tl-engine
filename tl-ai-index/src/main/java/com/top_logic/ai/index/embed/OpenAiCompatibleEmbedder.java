@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -60,7 +61,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
  *
  * <p>
  * The embedder computes the vectors of the search for all persons and never acts for one, so a
- * {@link CredentialProvider#isPersonal() personal} credential provider is refused at each request.
+ * {@link CredentialProvider#isPersonal() personal} credential provider is a configuration error: the
+ * embedder is not created with it.
  * </p>
  */
 @Label("HTTP embedding endpoint")
@@ -212,6 +214,9 @@ public class OpenAiCompatibleEmbedder extends AbstractEmbedder<OpenAiCompatibleE
 		_endpoint = URI.create(ModelDiscoveryHelper.normalizeBaseUrl(config.getBaseUrl()) + "/v1/embeddings");
 		_credentials = CredentialProvider.create(context, _endpoint.toString(), config.getCredentials(),
 			config.getApiKey(), CredentialProvider.AUTHORIZATION, CredentialProvider.BEARER);
+		if (_credentials.isPersonal()) {
+			throw new ConfigurationError(I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill(_endpoint.toString()));
+		}
 	}
 
 	@Override
@@ -269,10 +274,6 @@ public class OpenAiCompatibleEmbedder extends AbstractEmbedder<OpenAiCompatibleE
 			.header("Content-Type", "application/json")
 			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8));
 		try {
-			if (_credentials.isPersonal()) {
-				throw new I18NRuntimeException(
-					I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill(_endpoint.toString()));
-			}
 			_credentials.authenticate(RequestAuthentication.of(builder));
 		} catch (I18NRuntimeException ex) {
 			throw new EmbeddingException(

@@ -147,8 +147,8 @@ public interface CredentialProvider {
 	 * The acting person is the person for whom the current call acts: a person who is present in a
 	 * browser window, or a person who started the run of the current thread there. The class
 	 * <code>com.top_logic.util.ActingPerson</code> of the module <code>tl-core</code> names this
-	 * person. A consumer that authenticates each request separately for the acting person needs no
-	 * change for a personal provider.
+	 * person. A consumer can use a personal provider if it authenticates each request on the thread
+	 * of its caller and never sends the credentials of one request with another request.
 	 * </p>
 	 *
 	 * <p>
@@ -171,8 +171,10 @@ public interface CredentialProvider {
 	 * </p>
 	 *
 	 * <p>
-	 * A consumer that never acts for a person, e.g. the translation service, must read this property
-	 * and refuse a personal provider at each call.
+	 * Another consumer must read this property and refuse a personal provider with a
+	 * {@link ConfigurationError} when it is created. This holds for a consumer that never acts for a
+	 * person, e.g. the translation service, and for a consumer that sends the credentials of one
+	 * request with other requests, e.g. on one connection for all persons.
 	 * </p>
 	 *
 	 * @return <code>true</code> if this provider sends the credentials of the acting person;

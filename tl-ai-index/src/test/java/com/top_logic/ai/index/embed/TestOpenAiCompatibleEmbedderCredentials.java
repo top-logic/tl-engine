@@ -38,7 +38,6 @@ import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.I18NConstants;
 import com.top_logic.basic.credential.SecretStoreService;
-import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResKey;
@@ -125,19 +124,16 @@ public class TestOpenAiCompatibleEmbedderCredentials extends TestCase {
 	}
 
 	/**
-	 * The embedder never acts for a person: personal credentials are refused, and no request is
-	 * sent.
+	 * The embedder never acts for a person: personal credentials are a configuration error, and the
+	 * embedder is not created.
 	 */
 	public void testPersonalCredentialsRefused() throws Exception {
-		Embedder embedder =
-			embedder("", "<credentials class='" + PersonalTestCredentials.class.getName() + "'/>");
 		try {
-			embedder.embedQuery("q");
+			embedder("", "<credentials class='" + PersonalTestCredentials.class.getName() + "'/>");
 			fail("Personal credentials must be refused.");
-		} catch (EmbeddingException ex) {
-			I18NRuntimeException refusal = (I18NRuntimeException) ex.getCause();
-			assertEquals(I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER
-				.fill("http://127.0.0.1:" + _server.getAddress().getPort() + "/v1/embeddings"), refusal.getErrorKey());
+		} catch (RuntimeException ex) {
+			assertTrue("Not refused for personal credentials: " + ex,
+				isRefused(ex, I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill(endpoint())));
 		}
 		assertEquals(List.of(), _authorizations);
 	}
@@ -165,7 +161,8 @@ public class TestOpenAiCompatibleEmbedderCredentials extends TestCase {
 				+ "' header='X-Gateway' secret='unencrypted:gateway-token'/>");
 			fail("Credentials and API key must not be accepted together.");
 		} catch (RuntimeException ex) {
-			assertTrue("Not refused for credentials and API key: " + ex, isRefused(ex));
+			assertTrue("Not refused for credentials and API key: " + ex,
+				isRefused(ex, I18NConstants.ERROR_CREDENTIALS_AND_API_KEY__OWNER.fill(endpoint())));
 		}
 	}
 
@@ -252,13 +249,16 @@ public class TestOpenAiCompatibleEmbedderCredentials extends TestCase {
 		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(embedderConfig);
 	}
 
+	/** The URL of the embedding endpoint of the test server. */
+	private String endpoint() {
+		return "http://127.0.0.1:" + _server.getAddress().getPort() + "/v1/embeddings";
+	}
+
 	/**
-	 * Whether a {@link ConfigurationError} for credentials and API key is among the causes of the
-	 * given exception.
+	 * Whether a {@link ConfigurationError} with the given message is among the causes of the given
+	 * exception.
 	 */
-	private boolean isRefused(Throwable ex) {
-		ResKey message = I18NConstants.ERROR_CREDENTIALS_AND_API_KEY__OWNER
-			.fill("http://127.0.0.1:" + _server.getAddress().getPort() + "/v1/embeddings");
+	private static boolean isRefused(Throwable ex, ResKey message) {
 		for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
 			if (cause instanceof ConfigurationError error && message.equals(error.getErrorKey())) {
 				return true;

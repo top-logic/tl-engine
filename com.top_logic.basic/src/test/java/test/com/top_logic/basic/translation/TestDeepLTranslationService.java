@@ -35,7 +35,6 @@ import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.I18NConstants;
 import com.top_logic.basic.credential.SecretStoreService;
-import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.translation.DeepLTranslationService;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.ResKey;
@@ -205,16 +204,17 @@ public class TestDeepLTranslationService extends AbstractTypedConfigurationTestC
 	}
 
 	/**
-	 * A translation never acts for a person: personal credentials are refused, and no request is
-	 * sent.
+	 * A translation never acts for a person: personal credentials are a configuration error, and the
+	 * service is not created.
 	 */
 	public void testPersonalCredentialsRefused() throws Exception {
 		try (MockApi api = new MockApi(index -> 200)) {
 			try {
-				translate(api, "", "<credentials class='" + PersonalTestCredentials.class.getName() + "'/>");
+				service(api, "", "<credentials class='" + PersonalTestCredentials.class.getName() + "'/>");
 				fail("Personal credentials must be refused.");
-			} catch (I18NRuntimeException ex) {
-				assertEquals(I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill("DeepL"), ex.getErrorKey());
+			} catch (RuntimeException ex) {
+				assertTrue("Not refused for personal credentials: " + ex,
+					isRefused(ex, I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill("DeepL")));
 			}
 
 			assertEquals(List.of(), api._authorizations);

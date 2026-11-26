@@ -100,6 +100,11 @@ public class HttpMcpTransport implements McpTransportConfig {
 		 * E.g. a bearer token from an environment variable or a file, or an access token from an
 		 * OAuth2 authorization server. If not set, the requests are sent without credentials.
 		 * </p>
+		 *
+		 * <p>
+		 * Personal credentials, which send the credentials of the acting person, are not possible:
+		 * one connection to the MCP server serves all persons.
+		 * </p>
 		 */
 		@Name(CREDENTIALS)
 		@Nullable
@@ -115,12 +120,22 @@ public class HttpMcpTransport implements McpTransportConfig {
 
 	/**
 	 * Creates a new {@link HttpMcpTransport} from configuration.
+	 *
+	 * @throws ConfigurationError
+	 *         If the URL is not valid, or if the credentials are
+	 *         {@link CredentialProvider#isPersonal() personal}.
 	 */
 	@CalledByReflection
 	public HttpMcpTransport(InstantiationContext context, Config config) {
 		_url = checkUrl(config.getUrl());
 		_headers = config.getHeaders();
 		_credentials = CredentialProvider.create(context, _url, config.getCredentials(), null, null, null);
+		if (_credentials.isPersonal()) {
+			// The McpClientConnection of the server serves all persons, and a request that the
+			// library sends by itself carries the headers of the last call that succeeded: the
+			// credentials of one person would go out with the requests of all persons.
+			throw new ConfigurationError(I18NConstants.ERROR_PERSONAL_CREDENTIALS__URL.fill(_url));
+		}
 	}
 
 	/**
@@ -193,7 +208,8 @@ public class HttpMcpTransport implements McpTransportConfig {
 					// initialize after the server forgot the session, or the tools/list after the
 					// server said that its tools changed. It gets the headers of the last call that
 					// succeeded. They belong to the connection, so callers with different
-					// credentials must not share a connection.
+					// credentials must not share a connection: the constructor refuses personal
+					// credentials.
 					credentials = lastSucceeded.get();
 				}
 				// The stream of server messages (GET) carries the context of the initialize of its

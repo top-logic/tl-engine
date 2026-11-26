@@ -18,6 +18,7 @@ import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -40,8 +41,8 @@ import com.top_logic.basic.util.ResKey;
  *
  * <p>
  * The secrets are secrets of the application, which every person uses. A
- * {@link CredentialProvider#isPersonal() personal} credential provider is therefore refused at each
- * read.
+ * {@link CredentialProvider#isPersonal() personal} credential provider is therefore a configuration
+ * error: the client is not created with it.
  * </p>
  *
  * @see KeyVaultSecretSource
@@ -62,8 +63,6 @@ public final class KeyVaultClient {
 
 	private final SecretClient _client;
 
-	private final CredentialProvider _credentials;
-
 	private final String _vaultUrl;
 
 	private final long _cacheTime;
@@ -77,18 +76,24 @@ public final class KeyVaultClient {
 	 *        The context for instantiating the credentials.
 	 * @param config
 	 *        The access to the key vault.
+	 * @throws ConfigurationError
+	 *         If the credentials are {@link CredentialProvider#isPersonal() personal}.
 	 */
 	public KeyVaultClient(InstantiationContext context, KeyVaultConfig config) {
 		PolymorphicConfiguration<? extends CredentialProvider> credentials = config.getCredentials();
 		if (credentials == null) {
 			credentials = defaultCredentials();
 		}
-		_credentials = context.getInstance(credentials);
+		CredentialProvider provider = context.getInstance(credentials);
 		_vaultUrl = stripTrailingSlash(config.getVaultUrl());
+		if (provider.isPersonal()) {
+			throw new ConfigurationError(
+				com.top_logic.basic.credential.I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill(_vaultUrl));
+		}
 		_cacheTime = config.getCacheTime();
 		HttpPipeline pipeline = new HttpPipelineBuilder()
 			.httpClient(AzureHttpClients.create(config))
-			.policies(new CredentialProviderPolicy(_credentials))
+			.policies(new CredentialProviderPolicy(provider))
 			.build();
 		SecretClientBuilder builder = new SecretClientBuilder().pipeline(pipeline);
 		try {
@@ -129,14 +134,10 @@ public final class KeyVaultClient {
 	 *         the request is optional.
 	 *
 	 * @throws I18NRuntimeException
-	 *         If the secret cannot be read, or if the credentials of the key vault are personal. The
-	 *         message names the secret and the vault but never contains the secret.
+	 *         If the secret cannot be read. The message names the secret and the vault but never
+	 *         contains the secret.
 	 */
 	public String getSecret(String name, String version, boolean optional) {
-		if (_credentials.isPersonal()) {
-			throw new I18NRuntimeException(
-				com.top_logic.basic.credential.I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill(_vaultUrl));
-		}
 		String key = version.isEmpty() ? name : name + '/' + version;
 		CacheEntry entry = _cache.computeIfAbsent(key, x -> new CacheEntry());
 		Snapshot snapshot = entry.get(() -> fetch(name, version));

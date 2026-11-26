@@ -12,9 +12,11 @@ import junit.framework.Test;
 
 import test.com.top_logic.basic.credential.PersonalTestCredentials;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.credential.azure.I18NConstants;
 import com.top_logic.credential.azure.KeyVaultSecretSource;
 import com.top_logic.credential.azure.ManagedIdentityCredentials;
@@ -273,21 +275,31 @@ public class TestKeyVaultSecretSource extends AbstractAzureMockTest {
 	}
 
 	/**
-	 * The secrets of the key vault are secrets of the application: personal credentials are refused,
-	 * and the key vault is not asked.
+	 * The secrets of the key vault are secrets of the application: personal credentials are a
+	 * configuration error, and the key vault is not asked.
 	 */
 	public void testPersonalCredentialsRefused() throws Exception {
-		SecretSource source =
-			vault("", "<credentials class='" + PersonalTestCredentials.class.getName() + "'/>");
-
 		try {
-			source.getSecret();
+			vault("", "<credentials class='" + PersonalTestCredentials.class.getName() + "'/>");
 			fail("Personal credentials must be refused.");
-		} catch (I18NRuntimeException ex) {
-			assertEquals(com.top_logic.basic.credential.I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.getKey(),
-				ex.getErrorKey().getKey());
+		} catch (RuntimeException ex) {
+			assertTrue("Not refused for personal credentials: " + ex, isRefused(ex,
+				com.top_logic.basic.credential.I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill(url(""))));
 		}
 		assertEquals(0, requests(SECRET_PATH).size());
+	}
+
+	/**
+	 * Whether a {@link ConfigurationError} with the given message is among the causes of the given
+	 * exception.
+	 */
+	private static boolean isRefused(Throwable ex, ResKey message) {
+		for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+			if (cause instanceof ConfigurationError error && message.equals(error.getErrorKey())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void testUnreachable() throws Exception {

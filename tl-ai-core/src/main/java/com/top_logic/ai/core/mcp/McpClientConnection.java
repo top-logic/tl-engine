@@ -45,6 +45,13 @@ import reactor.util.context.Context;
  * {@link HttpMcpTransport} runs on the thread of the caller, before the wait for the server, see
  * {@link #send(Supplier)}.
  * </p>
+ *
+ * <p>
+ * One connection serves all persons, and the requests that the library sends by itself carry the
+ * headers of the last call that succeeded. The credentials are therefore credentials of the
+ * application: the {@link HttpMcpTransport} refuses {@link CredentialProvider#isPersonal()
+ * personal} credentials when it is created.
+ * </p>
  */
 class McpClientConnection {
 

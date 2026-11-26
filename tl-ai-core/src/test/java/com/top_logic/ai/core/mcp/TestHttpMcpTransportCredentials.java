@@ -30,6 +30,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.credential.PersonalTestCredentials;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -41,6 +42,7 @@ import com.top_logic.ai.tool.api.ProgressReporter;
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.ToolExecutionContext;
 import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -54,6 +56,7 @@ import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.thread.CancelScope.BlockingCall;
+import com.top_logic.basic.util.ResKey;
 
 import io.modelcontextprotocol.spec.McpSchema;
 
@@ -80,6 +83,10 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 
 	/** Credentials of {@link RecordingCredentials}. */
 	private static final String RECORDING = "<credentials class='" + RecordingCredentials.class.getName() + "'/>";
+
+	/** Credentials of the acting person, see {@link PersonalTestCredentials}. */
+	private static final String PERSONAL =
+		"<credentials class='" + PersonalTestCredentials.class.getName() + "'/>";
 
 	/** The name of the MCP server in the {@link McpServerRegistry} of a test. */
 	private static final String SERVER = "test";
@@ -186,6 +193,23 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 		for (String authorization : authorizations) {
 			assertNull(authorization);
 		}
+	}
+
+	/**
+	 * One connection serves all persons, so personal credentials are a configuration error: the
+	 * transport is not created, the server is not connected, and no request is sent.
+	 */
+	public void testPersonalCredentialsRefused() throws Exception {
+		try {
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(transport(PERSONAL));
+			fail("Personal credentials must be refused.");
+		} catch (RuntimeException ex) {
+			assertTrue("Not refused for personal credentials: " + ex,
+				isRefused(ex, I18NConstants.ERROR_PERSONAL_CREDENTIALS__URL.fill(url())));
+		}
+
+		assertFalse("A server with personal credentials must not be connected.", connect(PERSONAL));
+		assertEquals(List.of(), authorizations());
 	}
 
 	/** A rejected request is repeated once with fresh credentials. */
@@ -476,13 +500,42 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 			+ " config:interface='" + McpServerRegistry.Config.class.getName() + "'"
 			+ " class='" + McpServerRegistry.class.getName() + "'>"
 			+ "<servers><server name='" + SERVER + "'>"
-			+ "<transport class='" + HttpMcpTransport.class.getName() + "'"
-			+ " url='http://127.0.0.1:" + _server.getAddress().getPort() + "/mcp'>"
-			+ credentials + "</transport>"
+			+ transportXml(credentials)
 			+ "</server></servers></registry>";
 		McpServerRegistry.Config<?> config =
 			(McpServerRegistry.Config<?>) TypedConfiguration.parse(CharacterContents.newContent(xml));
 		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+	}
+
+	/** The configuration of a transport to the local test server. */
+	private HttpMcpTransport.Config transport(String credentials) throws ConfigurationException {
+		String xml = "<transport xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + HttpMcpTransport.Config.class.getName() + "'"
+			+ transportXml(credentials).substring("<transport".length());
+		return (HttpMcpTransport.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+	}
+
+	private String transportXml(String credentials) {
+		return "<transport class='" + HttpMcpTransport.class.getName() + "' url='" + url() + "'>"
+			+ credentials + "</transport>";
+	}
+
+	/** The URL of the local test server. */
+	private String url() {
+		return "http://127.0.0.1:" + _server.getAddress().getPort() + "/mcp";
+	}
+
+	/**
+	 * Whether a {@link ConfigurationError} with the given message is among the causes of the given
+	 * exception.
+	 */
+	private static boolean isRefused(Throwable ex, ResKey message) {
+		for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+			if (cause instanceof ConfigurationError error && message.equals(error.getErrorKey())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static Tool tool(McpServerRegistry registry) {

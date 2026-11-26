@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.EntryTag;
@@ -18,7 +19,6 @@ import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.RequestAuthentication;
-import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.tools.resources.translate.ConnectionAuthentication;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.tools.resources.translate.deepl.DeepLTranslator;
@@ -36,7 +36,7 @@ import com.top_logic.tools.resources.translate.deepl.DeepLTranslator.Builder;
  *
  * <p>
  * A translation never acts for a person, so a {@link CredentialProvider#isPersonal() personal}
- * credential provider is refused at each request.
+ * credential provider is a configuration error: the service does not start with it.
  * </p>
  *
  * @author <a href="mailto:Dmitry.Ivanizki@top-logic.com">Dmitry Ivanizki</a>
@@ -136,6 +136,10 @@ public class DeepLTranslationService extends TranslationService<DeepLTranslation
 		super(context, config);
 		_credentials = CredentialProvider.create(context, LABEL, config.getCredentials(), config.getApiKey(),
 			DeepLTranslator.AUTHORIZATION, DeepLTranslator.AUTH_SCHEME);
+		if (_credentials.isPersonal()) {
+			throw new ConfigurationError(
+				com.top_logic.basic.credential.I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill(LABEL));
+		}
 	}
 
 	@Override
@@ -147,10 +151,6 @@ public class DeepLTranslationService extends TranslationService<DeepLTranslation
 		builder.setAuthentication(new ConnectionAuthentication() {
 			@Override
 			public void authenticate(HttpURLConnection connection) {
-				if (_credentials.isPersonal()) {
-					throw new I18NRuntimeException(
-						com.top_logic.basic.credential.I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill(LABEL));
-				}
 				_credentials.authenticate(RequestAuthentication.of(connection));
 			}
 

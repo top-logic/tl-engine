@@ -238,7 +238,16 @@ The test base class `test.com.top_logic.util.AbstractPersonalCredentialProviderT
 
 ### Consumers of a personal provider
 
-A consumer that authenticates each request separately for the acting person needs no change. A consumer that never acts for a person must read `isPersonal()` and refuse a personal provider at each call. These parts of the engine do this: the embedder, which computes the vectors of the search for all persons, the DeepL translation service and the client of an Azure Key Vault. The message names the service.
+A consumer can use a personal provider if it authenticates each request on the thread of its caller and never sends the credentials of one request with another request.
+
+Another consumer must read `isPersonal()` and refuse a personal provider with a `ConfigurationError` when it is created, so that the application reports the misconfiguration at startup. These parts of the engine refuse a personal provider:
+
+- the embedder, which computes the vectors of the search for all persons,
+- the DeepL translation service,
+- the client of an Azure Key Vault, whose secrets are secrets of the application,
+- the MCP client (`HttpMcpTransport`). One connection to an MCP server serves all persons, and a request that the MCP library sends by itself carries the credentials of the last call. Personal credentials for an MCP server need one connection for each person. This is a separate change.
+
+The message names the service.
 
 ## A consumer of an HTTP service
 

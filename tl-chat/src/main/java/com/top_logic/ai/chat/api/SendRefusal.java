@@ -16,7 +16,6 @@ import com.top_logic.ai.core.agent.AgentDefinition;
 import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.agent.AgentFactory;
 import com.top_logic.ai.core.security.AiToolAccessService;
-import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.ai.core.security.RunAuthorization;
@@ -101,7 +100,7 @@ public record SendRefusal(String status, String reason) {
 	private static SendRefusal personaRefusal(Person person, String agentName) {
 		AgentDefinition agentDef;
 		try {
-			agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName, reader(person));
+			agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName, ModelSecurity.forAccount(person));
 		} catch (RuntimeException ex) {
 			// Cannot read it, so cannot judge it: leave the request to the run, as before.
 			Logger.warn("Could not check whether '" + agentName + "' is a conversation partner.", ex,
@@ -125,7 +124,8 @@ public record SendRefusal(String status, String reason) {
 	 */
 	private static boolean agentExists(Person person, String agentName) {
 		try {
-			return AgentDefinitionQuery.getInstance().findAgentByName(agentName, reader(person)) != null;
+			return AgentDefinitionQuery.getInstance()
+				.findAgentByName(agentName, ModelSecurity.forAccount(person)) != null;
 		} catch (RuntimeException ex) {
 			// Cannot enumerate, so cannot judge: leave the request to the run, as before.
 			Logger.warn("Could not check whether an agent '" + agentName + "' exists.", ex,
@@ -144,7 +144,7 @@ public record SendRefusal(String status, String reason) {
 		String agentName;
 		try {
 			access = AiToolAccessService.effectiveRunAccessFor(person);
-			reader = reader(person);
+			reader = ModelSecurity.forAccount(person);
 			agentName = options.agent() != null && !options.agent().isBlank()
 				? options.agent().trim()
 				: AgentFactory.defaultAgentFor(access, reader);
@@ -170,11 +170,6 @@ public record SendRefusal(String status, String reason) {
 			return null;
 		}
 		return denied == null ? null : forbidden(Resources.getInstance().getString(denied.reason()));
-	}
-
-	/** The model rights the run of this account will have, as the default security context builds them. */
-	private static ModelSecurity reader(Person person) {
-		return new ModelAccessRightsSecurity(person);
 	}
 
 	private static String blankToNull(String value) {

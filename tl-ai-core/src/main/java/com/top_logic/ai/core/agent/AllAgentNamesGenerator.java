@@ -16,7 +16,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
-import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.util.TLContext;
 
 /**
@@ -61,7 +61,7 @@ public class AllAgentNamesGenerator extends ListGeneratorAdaptor {
 	@Override
 	public List<?> generateList(EditContext editContext) {
 		List<String> names = new ArrayList<>();
-		ModelAccessRightsSecurity editor = new ModelAccessRightsSecurity(TLContext.currentUser());
+		ModelSecurity editor = ModelSecurity.forAccount(TLContext.currentUser());
 		for (AgentDefinition ad : AgentDefinitionQuery.getInstance().getAllAgents(editor)) {
 			if (ad.infrastructure()) {
 				continue;

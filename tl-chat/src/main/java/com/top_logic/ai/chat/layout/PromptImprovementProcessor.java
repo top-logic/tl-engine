@@ -31,7 +31,7 @@ import com.top_logic.ai.core.execution.AgentRunner;
 import com.top_logic.ai.core.message.Conversation;
 import com.top_logic.ai.core.message.TextContent;
 import com.top_logic.ai.core.message.UserMessage;
-import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RunEntryPoint;
 import com.top_logic.ai.core.security.RunPrincipal;
 import com.top_logic.ai.core.security.RunSecurity;
@@ -273,7 +273,7 @@ public final class PromptImprovementProcessor {
 	 */
 	private static boolean agentExists(String name) {
 		return AgentDefinitionQuery.getInstance()
-			.findAgentByName(name, new ModelAccessRightsSecurity(TLContext.currentUser())) != null;
+			.findAgentByName(name, ModelSecurity.forAccount(TLContext.currentUser())) != null;
 	}
 
 	/** A checked request whose state is registered on the tracker, ready to run. */

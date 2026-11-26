@@ -14,7 +14,6 @@ import com.top_logic.base.operation.OperationMode;
 import com.top_logic.base.operation.OperationModeService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.ai.core.security.AiToolAccessService;
-import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy;
 import com.top_logic.ai.core.security.RoleToolAccess;
@@ -88,7 +87,7 @@ public class TopLogicSecurityContext implements SecurityContext {
 				+ " UI, or a TL-Script call, both of which act as the logged-in account), or - for an"
 				+ " unattended run - as a configured service account.");
 		}
-		return new TopLogicSecurityContext(new ModelAccessRightsSecurity(principal),
+		return new TopLogicSecurityContext(ModelSecurity.forAccount(principal),
 			AiToolAccessService.authorizationFor(principal, background),
 			AiToolAccessService.runAuthorizationFor(principal));
 	}

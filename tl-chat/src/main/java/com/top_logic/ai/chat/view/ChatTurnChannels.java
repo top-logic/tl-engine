@@ -18,7 +18,6 @@ import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.agent.AgentFactory;
 import com.top_logic.ai.core.agent.AgentFactory.RunOverrides;
 import com.top_logic.ai.core.security.AiToolAccessService;
-import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.ai.core.security.RunAuthorization;
@@ -150,7 +149,7 @@ public final class ChatTurnChannels {
 		}
 		try {
 			RunAuthorization access = AiToolAccessService.effectiveRunAccessFor(owner);
-			ModelSecurity reader = new ModelAccessRightsSecurity(owner);
+			ModelSecurity reader = ModelSecurity.forAccount(owner);
 			String agent = agentName == null || agentName.isBlank()
 				? AgentFactory.defaultAgentFor(access, reader)
 				: agentName.trim();
@@ -187,7 +186,7 @@ public final class ChatTurnChannels {
 		}
 		try {
 			boolean known = AgentDefinitionQuery.getInstance()
-				.findAgentByName(agentName.trim(), new ModelAccessRightsSecurity(owner)) != null;
+				.findAgentByName(agentName.trim(), ModelSecurity.forAccount(owner)) != null;
 			if (!known) {
 				Logger.debug("No agent '" + agentName + "' to follow a channel to.", ChatTurnChannels.class);
 			}

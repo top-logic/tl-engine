@@ -29,7 +29,7 @@ import com.top_logic.ai.core.provider.EffortLevels;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.ai.core.security.AiToolAccessService;
-import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RunAuthorization;
 import com.top_logic.util.Resources;
 
@@ -260,7 +260,7 @@ public final class ChatCapabilities {
 	private static Collection<String> declaredServersOf(Person person, String agentName) {
 		try {
 			AgentDefinition agent =
-				AgentDefinitionQuery.getInstance().findAgentByName(agentName, new ModelAccessRightsSecurity(person));
+				AgentDefinitionQuery.getInstance().findAgentByName(agentName, ModelSecurity.forAccount(person));
 			return agent == null ? List.of() : agent.mcpServers();
 		} catch (RuntimeException ex) {
 			Logger.debug("Cannot read the servers of '" + agentName + "'.", ChatCapabilities.class);
@@ -278,7 +278,7 @@ public final class ChatCapabilities {
 	 */
 	private static Collection<AgentDefinition> listAgents(Person person) {
 		try {
-			return AgentDefinitionQuery.getInstance().getAllAgents(new ModelAccessRightsSecurity(person));
+			return AgentDefinitionQuery.getInstance().getAllAgents(ModelSecurity.forAccount(person));
 		} catch (RuntimeException ex) {
 			Logger.warn("Listing knowledge-base agents failed; using configured agents only.",
 				ex, ChatCapabilities.class);

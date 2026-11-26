@@ -48,7 +48,6 @@ import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.ai.core.security.EffectiveToolAccess;
 import com.top_logic.ai.core.security.EffectiveToolAccess.CapabilityAccess;
-import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
@@ -413,7 +412,7 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 
 		// For an account, what it knows: a stored agent it may not read is not its agent, and a
 		// configured agent of the same name is what it runs.
-		ModelSecurity reader = _account != null ? new ModelAccessRightsSecurity(_account) : null;
+		ModelSecurity reader = _account != null ? ModelSecurity.forAccount(_account) : null;
 		AgentFacts facts = reader != null ? AgentFacts.liveFor(reader) : AgentFacts.live();
 		List<String> agents = names(Dimension.AGENT);
 		// The agent section is not the only one that can stop an agent: one whose own model, or one of

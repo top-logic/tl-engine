@@ -9,6 +9,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.ai.core.agent.TopLogicSecurityContext;
+import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -124,6 +127,28 @@ public interface ModelSecurity {
 			return TLModelUtil.getAllGlobalClasses(ModelService.getApplicationModel());
 		}
 	};
+
+	/**
+	 * The model rights of a run of the given account.
+	 *
+	 * <p>
+	 * The security context of a run ({@link TopLogicSecurityContext#forRun(Person, boolean)}) builds
+	 * its model rights here, and so does each check that answers in advance what a run of the account
+	 * will see, for example the agent menu of the chat or the refusal of a send. So such a check
+	 * cannot disagree with the run.
+	 * </p>
+	 *
+	 * <p>
+	 * For the engine only. An application constructs a {@link ModelAccessRightsSecurity}.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account the run acts for. <code>null</code> grants nothing.
+	 */
+	@FrameworkInternal
+	static ModelSecurity forAccount(Person account) {
+		return new ModelAccessRightsSecurity(account);
+	}
 
 	/**
 	 * Whether the run's principal may read the given object.

@@ -17,7 +17,7 @@
 	title and not its body. That is the per-attribute half of the read filtering of issue #289, and it
 	needs an attribute whose grant differs from its class's.
 
-	"ProjectAgent" and "ProjectSkill" are the stored agents and skills of one project (Ticket #30493).
+	"ProjectAgent" and "ProjectSkill" are the stored agents and skills of one project.
 	They specialize the engine's tl.ai.core:Agent and tl.ai.core:Skill and are parts of a project, so
 	they follow the project: its partners see, use and change them, and nobody else does. No rule of
 	this fixture names them - a composition part decides through its container by default.

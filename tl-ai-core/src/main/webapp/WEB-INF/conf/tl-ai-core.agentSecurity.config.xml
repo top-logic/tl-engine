@@ -2,7 +2,7 @@
 
 <!--
 	Who may see and use a stored agent (tl.ai.core:Agent) or skill (tl.ai.core:Skill), in addition
-	to <agent-access> (Ticket #30493). Both must allow.
+	to <agent-access>. Both must allow.
 
 	Every run and every list asks the model rights of the account: a stored agent or skill that the
 	account may not read is unknown to it (AgentDefinitionQuery with a reader). This file gives the

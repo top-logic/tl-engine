@@ -422,12 +422,15 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 		// An infrastructure agent is stopped for a third reason that no role decides: the application
 		// runs it for the user and nobody converses with it (#397). Its row says so rather than
 		// reporting a grant that the gate would refuse.
-		// A stored agent the account may not read does not exist for it (#30493): no run, menu or
-		// list of the account knows it. Only an account has model rights, so a role is not asked this.
+		// A stored agent the account may not read does not exist for it: no run, menu or list of the
+		// account knows it. Only an account has model rights, so a role is not asked this.
 		Map<String, EffectiveAccessRow.RunName> stopped = new LinkedHashMap<>();
 		List<String> allowedAgents = new ArrayList<>();
 		for (String agentName : access.allowedAgents(agents)) {
 			if (reader != null && !knownTo(reader, agentName)) {
+				// The row has its own sentence, so its decision only marks it as refused. The causes of
+				// RoleAccessPolicy name the rules of <agent-access>, which do not refuse here, and they
+				// are part of the API that applications read, so there is no cause of its own.
 				stopped.put(agentName, new EffectiveAccessRow.RunName(Dimension.AGENT, agentName,
 					new Decision.Denied(Dimension.AGENT, agentName, null, RoleAccessPolicy.Cause.NOT_GRANTED),
 					Resources.getInstance().getString(I18NConstants.AGENT_NOT_READABLE__AGENT_NAME.fill(agentName))));

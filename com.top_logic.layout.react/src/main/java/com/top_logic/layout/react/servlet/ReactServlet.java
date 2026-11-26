@@ -35,6 +35,7 @@ import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.scan.UploadGuardRequest;
 import com.top_logic.basic.io.binary.scan.UploadRejectedException;
@@ -86,7 +87,7 @@ import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.RevalidationVisitor;
 import com.top_logic.util.ActingPerson;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
 import de.haumacher.msgbuf.data.DataObject;
@@ -592,8 +593,26 @@ public class ReactServlet extends TopLogicServlet {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 		SSEUpdateQueue queue = getWindowQueue(session, windowName);
-		// The person of the sub-session just installed; none if the session does not know the window.
-		return new WindowContext(displayContext, queue, rootHandler, ActingPerson.bind(TLContext.currentUser()));
+		return new WindowContext(displayContext, queue, rootHandler, bindActingPerson(windowName));
+	}
+
+	/**
+	 * Binds the person of the given window as {@link ActingPerson}: a request from a window acts for
+	 * the person who is present in it.
+	 *
+	 * <p>
+	 * The person is the one of the window's sub-session, not the user of the context the request
+	 * runs in. A window that the session of the request does not know has no acting person.
+	 * </p>
+	 *
+	 * @return The handle whose {@link ThreadLocalBinding.Handle#close() close()} restores the acting
+	 *         person bound before.
+	 */
+	static ThreadLocalBinding<Person>.Handle bindActingPerson(String windowName) {
+		TLSessionContext sessionContext = TLContextManager.getSession();
+		TLSubSessionContext window = sessionContext == null || StringServices.isEmpty(windowName) ? null
+			: sessionContext.getSubSession(windowName);
+		return ActingPerson.bind(window == null ? null : window.getPerson());
 	}
 
 	@SuppressWarnings("unchecked")

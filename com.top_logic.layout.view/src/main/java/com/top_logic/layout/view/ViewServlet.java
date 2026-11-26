@@ -364,7 +364,8 @@ public class ViewServlet extends TopLogicServlet {
 		// tree. The trees are therefore only touched within an interaction. The view is loaded for the
 		// person of the window, who is present in it.
 		try (Interaction interaction = windowRegistry.beginInteraction();
-				ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(TLContext.currentUser())) {
+				ThreadLocalBinding<Person>.Handle acting =
+					ActingPerson.bind(subSession == null ? null : subSession.getPerson())) {
 			// The page sees the current state of the knowledge base, including the commits other
 			// threads made since the window's last request: the session revision of a window that
 			// exists already only advances when its model events are synthesized, and a reloaded page

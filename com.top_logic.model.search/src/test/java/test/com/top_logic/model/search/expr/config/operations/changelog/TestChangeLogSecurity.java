@@ -23,10 +23,13 @@ import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.changelog.ChangeLogOptions;
 import com.top_logic.element.changelog.ChangeSetReverter;
+import com.top_logic.element.changelog.I18NConstants;
+import com.top_logic.element.changelog.UndoCommandHandler;
 import com.top_logic.element.changelog.model.Change;
 import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.element.changelog.model.Modification;
@@ -456,6 +459,81 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 		assertFalse(target.getIncomplete());
 		assertEquals(List.of(), ChangeSetReverter.revert(_kb, target, false));
 		assertEquals("barA", _barA.tValueByName(NAME));
+	}
+
+	/**
+	 * {@code revertChanges()} with security checks refuses a commit the user sees completely but may
+	 * not write: the scenario of a script of an API endpoint reading the change log in a privileged
+	 * function. Nothing is reverted.
+	 */
+	public void testRevertDeniedWithoutWriteRight() throws Exception {
+		commit(ResKey.text("by admin"), () -> _barA.tUpdateByName(NAME, "barA2"));
+
+		becomeUser(_reader);
+		ChangeSet restricted = latestRestricted(_barA);
+		assertFalse("Precondition: the reader sees the commit completely.", restricted.getIncomplete());
+
+		long lastRevision = _kb.getHistoryManager().getLastRevision();
+		try (Transaction tx = _kb.beginTransaction(ResKey.text("revert"))) {
+			execute(search(REVERT), restricted);
+			fail("A commit changing an object the user may not write must not be reverted.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_REVERT_NO_WRITE_ACCESS__OBJECT_ATTRIBUTE.getKey(),
+				ex.getErrorKey().getKey());
+		}
+		assertEquals(lastRevision, _kb.getHistoryManager().getLastRevision());
+		assertEquals("barA2", _barA.tValueByName(NAME));
+	}
+
+	/**
+	 * {@code revertChanges()} without security checks (a privileged script) reverts a commit
+	 * regardless of the write rights of the current user.
+	 */
+	public void testRevertWithoutSecurity() throws Exception {
+		commit(ResKey.text("by admin"), () -> _barA.tUpdateByName(NAME, "barA2"));
+
+		becomeUser(_reader);
+		ChangeSet restricted = latestRestricted(_barA);
+
+		try (Transaction tx = _kb.beginTransaction(ResKey.text("revert"))) {
+			assertEquals(List.of(), executeWithoutSecurity(REVERT, restricted));
+			tx.commit();
+		}
+		assertEquals("barA", _barA.tValueByName(NAME));
+	}
+
+	/**
+	 * The {@link UndoCommandHandler} refuses to undo the newest commit of the current user, if the
+	 * user may not write the changed object. Nothing is reverted.
+	 */
+	public void testUndoCommandDeniedWithoutWriteRight() throws Exception {
+		becomeUser(_reader);
+		commit(ResKey.text("by reader"), () -> _barA.tUpdateByName(NAME, "barA2"));
+
+		UndoCommandHandler.Config config = TypedConfiguration.newConfigItem(UndoCommandHandler.Config.class);
+		UndoCommandHandler undo =
+			new UndoCommandHandler(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+
+		long lastRevision = _kb.getHistoryManager().getLastRevision();
+		try {
+			undo.handleCommand(null, null, null, Map.of());
+			fail("The undo of a commit changing an object the user may not write must be refused.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_REVERT_NO_WRITE_ACCESS__OBJECT_ATTRIBUTE.getKey(),
+				ex.getErrorKey().getKey());
+		}
+		assertEquals(lastRevision, _kb.getHistoryManager().getLastRevision());
+		assertEquals("barA2", _barA.tValueByName(NAME));
+	}
+
+	/**
+	 * The newest commit changing the given object, read in the privileged function
+	 * {@link #PRIVILEGED_CHANGE_LOG} and restricted for the current user.
+	 */
+	private static ChangeSet latestRestricted(TLObject obj) throws Exception {
+		Collection<?> log = (Collection<?>) execute(search(PRIVILEGED_CHANGE_LOG), obj);
+		assertEquals(1, log.size());
+		return (ChangeSet) log.iterator().next();
 	}
 
 	/**

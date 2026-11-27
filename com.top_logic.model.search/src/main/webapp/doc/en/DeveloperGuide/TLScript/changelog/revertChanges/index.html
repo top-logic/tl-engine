@@ -6,6 +6,7 @@
 <p><strong>The function does not open or commit a transaction itself.</strong> The surrounding script is responsible for commit and rollback handling.</p>
 <p>The returned list contains the problems (resource keys) that were raised during the revert. An empty list means every revert ran without conflict.</p>
 <p>A change set that is marked as incomplete (<code class="hljs inlineCode">tl.changelog:ChangeSet#incomplete</code>), because <code class="hljs inlineCode">changeSetRestrict</code> removed changes the user may not see from it, is not reverted: the function fails with an error, and none of the given changes is reverted.</p>
+<p>When the script is evaluated with security checks (e.g. in an API endpoint, an agent tool or the user interface), the current user must be allowed to perform every change of the revert: to modify each changed attribute of a changed object, to delete an object whose creation is reverted, and to create an object whose deletion is reverted in its former container. The creation or deletion of a part whose container is created or deleted by the same change is decided by the right on the container. If a right is missing, the function fails with an error naming the object, and none of the given changes is reverted. Without security checks (e.g. in the configuration or a system context), no rights are checked.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>

@@ -7,6 +7,7 @@ package com.top_logic.element.changelog;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -35,6 +36,23 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     see.
 	 */
 	public static ResKey1 ERROR_REVERT_INCOMPLETE_CHANGE_SET__DATE;
+
+	/**
+	 * @en The change cannot be reverted, because you are not allowed to modify the attribute "{1}"
+	 *     of "{0}".
+	 */
+	public static ResKey2 ERROR_REVERT_NO_WRITE_ACCESS__OBJECT_ATTRIBUTE;
+
+	/**
+	 * @en The change cannot be reverted, because you are not allowed to delete "{0}".
+	 */
+	public static ResKey1 ERROR_REVERT_NO_DELETE_ACCESS__OBJECT;
+
+	/**
+	 * @en The change cannot be reverted, because you are not allowed to create "{0}" of type "{1}"
+	 *     again.
+	 */
+	public static ResKey2 ERROR_REVERT_NO_CREATE_ACCESS__OBJECT_TYPE;
 
 	static {
 		initConstants(I18NConstants.class);

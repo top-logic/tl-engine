@@ -354,6 +354,55 @@
 								<step attribute="TestAccessParentOperations:FullPart#editor"/>
 							</path>
 						</rule>
+						<!-- Role sources of TestChangeSetReverterRights. -->
+						<rule id="TestRevertWriteCheck_folder_readers"
+							meta-element="TestRevertWriteCheck:Folder"
+							role="TestRevertWriteCheck.Reader"
+						>
+							<path>
+								<step attribute="TestRevertWriteCheck:Folder#readers"/>
+							</path>
+						</rule>
+						<rule id="TestRevertWriteCheck_folder_creators"
+							meta-element="TestRevertWriteCheck:Folder"
+							role="TestRevertWriteCheck.Creator"
+						>
+							<path>
+								<step attribute="TestRevertWriteCheck:Folder#creators"/>
+							</path>
+						</rule>
+						<rule id="TestRevertWriteCheck_item_readers"
+							meta-element="TestRevertWriteCheck:Item"
+							role="TestRevertWriteCheck.Reader"
+						>
+							<path>
+								<step attribute="TestRevertWriteCheck:Item#readers"/>
+							</path>
+						</rule>
+						<rule id="TestRevertWriteCheck_item_editors"
+							meta-element="TestRevertWriteCheck:Item"
+							role="TestRevertWriteCheck.Editor"
+						>
+							<path>
+								<step attribute="TestRevertWriteCheck:Item#editors"/>
+							</path>
+						</rule>
+						<rule id="TestRevertWriteCheck_item_deleters"
+							meta-element="TestRevertWriteCheck:Item"
+							role="TestRevertWriteCheck.Deleter"
+						>
+							<path>
+								<step attribute="TestRevertWriteCheck:Item#deleters"/>
+							</path>
+						</rule>
+						<rule id="TestRevertWriteCheck_item_creators"
+							meta-element="TestRevertWriteCheck:Item"
+							role="TestRevertWriteCheck.Creator"
+						>
+							<path>
+								<step attribute="TestRevertWriteCheck:Item#creators"/>
+							</path>
+						</rule>
 						<!-- Roles on the security root, held by the members of a group. -->
 						<singleton-rule
 							id="TestAccessParentOperations_rootEditors"
@@ -873,6 +922,34 @@
 							<container/>
 						</access-parent>
 					</class>
+					<class name="TestRevertWriteCheck:Folder">
+						<grant
+							operation="Read"
+							roles="TestRevertWriteCheck.Reader"
+						/>
+						<grant
+							operation="Write"
+							roles="TestRevertWriteCheck.Reader"
+						/>
+					</class>
+					<class name="TestRevertWriteCheck:Item">
+						<grant
+							operation="Read"
+							roles="TestRevertWriteCheck.Reader"
+						/>
+						<grant
+							operation="Write"
+							roles="TestRevertWriteCheck.Editor"
+						/>
+						<grant
+							operation="Delete"
+							roles="TestRevertWriteCheck.Deleter"
+						/>
+						<grant
+							operation="Create"
+							roles="TestRevertWriteCheck.Creator"
+						/>
+					</class>
 					<class name="TestAccessParentAnyOf:Folder">
 						<grant
 							operation="Read"
@@ -1140,6 +1217,10 @@
 					<role name="TestLocalTypeSecurity.Responsible"/>
 					<role name="TestAccessParentOperations.CatalogReader"/>
 					<role name="TestAccessParentOperations.EntryEditor"/>
+					<role name="TestRevertWriteCheck.Reader"/>
+					<role name="TestRevertWriteCheck.Editor"/>
+					<role name="TestRevertWriteCheck.Deleter"/>
+					<role name="TestRevertWriteCheck.Creator"/>
 					<role name="TestAccessParentAnyOf.FolderOwner"/>
 					<role name="TestAccessParentAnyOf.FolderReader"/>
 					<role name="TestAccessParentAnyOf.DocReader"/>
@@ -1165,6 +1246,7 @@
 					<declaration file="/WEB-INF/model/TestDiscoverForm.model.xml"/>
 					<declaration file="/WEB-INF/model/TestLocalTypeSecurity.model.xml"/>
 					<declaration file="/WEB-INF/model/TestAccessParentOperations.model.xml"/>
+					<declaration file="/WEB-INF/model/TestRevertWriteCheck.model.xml"/>
 					<declaration file="/WEB-INF/model/TestAccessParentAnyOf.model.xml"/>
 				</declarations>
 				<settings>

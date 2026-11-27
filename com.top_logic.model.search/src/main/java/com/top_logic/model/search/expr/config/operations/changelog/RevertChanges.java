@@ -18,10 +18,12 @@ import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
+import com.top_logic.util.TLContext;
 
 /**
  * TL-Script function {@code revertChanges(changes)}.
@@ -36,19 +38,27 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
  * Returns the aggregated list of problems ({@code ResKey}s) reported by the individual revert
  * operations. An empty list means the revert was clean.
  * </p>
+ *
+ * <p>
+ * When the function is evaluated {@link #usesSecurity() with security checks}, the current user
+ * must be allowed to perform every change of the reverts, see
+ * {@link ChangeSetReverter#checkWritable(ChangeSet, com.top_logic.knowledge.wrap.person.Person)}.
+ * All given change sets are checked before the first one is reverted, so that either all of them
+ * are reverted or none.
+ * </p>
  */
-public class RevertChanges extends GenericMethod {
+public class RevertChanges extends GenericMethodWithSecurity {
 
 	/**
 	 * Creates a {@link RevertChanges}.
 	 */
-	protected RevertChanges(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected RevertChanges(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new RevertChanges(getName(), arguments);
+		return new RevertChanges(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -95,6 +105,12 @@ public class RevertChanges extends GenericMethod {
 			return Collections.emptyList();
 		}
 
+		if (usesSecurity()) {
+			for (ChangeSet change : changes) {
+				ChangeSetReverter.checkWritable(change, TLContext.currentUser());
+			}
+		}
+
 		List<ResKey> problems = ChangeSetReverter.revertAll(changes);
 		return problems;
 	}
@@ -122,7 +138,7 @@ public class RevertChanges extends GenericMethod {
 
 		@Override
 		public RevertChanges build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			return new RevertChanges(getConfig().getName(), args);
+			return new RevertChanges(getConfig().getName(), args, true);
 		}
 	}
 

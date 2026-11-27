@@ -386,6 +386,14 @@
 								<step attribute="TestAccessParentAnyOf:Folder#reader"/>
 							</path>
 						</rule>
+						<rule id="TestAccessParentAnyOf_folderDiscoverer"
+							meta-element="TestAccessParentAnyOf:Folder"
+							role="TestAccessParentAnyOf.FolderDiscoverer"
+						>
+							<path>
+								<step attribute="TestAccessParentAnyOf:Folder#discoverer"/>
+							</path>
+						</rule>
 						<rule id="TestAccessParentAnyOf_docReader"
 							meta-element="TestAccessParentAnyOf:Document"
 							role="TestAccessParentAnyOf.DocReader"
@@ -898,6 +906,10 @@
 							operation="Delete"
 							roles="TestAccessParentAnyOf.FolderOwner"
 						/>
+						<grant
+							operation="Discover"
+							roles="TestAccessParentAnyOf.FolderDiscoverer"
+						/>
 					</class>
 					<class name="TestAccessParentAnyOf:Document">
 						<grant
@@ -1006,6 +1018,30 @@
 									reference="TestAccessParentAnyOf:Document#relatedMixed"
 								/>
 							</any-of>
+						</access-parent>
+					</class>
+					<!-- Who may only discover the folder does not discover the shared objects in it. -->
+					<class name="TestAccessParentAnyOf:Shared">
+						<access-parent>
+							<any-of>
+								<container
+									discover="implied"
+									operations="Read,Write,Create,Delete"
+								/>
+								<referer
+									operations="Read"
+									reference="TestAccessParentAnyOf:Document#relatedShared"
+								/>
+							</any-of>
+						</access-parent>
+					</class>
+					<!-- No candidate delegates Discover: the grants of the type decide it beside Read and Write on the folder. -->
+					<class name="TestAccessParentAnyOf:Hidden">
+						<access-parent>
+							<container
+								discover="implied"
+								operations="Read,Write"
+							/>
 						</access-parent>
 					</class>
 					<class name="TestAccessParentAnyOf:Single">
@@ -1192,6 +1228,7 @@
 					<role name="TestAccessParentOperations.EntryEditor"/>
 					<role name="TestAccessParentAnyOf.FolderOwner"/>
 					<role name="TestAccessParentAnyOf.FolderReader"/>
+					<role name="TestAccessParentAnyOf.FolderDiscoverer"/>
 					<role name="TestAccessParentAnyOf.DocReader"/>
 					<role name="TestAccessParentAnyOf.DocEditor"/>
 					<role name="TestAccessParentAnyOf.TaskOwner"/>

@@ -469,7 +469,8 @@ public class SecurityCoverageAnalysis {
 				findings.add(CoverageFinding.noRoleSource(type));
 			}
 			// Every grant on the type or on one of its attributes implies Discover. Discover is
-			// delegated together with any operation, the declared operations not delegated are
+			// delegated together with any operation or implied by them (discover="implied"), so
+			// that it needs no grant of its own; the declared operations not delegated are
 			// reported one by one. A type deciding Read itself is reported when it grants Read to
 			// nobody, as a type deciding for itself.
 			if (accessParent == null) {

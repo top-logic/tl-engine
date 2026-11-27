@@ -161,6 +161,15 @@ public record AnyOfRelation(List<AccessParentFunction> candidates) implements Ac
 	}
 
 	/**
+	 * @return Whether one of the candidates leaves Discover to the operations it delegates, see
+	 *         {@link AccessParentFunction#impliesDiscover()}.
+	 */
+	@Override
+	public boolean impliesDiscover() {
+		return candidates.stream().anyMatch(AccessParentFunction::impliesDiscover);
+	}
+
+	/**
 	 * @return Whether one of the candidates is the object itself, see {@link SelfRelation}.
 	 */
 	@Override

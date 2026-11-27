@@ -88,6 +88,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ACCESS_PARENT_RESTRICTED__RELATION_OPERATIONS;
 
 	/**
+	 * @en {0}, only for {1}, Discover only through them
+	 */
+	public static ResKey2 ACCESS_PARENT_RESTRICTED_DISCOVER_IMPLIED__RELATION_OPERATIONS;
+
+	/**
 	 * @en {0}, {1}
 	 */
 	public static ResKey2 OPERATION_LIST__LIST_OPERATION;

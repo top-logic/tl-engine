@@ -23,7 +23,8 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
  * second the grants of the same entry. A grant of an operation the setting
  * {@link AccessParentConfig#delegatesOperation(AccessParentConfig, String) delegates} - one of the
  * {@link OperationRestriction#getOperations() operations listed}, Discover, which is delegated
- * together with any of them, or every operation of a setting not restricted - to some roles takes
+ * together with any of them unless it is {@link OperationRestriction#getDiscover() implied} by
+ * them, or every operation of a setting not restricted - to some roles takes
  * no effect,
  * unless the setting {@link AccessParentConfig#includesSelf(AccessParentConfig) names the object
  * itself} as a candidate. The operations are compared by their names, as written in the

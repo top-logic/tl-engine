@@ -93,6 +93,10 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 
 	private static final String MESH = MODULE + ":Mesh";
 
+	private static final String SHARED = MODULE + ":Shared";
+
+	private static final String HIDDEN = MODULE + ":Hidden";
+
 	/** Number of nodes of a complete graph of access parents. */
 	private static final int MESH_SIZE = 12;
 
@@ -114,11 +118,18 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 
 	private static final String ROLE_DOC_READER = MODULE + ".DocReader";
 
+	private static final String ROLE_FOLDER_OWNER = MODULE + ".FolderOwner";
+
+	private static final String ROLE_FOLDER_READER = MODULE + ".FolderReader";
+
 	private static final String ROLE_DOC_EDITOR = MODULE + ".DocEditor";
 
 	private Person _folderOwner;
 
 	private Person _folderReader;
+
+	/** May only discover {@link #_folder}. */
+	private Person _folderDiscoverer;
 
 	private Person _otherOwner;
 
@@ -180,6 +191,15 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 
 	private TLObject _barePart;
 
+	/** Part of {@link #_folder}, related by {@link #_document}. */
+	private TLObject _shared;
+
+	/** Part of {@link #_folder}, related by no document. */
+	private TLObject _unrelatedShared;
+
+	/** Part of {@link #_folder}. */
+	private TLObject _hidden;
+
 	private final List<TLObject> _created = new ArrayList<>();
 
 	@Override
@@ -189,6 +209,7 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		inTransaction(() -> {
 			_folderOwner = createPerson("anyOfFolderOwner");
 			_folderReader = createPerson("anyOfFolderReader");
+			_folderDiscoverer = createPerson("anyOfFolderDiscoverer");
 			_otherOwner = createPerson("anyOfOtherOwner");
 			_docReader = createPerson("anyOfDocReader");
 			_docEditor = createPerson("anyOfDocEditor");
@@ -205,6 +226,7 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 
 			_folder = createFolder(_folderOwner);
 			_folder.tUpdateByName("reader", _folderReader);
+			_folder.tUpdateByName("discoverer", _folderDiscoverer);
 			_folder2 = createFolder(_folderOwner);
 			_otherFolder = createFolder(_otherOwner);
 		});
@@ -222,6 +244,11 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 			_folder.tUpdateByName("directs", List.of(_direct));
 			_barePart = create(BARE_PART);
 			_folder.tUpdateByName("bareParts", List.of(_barePart));
+			_shared = create(SHARED);
+			_unrelatedShared = create(SHARED);
+			_folder.tUpdateByName("shareds", List.of(_shared, _unrelatedShared));
+			_hidden = create(HIDDEN);
+			_folder.tUpdateByName("hiddens", List.of(_hidden));
 
 			_document = create(DOCUMENT);
 			_document.tUpdateByName("reader", _docReader);
@@ -229,6 +256,7 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 			_document.tUpdateByName("author", _contact);
 			_document.tUpdateByName("relatedParts", List.of(_part));
 			_document.tUpdateByName("relatedMixed", List.of(_mixed));
+			_document.tUpdateByName("relatedShared", List.of(_shared));
 
 			_hiddenDocument = create(DOCUMENT);
 			_hiddenDocument.tUpdateByName("author", _hiddenContact);
@@ -880,6 +908,67 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		assertFalse(allowed(_other, _barePart, SimpleBoundCommandGroup.READ));
 	}
 
+	/**
+	 * Who may only discover the folder discovers the objects delegating Discover to it, but not
+	 * those whose container candidate leaves Discover to the delegated operations.
+	 */
+	public void testImpliedDiscoverHidesFromParentDiscoverer() {
+		assertTrue(allowed(_folderDiscoverer, _folder, SimpleBoundCommandGroup.DISCOVER));
+		assertFalse(allowed(_folderDiscoverer, _folder, SimpleBoundCommandGroup.READ));
+		assertTrue("Discover is delegated to the folder together with every operation.",
+			allowed(_folderDiscoverer, _part, SimpleBoundCommandGroup.DISCOVER));
+
+		for (TLObject object : List.of(_shared, _unrelatedShared, _hidden)) {
+			assertFalse("Discover on the folder alone does not reveal " + object,
+				allowed(_folderDiscoverer, object, SimpleBoundCommandGroup.DISCOVER));
+			assertFalse(allowed(_folderDiscoverer, object, SimpleBoundCommandGroup.READ));
+		}
+	}
+
+	/**
+	 * An object whose container candidate leaves Discover to the delegated operations is
+	 * discoverable for those the folder allows one of them, and through the other candidates.
+	 */
+	public void testImpliedDiscoverFollowsDelegatedOperations() {
+		for (TLObject object : List.of(_shared, _unrelatedShared, _hidden)) {
+			assertTrue("Read on the folder implies Discover on " + object,
+				allowed(_folderReader, object, SimpleBoundCommandGroup.DISCOVER));
+			assertTrue(allowed(_folderReader, object, SimpleBoundCommandGroup.READ));
+			assertTrue(allowed(_folderOwner, object, SimpleBoundCommandGroup.DISCOVER));
+			assertFalse(allowed(_other, object, SimpleBoundCommandGroup.DISCOVER));
+		}
+
+		assertTrue("The referer candidate delegates Discover together with Read.",
+			allowed(_docReader, _shared, SimpleBoundCommandGroup.DISCOVER));
+		assertTrue(allowed(_docReader, _shared, SimpleBoundCommandGroup.READ));
+		assertFalse("No document relating it.", allowed(_docReader, _unrelatedShared, SimpleBoundCommandGroup.DISCOVER));
+		assertFalse(allowed(_docReader, _hidden, SimpleBoundCommandGroup.DISCOVER));
+	}
+
+	/**
+	 * The roles admitting Discover on an object whose container candidate leaves Discover to the
+	 * delegated operations are those admitting one of them on the folder.
+	 */
+	public void testAdmittingRolesOfImpliedDiscover() {
+		BoundedRole folderOwner = BoundedRole.getRoleByName(ROLE_FOLDER_OWNER);
+		BoundedRole folderReader = BoundedRole.getRoleByName(ROLE_FOLDER_READER);
+		assertEquals(Map.of(_folder, Set.of(folderOwner, folderReader)),
+			rights().getAdmittingRolesByHolder(_hidden, SimpleBoundCommandGroup.DISCOVER));
+		assertEquals("Discover is decided by the hidden object itself, beside the folder deciding Read and Write.",
+			List.of(_hidden), holders(_hidden, SimpleBoundCommandGroup.DISCOVER));
+	}
+
+	/**
+	 * On the type level, Discover on an object whose container candidate leaves Discover to the
+	 * delegated operations follows the operations on the type of the folder.
+	 */
+	public void testTypeLevelOfImpliedDiscover() {
+		assertTrue(rights().getAccessibleTypes(_rootOwner, SimpleBoundCommandGroup.DISCOVER).contains(type(HIDDEN)));
+		assertTrue(rights().getAccessibleTypes(_rootOwner, SimpleBoundCommandGroup.DISCOVER).contains(type(SHARED)));
+		assertFalse("The document reader role grants nothing on a folder.",
+			rights().getAccessibleTypes(_rootDocReader, SimpleBoundCommandGroup.DISCOVER).contains(type(HIDDEN)));
+	}
+
 	private TLObject createSession(TLObject subject) {
 		return inTransaction(() -> {
 			TLObject result = create(SESSION);
@@ -890,7 +979,8 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 	}
 
 	private List<Person> persons() {
-		return List.of(_folderOwner, _folderReader, _docReader, _docEditor, _taskOwner, _other, _sessionOwner);
+		return List.of(_folderOwner, _folderReader, _folderDiscoverer, _docReader, _docEditor, _taskOwner, _other,
+			_sessionOwner);
 	}
 
 	private static List<TLObject> holders(TLObject object, BoundCommandGroup operation) {

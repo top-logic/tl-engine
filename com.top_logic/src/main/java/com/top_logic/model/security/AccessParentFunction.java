@@ -188,6 +188,24 @@ public interface AccessParentFunction {
 	}
 
 	/**
+	 * Whether Discover on the delegating object follows from the other operations this relation
+	 * {@link #delegates(BoundCommandGroup) delegates}.
+	 *
+	 * <p>
+	 * Every operation allowed on an object implies Discover on it. For a relation that does not
+	 * delegate Discover as an operation of its own (<code>discover="implied"</code>, see
+	 * {@link OperationRestriction#getDiscover()}), the access check therefore asks the access
+	 * parents for each delegated operation in place of Discover: the object is discoverable through
+	 * them only for a user they allow one of these operations.
+	 * </p>
+	 *
+	 * @return <code>false</code> by default.
+	 */
+	default boolean impliesDiscover() {
+		return false;
+	}
+
+	/**
 	 * Whether the delegating object decides the operations this relation
 	 * {@link #delegates(BoundCommandGroup) delegates} itself as well, by the grants of its type and
 	 * the roles held on it, in addition to its access parents.
@@ -236,8 +254,9 @@ public interface AccessParentFunction {
 	}
 
 	/**
-	 * The operations on the delegating object the access parent decides, besides Discover, when it
-	 * is restricted to a list of them.
+	 * The operations on the delegating object the access parent decides, besides Discover (unless
+	 * it {@link #impliesDiscover() leaves Discover to them}), when it is restricted to a list of
+	 * them.
 	 *
 	 * @return The delegated operations, <code>null</code> when the relation is not restricted to a
 	 *         list: it then delegates every operation, unless it tells otherwise by

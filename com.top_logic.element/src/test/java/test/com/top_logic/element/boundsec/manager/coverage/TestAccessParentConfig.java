@@ -828,6 +828,86 @@ public class TestAccessParentConfig extends BasicTestCase {
 		assertIgnored(log, "Discover");
 	}
 
+	/**
+	 * With <code>discover="implied"</code>, Discover is not delegated as an operation of its own,
+	 * at runtime as well as in the configuration.
+	 */
+	public void testImpliedDiscoverIsNotDelegated() throws Exception {
+		String classXml = "<class name='" + LINKED + "'><access-parent>" + TARGET_PARENT
+			+ " operations='Read,Write' discover='implied'/></access-parent></class>";
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, classXml);
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+
+		assertTrue(parent.delegates(SimpleBoundCommandGroup.READ));
+		assertTrue(parent.delegates(SimpleBoundCommandGroup.WRITE));
+		assertFalse(parent.delegates(SimpleBoundCommandGroup.DISCOVER));
+		assertTrue(parent.impliesDiscover());
+		assertFalse(parent.delegatesAll());
+		assertEquals(Set.of(SimpleBoundCommandGroup.READ, SimpleBoundCommandGroup.WRITE), parent.getOperations());
+
+		assertDelegatesExactly(read(classXml).getAccessParent(), "Read", "Write");
+	}
+
+	/**
+	 * By default, and with <code>discover="delegated"</code>, Discover is delegated together with
+	 * the listed operations.
+	 */
+	public void testDelegatedDiscoverIsDefault() throws Exception {
+		for (String discover : List.of("", " discover='delegated'")) {
+			String classXml = "<class name='" + LINKED + "'><access-parent>" + TARGET_PARENT
+				+ " operations='Read'" + discover + "/></access-parent></class>";
+			BufferingProtocol log = new BufferingProtocol();
+			AccessParentFunction parent = linkedParent(log, classXml);
+			assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+			assertTrue(discover, parent.delegates(SimpleBoundCommandGroup.DISCOVER));
+			assertFalse(discover, parent.impliesDiscover());
+			assertDelegatesExactly(read(classXml).getAccessParent(), "Read", "Discover");
+		}
+	}
+
+	/**
+	 * In an <code>any-of</code>, Discover stays delegated as long as one candidate delegates it.
+	 */
+	public void testImpliedDiscoverInAnyOfConfigAgreesWithRelation() throws Exception {
+		assertConfigAgrees("<container operations='Read,Write,Create,Delete' discover='implied'/>" + TARGET_PARENT
+			+ " operations='Read'/>", false);
+		assertConfigAgrees("<container operations='Read,Write' discover='implied'/>" + TARGET_PARENT
+			+ " operations='Read' discover='implied'/>", false);
+	}
+
+	/**
+	 * A grant of Discover takes effect when Discover is implied by the delegated operations.
+	 */
+	public void testDiscoverGrantBesideImpliedDiscoverIsNotIgnored() throws Exception {
+		String classXml = "<class name='" + LINKED + "'><access-parent>" + TARGET_PARENT
+			+ " operations='Read' discover='implied'/></access-parent>"
+			+ "<grant operation='Discover' roles='TestSecurityCoverage.Reader'/></class>";
+		BufferingProtocol log = new BufferingProtocol();
+		linkedParent(log, classXml);
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertTrue(log.getInfos().toString(), ignoredWarnings(log).isEmpty());
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(read(classXml));
+		assertTrue(checker.getFailures().toString(), checker.getFailures().isEmpty());
+	}
+
+	public void testImpliedDiscoverWithoutOperationsIsError() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent>"
+			+ TARGET_PARENT + " discover='implied'/></access-parent></class>");
+		assertNull("An unusable setting leaves the type without access parent.", parent);
+		assertError(log, "discover=\"implied\" without listing the operations");
+	}
+
+	public void testImpliedDiscoverListingDiscoverIsError() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent>"
+			+ TARGET_PARENT + " operations='Read,Discover' discover='implied'/></access-parent></class>");
+		assertNull("An unusable setting leaves the type without access parent.", parent);
+		assertError(log, "contradict each other");
+	}
+
 	public void testMarkWithRestrictedParentIsError() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
 		linkedParent(log, "<class name='" + LINKED + "' internal='true'><access-parent>"

@@ -163,7 +163,8 @@ public interface AccessParentConfig extends ConfigPart {
 	 *
 	 * <p>
 	 * A building block delegates the operations it {@link OperationRestriction#getOperations()
-	 * lists} and Discover, which is delegated together with any of them, or all operations when it
+	 * lists} and Discover, which is delegated together with any of them unless the building block
+	 * leaves it to them ({@link OperationRestriction#getDiscover()}), or all operations when it
 	 * lists none, except Create for a {@link RefererAccessParent}, which never decides it. An
 	 * {@link AnyOfAccessParent} delegates an operation one of its candidates
 	 * delegates, Create only when a candidate leading to the container delegates it.
@@ -204,8 +205,14 @@ public interface AccessParentConfig extends ConfigPart {
 		}
 		if (definition instanceof OperationRestriction restriction) {
 			List<CommandGroupReference> operations = restriction.getOperations();
-			return operations.isEmpty() || SimpleBoundCommandGroup.DISCOVER_NAME.equals(operationName)
-				|| operations.stream().anyMatch(operation -> operationName.equals(operation.id()));
+			if (operations.isEmpty()) {
+				return true;
+			}
+			if (SimpleBoundCommandGroup.DISCOVER_NAME.equals(operationName)
+				&& restriction.getDiscover() != DiscoverDelegation.IMPLIED) {
+				return true;
+			}
+			return operations.stream().anyMatch(operation -> operationName.equals(operation.id()));
 		}
 		return true;
 	}

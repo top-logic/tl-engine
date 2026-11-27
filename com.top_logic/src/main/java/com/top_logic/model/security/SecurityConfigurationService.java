@@ -324,7 +324,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		 * delegated operations, unless the own grants of the type imply them. Without a restriction
 		 * to some operations, the access parent decides all of them. Restricted to some
 		 * operations, the access parent decides these and Discover, and the grants of the type
-		 * together with the roles held on the object itself decide all other operations. Grants of
+		 * together with the roles held on the object itself decide all other operations. A
+		 * restricted access parent with <code>discover="implied"</code> does not decide Discover
+		 * as an operation of its own: through it, the object is discoverable for a user only if it
+		 * allows one of the listed operations, otherwise the grants of the type decide. Grants of
 		 * the type for an operation the access parent decides are ignored and reported as a
 		 * warning, unless the access parent names the object itself as candidate
 		 * (<code>&lt;any-of&gt;&lt;self/&gt;...&lt;/any-of&gt;</code>): the grants of the type
@@ -963,7 +966,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * For a type whose access parent is restricted to some operations, the rights of its attributes
 	 * for a delegated operation do not count: they are checked on the access parent (see
 	 * {@link #getRoleHolders(TLObject, BoundCommandGroup)}), so that holding one of their roles on the
-	 * object itself admits nothing. Discover is delegated together with these operations. An access
+	 * object itself admits nothing. Discover is delegated together with these operations, unless the
+	 * access parent leaves it to them (<code>discover="implied"</code>). An access
 	 * parent {@link AccessParentFunction#includesSelf() including} the object itself leaves them to
 	 * the object as well.
 	 * </p>
@@ -1432,9 +1436,24 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (function == null) {
 			return null;
 		}
+		if (config instanceof OperationRestriction restriction
+			&& restriction.getDiscover() == DiscoverDelegation.IMPLIED
+			&& restriction.getOperations().isEmpty()) {
+			context.error("The access parent of " + TLModelUtil.qualifiedName(type) + " sets "
+				+ OperationRestriction.DISCOVER + "=\"" + DiscoverDelegation.IMPLIED.getExternalName()
+				+ "\" without listing the " + OperationRestriction.OPERATIONS + " Discover is implied by.");
+			return null;
+		}
 		if (config instanceof OperationRestriction restriction && !restriction.getOperations().isEmpty()) {
 			Set<BoundCommandGroup> operations = resolveDelegatedOperations(context, type, restriction);
 			if (operations == null) {
+				return null;
+			}
+			if (restriction.getDiscover() == DiscoverDelegation.IMPLIED
+				&& operations.contains(SimpleBoundCommandGroup.DISCOVER)) {
+				context.error("The access parent of " + TLModelUtil.qualifiedName(type) + " lists the operation "
+					+ SimpleBoundCommandGroup.DISCOVER_NAME + " and sets " + OperationRestriction.DISCOVER + "=\""
+					+ DiscoverDelegation.IMPLIED.getExternalName() + "\", which contradict each other.");
 				return null;
 			}
 			for (BoundCommandGroup operation : operations) {
@@ -1445,7 +1464,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 					return null;
 				}
 			}
-			function = new RestrictedRelation(function, Set.copyOf(operations));
+			function = new RestrictedRelation(function, Set.copyOf(operations), restriction.getDiscover());
 		}
 		return function;
 	}
@@ -2140,7 +2159,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * <p>
 	 * The operation and each operation implying it on the object, as far as the access parent
 	 * delegates it, is checked on the access parents, mapped by
-	 * {@link #operationOnParent(BoundCommandGroup)}; one of them
+	 * {@link #operationOnParent(BoundCommandGroup)}, for Discover every delegated operation when
+	 * the access parent {@link AccessParentFunction#impliesDiscover() leaves Discover to them}; one
+	 * of them
 	 * {@link AccessParentFunction#allows(TLObject, BoundCommandGroup, ParentCheck) allowed} by the
 	 * access parents allows the operation. An access parent delegating every operation decides
 	 * alone. For an access parent restricted to some operations, the roles the person holds on the
@@ -2158,9 +2179,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (parent != null) {
 			// The requested operation and the operations implying it on the object, as far as they
 			// are delegated, are checked on the parent.
-			Set<BoundCommandGroup> operations = new LinkedHashSet<>();
-			operations.add(commandGroup);
-			operations.addAll(getObjectOperations(instance).getImplying(commandGroup));
+			Set<BoundCommandGroup> operations =
+				operationsCheckedOnParent(getObjectOperations(instance), commandGroup, parent);
 			ParentCheck check = (parentObject, operation) -> {
 				if (!CheckedObjects.isStored(parentObject)) {
 					// The parent is not access controlled, or it is being built in the current
@@ -2228,6 +2248,36 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return SimpleBoundCommandGroup.WRITE;
 		}
 		return operation;
+	}
+
+	/**
+	 * The operations on a delegating object whose decision by the access parent allows the given
+	 * operation on it: the operation itself and the operations implying it.
+	 *
+	 * <p>
+	 * For Discover and an access parent that {@link AccessParentFunction#impliesDiscover() leaves
+	 * Discover to the operations it delegates}, every operation applying to the object implies
+	 * Discover, as every right on an object does. Those the access parent does not delegate are
+	 * skipped by the caller, as for any other operation.
+	 * </p>
+	 *
+	 * @param applicable
+	 *        The operations applying to the delegating object.
+	 * @param operation
+	 *        The operation checked on the delegating object.
+	 * @param parent
+	 *        The access parent of the delegating object.
+	 * @return The operations, the given one first.
+	 */
+	private static Set<BoundCommandGroup> operationsCheckedOnParent(ApplicableOperations applicable,
+			BoundCommandGroup operation, AccessParentFunction parent) {
+		Set<BoundCommandGroup> result = new LinkedHashSet<>();
+		result.add(operation);
+		result.addAll(applicable.getImplying(operation));
+		if (SimpleBoundCommandGroup.DISCOVER.equals(operation) && parent.impliesDiscover()) {
+			result.addAll(applicable.getOperations());
+		}
+		return result;
 	}
 
 	@Override
@@ -2302,9 +2352,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (!visited.add(new ObjectOperation(instance, operation))) {
 			return;
 		}
-		Set<BoundCommandGroup> operations = new LinkedHashSet<>();
-		operations.add(operation);
-		operations.addAll(getObjectOperations(instance).getImplying(operation));
+		Set<BoundCommandGroup> operations = operationsCheckedOnParent(getObjectOperations(instance), operation, parent);
 		for (BoundCommandGroup delegated : operations) {
 			for (TLObject parentObject : parent.resolveAll(instance, delegated)) {
 				collectAdmittingRoles(parentObject, operationOnParent(delegated), visited, result);
@@ -2655,8 +2703,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			result = false;
 			// The operation itself or one implying it on the type: a delegated one is checked on
 			// the parent types.
-			Set<BoundCommandGroup> operations = new HashSet<>(getOperations(type).getImplying(commandGroup));
-			operations.add(commandGroup);
+			Set<BoundCommandGroup> operations = operationsCheckedOnParent(getOperations(type), commandGroup, accessParent);
 			for (BoundCommandGroup operation : operations) {
 				if (!accessParent.delegates(operation)) {
 					continue;

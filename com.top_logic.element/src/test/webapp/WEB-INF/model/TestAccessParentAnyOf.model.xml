@@ -14,6 +14,9 @@
 						<reference name="reader"
 							type="tl.accounts:Person"
 						/>
+						<reference name="discoverer"
+							type="tl.accounts:Person"
+						/>
 						<reference name="parts"
 							composite="true"
 							multiple="true"
@@ -49,6 +52,16 @@
 							multiple="true"
 							type="BarePart"
 						/>
+						<reference name="shareds"
+							composite="true"
+							multiple="true"
+							type="Shared"
+						/>
+						<reference name="hiddens"
+							composite="true"
+							multiple="true"
+							type="Hidden"
+						/>
 					</attributes>
 				</class>
 
@@ -75,6 +88,10 @@
 						<reference name="relatedMixed"
 							multiple="true"
 							type="Mixed"
+						/>
+						<reference name="relatedShared"
+							multiple="true"
+							type="Shared"
 						/>
 						<reference name="notes"
 							multiple="true"
@@ -229,6 +246,12 @@
 
 				<!-- Names itself as candidate beside its folder, without any grant. -->
 				<class name="BarePart"/>
+
+				<!-- Delegates to its folder with Discover implied by the delegated operations, and Read to every document relating it. -->
+				<class name="Shared"/>
+
+				<!-- Delegates Read and Write to its folder with Discover implied by them. -->
+				<class name="Hidden"/>
 
 				<!-- Role rule and grants: the owner may read and write it; delegates Read to its subject in addition. -->
 				<class name="Session">

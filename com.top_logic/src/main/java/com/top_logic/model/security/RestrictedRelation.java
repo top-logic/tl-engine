@@ -26,10 +26,23 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  *        The relation leading to the access parent.
  * @param operations
  *        The operations on the delegating object that are delegated, not empty. Discover is
- *        delegated in addition.
+ *        delegated in addition, if so configured.
+ * @param discover
+ *        How Discover on the delegating object is decided, see
+ *        {@link OperationRestriction#getDiscover()}.
  */
-public record RestrictedRelation(AccessParentFunction relation, Set<BoundCommandGroup> operations)
-		implements AccessParentFunction {
+public record RestrictedRelation(AccessParentFunction relation, Set<BoundCommandGroup> operations,
+		DiscoverDelegation discover) implements AccessParentFunction {
+
+	/**
+	 * Creates a {@link RestrictedRelation} delegating Discover together with the given
+	 * operations.
+	 *
+	 * @see #RestrictedRelation(AccessParentFunction, Set, DiscoverDelegation)
+	 */
+	public RestrictedRelation(AccessParentFunction relation, Set<BoundCommandGroup> operations) {
+		this(relation, operations, DiscoverDelegation.DELEGATED);
+	}
 
 	/**
 	 * Checks the restriction.
@@ -85,14 +98,23 @@ public record RestrictedRelation(AccessParentFunction relation, Set<BoundCommand
 	}
 
 	/**
-	 * @return Whether the operation is listed, or is Discover, and the restricted relation
-	 *         delegates it at all.
+	 * @return Whether the operation is listed, or is Discover and {@link #discover() delegated}
+	 *         together with the listed operations, and the restricted relation delegates it at all.
 	 */
 	@Override
 	public boolean delegates(BoundCommandGroup operation) {
 		return (operations.contains(operation)
-			|| (SimpleBoundCommandGroup.DISCOVER.equals(operation) && !operations.isEmpty()))
+			|| (SimpleBoundCommandGroup.DISCOVER.equals(operation) && discover == DiscoverDelegation.DELEGATED))
 			&& relation.delegates(operation);
+	}
+
+	/**
+	 * @return Whether Discover is not delegated together with the listed operations, but
+	 *         {@link DiscoverDelegation#IMPLIED implied} by them.
+	 */
+	@Override
+	public boolean impliesDiscover() {
+		return discover == DiscoverDelegation.IMPLIED;
 	}
 
 	@Override
@@ -102,12 +124,16 @@ public record RestrictedRelation(AccessParentFunction relation, Set<BoundCommand
 
 	/**
 	 * The label of the relation, followed by the labels of the delegated operations, ordered by
-	 * their names.
+	 * their names, and a note when Discover is not delegated together with them.
 	 */
 	@Override
 	public ResKey getLabel() {
 		ResKey labels = OperationLabels.of(
 			operations.stream().map(BoundCommandGroup::getID).collect(Collectors.toSet()));
+		if (discover == DiscoverDelegation.IMPLIED) {
+			return I18NConstants.ACCESS_PARENT_RESTRICTED_DISCOVER_IMPLIED__RELATION_OPERATIONS.fill(relation.getLabel(),
+				labels);
+		}
 		return I18NConstants.ACCESS_PARENT_RESTRICTED__RELATION_OPERATIONS.fill(relation.getLabel(), labels);
 	}
 

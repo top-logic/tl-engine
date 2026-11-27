@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), attributes readable with Discover (discover-attributes), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents (also restricted to operations, `operations` of an access parent; several access parents with <any-of>, <referer>, a multi-valued <target> or a <script> yielding several objects; a custom AccessParentDefinition combining access parents), role rules of the AccessManager, the access to historic versions of objects (history, anchors), the autoconf files and the SecurityCoverageCheck.
+description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), attributes readable with Discover (discover-attributes), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents (also restricted to operations, `operations` of an access parent, Discover only through them with `discover="implied"`; several access parents with <any-of>, <referer>, a multi-valued <target> or a <script> yielding several objects; a custom AccessParentDefinition combining access parents), role rules of the AccessManager, the access to historic versions of objects (history, anchors), the autoconf files and the SecurityCoverageCheck.
 order: 20
 ---
 
@@ -404,7 +404,8 @@ described above. With it the access parent decides only the listed operations; t
 all others itself:
 
 - The list is literal: **Create** and **Delete** are delegated only if listed, `Write` does not bring
-  them along. **Discover** is delegated whenever any operation is delegated.
+  them along. **Discover** is delegated whenever any operation is delegated, unless
+  `discover="implied"` is set, see below.
 - The names are the operations on the delegating object. The mapping of Create and Delete to Write
   on the parent happens afterwards.
 - An operation `Y` is allowed through the parent if `Y` is delegated and the parent allows `Y`, or
@@ -442,6 +443,37 @@ a right of its own, granted to a role the user holds on the entry itself:
 
 Read and Discover of an entry follow the catalog; Write is allowed to holders of `Editor` on the
 entry. A Read grant on `my.module:Entry` would be ignored and reported.
+
+**Discover only through the delegated operations (`discover="implied"`).** By default a restricted
+building block delegates Discover together with its operations, and the access parent is asked for
+Discover: whoever may discover the access parent - by a `Discover` grant, a helper role or a
+`<referer>` of its own - discovers every object below it, labels included. Where a role shall see
+the container, but of the objects below it only a subset decided elsewhere, the building block
+takes `discover="implied"` (default `discover="delegated"`):
+
+```xml
+<class name="my.module:Document">
+	<access-parent>
+		<any-of>
+			<container operations="Read,Write,Create,Delete" discover="implied"/>
+			<referer reference="my.module:ShareScope#documents" operations="Read"/>
+		</any-of>
+	</access-parent>
+</class>
+```
+
+- Discover is then not delegated as an operation of its own. Through the building block, the
+  object is discoverable only for a user the access parent allows one of the listed operations
+  (each mapped as usual, Create and Delete to Write): every right on an object implies Discover.
+  Discover on the access parent alone no longer makes the object discoverable.
+- In an `<any-of>`, Discover stays delegated as long as another candidate delegates it (the
+  `<referer>` above); only that candidate is asked for Discover itself, the candidate with
+  `discover="implied"` through its listed operations. A partner holding only Discover on the folder
+  and Read on a `ShareScope` discovers exactly the documents the scope holds.
+- Where no candidate delegates Discover, the grants of the type decide it as well, checked with the
+  roles on the object itself; a `Discover` grant of the type is then no longer ignored.
+- `discover="implied"` requires `operations`, which must not list `Discover`; both are configuration
+  errors otherwise.
 
 **Upgrading from `TL_8.0.0-alpha9`.** The attributes `access-parent="..."` and `access-reference="..."`
 of a `<class>` entry are gone and rejected at startup: `access-parent="container"` becomes
@@ -560,7 +592,8 @@ folder may do everything with it.
   [The object itself as candidate](#the-object-itself-as-candidate-self).
 - **A candidate not delegating an operation abstains** for it. An operation delegated by no
   candidate is decided by the grants of the type itself, as for a single restricted access parent.
-  Discover is delegated by a candidate delegating any operation.
+  Discover is delegated by a candidate delegating any operation, unless the candidate sets
+  `discover="implied"`, see [Access parent](#access-parent-delegating-the-decision).
 - **No access parent, no verdict.** An object for which no candidate yields an access parent (no
   referring object, an empty reference) has no verdict from the parents: as with a single access
   parent, the grants of the type decide where a restricted candidate leaves them room (the contact

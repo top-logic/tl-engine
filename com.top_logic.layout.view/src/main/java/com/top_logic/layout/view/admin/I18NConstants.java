@@ -361,6 +361,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 COVERAGE_DELEGATED_RESTRICTED__PARENT_OPERATIONS;
 
 	/**
+	 * @en The type delegates the operations {1} to its access parent, the object reached through
+	 *     {0}: whether a user may perform one of them on an object of the type is whether the user
+	 *     may perform it on that object, where creating or deleting is writing it. Discover is not
+	 *     delegated: through the access parent, an object is discoverable only for a user it allows
+	 *     one of these operations. All other operations, Discover included, are decided by the
+	 *     grants of the type itself and the roles the users hold on its objects.
+	 */
+	public static ResKey2 COVERAGE_DELEGATED_RESTRICTED_DISCOVER_IMPLIED__PARENT_OPERATIONS;
+
+	/**
 	 * @en The type delegates the operations {1} to its container, whichever composition holds the
 	 *     object ({0}): whether a user may perform one of them on an object of the type is whether
 	 *     the user may perform it on its container, where creating or deleting is writing the
@@ -368,6 +378,17 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     the grants of the type itself and the roles the users hold on its objects.
 	 */
 	public static ResKey2 COVERAGE_DELEGATED_RESTRICTED_CONTAINER__CONTAINERS_OPERATIONS;
+
+	/**
+	 * @en The type delegates the operations {1} to its container, whichever composition holds the
+	 *     object ({0}): whether a user may perform one of them on an object of the type is whether
+	 *     the user may perform it on its container, where creating or deleting is writing the
+	 *     container. Discover is not delegated: through the container, an object is discoverable
+	 *     only for a user it allows one of these operations. All other operations, Discover
+	 *     included, are decided by the grants of the type itself and the roles the users hold on its
+	 *     objects.
+	 */
+	public static ResKey2 COVERAGE_DELEGATED_RESTRICTED_CONTAINER_DISCOVER_IMPLIED__CONTAINERS_OPERATIONS;
 
 	/**
 	 * @en The type delegates every access decision to several access parents, "{0}": whether a user
@@ -404,6 +425,17 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     its objects.
 	 */
 	public static ResKey2 COVERAGE_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS;
+
+	/**
+	 * @en The type delegates the operations {1} to several access parents, "{0}": whether a user may
+	 *     perform one of them on an object of the type is whether the user may perform it on one of
+	 *     the access parents of the object deciding it, where deleting is writing it and creating,
+	 *     when listed, is writing the container. Discover is not delegated: through the access
+	 *     parents, an object is discoverable only for a user one of them allows one of these
+	 *     operations. All other operations, Discover included, are decided by the grants of the type
+	 *     itself and the roles the users hold on its objects.
+	 */
+	public static ResKey2 COVERAGE_DELEGATED_RESTRICTED_ANY_OF_DISCOVER_IMPLIED__CANDIDATES_OPERATIONS;
 
 	/**
 	 * @en The type is marked as internal: it is used by the application code alone, so it is exempt
@@ -455,6 +487,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 GRANTS_DELEGATED_RESTRICTED__PARENT_OPERATIONS;
 
 	/**
+	 * @en The type delegates the operations {1} to its access parent "{0}", but not Discover: the
+	 *     grants of the type the access parent leads to decide them, and an object is discoverable
+	 *     through the access parent only where they allow one of them. The grants of the type itself
+	 *     decide all other operations, Discover included.
+	 */
+	public static ResKey2 GRANTS_DELEGATED_RESTRICTED_DISCOVER_IMPLIED__PARENT_OPERATIONS;
+
+	/**
 	 * @en The type delegates every access decision to several access parents, "{0}", so it has no
 	 *     grants of its own. An operation is allowed as soon as the grants of the type of one access
 	 *     parent deciding it allow it.
@@ -475,6 +515,15 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     parent deciding it allow it. The grants of the type itself decide all other operations.
 	 */
 	public static ResKey2 GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS;
+
+	/**
+	 * @en The type delegates the operations {1} to several access parents, "{0}", but not Discover:
+	 *     such an operation is allowed as soon as the grants of the type of one access parent
+	 *     deciding it allow it, and an object is discoverable through the access parents only where
+	 *     they allow one of these operations. The grants of the type itself decide all other
+	 *     operations, Discover included.
+	 */
+	public static ResKey2 GRANTS_DELEGATED_RESTRICTED_ANY_OF_DISCOVER_IMPLIED__CANDIDATES_OPERATIONS;
 
 	/**
 	 * @en The type decides itself and through its access parents, "{0}": an operation is allowed
@@ -600,6 +649,15 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     the account holds on the object itself.
 	 */
 	public static ResKey3 EFFECTIVE_ACCESS_DELEGATED_RESTRICTED__TYPE_OBJECT_OPERATIONS;
+
+	/**
+	 * @en The type "{0}" delegates the operations {2} to an access parent, but not Discover: for
+	 *     these, the grants of the type of "{1}" and the roles the account holds on "{1}" decide,
+	 *     and the object is discoverable through "{1}" when one of them is allowed there. All other
+	 *     operations, Discover included, are decided by the grants of the type "{0}" and the roles
+	 *     the account holds on the object itself.
+	 */
+	public static ResKey3 EFFECTIVE_ACCESS_DELEGATED_RESTRICTED_DISCOVER_IMPLIED__TYPE_OBJECT_OPERATIONS;
 
 	/**
 	 * @en The type "{0}" decides itself and delegates to access parents as well: an operation is

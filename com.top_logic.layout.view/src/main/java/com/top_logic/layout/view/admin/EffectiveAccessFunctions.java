@@ -314,8 +314,10 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 				? I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.fill(type, decidingObject)
 				: I18NConstants.EFFECTIVE_ACCESS_DELEGATED_OWN_CREATE__TYPE_OBJECT.fill(type, decidingObject);
 		}
-		return I18NConstants.EFFECTIVE_ACCESS_DELEGATED_RESTRICTED__TYPE_OBJECT_OPERATIONS.fill(type, decidingObject,
-			SecurityGrantFunctions.operationLabels(operations));
+		return (SecurityGrantFunctions.delegatesDiscover(parent)
+			? I18NConstants.EFFECTIVE_ACCESS_DELEGATED_RESTRICTED__TYPE_OBJECT_OPERATIONS
+			: I18NConstants.EFFECTIVE_ACCESS_DELEGATED_RESTRICTED_DISCOVER_IMPLIED__TYPE_OBJECT_OPERATIONS)
+				.fill(type, decidingObject, SecurityGrantFunctions.operationLabels(operations));
 	}
 
 	private static void addAccountInfo(List<ResKey> texts, Person account) {

@@ -36,12 +36,14 @@ import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ApplicableOperations;
 import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.security.OperationRestriction;
 import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
@@ -181,14 +183,25 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 			if (operations == null) {
 				return I18NConstants.GRANTS_DELEGATED_ANY_OF__CANDIDATES.fill(parent.getLabel());
 			}
-			return I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.fill(parent.getLabel(),
-				operationLabels(operations));
+			return (delegatesDiscover(parent) ? I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS
+				: I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF_DISCOVER_IMPLIED__CANDIDATES_OPERATIONS)
+					.fill(parent.getLabel(), operationLabels(operations));
 		}
 		if (operations == null) {
 			return I18NConstants.GRANTS_DELEGATED__PARENT.fill(parent.getLabel());
 		}
-		return I18NConstants.GRANTS_DELEGATED_RESTRICTED__PARENT_OPERATIONS.fill(parent.getRelation().getLabel(),
-			operationLabels(operations));
+		return (delegatesDiscover(parent) ? I18NConstants.GRANTS_DELEGATED_RESTRICTED__PARENT_OPERATIONS
+			: I18NConstants.GRANTS_DELEGATED_RESTRICTED_DISCOVER_IMPLIED__PARENT_OPERATIONS)
+				.fill(parent.getRelation().getLabel(), operationLabels(operations));
+	}
+
+	/**
+	 * Whether the given access parent decides Discover as an operation of its own, rather than
+	 * leaving it to the operations it delegates (<code>discover="implied"</code>, see
+	 * {@link OperationRestriction#getDiscover()}).
+	 */
+	static boolean delegatesDiscover(AccessParentFunction parent) {
+		return parent.delegates(SimpleBoundCommandGroup.DISCOVER);
 	}
 
 	/**

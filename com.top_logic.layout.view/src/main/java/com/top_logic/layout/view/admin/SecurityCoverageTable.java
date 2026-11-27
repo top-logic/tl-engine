@@ -1215,26 +1215,34 @@ public class SecurityCoverageTable implements UIElement {
 			if (operations == null) {
 				return I18NConstants.COVERAGE_DELEGATED_ANY_OF__CANDIDATES.fill(parent.getLabel());
 			}
-			return I18NConstants.COVERAGE_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.fill(parent.getLabel(),
-				SecurityGrantFunctions.operationLabels(operations));
+			return (delegatesDiscover(parent) ? I18NConstants.COVERAGE_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS
+				: I18NConstants.COVERAGE_DELEGATED_RESTRICTED_ANY_OF_DISCOVER_IMPLIED__CANDIDATES_OPERATIONS)
+					.fill(parent.getLabel(), SecurityGrantFunctions.operationLabels(operations));
 		}
 		if (parent.getRelation() instanceof ContainerRelation container && container.composition() == null) {
 			String containers = coverage.containerReferences().stream()
 				.map(TLModelUtil::qualifiedName)
 				.collect(Collectors.joining(VALUE_SEPARATOR));
 			if (operations != null) {
-				return I18NConstants.COVERAGE_DELEGATED_RESTRICTED_CONTAINER__CONTAINERS_OPERATIONS.fill(containers,
-					SecurityGrantFunctions.operationLabels(operations));
+				return (delegatesDiscover(parent)
+					? I18NConstants.COVERAGE_DELEGATED_RESTRICTED_CONTAINER__CONTAINERS_OPERATIONS
+					: I18NConstants.COVERAGE_DELEGATED_RESTRICTED_CONTAINER_DISCOVER_IMPLIED__CONTAINERS_OPERATIONS)
+						.fill(containers, SecurityGrantFunctions.operationLabels(operations));
 			}
 			return container.configured()
 				? I18NConstants.COVERAGE_DELEGATED_CONTAINER__CONTAINERS.fill(containers)
 				: I18NConstants.COVERAGE_DELEGATED_DEFAULT__CONTAINERS.fill(containers);
 		}
 		if (operations != null) {
-			return I18NConstants.COVERAGE_DELEGATED_RESTRICTED__PARENT_OPERATIONS.fill(parent.getRelation().getLabel(),
-				SecurityGrantFunctions.operationLabels(operations));
+			return (delegatesDiscover(parent) ? I18NConstants.COVERAGE_DELEGATED_RESTRICTED__PARENT_OPERATIONS
+				: I18NConstants.COVERAGE_DELEGATED_RESTRICTED_DISCOVER_IMPLIED__PARENT_OPERATIONS)
+					.fill(parent.getRelation().getLabel(), SecurityGrantFunctions.operationLabels(operations));
 		}
 		return I18NConstants.COVERAGE_DELEGATED__PARENT.fill(accessParent(coverage));
+	}
+
+	private static boolean delegatesDiscover(AccessParentFunction parent) {
+		return SecurityGrantFunctions.delegatesDiscover(parent);
 	}
 
 	/**

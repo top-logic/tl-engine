@@ -36,6 +36,7 @@ import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ContainerRelation;
+import com.top_logic.model.security.DiscoverDelegation;
 import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.security.RestrictedRelation;
 import com.top_logic.model.security.SelfRelation;
@@ -71,6 +72,34 @@ public class TestRestrictedDelegationTexts extends TestCase {
 		ResKey unrestricted = SecurityGrantFunctions.delegation(ContainerRelation.ANY);
 		assertEquals("A type delegating everything keeps its text.", I18NConstants.GRANTS_DELEGATED__PARENT.getKey(),
 			unrestricted.plain().getKey());
+	}
+
+	/**
+	 * A restricted access parent leaving Discover to the delegated operations is told so, while an
+	 * {@link AnyOfRelation} with another candidate still delegating Discover keeps its text.
+	 */
+	public void testTextsOfImpliedDiscover() {
+		AccessParentFunction implied = new RestrictedRelation(ContainerRelation.ANY,
+			Set.of(SimpleBoundCommandGroup.READ), DiscoverDelegation.IMPLIED);
+		assertEquals(I18NConstants.GRANTS_DELEGATED_RESTRICTED_DISCOVER_IMPLIED__PARENT_OPERATIONS.getKey(),
+			SecurityGrantFunctions.delegation(implied).plain().getKey());
+		assertEquals(I18NConstants.EFFECTIVE_ACCESS_DELEGATED_RESTRICTED_DISCOVER_IMPLIED__TYPE_OBJECT_OPERATIONS.getKey(),
+			EffectiveAccessFunctions.delegation("Entry", "Catalog", implied).plain().getKey());
+
+		AnyOfRelation allImplied = new AnyOfRelation(List.of(implied, new RestrictedRelation(ContainerRelation.DEFAULT,
+			Set.of(SimpleBoundCommandGroup.WRITE), DiscoverDelegation.IMPLIED)));
+		assertEquals(I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF_DISCOVER_IMPLIED__CANDIDATES_OPERATIONS.getKey(),
+			SecurityGrantFunctions.delegation(allImplied).plain().getKey());
+
+		AnyOfRelation mixed = new AnyOfRelation(List.of(implied,
+			new RestrictedRelation(ContainerRelation.DEFAULT, Set.of(SimpleBoundCommandGroup.WRITE))));
+		assertEquals("Another candidate delegates Discover.",
+			I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.getKey(),
+			SecurityGrantFunctions.delegation(mixed).plain().getKey());
+
+		Resources german = Resources.getInstance(Locale.GERMAN);
+		assertFalse("The label of the candidate tells that Discover is implied.",
+			german.getString(implied.getLabel()).equals(german.getString(RESTRICTED.getLabel())));
 	}
 
 	public void testEffectiveAccessOfRestrictedType() {
